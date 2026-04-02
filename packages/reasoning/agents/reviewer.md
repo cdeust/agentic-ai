@@ -40,9 +40,9 @@ Check every file touched against the layer dependency rules:
 
 | Layer | May Import | Must NOT Import |
 |---|---|---|
-| shared/ | Python stdlib only | core, infrastructure, handlers, server, transport |
-| core/ | shared/ only | infrastructure, handlers, server, transport, os/pathlib |
-| infrastructure/ | shared/, Python stdlib | core, handlers, server, transport |
+| shared/ | Standard library only | core, infrastructure, handlers, server, transport |
+| core/ | shared/ only | infrastructure, handlers, server, transport, I/O libraries |
+| infrastructure/ | shared/, standard library | core, handlers, server, transport |
 | handlers/ | core, infrastructure, shared, validation, errors | server, transport |
 | server/ | handlers, errors | core, infrastructure (except via handlers) |
 | transport/ | server | everything else |
@@ -53,13 +53,13 @@ Flag any import that crosses a forbidden boundary. This is a blocking issue — 
 
 - **Single Responsibility**: Does the changed module still have one reason to change? If a PR adds a second responsibility, request a split.
 - **Open/Closed**: Does the change modify existing behavior or extend it? Prefer new implementations over if/elif additions.
-- **Liskov Substitution**: If a subtype or Protocol implementation was changed, can it still substitute for the base?
-- **Interface Segregation**: Were new methods added to an existing Protocol? Should it be a separate Protocol instead?
-- **Dependency Inversion**: Are concrete types used where Protocols should be? Is infrastructure instantiated inside core?
+- **Liskov Substitution**: If a subtype or interface implementation was changed, can it still substitute for the base?
+- **Interface Segregation**: Were new methods added to an existing interface? Should it be a separate interface instead?
+- **Dependency Inversion**: Are concrete types used where interfaces should be? Is infrastructure instantiated inside core?
 
 ### 3. Reverse Dependency Injection & Factory Pattern
 
-- Core modules must declare dependencies via Protocol types in constructors.
+- Core modules must declare dependencies via interface types in constructors.
 - Handlers wire infrastructure into core via factory functions.
 - Flag any direct instantiation of infrastructure inside core.
 - Flag any service locator or global mutable state.
@@ -74,7 +74,7 @@ Flag any import that crosses a forbidden boundary. This is a blocking issue — 
 ### 5. 3R's Assessment
 
 - **Readability**: Methods under 40 lines? Files under 300 lines? Descriptive names? Top-down flow?
-- **Reliability**: Type hints on new code? Validation only at system boundaries? Pydantic models for data?
+- **Reliability**: Static types on new code? Validation only at system boundaries? Typed data models for structured data?
 - **Reusability**: Shared logic in shared/? DI over copy-paste? No premature abstractions (need 3 uses first)?
 
 ### 6. Wiring & Dead Code
@@ -119,7 +119,7 @@ APPROVE / REQUEST CHANGES / NEEDS DISCUSSION
 
 - try/except blocks that swallow errors without understanding why they occur.
 - Utility grab-bag modules with no cohesive purpose.
-- Configuration dicts instead of typed Pydantic models.
+- Configuration dicts instead of typed data models.
 - Monkey-patching or runtime attribute injection.
 - Dead code, backward-compat shims, or "future-proofing" with no current caller.
 - Tests that mock the subject under test instead of its dependencies.

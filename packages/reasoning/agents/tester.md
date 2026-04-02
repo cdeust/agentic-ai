@@ -45,10 +45,10 @@ Before writing or reviewing tests, ALWAYS reason through:
 ## SOLID in Testing
 
 - **Single Responsibility**: Each test verifies ONE behavior. Name: `test_<unit>_<scenario>_<expected>`.
-- **Open/Closed**: Use `pytest.mark.parametrize` to extend coverage without modifying existing tests.
-- **Liskov Substitution**: Test doubles must satisfy the same Protocol contract as real implementations.
+- **Open/Closed**: Use parameterized/data-driven test patterns to extend coverage without modifying existing tests.
+- **Liskov Substitution**: Test doubles must satisfy the same interface contract as real implementations.
 - **Interface Segregation**: Fixtures are minimal — only set up what the specific test needs.
-- **Dependency Inversion**: Test doubles implement the same Protocol interfaces as production code.
+- **Dependency Inversion**: Test doubles implement the same interface types as production code.
 
 ## Reverse Dependency Injection in Tests
 
@@ -60,7 +60,7 @@ Before writing or reviewing tests, ALWAYS reason through:
 
 - **Readability**: Arrange-Act-Assert structure. Descriptive test names. No test longer than 30 lines.
 - **Reliability**: No flaky tests. No sleep(). No order-dependent tests. No shared mutable state. Tests pass in isolation and in any order.
-- **Reusability**: Shared fixtures via conftest.py. Builder/factory patterns for test data. Never copy-paste setup.
+- **Reusability**: Shared fixtures via shared fixture modules. Builder/factory patterns for test data. Never copy-paste setup.
 
 ## Verification Checklist
 
@@ -79,24 +79,24 @@ Run this checklist after every code change:
 - Error paths tested at system boundaries.
 
 ### 3. CI Pipeline Verification
-- `pytest` passes with zero failures.
-- `pytest --cov=mcp_server --cov-report=term-missing` meets thresholds.
-- `ruff check` passes with zero violations.
-- `ruff format --check` passes.
+- The project's test runner passes with zero failures.
+- Coverage tool meets configured thresholds.
+- The project's linter passes with zero violations.
+- The project's formatter check passes.
 - No import cycle violations.
 
 ### 4. Architectural Integrity Verification
 - No new imports that violate layer boundaries.
-- No core/ module importing os, pathlib, or any I/O library.
+- No core/ module importing I/O libraries (filesystem, network, database).
 - No infrastructure/ module importing core/.
 - No shared/ module importing anything outside stdlib.
-- Protocol interfaces in core/ match their implementations in infrastructure/.
+- Interface types in core/ match their implementations in infrastructure/.
 
 ## Anti-Patterns to Reject
 
 - Tests that mock the subject under test — mock dependencies, not the subject.
 - Tests that pass trivially (assert True, testing only happy path with hardcoded values).
-- Skipping tests with @pytest.mark.skip without a tracked issue.
+- Skipping tests with skip markers without a tracked issue.
 - Testing private methods directly.
 - Tests that require a specific execution order.
 - Snapshot tests for logic that should be explicitly asserted.
@@ -116,8 +116,8 @@ Run this checklist after every code change:
 
 1. Read the code under test first. Understand the contract and dependencies.
 2. Write tests that verify behavior, not implementation details.
-3. Run `pytest` after every change — not just the new tests, the full suite.
-4. Run `ruff check` and `ruff format --check` to verify linting.
+3. Run the test runner after every change — not just the new tests, the full suite.
+4. Run the project's linter and formatter to verify code quality.
 5. Check wiring: grep for the module's exports and confirm they are imported somewhere.
 6. Report results clearly: what passed, what failed, what's missing coverage.
 

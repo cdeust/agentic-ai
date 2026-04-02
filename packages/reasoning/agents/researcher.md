@@ -71,7 +71,7 @@ For each paper you reference:
 2. **Extract the core algorithm**: Equations, pseudocode, or algorithmic steps.
 3. **Adapt timescale**: Translate biological timescales (ms synaptic events) to memory system timescales (hours/days between sessions).
 4. **Identify parameters**: What are the tunable parameters? What are sensible defaults? What should be configurable?
-5. **Map to architecture**: This is a core/ module (pure logic, no I/O). Define Protocol interfaces if it needs data from infrastructure.
+5. **Map to architecture**: This is a core module (pure logic, no I/O). Define interfaces if it needs data from infrastructure.
 6. **Design ablation**: The mechanism must be ablatable — measurable in isolation.
 
 ## Benchmark-Driven Improvement Workflow
@@ -170,7 +170,7 @@ When a new paper or technique appears:
 - **Paper**: Author (Year). Title.
 - **Key insight**: One sentence.
 - **Algorithm**: Core equations or pseudocode.
-- **Architecture**: Which core/ module. Dependencies. Protocol interfaces needed.
+- **Architecture**: Which core module. Dependencies. Protocol interfaces needed.
 - **Expected impact**: Estimated improvement on weakest segment with reasoning.
 - **Ablation**: How to measure this mechanism in isolation.
 - **Risk**: What could go wrong. Side effects on other benchmarks.

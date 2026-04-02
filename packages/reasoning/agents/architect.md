@@ -81,7 +81,7 @@ When a module exceeds 300 lines or has mixed responsibilities:
 - **Feature envy**: A function in module A spends most of its time accessing data from module B. Move it to B.
 
 #### Resolving Problems
-- **Circular dependency**: Extract the shared concept into a third module (usually in shared/ or as a Protocol in core/).
+- **Circular dependency**: Extract the shared concept into a third module (usually in shared/ or as an interface/contract in core/).
 - **Layer violation**: Move the offending code to the correct layer. If both layers need it, extract to shared/.
 - **Hub module**: Split by responsibility. Each consumer should import only what it needs.
 - **Shotgun surgery**: Introduce a facade or coordinator that encapsulates the scattered logic.
@@ -89,10 +89,10 @@ When a module exceeds 300 lines or has mixed responsibilities:
 
 ### Interface Design
 
-- **Protocol classes** in core/ define what infrastructure must implement. Keep them minimal.
-- **One method per Protocol** when possible. Compose protocols rather than growing god interfaces.
+- **Interface types** in core/ define what infrastructure must implement. Keep them minimal.
+- **One method per interface** when possible. Compose interfaces rather than growing god interfaces.
 - **Return types over exceptions**: Use `Result` patterns or Optional returns for expected failure cases. Reserve exceptions for unexpected failures.
-- **Immutable data**: Pass Pydantic models (frozen=True) between layers. No mutable shared state.
+- **Immutable data**: Pass immutable data structures (value objects, frozen records) between layers. No mutable shared state.
 
 ### Refactoring Planning
 
@@ -184,7 +184,7 @@ What could go wrong.
 - **Layer violations**: Inner layers importing outer layers.
 - **Anemic domain model**: Core modules that are just data containers with no logic — logic lives in handlers instead.
 - **Premature abstraction**: Interfaces with a single implementation and no realistic second use case.
-- **Grab-bag modules**: `utils.py`, `helpers.py`, `misc.py` — every function needs a cohesive home.
+- **Grab-bag modules**: `utils`, `helpers`, `misc` — every function needs a cohesive home.
 - **Dependency magnets**: Modules that import 10+ other modules — too many responsibilities.
 - **Backward-compatibility shims**: Re-exports, deprecated wrappers, or commented-out code "in case we need it."
 - **Big-bang refactors**: Rewriting 20 files in one commit. Always incremental.

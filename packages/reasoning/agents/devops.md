@@ -40,60 +40,56 @@ Before making any infrastructure decision, ALWAYS reason through:
 - **Fast feedback**: Tests run in parallel. Fail fast — lint and type checks before slow integration tests.
 - **Deterministic builds**: Pinned dependencies, locked versions, reproducible environments.
 - **Pipeline stages** (in order):
-  1. **Lint**: `ruff check`, `ruff format --check` — seconds.
-  2. **Type check**: mypy/pyright if configured — seconds.
-  3. **Unit tests**: `pytest tests_py/core/ tests_py/shared/` — no I/O, fast.
-  4. **Integration tests**: `pytest tests_py/infrastructure/ tests_py/handlers/` — requires PostgreSQL service.
+  1. **Lint**: Run the project's linter and formatter in check mode — seconds.
+  2. **Type check**: Run the project's type checker if configured — seconds.
+  3. **Unit tests**: Run unit tests against core/shared layers — no I/O, fast.
+  4. **Integration tests**: Run integration tests against infrastructure/handler layers — requires service containers.
   5. **Security scan**: dependency audit, secret detection.
   6. **Benchmark** (optional, on demand): run against test database.
-- **Service containers**: PostgreSQL with pgvector and pg_trgm in CI. Use official `pgvector/pgvector:pg16` image.
-- **Caching**: Cache pip dependencies, pre-built wheels, and sentence-transformers model downloads between runs.
+- **Service containers**: Start any required backing services in CI (e.g., PostgreSQL with pgvector and pg_trgm via `pgvector/pgvector:pg16`).
+- **Caching**: Cache dependency downloads, compiled artifacts, and model files between runs.
 - **Branch protection**: Main branch requires passing CI. No force pushes.
 
 ### Docker & Containerization
 
 #### Application Container
-```dockerfile
-# Multi-stage build
-FROM python:3.10-slim AS builder
-# Install build dependencies, compile wheels
-FROM python:3.10-slim AS runtime
-# Copy only wheels and application code
-# Non-root user, read-only filesystem where possible
-```
+
+Use a multi-stage Dockerfile pattern:
+- **Stage 1 (builder)**: Install build dependencies, compile artifacts.
+- **Stage 2 (runtime)**: Copy only compiled output and application code into a minimal base image.
 
 - **Multi-stage builds**: Build dependencies don't ship in the runtime image.
-- **Non-root user**: Never run as root. Create a dedicated `cortex` user.
-- **Minimal base image**: `python:3.10-slim`, not `python:3.10`. Alpine only if musl compatibility is verified.
+- **Non-root user**: Never run as root. Create a dedicated application user.
+- **Minimal base image**: Use the smallest official image for the project's runtime (e.g., `-slim` variants). Alpine only if native library compatibility is verified.
 - **Layer ordering**: Dependencies first (cached), application code last (changes frequently).
 - **Health checks**: `HEALTHCHECK` instruction in Dockerfile. HTTP endpoint or TCP check.
-- **.dockerignore**: Exclude `.git`, `__pycache__`, `tests_py/`, `benchmarks/`, `docs/`, `*.pyc`.
+- **.dockerignore**: Exclude `.git`, build artifacts, test directories, cache files, documentation, and benchmarks.
 - **No secrets in images**: Use environment variables or mounted secrets at runtime.
 
 #### PostgreSQL Container
 - Use `pgvector/pgvector:pg16` — includes pgvector extension pre-installed.
-- Mount `pg_schema.py` migrations as init scripts, or run them on application startup.
+- Mount schema migration files as init scripts, or run them on application startup.
 - Persistent volume for data directory. Never use tmpfs for production data.
 - Configure `shared_preload_libraries = 'pg_stat_statements'` for query monitoring.
 
-#### Docker Compose (Development)
+#### Docker Compose (Development Example)
 ```yaml
 services:
-  cortex:
+  app:
     build: .
     environment:
-      - DATABASE_URL=postgresql://cortex:password@db:5432/cortex
+      - DATABASE_URL=postgresql://appuser:password@db:5432/appdb
     depends_on:
       db:
         condition: service_healthy
   db:
     image: pgvector/pgvector:pg16
     environment:
-      - POSTGRES_USER=cortex
+      - POSTGRES_USER=appuser
       - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=cortex
+      - POSTGRES_DB=appdb
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cortex"]
+      test: ["CMD-SHELL", "pg_isready -U appuser"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -103,9 +99,9 @@ volumes:
   pgdata:
 ```
 
-### PostgreSQL Provisioning
+### PostgreSQL Provisioning (Example)
 
-- **Extensions**: `pgvector`, `pg_trgm`, `pg_stat_statements` — installed at database creation.
+- **Extensions**: Install required extensions at database creation (e.g., `pgvector`, `pg_trgm`, `pg_stat_statements`).
 - **Roles**: Application user gets `SELECT, INSERT, UPDATE, DELETE` on application tables. Schema migrations run with a separate elevated role.
 - **Connection pooling**: PgBouncer in front of PostgreSQL for connection reuse. Transaction-level pooling for short-lived connections.
 - **Backups**: `pg_dump` for logical backups. WAL archiving for point-in-time recovery. Test restores regularly.
@@ -152,7 +148,7 @@ volumes:
 
 ## Environment Parity
 
-- **Dev = CI = Prod** in terms of: PostgreSQL version, pgvector version, Python version, dependency versions.
+- **Dev = CI = Prod** in terms of: database version, extension versions, runtime version, dependency versions.
 - Differences only in: resource allocation, data volume, secret values, logging verbosity.
 - If it passes in CI but fails in prod, the environments have diverged — fix the divergence, don't patch the symptom.
 
