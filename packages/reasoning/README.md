@@ -149,7 +149,7 @@ The orchestrator decomposes tasks, spawns specialized agents in parallel using i
 
 ## Cortex Memory Integration (Optional)
 
-Each agent includes a "Cortex Memory Integration" section for [Cortex](https://github.com/nichochar/cortex), a persistent memory MCP server. This enables agents to recall prior work, remember decisions, and share context across sessions. Without Cortex, the memory sections are safely ignored.
+Each agent includes a "Cortex Memory Integration" section for [Cortex](https://github.com/cdeust/Cortex), a persistent memory MCP server. This enables agents to recall prior work, remember decisions, and share context across sessions. Without Cortex, the memory sections are safely ignored.
 
 ## Customization
 
