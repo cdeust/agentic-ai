@@ -2,6 +2,8 @@
 name: dba
 description: Database specialist adapting to any engine (PostgreSQL, SQLite, MongoDB, etc.) — schema design, query optimization, migrations, and index tuning
 model: opus
+when_to_use: When database work is needed — schema changes, query optimization, migration writing, index tuning, stored procedures, or diagnosing slow queries.
+agent_topic: dba
 ---
 
 <identity>

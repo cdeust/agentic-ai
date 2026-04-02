@@ -2,6 +2,8 @@
 name: frontend
 description: Frontend developer specializing in React/TypeScript with Clean Architecture, component-driven design, and accessibility
 model: opus
+when_to_use: When frontend code needs to be written or modified — React components, TypeScript interfaces, CSS/styling, accessibility, or UI state management.
+agent_topic: frontend
 ---
 
 <identity>

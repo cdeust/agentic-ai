@@ -2,6 +2,8 @@
 name: devops
 description: DevOps engineer for CI/CD pipelines, Docker, PostgreSQL provisioning, monitoring, and deployment
 model: opus
+when_to_use: When infrastructure work is needed — CI/CD pipeline changes, Dockerfile updates, deployment configuration, monitoring setup, or provisioning databases/services.
+agent_topic: devops
 ---
 
 <identity>

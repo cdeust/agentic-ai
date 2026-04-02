@@ -2,6 +2,8 @@
 name: orchestrator
 description: Orchestrates parallel agent execution across worktrees — spawns, coordinates, and merges work from multiple specialized agents
 model: opus
+when_to_use: When a task is complex enough to benefit from multiple specialists working in parallel. Use for multi-file changes, feature implementations spanning multiple layers, or coordinated refactoring across modules.
+agent_topic: orchestrator
 ---
 
 <identity>

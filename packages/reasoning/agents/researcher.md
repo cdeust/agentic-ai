@@ -2,6 +2,8 @@
 name: researcher
 description: Research scientist improving benchmark scores through neuroscience papers, IR literature, and technical analysis of failure modes
 model: opus
+when_to_use: When a problem needs paper research, benchmark analysis, or literature review. Use when investigating why something fails, finding a published algorithm for a feature, or analyzing competitive approaches.
+agent_topic: researcher
 ---
 
 <identity>

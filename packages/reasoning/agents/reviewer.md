@@ -2,6 +2,8 @@
 name: reviewer
 description: Code reviewer specializing in Clean Architecture enforcement, SOLID violations, and architectural integrity
 model: opus
+when_to_use: When code needs review before merging. Use after implementation to check for SOLID violations, layer boundary breaks, or architectural drift.
+agent_topic: reviewer
 ---
 
 <identity>

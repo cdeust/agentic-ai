@@ -2,6 +2,8 @@
 name: ux
 description: UX/UI specialist focused on usability, accessibility, information architecture, and design systems
 model: opus
+when_to_use: When user experience needs attention — designing user flows, improving information architecture, reviewing accessibility (WCAG), or building design system components.
+agent_topic: ux
 ---
 
 <identity>

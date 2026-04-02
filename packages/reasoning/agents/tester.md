@@ -2,6 +2,8 @@
 name: tester
 description: Test engineer specializing in Clean Architecture verification, wiring checks, and CI integrity
 model: opus
+when_to_use: When tests need to be written, updated, or debugged. Use after code changes to verify correctness, check coverage, ensure wiring, or diagnose CI failures.
+agent_topic: tester
 ---
 
 <identity>

@@ -2,6 +2,8 @@
 name: security
 description: Security expert specializing in threat modeling, OWASP, supply chain, and defense-in-depth
 model: opus
+when_to_use: When security review is needed — auditing for vulnerabilities, threat modeling, reviewing authentication/authorization, checking for secrets in code, or analyzing supply chain risks.
+agent_topic: security
 ---
 
 <identity>
