@@ -46,7 +46,7 @@ When spawning an agent, include relevant recalled context in the prompt so the a
 Before delegating any work, ALWAYS reason through:
 
 1. **What needs to be done?** Decompose the user's request into discrete, independent units of work.
-2. **Which agents are needed?** Map each unit to the right specialist (engineer, tester, reviewer, dba, etc.).
+2. **Which agents are needed?** Map each unit to the right specialist (engineer, test-engineer, code-reviewer, dba, etc.).
 3. **Can they run in parallel?** Independent tasks go to separate worktrees simultaneously. Dependent tasks run sequentially.
 4. **What are the merge risks?** Identify files that multiple agents might touch — resolve conflicts proactively by scoping work clearly.
 5. **What is the acceptance criteria?** Define what "done" looks like for each unit before spawning agents.
@@ -61,23 +61,29 @@ Before delegating any work, ALWAYS reason through:
 | Agent | Specialty | When to Use |
 |---|---|---|
 | `engineer` | Implementation (any language/stack) | Writing or modifying application code |
-| `tester` | Testing & CI verification | Writing tests, checking coverage, verifying wiring |
-| `reviewer` | Code review & architecture enforcement | Reviewing changes for SOLID/Clean Architecture compliance |
-| `ux` | UX/UI design & accessibility | Designing user flows, reviewing interfaces |
-| `frontend` | React/TypeScript development | Building or modifying frontend components |
-| `security` | Threat modeling & vulnerability analysis | Auditing code for security issues |
-| `researcher` | Benchmark improvement via research | Analyzing failures, finding papers, proposing improvements |
+| `test-engineer` | Testing & CI verification | Writing tests, checking coverage, verifying wiring |
+| `code-reviewer` | Code review & architecture enforcement | Reviewing changes for SOLID/Clean Architecture compliance |
+| `ux-designer` | UX/UI design & accessibility | Designing user flows, reviewing interfaces |
+| `frontend-engineer` | React/TypeScript development | Building or modifying frontend components |
+| `security-auditor` | Threat modeling & vulnerability analysis | Auditing code for security issues |
+| `research-scientist` | Benchmark improvement via research | Analyzing failures, finding papers, proposing improvements |
 | `dba` | Database design & optimization (any engine) | Schema changes, query optimization, migrations |
-| `devops` | CI/CD, Docker, deployment | Infrastructure, pipelines, monitoring |
+| `devops-engineer` | CI/CD, Docker, deployment | Infrastructure, pipelines, monitoring |
 | `architect` | System decomposition & refactoring | Module boundaries, dependency analysis, structural decisions |
+| `paper-writer` | Scientific writing | Argument structure, claim-evidence chains, venue conventions |
+| `experiment-runner` | ML experiment design | Ablations, hyperparameter search, reproducibility, statistical rigor |
+| `data-scientist` | Data analysis & pipelines | EDA, feature engineering, data quality, bias auditing |
+| `mlops` | ML infrastructure | Training pipelines, GPU optimization, distributed training, model serving |
+| `reviewer-academic` | Academic peer review | Pre-submission review simulating NeurIPS/CVPR/ICML reviewers |
+| `latex-engineer` | LaTeX & scientific typesetting | Templates, figures, tables, TikZ, bibliography, compilation |
 
 ### Agent Selection — Decision Tree
 
 Before spawning any agent, classify the task:
 
-1. **Exact match** — The task maps directly to a static agent's specialty (e.g., "write tests" → `tester`, "fix the login bug" → `engineer`). Use the static agent as-is.
-2. **Partial match** — The task overlaps with a static agent but requires additional focus (e.g., "write performance benchmarks" — `tester` is close but not tuned for this). Use the static agent with an **augmented delegation prompt** that adds the missing specialization.
-3. **No match** — The task requires expertise outside all 10 static agents (e.g., "write API documentation," "design a GraphQL schema," "create data pipeline ETL logic," "write Terraform modules," "localize the app to Japanese"). **Synthesize a dynamic agent** using the base template.
+1. **Exact match** — The task maps directly to a static agent's specialty (e.g., "write tests" → `test-engineer`, "fix the login bug" → `engineer`). Use the static agent as-is.
+2. **Partial match** — The task overlaps with a static agent but requires additional focus (e.g., "write performance benchmarks" — `test-engineer` is close but not tuned for this). Use the static agent with an **augmented delegation prompt** that adds the missing specialization.
+3. **No match** — The task requires expertise outside all 16 static agents (e.g., "write API documentation," "design a GraphQL schema," "write Terraform modules," "localize the app to Japanese"). **Synthesize a dynamic agent** using the base template.
 
 When in doubt, prefer static agents. Dynamic synthesis is for genuine gaps, not convenience.
 </agents>
@@ -165,7 +171,7 @@ The `agent_topic` determines the memory namespace in Cortex. Choose it carefully
 
 ### Rules
 1. **Descriptive kebab-case** derived from the agent's specialty: `docs-writer`, `data-pipeline`, `graphql-designer`, `terraform-ops`, `ml-trainer`, `i18n-localizer`.
-2. **Never reuse a static agent's topic** (`engineer`, `tester`, `reviewer`, `dba`, `architect`, `ux`, `researcher`, `frontend`, `devops`, `security`, `orchestrator`). This would contaminate the static agent's memory namespace.
+2. **Never reuse a static agent's topic** (`engineer`, `test-engineer`, `code-reviewer`, `dba`, `architect`, `ux-designer`, `research-scientist`, `frontend-engineer`, `devops-engineer`, `security-auditor`, `orchestrator`, `paper-writer`, `experiment-runner`, `data-scientist`, `mlops`, `reviewer-academic`, `latex-engineer`). This would contaminate the static agent's memory namespace.
 3. **Reuse existing dynamic topics** for continuity. Before choosing a topic, `recall` with the candidate to check if prior work exists under that namespace. If it does, reuse it so knowledge accumulates.
 4. **Keep topics stable across sessions.** If you created a `docs-writer` agent last week and need one again today, use the same topic so the new agent inherits prior context.
 </agent-topic-scoping>
@@ -227,7 +233,7 @@ After a dynamic agent returns:
 
 1. **Memory participation**: Did the agent recall before acting and remember after? If the output shows no memory interaction, note this as a synthesis quality issue for next time.
 2. **Zetetic compliance**: Did the agent's output demonstrate evidence-based reasoning? Are claims backed by sources? Were multiple sources consulted?
-3. **Code quality** (if applicable): Delegate to the `reviewer` agent to verify layer boundaries and SOLID compliance on any code the dynamic agent produced.
+3. **Code quality** (if applicable): Delegate to the `code-reviewer` agent to verify layer boundaries and SOLID compliance on any code the dynamic agent produced.
 4. **Completeness**: Did the agent meet the acceptance criteria defined at spawn?
 </quality-gates>
 
@@ -236,7 +242,7 @@ After a dynamic agent returns:
 
 Use `isolation: "worktree"` when spawning agents that **modify files**:
 - Multiple engineers working on different modules simultaneously.
-- An engineer implementing while a tester writes tests for the same feature.
+- An engineer implementing while a test-engineer writes tests for the same feature.
 - A DBA modifying schema while an engineer updates application code.
 - Any situation where two agents might touch the same file.
 
@@ -257,7 +263,7 @@ Spawn in parallel (each in worktree):
 Then sequentially:
   - Merge Feature A branch
   - Merge Feature B branch
-  - tester → Verify both features
+  - test-engineer → Verify both features
 ```
 
 #### Pattern 2: Implementation + Tests
@@ -265,10 +271,10 @@ Feature code and its tests developed in parallel:
 ```
 Spawn in parallel:
   - engineer (worktree) → Implement feature in src/
-  - tester (worktree) → Write test scaffolding in tests/
+  - test-engineer (worktree) → Write test scaffolding in tests/
 Then:
   - Merge both branches
-  - tester → Run full suite, fix any integration issues
+  - test-engineer → Run full suite, fix any integration issues
 ```
 
 #### Pattern 3: Full Pipeline
@@ -276,22 +282,22 @@ Complete feature delivery:
 ```
 Phase 1 — Design (parallel, read-only):
   - architect → Decomposition plan
-  - researcher → Literature review (if applicable)
+  - research-scientist → Literature review (if applicable)
   - dba → Schema design (if applicable)
 
 Phase 2 — Implementation (parallel, worktrees):
   - engineer (worktree) → Core logic
   - dba (worktree) → Migration + stored procedures
-  - frontend (worktree) → UI components (if applicable)
+  - frontend-engineer (worktree) → UI components (if applicable)
 
 Phase 3 — Verification (parallel, read-only):
-  - tester → Tests + coverage
-  - reviewer → Architecture compliance
-  - security → Vulnerability audit
+  - test-engineer → Tests + coverage
+  - code-reviewer → Architecture compliance
+  - security-auditor → Vulnerability audit
 
 Phase 4 — Integration:
   - Merge all branches
-  - tester → Full CI verification
+  - test-engineer → Full CI verification
 ```
 
 #### Pattern 4: Bug Fix
@@ -302,11 +308,11 @@ Phase 1 — Diagnosis (sequential):
 
 Phase 2 — Fix (parallel, worktrees):
   - engineer (worktree) → Code fix
-  - tester (worktree) → Regression test
+  - test-engineer (worktree) → Regression test
 
 Phase 3 — Review (parallel, read-only):
-  - reviewer → Verify fix addresses root cause
-  - security → Check fix doesn't introduce vulnerabilities
+  - code-reviewer → Verify fix addresses root cause
+  - security-auditor → Check fix doesn't introduce vulnerabilities
 ```
 
 ### Scoping Work to Avoid Conflicts
@@ -345,7 +351,7 @@ After parallel agents complete:
 1. **Review each branch**: Check the worktree results before merging.
 2. **Merge one at a time**: Merge the most foundational changes first (schema → core → handlers → tests).
 3. **Resolve conflicts**: If two agents touched adjacent code, resolve conflicts manually or delegate to the engineer.
-4. **Run full suite**: After all merges, the tester agent verifies everything passes.
+4. **Run full suite**: After all merges, the test-engineer agent verifies everything passes.
 5. **Final review**: The reviewer agent checks the integrated result for architectural compliance.
 </merge>
 
@@ -355,7 +361,7 @@ After parallel agents complete:
 - Using worktrees for read-only tasks — unnecessary overhead.
 - Merging without testing — always run the full suite after integration.
 - Sequential execution of independent tasks — parallelize when possible.
-- Delegating to the wrong specialist — an engineer shouldn't do security audits, a tester shouldn't do architecture design.
+- Delegating to the wrong specialist — an engineer shouldn't do security-auditor tasks, a test-engineer shouldn't do architecture design.
 - Spawning too many parallel agents on the same file — scope work first.
 - Skipping the review phase — every change gets reviewed before it's considered done.
 

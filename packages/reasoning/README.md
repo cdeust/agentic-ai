@@ -98,19 +98,37 @@ TRANSPORT → SERVER → HANDLERS → CORE ← SHARED
 
 ## Agents
 
+### Engineering
+
 | Agent | Role | Specialty |
 |---|---|---|
 | **engineer** | Software Engineer | Clean Architecture, SOLID, root-cause problem solving — adapts to any language/stack |
 | **architect** | Software Architect | Module decomposition, layer boundaries, dependency analysis, refactoring strategy |
-| **reviewer** | Code Reviewer | Clean Architecture enforcement, SOLID violations, architectural integrity |
-| **tester** | Test Engineer | Architecture verification, wiring checks, CI integrity |
+| **code-reviewer** | Code Reviewer | Clean Architecture enforcement, SOLID violations, architectural integrity |
+| **test-engineer** | Test Engineer | Architecture verification, wiring checks, CI integrity |
 | **dba** | Database Specialist | Schema design, query optimization, migrations, index tuning — any engine |
-| **frontend** | Frontend Developer | React/TypeScript, component-driven design, accessibility |
-| **devops** | DevOps Engineer | CI/CD pipelines, Docker, provisioning, monitoring, deployment |
-| **security** | Security Expert | Threat modeling, OWASP, supply chain, defense-in-depth |
-| **researcher** | Research Scientist | Literature review, paper analysis, benchmark improvement |
-| **ux** | UX/UI Specialist | Usability, accessibility, information architecture, design systems |
-| **orchestrator** | Multi-Agent Coordinator | Spawns, coordinates, and merges work from parallel agents |
+| **frontend-engineer** | Frontend Developer | React/TypeScript, component-driven design, accessibility |
+| **devops-engineer** | DevOps Engineer | CI/CD pipelines, Docker, provisioning, monitoring, deployment |
+| **security-auditor** | Security Auditor | Threat modeling, OWASP, supply chain, defense-in-depth |
+| **ux-designer** | UX/UI Designer | Usability, accessibility, information architecture, design systems |
+
+### Research & Academic
+
+| Agent | Role | Specialty |
+|---|---|---|
+| **research-scientist** | Research Scientist | Literature review, paper analysis, benchmark improvement, finding published algorithms |
+| **paper-writer** | Scientific Writer | Argument structure, claim-evidence chains, narrative flow, venue conventions |
+| **experiment-runner** | Experiment Designer | Ablation studies, hyperparameter search, reproducibility, statistical rigor |
+| **data-scientist** | Data Analyst | EDA, feature engineering, data quality, bias auditing, dataset documentation |
+| **mlops** | ML Infrastructure | Training pipelines, GPU optimization, distributed training, model serving |
+| **reviewer-academic** | Peer Review Simulator | Pre-submission review as a NeurIPS/CVPR/ICML reviewer would |
+| **latex-engineer** | LaTeX Specialist | Templates, figures, tables, TikZ/PGFPlots, bibliography, compilation |
+
+### Coordination
+
+| Agent | Role | Specialty |
+|---|---|---|
+| **orchestrator** | Multi-Agent Coordinator | Spawns, coordinates, and merges work from parallel agents. Synthesizes dynamic agents on the fly |
 
 ---
 
@@ -139,11 +157,11 @@ Use the engineer agent to fix the authentication bug in login.py
 ```
 
 ```
-Use the reviewer agent to review the changes in this PR
+Use the code-reviewer agent to review the changes in this PR
 ```
 
 ```
-Use the orchestrator to run architect, engineer, and tester in parallel on this task
+Use the orchestrator to run architect, engineer, and test-engineer in parallel on this task
 ```
 
 ### The Orchestrator
