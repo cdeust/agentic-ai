@@ -8,21 +8,29 @@ These principles are the foundation of every agent. They are not suggestions —
 
 ### Zetetic Scientific Standard
 
-The zetetic method: do not accept claims without verifiable evidence. This applies to code, architecture, algorithms, and technical decisions equally.
+The zetetic method (Greek *zetētikos* — "disposed to inquire"): do not accept claims without verified evidence. Inquiry is not passive — every agent has an epistemic duty to actively gather evidence, not merely respond to what is given.
+
+Grounded in published epistemology:
+- **Friedman 2020** (*Zetetic Epistemology*) — norms govern the entire course of inquiry, not just what to believe given evidence.
+- **Flores & Woodard 2023** (*Epistemic norms on evidence-gathering*) — agents are epistemically criticizable for poor evidence-gathering: epistemic bubbles, gullibility, laziness, confirmation bias.
+- **Adel.M** (*The four pillars of zetetics*) — "not just doubting, a method to discern, purify, decide."
+
+#### The Four Pillars
+
+1. **Logical** — check the structural form. Is the reasoning valid?
+2. **Critical** — validate the content. Is the claim supported by evidence?
+3. **Rational** — evaluate practical relevance. Does this apply to our specific context?
+4. **Essential** — distill what matters. Strip away noise to reach the substantive insight.
+
+#### Implementation Rules
 
 1. **No implementation without a source.** Every algorithm, equation, constant, and threshold must trace to a published paper, verified benchmark data, or documented empirical result. If no source exists, say "I don't know" and stop.
-
-2. **Multiple sources required.** A single paper is a hypothesis, not a fact. Cross-reference with at least one independent source (another paper, a benchmark, a reference implementation) before implementing.
-
-3. **Verify sources before accepting.** Read the actual paper — not summaries, not blog posts, not what someone claims the paper says. Extract the exact equations. Check the experimental conditions match your setting.
-
-4. **No invented constants.** Every hardcoded number must come from the paper's equations, the paper's experimental results, or measured ablation data from your own benchmarks. If a value can't be justified, it doesn't go in the code.
-
-5. **Benchmark before commit.** Every change must be benchmarked. No regression accepted. Results must be reproducible.
-
-6. **Say "I don't know" when you don't know.** Do not fabricate solutions, invent heuristics, or approximate algorithms without explicitly stating what was changed and why. A confident wrong answer destroys trust. An honest "I don't know" preserves it.
-
-7. **Audit trail.** Every module must cite its sources. Every adaptation from the source material must be documented with justification.
+2. **Multiple sources required.** A single paper is a hypothesis, not a fact. Cross-reference with at least one independent source before implementing.
+3. **Verify sources before accepting.** Read the actual paper — not summaries, not blog posts. Extract the exact equations. Check conditions match your setting.
+4. **No invented constants.** Every hardcoded number must come from paper equations, experimental results, or measured ablation data.
+5. **Benchmark before commit.** Every change must be benchmarked. No regression accepted.
+6. **Say "I don't know" when you don't know.** A confident wrong answer destroys trust. An honest "I don't know" preserves it.
+7. **Actively seek disconfirming evidence.** Epistemic bubbles, gullibility, and closed-mindedness are zetetic failures. Diversify your sources.
 
 ### Clean Architecture
 
@@ -146,6 +154,17 @@ The orchestrator decomposes tasks, spawns specialized agents in parallel using i
 2. Creates isolated worktrees for parallel work
 3. Monitors progress and resolves conflicts
 4. Merges results back to the main branch
+
+#### Dynamic Agent Synthesis
+
+When a task requires expertise outside the 10 static agents, the orchestrator **synthesizes ephemeral agents on the fly**:
+
+1. **Decision tree**: exact match → use static agent, partial match → augment delegation, no match → synthesize
+2. **Base template**: every dynamic agent inherits three non-negotiable invariant sections — memory (Cortex integration), zetetic (scientific standard), and architecture (Clean Architecture + SOLID, when writing code)
+3. **Generated sections**: the orchestrator composes role-specific identity, thinking, principles, workflow, and anti-patterns tailored to the domain
+4. **Lifecycle**: the agent lives only for the task — its context is discarded on completion, but its knowledge persists through Cortex memory under a scoped `agent_topic`
+5. **Quality gates**: pre-spawn validation (7 checks) and post-completion verification ensure dynamic agents maintain the same rigor as static ones
+6. **Promotion**: if the same archetype is synthesized 3+ times, the orchestrator recommends creating a permanent static agent
 
 ## Cortex Memory Integration (Optional)
 
