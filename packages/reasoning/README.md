@@ -123,6 +123,7 @@ TRANSPORT → SERVER → HANDLERS → CORE ← SHARED
 | **mlops** | ML Infrastructure | Training pipelines, GPU optimization, distributed training, model serving |
 | **reviewer-academic** | Peer Review Simulator | Pre-submission review as a NeurIPS/CVPR/ICML reviewer would |
 | **latex-engineer** | LaTeX Specialist | Templates, figures, tables, TikZ/PGFPlots, bibliography, compilation |
+| **professor** | Academic Professor | Concept explanations, mental models, Socratic method, lectures, exercises |
 
 ### Coordination
 

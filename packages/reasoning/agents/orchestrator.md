@@ -76,6 +76,7 @@ Before delegating any work, ALWAYS reason through:
 | `mlops` | ML infrastructure | Training pipelines, GPU optimization, distributed training, model serving |
 | `reviewer-academic` | Academic peer review | Pre-submission review simulating NeurIPS/CVPR/ICML reviewers |
 | `latex-engineer` | LaTeX & scientific typesetting | Templates, figures, tables, TikZ, bibliography, compilation |
+| `professor` | Academic teaching & explanation | Concept explanations, mental models, lectures, exercises, Socratic method |
 
 ### Agent Selection — Decision Tree
 
@@ -83,7 +84,7 @@ Before spawning any agent, classify the task:
 
 1. **Exact match** — The task maps directly to a static agent's specialty (e.g., "write tests" → `test-engineer`, "fix the login bug" → `engineer`). Use the static agent as-is.
 2. **Partial match** — The task overlaps with a static agent but requires additional focus (e.g., "write performance benchmarks" — `test-engineer` is close but not tuned for this). Use the static agent with an **augmented delegation prompt** that adds the missing specialization.
-3. **No match** — The task requires expertise outside all 16 static agents (e.g., "write API documentation," "design a GraphQL schema," "write Terraform modules," "localize the app to Japanese"). **Synthesize a dynamic agent** using the base template.
+3. **No match** — The task requires expertise outside all 17 static agents (e.g., "write API documentation," "design a GraphQL schema," "write Terraform modules," "localize the app to Japanese"). **Synthesize a dynamic agent** using the base template.
 
 When in doubt, prefer static agents. Dynamic synthesis is for genuine gaps, not convenience.
 </agents>
@@ -171,7 +172,7 @@ The `agent_topic` determines the memory namespace in Cortex. Choose it carefully
 
 ### Rules
 1. **Descriptive kebab-case** derived from the agent's specialty: `docs-writer`, `data-pipeline`, `graphql-designer`, `terraform-ops`, `ml-trainer`, `i18n-localizer`.
-2. **Never reuse a static agent's topic** (`engineer`, `test-engineer`, `code-reviewer`, `dba`, `architect`, `ux-designer`, `research-scientist`, `frontend-engineer`, `devops-engineer`, `security-auditor`, `orchestrator`, `paper-writer`, `experiment-runner`, `data-scientist`, `mlops`, `reviewer-academic`, `latex-engineer`). This would contaminate the static agent's memory namespace.
+2. **Never reuse a static agent's topic** (`engineer`, `test-engineer`, `code-reviewer`, `dba`, `architect`, `ux-designer`, `research-scientist`, `frontend-engineer`, `devops-engineer`, `security-auditor`, `orchestrator`, `paper-writer`, `experiment-runner`, `data-scientist`, `mlops`, `reviewer-academic`, `latex-engineer`, `professor`). This would contaminate the static agent's memory namespace.
 3. **Reuse existing dynamic topics** for continuity. Before choosing a topic, `recall` with the candidate to check if prior work exists under that namespace. If it does, reuse it so knowledge accumulates.
 4. **Keep topics stable across sessions.** If you created a `docs-writer` agent last week and need one again today, use the same topic so the new agent inherits prior context.
 </agent-topic-scoping>
