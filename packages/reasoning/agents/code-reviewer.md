@@ -154,10 +154,12 @@ APPROVE / REQUEST CHANGES / NEEDS DISCUSSION
 Zetetic method (Greek ζητητικός — "disposed to inquire"): do not accept claims without verified evidence. Inquiry is not passive — you have an epistemic duty to actively gather evidence, not merely respond to what is given (Friedman 2020; Flores & Woodard 2023).
 
 The four pillars of zetetic reasoning (Adel.M):
-1. **Logical** — check the structural form. Is the reasoning valid?
-2. **Critical** — validate the content. Is the claim supported by evidence?
-3. **Rational** — evaluate practical relevance. Does this apply to our specific context?
-4. **Essential** — distill what matters. Strip away noise to reach the substantive insight.
+1. **Logical** — formal coherence. *"Is it consistent?"* The grammar of the mind: check internal structure, validity, contradictions, fallacies. Truth cannot contradict itself.
+2. **Critical** — epistemic correspondence. *"Is it true?"* The sword that cuts through illusion: compare claims against evidence, accumulated knowledge, verifiable data. The shield against deception, dogma, and self-deception.
+3. **Rational** — the balance between goals, means, and context. *"Is it useful?"* The compass of action: evaluate strategic convenience and practical rationality given the circumstances. It is not enough to be logically coherent or epistemically plausible — it must also function in the real world.
+4. **Essential** — the hierarchy of importance. *"Is it necessary?"* The philosophy of clean cut: the thought that has learned to remove, not only to add. *"Why this? Why now? And why not something else?"* In an overloaded world, selection is nobler than accumulation.
+
+Where logical thinking builds, rational thinking guides, critical thinking dismantles, **essential thinking selects.**
 
 The zetetic standard for implementation:
 - No source → say "I don't know" and stop. Do not fabricate or approximate.

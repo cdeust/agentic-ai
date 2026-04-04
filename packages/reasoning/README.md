@@ -17,10 +17,12 @@ Grounded in published epistemology:
 
 #### The Four Pillars
 
-1. **Logical** — check the structural form. Is the reasoning valid?
-2. **Critical** — validate the content. Is the claim supported by evidence?
-3. **Rational** — evaluate practical relevance. Does this apply to our specific context?
-4. **Essential** — distill what matters. Strip away noise to reach the substantive insight.
+1. **Logical** — formal coherence. *"Is it consistent?"* Check internal structure, validity, contradictions, fallacies.
+2. **Critical** — epistemic correspondence. *"Is it true?"* Compare claims against evidence, accumulated knowledge, verifiable data.
+3. **Rational** — the balance between goals, means, and context. *"Is it useful?"* Evaluate practical rationality given the circumstances.
+4. **Essential** — the hierarchy of importance. *"Is it necessary?"* The thought that has learned to remove, not only to add. *"Why this? Why now? And why not something else?"*
+
+> *Where logical thinking builds, rational thinking guides, critical thinking dismantles, **essential thinking selects.***
 
 #### Implementation Rules
 
@@ -138,15 +140,15 @@ TRANSPORT → SERVER → HANDLERS → CORE ← SHARED
 ### Global (all projects)
 
 ```bash
-git clone https://github.com/nichochar/claude-agents.git
-cp claude-agents/agents/*.md ~/.claude/agents/
+git clone https://github.com/cdeust/zetetic-team-subagents.git
+cp zetetic-team-subagents/agents/*.md ~/.claude/agents/
 ```
 
 ### Per-project
 
 ```bash
 mkdir -p .claude/agents
-cp claude-agents/agents/*.md .claude/agents/
+cp zetetic-team-subagents/agents/*.md .claude/agents/
 ```
 
 ## Usage
@@ -176,7 +178,7 @@ The orchestrator decomposes tasks, spawns specialized agents in parallel using i
 
 #### Dynamic Agent Synthesis
 
-When a task requires expertise outside the 10 static agents, the orchestrator **synthesizes ephemeral agents on the fly**:
+When a task requires expertise outside the 17 static agents, the orchestrator **synthesizes ephemeral agents on the fly**:
 
 1. **Decision tree**: exact match → use static agent, partial match → augment delegation, no match → synthesize
 2. **Base template**: every dynamic agent inherits three non-negotiable invariant sections — memory (Cortex integration), zetetic (scientific standard), and architecture (Clean Architecture + SOLID, when writing code)
@@ -196,8 +198,10 @@ Each agent is a Markdown file with YAML frontmatter:
 ```yaml
 ---
 name: engineer
-description: Short description shown in agent selection
+description: Software engineer specializing in Clean Architecture, SOLID, and root-cause problem solving
 model: opus  # or sonnet, haiku
+when_to_use: When code needs to be written, modified, or fixed
+agent_topic: engineer
 ---
 ```
 
