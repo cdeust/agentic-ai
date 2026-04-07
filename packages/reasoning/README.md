@@ -187,6 +187,86 @@ When a task requires expertise outside the 17 static agents, the orchestrator **
 5. **Quality gates**: pre-spawn validation (7 checks) and post-completion verification ensure dynamic agents maintain the same rigor as static ones
 6. **Promotion**: if the same archetype is synthesized 3+ times, the orchestrator recommends creating a permanent static agent
 
+## Running Agents as Standalone CLI Sessions (Worktrees, No Permission Blocks)
+
+Using agents via the parent session's subagent mechanism (`Use the engineer agent to …`) is convenient, but it shares the parent's context window and funnels every tool call through the parent's permission prompts. For real parallel work — one agent per terminal, each in its own git worktree, none of them blocked on approval dialogs — spawn each agent as its **own `claude` process**.
+
+### The spawn script
+
+```bash
+# from inside the repo you want the agent to work ON
+/path/to/zetetic-team-subagents/scripts/spawn-agent.sh engineer "Fix the auth bug in login.py"
+
+# or interactive REPL
+/path/to/zetetic-team-subagents/scripts/spawn-agent.sh architect
+```
+
+What it does:
+
+1. Reads `agents/<name>.md` and strips the YAML frontmatter to get the raw system prompt.
+2. Creates a fresh git worktree next to your repo on branch `agent/<name>/<timestamp>` — the agent cannot stomp on your working tree.
+3. Launches `claude` in that worktree with:
+   - `--append-system-prompt "<agent body>"` — installs the agent persona into a *top-level* session (not a subagent).
+   - `--permission-mode bypassPermissions` — no interactive approval prompts, so the session is not blocked waiting on you to click allow.
+   - `-p "<task>"` for headless one-shot, or no `-p` for an interactive REPL.
+
+Because each agent is a separate `claude` process with its own PID, context window, and working directory, you can open N terminals and run N agents truly in parallel:
+
+```bash
+# terminal 1
+spawn-agent.sh architect    "Propose a module split for src/core"
+# terminal 2
+spawn-agent.sh engineer     "Implement the split from the architect branch"
+# terminal 3
+spawn-agent.sh test-engineer "Write coverage for the new modules"
+# terminal 4
+spawn-agent.sh code-reviewer "Review diff against main"
+```
+
+When an agent finishes, merge its branch back the normal way:
+
+```bash
+git -C <main-repo> merge agent/engineer/20260407-154210
+git worktree remove ../<repo>-engineer-20260407-154210
+```
+
+### Authentication
+
+Spawned sessions reuse whatever credentials your normal `claude` command already uses — the script does **not** force an API key. The CLI's standard resolution order applies:
+
+1. OAuth token from `claude /login` or `claude setup-token` (Claude Pro / Max / Team subscription)
+2. macOS Keychain
+3. `ANTHROPIC_API_KEY` environment variable
+4. `apiKeyHelper` configured in settings
+
+So if `claude` works interactively for you, `spawn-agent.sh` will work with the same identity and billing. Avoid `--bare` (not used by the script) — that flag explicitly disables OAuth/keychain and requires `ANTHROPIC_API_KEY`, which is usually not what you want on a subscription plan.
+
+### Why `bypassPermissions`?
+
+`--permission-mode bypassPermissions` disables the approval UI for the session — the minimum needed to unblock a headless agent. Use it **only inside an isolated worktree** (which the script enforces) so a runaway agent cannot damage your main checkout. If you want a stricter posture, swap it for `acceptEdits` (auto-approves file edits only, still prompts for shell) — edit the script's `--permission-mode` line.
+
+### Manual invocation (no script)
+
+If you do not want the script, the one-liner equivalent is:
+
+```bash
+git worktree add -b agent/engineer/test ../myrepo-engineer
+cd ../myrepo-engineer
+claude --permission-mode bypassPermissions \
+       --append-system-prompt "$(awk 'BEGIN{f=0}/^---$/{f++;next}f>=2' /path/to/zetetic-team-subagents/agents/engineer.md)" \
+       -p "Fix the auth bug in login.py"
+```
+
+The `awk` strips the YAML frontmatter; everything after the second `---` is the agent's system prompt.
+
+### When to use which mode
+
+| Mode | Use when |
+|---|---|
+| Parent-session subagent (`Use the engineer agent…`) | Light delegation inside an existing conversation; you want the parent to synthesize results. |
+| `spawn-agent.sh` standalone worktree | True parallelism, isolated filesystems, independent context windows, no permission prompts blocking automation. |
+| `orchestrator` agent | You want one coordinator to do the spawning and merging for you. |
+
 ## Cortex Memory Integration (Optional)
 
 Each agent includes a "Cortex Memory Integration" section for [Cortex](https://github.com/cdeust/Cortex), a persistent memory MCP server. This enables agents to recall prior work, remember decisions, and share context across sessions. Without Cortex, the memory sections are safely ignored.
