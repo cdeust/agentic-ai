@@ -133,6 +133,36 @@ TRANSPORT → SERVER → HANDLERS → CORE ← SHARED
 |---|---|---|
 | **orchestrator** | Multi-Agent Coordinator | Spawns, coordinates, and merges work from parallel agents. Synthesizes dynamic agents on the fly |
 
+### Genius Team — Historical Reasoning Patterns
+
+Agents that extract **reproducible reasoning procedures** from the primary-source record of history's most productive thinkers. Each agent is a method, not a persona — routed by **problem shape**, not by field. Every canonical move has a two-layer structure: domain-neutral procedure + historical instance with citation + modern transfers across 5 domains + trigger for the orchestrator.
+
+> **Index:** see [`agents/genius/INDEX.md`](agents/genius/INDEX.md) for the full shape → agent lookup table.
+
+| Agent | Reasoning Shape | Key Primary Source |
+|---|---|---|
+| **curie** | Residual with a carrier — isolate by enrichment with control substitution | Curie thesis 1903; CR Acad Sci 1898 |
+| **fermi** | Order-of-magnitude first — bracket before solve, refuse false precision | Collected Papers; LA-6300-H Trinity notes |
+| **hamilton** | Hard real-time — priority-displaced scheduling, designed error paths | Hamilton & Hackler 2008 IEEE; LUMINARY 1A source |
+| **shannon** | Define the right measure — limit before method, source/channel/code separation | Shannon 1948 Bell Syst Tech J |
+| **lamport** | Distributed causality — invariants not traces, spec before code | Lamport 1978 CACM; TLA+ 1994 |
+| **darwin** | Long-horizon observation — difficulty book, hardest-case test, stopping rule | Origin 1859; Notebooks B-E 1837–39 |
+| **noether** | Symmetry first — invariance → conservation; gauge vs global classification | Noether 1918 Gött. Nachr. |
+| **mendeleev** | Tabulate and predict gaps — falsifiable taxonomy from hidden axes | Mendeleev 1869, 1871 |
+| **feynman** | Rederive from scratch — cargo-cult detector, integrity audit | Lectures 1963; Cargo Cult Science 1974; Rogers Commission Appx F |
+| **mcclintock** | Anomaly others discarded — single-specimen deep observation | McClintock 1950 PNAS; Nobel lecture 1984 |
+| **dijkstra** | Proof and program together — locality of reasoning, elegance as correctness | EWD archive; Discipline of Programming 1976 |
+| **hopper** | Compile as abstraction barrier — debugging first-class, make tangible | Hopper 1952 ACM; HoPL keynote 1978 |
+| **engelbart** | Augment not automate — bootstrap, H-LAM/T, demo-as-argument, raise the ceiling | Engelbart 1962 SRI; Mother of All Demos 1968 |
+| **ramanujan** | Conjecture generator — pattern from special cases, **mandatory prover pairing** | Notebooks (Berndt ed. 1985–98); Hardy-Ramanujan 1918 |
+
+**Design rules:**
+- No biography worship — each agent is a procedure, not an icon
+- Every canonical move cites a primary source (papers, notebooks, lab books, patents — not biographies)
+- Blind spots are load-bearing operational rules, not disclaimers
+- Each agent has explicit refusal conditions and hand-off protocols to other agents
+- Ramanujan-agent **refuses to operate without a paired prover-agent** (Dijkstra, Lamport, or domain-appropriate formal-methods agent)
+
 ---
 
 ## Installation
@@ -142,13 +172,15 @@ TRANSPORT → SERVER → HANDLERS → CORE ← SHARED
 ```bash
 git clone https://github.com/cdeust/zetetic-team-subagents.git
 cp zetetic-team-subagents/agents/*.md ~/.claude/agents/
+cp -r zetetic-team-subagents/agents/genius ~/.claude/agents/genius
 ```
 
 ### Per-project
 
 ```bash
-mkdir -p .claude/agents
+mkdir -p .claude/agents/genius
 cp zetetic-team-subagents/agents/*.md .claude/agents/
+cp zetetic-team-subagents/agents/genius/*.md .claude/agents/genius/
 ```
 
 ## Usage
