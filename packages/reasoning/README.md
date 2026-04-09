@@ -1,42 +1,313 @@
-# Claude Code Agents
+# Zetetic Agents for Claude Code
 
-A collection of specialized Claude Code agents built on a shared engineering methodology: **zetetic scientific rigor, Clean Architecture, and SOLID principles**. The agents are the vehicle — the methodology is the value.
+**The only Claude Code agent system where every claim must cite its source, every commit is checked for invented constants, and every agent refuses to answer when it doesn't know.**
 
-## Methodology
+45 agents. 36 skills. 16 commands. 10 tools. 8 hooks. One epistemic standard that none of them can bypass.
 
-These principles are the foundation of every agent. They are not suggestions — they are mandatory constraints that every agent inherits regardless of its specialization.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-### Zetetic Scientific Standard
+---
 
-The zetetic method (Greek *zetētikos* — "disposed to inquire"): do not accept claims without verified evidence. Inquiry is not passive — every agent has an epistemic duty to actively gather evidence, not merely respond to what is given.
+## Why This Exists
 
-Grounded in published epistemology:
-- **Friedman 2020** (*Zetetic Epistemology*) — norms govern the entire course of inquiry, not just what to believe given evidence.
-- **Flores & Woodard 2023** (*Epistemic norms on evidence-gathering*) — agents are epistemically criticizable for poor evidence-gathering: epistemic bubbles, gullibility, laziness, confirmation bias.
-- **Adel.M** (*The four pillars of zetetics*) — "not just doubting, a method to discern, purify, decide."
+Most Claude Code agent repos ship role prompts: "You are a senior engineer. Follow best practices." The agent sounds authoritative. It invents constants, cites papers it hasn't read, and ships code with confidence inversely proportional to its correctness.
 
-#### The Four Pillars
+**This repo takes a different position:** an AI agent that cannot say "I don't know" is more dangerous than one that cannot say anything at all.
 
-1. **Logical** — formal coherence. *"Is it consistent?"* Check internal structure, validity, contradictions, fallacies.
-2. **Critical** — epistemic correspondence. *"Is it true?"* Compare claims against evidence, accumulated knowledge, verifiable data.
-3. **Rational** — the balance between goals, means, and context. *"Is it useful?"* Evaluate practical rationality given the circumstances.
-4. **Essential** — the hierarchy of importance. *"Is it necessary?"* The thought that has learned to remove, not only to add. *"Why this? Why now? And why not something else?"*
+Every agent in this repo inherits a hard epistemic standard — the **zetetic method** — that is not a suggestion but an enforced constraint:
 
-> *Where logical thinking builds, rational thinking guides, critical thinking dismantles, **essential thinking selects.***
+- No source? Say "I don't know" and stop.
+- Single source? It's a hypothesis, not a fact.
+- Blog post? Not a source. Read the actual paper.
+- Hardcoded number? Cite the equation or the ablation data.
+- Confident answer? List what could invalidate it first.
 
-#### Implementation Rules
+The hooks enforce this automatically. Every `git commit` is scanned for invented constants. Every `git push` is checked for unsourced claims. The standard is not voluntary.
 
-1. **No implementation without a source.** Every algorithm, equation, constant, and threshold must trace to a published paper, verified benchmark data, or documented empirical result. If no source exists, say "I don't know" and stop.
-2. **Multiple sources required.** A single paper is a hypothesis, not a fact. Cross-reference with at least one independent source before implementing.
-3. **Verify sources before accepting.** Read the actual paper — not summaries, not blog posts. Extract the exact equations. Check conditions match your setting.
-4. **No invented constants.** Every hardcoded number must come from paper equations, experimental results, or measured ablation data.
-5. **Benchmark before commit.** Every change must be benchmarked. No regression accepted.
-6. **Say "I don't know" when you don't know.** A confident wrong answer destroys trust. An honest "I don't know" preserves it.
-7. **Actively seek disconfirming evidence.** Epistemic bubbles, gullibility, and closed-mindedness are zetetic failures. Diversify your sources.
+---
 
-### Clean Architecture
+## What's In the Box
 
-Concentric layers with dependencies pointing inward. The exact layer names vary by project — identify them from the codebase.
+```
+zetetic-team-subagents/
+  agents/             18 team agents (engineer, architect, security-auditor, ...)
+  agents/genius/      27 genius agents (curie, fermi, dijkstra, jobs, ...)
+  skills/             36 skills across 7 categories
+  commands/           16 slash commands (/zcommit, /qestimate, /qverify, ...)
+  tools/              10 shell utilities (zetetic-checker, difficulty-book-manager, ...)
+  hooks/               8 automated enforcement hooks
+  scripts/             2 agent spawning scripts
+```
+
+### Team Agents (18)
+
+Standard engineering and research roles — but each inherits Clean Architecture, SOLID, and the zetetic standard. Not just "you are an engineer"; rather, an engineer who traces every fix to its root cause, never applies band-aids, and refuses to ship code that violates layer boundaries.
+
+| | | | |
+|---|---|---|---|
+| engineer | architect | code-reviewer | test-engineer |
+| dba | frontend-engineer | devops-engineer | security-auditor |
+| ux-designer | research-scientist | paper-writer | experiment-runner |
+| data-scientist | mlops | reviewer-academic | latex-engineer |
+| professor | **orchestrator** | | |
+
+### Genius Agents (27)
+
+**This is the part no one else has.**
+
+27 agents that extract reproducible reasoning *procedures* from the primary-source record of history's most productive thinkers. Not personas. Not "pretend to be Einstein." Actual methods — each with 4-7 canonical moves, primary-source citations, documented blind spots, explicit refusal conditions, and hand-off protocols to other agents.
+
+Routed by **problem shape**, not by field. Curie is not "the chemistry agent" — she is the agent you call when a measurement exceeds what known parts predict and the residual needs a carrier. That applies to latency debugging, cost analysis, ML leakage detection, and security traffic anomalies.
+
+<details>
+<summary><b>Full genius roster (click to expand)</b></summary>
+
+| Agent | Reasoning Shape | When to Use |
+|---|---|---|
+| **curie** | Residual with a carrier | Measured > predicted; signal buried in noise; need isolation |
+| **fermi** | Order-of-magnitude first | "We don't have data"; need a bracket before a decision |
+| **hamilton** | Hard real-time / priority under failure | System must degrade gracefully, not crash |
+| **shannon** | Define the measure first | Optimizing without a defined objective; layers tangled |
+| **lamport** | Distributed causality / spec before code | Concurrency bugs; "works on my machine"; no written spec |
+| **darwin** | Long-horizon observation | Slow phenomenon; theory without a difficulty book |
+| **noether** | Symmetry / invariance | Hidden regularity; unexplained conserved quantity |
+| **mendeleev** | Tabulate and predict gaps | Many items, suspected pattern, unnamed holes |
+| **feynman** | Rederive / cargo-cult detector | Claimed understanding nobody can explain simply |
+| **mcclintock** | Anomaly others discarded | "One-off, ignore it" — but is it? |
+| **dijkstra** | Proof and program together | Correctness can't be established by testing |
+| **hopper** | Compile as abstraction barrier | Users forced to think like the machine |
+| **engelbart** | Augment, don't automate | "Automate this" when "augment this" is better |
+| **ramanujan** | Conjecture generator | Need many candidates fast — **mandatory prover pairing** |
+| **turing** | Reduce to mechanism | Drowning in detail; nobody asked what the simplest machine is |
+| **vonneumann** | Cross-domain transfer | Problem isomorphic to a solved one in another field |
+| **lavoisier** | Mass-balance | Inputs ≠ outputs; something is disappearing |
+| **fisher** | Experimental design | Causal claim without randomization, blocking, replication |
+| **einstein** | Gedankenexperiment | Concept without operational definition; frame-dependent rule |
+| **galileo** | Idealize away friction | Phenomenon obscured by secondary effects |
+| **liskov** | Substitutability as contract | Swap-test fails; interface has no behavioral spec |
+| **semmelweis** | Data against institution | Evidence is clear; the organization refuses to act |
+| **fleming** | Serendipity capture | Anomaly during routine work; "that's weird" goes uninvestigated |
+| **kay** | Late binding / malleability | Hardcoded decisions that should be deferred to runtime |
+| **knuth** | Profile before optimizing | Optimizing without profiling; misquoting "premature optimization" |
+| **kekule** | Structure from constraints | Components have connection rules; topology unknown |
+| **jobs** | Integrated experience | "It works" per component but the user experience is broken |
+
+</details>
+
+> See [`agents/genius/INDEX.md`](agents/genius/INDEX.md) for the full 130+ shape lookup table with triggers, common pairings, and composition chains.
+
+### Skills (36)
+
+Reusable procedures invocable as workflows. Every skill has **four zetetic gates** (logical, critical, rational, essential) that must pass before output is delivered. A skill that can't clear its gates says so and stops.
+
+| Category | Skills | Examples |
+|---|---|---|
+| **Zetetic** (4) | Epistemic backbone | `/verify-claim` `/difficulty-book` `/cargo-cult-check` `/seek-disconfirmation` |
+| **Engineering** (9) | Daily workflows | `/review` `/implement` `/debug` `/optimize` `/secure` `/refactor` `/test` `/deploy` `/migrate-db` |
+| **Analysis** (6) | Investigation | `/estimate` `/investigate` `/benchmark` `/balance` `/experiment` `/audit-integrity` |
+| **Architecture** (5) | Structural decisions | `/decompose` `/adr` `/spec` `/contract` `/evaluate-tool` |
+| **Research** (5) | Academic & ML | `/literature-review` `/explain` `/write-paper` `/pre-submit-review` `/design-experiment` |
+| **Compose** (7) | Multi-agent chains | `/performance-investigation` `/anomaly-to-explanation` `/conjecture-to-code` `/failure-resilient-design` `/product-quality-audit` `/new-tool-design` `/statistical-intervention` |
+
+### Commands (16)
+
+Quick slash commands for daily use:
+
+| Category | Commands |
+|---|---|
+| **Agent management** | `/agent-list` `/agent-spawn` `/agent-status` |
+| **Git workflow** | `/zcommit` `/zpr` `/zclean` |
+| **Session** | `/session-save` `/session-recall` |
+| **Quality gates** | `/pre-commit` `/pre-push` |
+| **Zetetic shortcuts** | `/qverify` `/qestimate` `/qreview` `/qdifficulty` `/qintegrity` |
+
+### Tools (10)
+
+Shell utilities that agents, commands, and hooks call:
+
+`agent-catalog` `zetetic-checker` `difficulty-book-manager` `shape-router` `skill-runner` `worktree-manager` `session-store` `hook-runner` `balance-auditor` `profile-runner`
+
+### Hooks (8) — The Differentiator
+
+**This is what no other agent repo does: automated epistemic enforcement.**
+
+| Hook | Trigger | What it enforces |
+|------|---------|-----------------|
+| **pre-commit-zetetic** | Before `git commit` | Blocks on: invented constants, unsourced claims, orphaned TODOs |
+| **pre-push-review** | Before `git push` | Blocks on: zetetic violations in the push diff |
+| **pre-edit-layer-check** | Before file edit | Warns on: core/ files at risk of layer violation |
+| **post-commit-difficulty** | After `git commit` | Reminds: update difficulty book if related area was changed |
+| **post-edit-balance** | After pipeline edit | Reminds: verify data conservation (inputs = outputs) |
+| **session-start** | Session begins | Loads: repo state, difficulty books, cached context |
+| **session-end** | Session ends | Saves: decisions, files changed, open questions |
+| **notification-handler** | Subagent completes | Logs result, checks for unmerged worktrees |
+
+The hooks turn the zetetic standard from a prompt instruction into an automated gate. You cannot commit a magic number without citing its source. You cannot push code with unsourced claims in comments. The standard is not "please follow these guidelines" — it is "the commit is blocked until you do."
+
+---
+
+## Quick Start
+
+### 1. Install agents
+
+```bash
+git clone https://github.com/cdeust/zetetic-team-subagents.git
+
+# Global (all projects)
+cp zetetic-team-subagents/agents/*.md ~/.claude/agents/
+cp -r zetetic-team-subagents/agents/genius ~/.claude/agents/genius
+cp -r zetetic-team-subagents/commands/* ~/.claude/commands/
+
+# Or per-project
+mkdir -p .claude/agents/genius .claude/commands
+cp zetetic-team-subagents/agents/*.md .claude/agents/
+cp zetetic-team-subagents/agents/genius/*.md .claude/agents/genius/
+cp -r zetetic-team-subagents/commands/* .claude/commands/
+```
+
+### 2. Use agents
+
+```
+Use the engineer agent to fix the authentication bug in login.py
+
+Use the fermi agent to estimate whether this service can handle 10x traffic
+
+Use the curie agent to investigate why p99 latency exceeds the sum of profiled components
+
+Use the jobs agent to audit the onboarding flow for "it just works" violations
+```
+
+### 3. Use commands
+
+```
+/qestimate How much would retraining cost at 10x data?
+
+/qverify "PostgreSQL is faster than MySQL for analytical queries"
+
+/zcommit
+
+/qintegrity
+```
+
+### 4. Enable hooks (optional but recommended)
+
+Add to your project's `.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "command": "/path/to/zetetic-team-subagents/hooks/pre-commit-zetetic.sh",
+        "timeout": 30000
+      },
+      {
+        "matcher": "Bash",
+        "command": "/path/to/zetetic-team-subagents/hooks/pre-push-review.sh",
+        "timeout": 60000
+      }
+    ],
+    "Stop": [
+      {
+        "command": "/path/to/zetetic-team-subagents/hooks/session-end.sh",
+        "timeout": 15000
+      }
+    ]
+  }
+}
+```
+
+See [`hooks/README.md`](hooks/README.md) for the full configuration with all 8 hooks.
+
+---
+
+## Parallel Agents in Worktrees
+
+Spawn any agent as its own `claude` process in an isolated git worktree:
+
+```bash
+# One agent per terminal, full parallel execution, no permission blocks
+scripts/spawn-agent.sh engineer     "Fix the auth bug in login.py"
+scripts/spawn-agent.sh architect    "Propose a module split for src/core"
+scripts/spawn-agent.sh code-reviewer "Review diff against main"
+scripts/spawn-agent.sh fermi        "Estimate the cost of retraining at 10x"
+```
+
+Each agent gets its own branch (`agent/<name>/<timestamp>`), its own filesystem, and `--permission-mode bypassPermissions` so it is never blocked. Merge when done:
+
+```bash
+git merge agent/engineer/20260409-143000
+git worktree remove ../myrepo-engineer-20260409-143000
+```
+
+---
+
+## Compose Chains
+
+The most powerful skills chain genius agents in pipelines:
+
+| Skill | Pipeline | What it does |
+|---|---|---|
+| `/performance-investigation` | fermi → curie → knuth | Bracket expected → measure actual → profile hot 3% |
+| `/anomaly-to-explanation` | mcclintock → curie → shannon | Notice → isolate carrier → formalize |
+| `/conjecture-to-code` | ramanujan → dijkstra → engineer | Generate candidates → prove → implement |
+| `/failure-resilient-design` | hamilton → lamport → engineer | Design degradation → specify → build |
+| `/product-quality-audit` | jobs → galileo → dijkstra | Experience spec → strip essential → verify |
+| `/new-tool-design` | engelbart → hopper → kay → jobs | Augment → abstract → make malleable → integrate |
+| `/statistical-intervention` | semmelweis → fisher → feynman | Detect anomaly → design experiment → integrity-check |
+
+---
+
+## Permissions
+
+| Mode | File ops | Shell | Best for |
+|---|---|---|---|
+| `bypassPermissions` | Auto | Auto | Worktree isolation (spawn script default) |
+| `acceptEdits` | Auto | Prompt | Interactive pairing |
+| Per-project `settings.json` | Configurable | Configurable | Team standards |
+| Default | Prompt | Prompt | First-time exploration |
+
+```json
+{
+  "permissions": {
+    "allow": ["Read", "Edit", "Write", "Glob", "Grep", "Bash(git *)", "Bash(npm test*)"]
+  }
+}
+```
+
+---
+
+## The Zetetic Standard
+
+Every agent, skill, command, and hook inherits this. It is not optional.
+
+**Four pillars** (Adel.M):
+
+| Pillar | Question | What it does |
+|---|---|---|
+| **Logical** | *"Is it consistent?"* | Check internal structure, validity, contradictions |
+| **Critical** | *"Is it true?"* | Compare claims against evidence and verifiable data |
+| **Rational** | *"Is it useful?"* | Evaluate practical rationality given the circumstances |
+| **Essential** | *"Is it necessary?"* | Remove what doesn't serve the goal. *"Why this? Why now?"* |
+
+**Seven rules:**
+
+1. No source → say "I don't know" and stop
+2. Single source = hypothesis. Cross-reference required
+3. Read the actual paper, not summaries or blog posts
+4. No invented constants. Cite the equation or the data
+5. Benchmark every change. No regressions
+6. A confident wrong answer destroys trust. "I don't know" preserves it
+7. Actively seek disconfirming evidence
+
+Grounded in published epistemology: Friedman 2020 (*Zetetic Epistemology*), Flores & Woodard 2023 (*Epistemic norms on evidence-gathering*).
+
+---
+
+## Architecture Standard
+
+Agents that write code enforce Clean Architecture and SOLID:
 
 ```
 TRANSPORT → SERVER → HANDLERS → CORE ← SHARED
@@ -44,408 +315,30 @@ TRANSPORT → SERVER → HANDLERS → CORE ← SHARED
                             INFRASTRUCTURE → SHARED
 ```
 
-- **Core / Domain**: Pure business logic. Zero I/O. No filesystem, network, or database access. Testable without mocks.
-- **Infrastructure / Adapters**: All I/O. Implements interfaces defined by core.
-- **Handlers / Use Cases / Controllers**: Composition roots — the ONLY layer that wires core + infrastructure together.
-- **Shared / Common / Utils**: Pure utility functions with no dependencies on other project layers.
-- Inner layers NEVER import outer layers. This rule is absolute regardless of language.
-
-#### Layer Dependency Rules
-
-| Layer | May Import | Must NOT Import |
-|---|---|---|
-| shared/ | Standard library only | core, infrastructure, handlers, server |
-| core/ | shared/ only | infrastructure, handlers, server, I/O |
-| infrastructure/ | shared/, standard library | core, handlers, server |
-| handlers/ | core, infrastructure, shared | server, transport |
-| server/ | handlers | core, infrastructure (except via handlers) |
-
-### SOLID Principles
-
-- **Single Responsibility**: One reason to change per module/class. If it does two things, split it.
-- **Open/Closed**: Extend behavior through new implementations, not by modifying existing ones. Use the language's abstraction mechanism (interfaces, protocols, traits) and registries, not conditional chains.
-- **Liskov Substitution**: Subtypes must be substitutable. Never override a method to throw "not implemented."
-- **Interface Segregation**: Small, focused interfaces. No god interfaces.
-- **Dependency Inversion**: Core defines interfaces. Infrastructure implements them. Handlers inject implementations at construction time.
-
-### Reverse Dependency Injection
-
-- Core modules declare what they need via interface types in their constructors or function signatures.
-- Factory functions in the composition root layer assemble the dependency graph.
-- No service locators. No global mutable state. No singletons except explicit configuration objects.
-
-### Root Cause Thinking
-
-- NEVER apply band-aid fixes. Trace failures to their architectural origin.
-- If a fix requires violating a layer boundary, the design is wrong — fix the design.
-- If a function needs a new dependency, propagate through the constructor chain rather than importing directly.
-- If adding a conditional for a special case, ask: should this be a separate strategy/implementation instead?
-
-### 3R's — Readability, Reliability, Reusability
-
-- **Readability**: Descriptive names. Short methods (~40 lines max). Focused files (~300 lines max). No magic numbers. Logic flows top-down.
-- **Reliability**: Use the language's type system fully. Validate at system boundaries only. Trust internal contracts.
-- **Reusability**: Extract shared logic as pure functions. Parameterize via DI. But do NOT prematurely abstract — three concrete uses before extracting.
-
-### Anti-Patterns to Reject
-
-- Catching/swallowing errors "just in case"
-- Utility grab-bag modules with no cohesive purpose
-- Passing untyped dictionaries instead of typed data structures
-- Dead code, backward-compatibility shims, or code with no current caller
-- Error handling for scenarios that can't happen
-- Abstractions for one-time operations
+- **Core**: pure logic, zero I/O, testable without mocks
+- **Infrastructure**: all I/O, implements interfaces defined by core
+- **Handlers**: composition roots, the ONLY layer that wires core + infrastructure
+- Inner layers NEVER import outer layers. The hooks catch violations automatically.
 
 ---
 
-## Agents
+## Cortex Memory Integration
 
-### Engineering
-
-| Agent | Role | Specialty |
-|---|---|---|
-| **engineer** | Software Engineer | Clean Architecture, SOLID, root-cause problem solving — adapts to any language/stack |
-| **architect** | Software Architect | Module decomposition, layer boundaries, dependency analysis, refactoring strategy |
-| **code-reviewer** | Code Reviewer | Clean Architecture enforcement, SOLID violations, architectural integrity |
-| **test-engineer** | Test Engineer | Architecture verification, wiring checks, CI integrity |
-| **dba** | Database Specialist | Schema design, query optimization, migrations, index tuning — any engine |
-| **frontend-engineer** | Frontend Developer | React/TypeScript, component-driven design, accessibility |
-| **devops-engineer** | DevOps Engineer | CI/CD pipelines, Docker, provisioning, monitoring, deployment |
-| **security-auditor** | Security Auditor | Threat modeling, OWASP, supply chain, defense-in-depth |
-| **ux-designer** | UX/UI Designer | Usability, accessibility, information architecture, design systems |
-
-### Research & Academic
-
-| Agent | Role | Specialty |
-|---|---|---|
-| **research-scientist** | Research Scientist | Literature review, paper analysis, benchmark improvement, finding published algorithms |
-| **paper-writer** | Scientific Writer | Argument structure, claim-evidence chains, narrative flow, venue conventions |
-| **experiment-runner** | Experiment Designer | Ablation studies, hyperparameter search, reproducibility, statistical rigor |
-| **data-scientist** | Data Analyst | EDA, feature engineering, data quality, bias auditing, dataset documentation |
-| **mlops** | ML Infrastructure | Training pipelines, GPU optimization, distributed training, model serving |
-| **reviewer-academic** | Peer Review Simulator | Pre-submission review as a NeurIPS/CVPR/ICML reviewer would |
-| **latex-engineer** | LaTeX Specialist | Templates, figures, tables, TikZ/PGFPlots, bibliography, compilation |
-| **professor** | Academic Professor | Concept explanations, mental models, Socratic method, lectures, exercises |
-
-### Coordination
-
-| Agent | Role | Specialty |
-|---|---|---|
-| **orchestrator** | Multi-Agent Coordinator | Spawns, coordinates, and merges work from parallel agents. Synthesizes dynamic agents on the fly |
-
-### Genius Team — Historical Reasoning Patterns
-
-Agents that extract **reproducible reasoning procedures** from the primary-source record of history's most productive thinkers. Each agent is a method, not a persona — routed by **problem shape**, not by field. Every canonical move has a two-layer structure: domain-neutral procedure + historical instance with citation + modern transfers across 5 domains + trigger for the orchestrator.
-
-> **Index:** see [`agents/genius/INDEX.md`](agents/genius/INDEX.md) for the full shape → agent lookup table.
-
-| Agent | Reasoning Shape | Key Primary Source |
-|---|---|---|
-| **curie** | Residual with a carrier — isolate by enrichment with control substitution | Curie thesis 1903; CR Acad Sci 1898 |
-| **fermi** | Order-of-magnitude first — bracket before solve, refuse false precision | Collected Papers; LA-6300-H Trinity notes |
-| **hamilton** | Hard real-time — priority-displaced scheduling, designed error paths | Hamilton & Hackler 2008 IEEE; LUMINARY 1A source |
-| **shannon** | Define the right measure — limit before method, source/channel/code separation | Shannon 1948 Bell Syst Tech J |
-| **lamport** | Distributed causality — invariants not traces, spec before code | Lamport 1978 CACM; TLA+ 1994 |
-| **darwin** | Long-horizon observation — difficulty book, hardest-case test, stopping rule | Origin 1859; Notebooks B-E 1837–39 |
-| **noether** | Symmetry first — invariance → conservation; gauge vs global classification | Noether 1918 Gött. Nachr. |
-| **mendeleev** | Tabulate and predict gaps — falsifiable taxonomy from hidden axes | Mendeleev 1869, 1871 |
-| **feynman** | Rederive from scratch — cargo-cult detector, integrity audit | Lectures 1963; Cargo Cult Science 1974; Rogers Commission Appx F |
-| **mcclintock** | Anomaly others discarded — single-specimen deep observation | McClintock 1950 PNAS; Nobel lecture 1984 |
-| **dijkstra** | Proof and program together — locality of reasoning, elegance as correctness | EWD archive; Discipline of Programming 1976 |
-| **hopper** | Compile as abstraction barrier — debugging first-class, make tangible | Hopper 1952 ACM; HoPL keynote 1978 |
-| **engelbart** | Augment not automate — bootstrap, H-LAM/T, demo-as-argument, raise the ceiling | Engelbart 1962 SRI; Mother of All Demos 1968 |
-| **ramanujan** | Conjecture generator — pattern from special cases, **mandatory prover pairing** | Notebooks (Berndt ed. 1985–98); Hardy-Ramanujan 1918 |
-| **turing** | Reduce to simplest mechanism — universality, decidability-first | Turing 1936 Proc London Math Soc |
-| **vonneumann** | Cross-domain formal transfer — game-theoretic decomposition, code-as-data | von Neumann & Morgenstern 1944; EDVAC 1945 |
-| **lavoisier** | Mass-balance — conservation accounting, residual as discovery, rename to clarify | Traité élémentaire 1789 |
-| **fisher** | Experimental design — randomize, block, replicate, factorial, design-before-run | Fisher 1935 Design of Experiments |
-| **einstein** | Gedankenexperiment — operational definitions, demand covariance, equivalence principle | Einstein 1905 Ann Phys |
-| **galileo** | Idealize away friction — inclined plane, quantitative over qualitative, minimal model | Discorsi 1638 |
-| **liskov** | Substitutability as contract — behavioral subtyping, data abstraction | Liskov & Wing 1994 TOPLAS |
-| **semmelweis** | Statistical anomaly between groups — data against institution, Semmelweis reflex | Semmelweis 1861 |
-| **fleming** | Serendipity capture — structured readiness, follow up immediately, publish before application | Fleming 1929 BJEP |
-| **kay** | Late binding — messaging over procedure, runtime malleability, build for children | Kay 1993 SIGPLAN |
-| **knuth** | Profile before optimizing — premature optimization in full context, literate programming | Knuth 1974 Computing Surveys; TAOCP |
-| **kekule** | Structural hypothesis from constraints — valence counting, shape from bonding | Kekulé 1865 Bull Soc Chim Paris |
-| **jobs** | Integrated experience as spec — no seams, all dimensions simultaneously, "it just works" | Apple HIG 1987; Jobs WWDC 1997; D8 2010 |
-
-**Design rules:**
-- No biography worship — each agent is a procedure, not an icon
-- Every canonical move cites a primary source (papers, notebooks, lab books, patents — not biographies)
-- Blind spots are load-bearing operational rules, not disclaimers
-- Each agent has explicit refusal conditions and hand-off protocols to other agents
-- Ramanujan-agent **refuses to operate without a paired prover-agent** (Dijkstra, Lamport, or domain-appropriate formal-methods agent)
+Each agent includes a memory section for [Cortex](https://github.com/cdeust/Cortex), a persistent memory MCP server. Agents recall prior decisions, remember lessons, and share context across sessions. Without Cortex, the memory sections are safely ignored.
 
 ---
-
-## Installation
-
-### Global (all projects)
-
-```bash
-git clone https://github.com/cdeust/zetetic-team-subagents.git
-cp zetetic-team-subagents/agents/*.md ~/.claude/agents/
-cp -r zetetic-team-subagents/agents/genius ~/.claude/agents/genius
-```
-
-### Per-project
-
-```bash
-mkdir -p .claude/agents/genius
-cp zetetic-team-subagents/agents/*.md .claude/agents/
-cp zetetic-team-subagents/agents/genius/*.md .claude/agents/genius/
-```
-
-## Usage
-
-Once installed, agents are available as subagent types in Claude Code:
-
-```
-Use the engineer agent to fix the authentication bug in login.py
-```
-
-```
-Use the code-reviewer agent to review the changes in this PR
-```
-
-```
-Use the orchestrator to run architect, engineer, and test-engineer in parallel on this task
-```
-
-### Using Genius Agents
-
-Genius agents are invoked the same way as team agents — by name. The orchestrator can also route to them automatically by problem shape (see [`INDEX.md`](agents/genius/INDEX.md)).
-
-**As a subagent (inside a Claude Code session):**
-
-```
-Use the fermi agent to estimate whether this service can handle 10x traffic
-
-Use the curie agent to investigate why latency exceeds the sum of profiled components
-
-Use the dijkstra agent to review this concurrent code for local-reasoning violations
-
-Use the jobs agent to audit the onboarding flow for "it just works" violations
-
-Use the semmelweis agent to analyze why team A's error rate is 5x higher than team B's
-```
-
-**Composing genius agents (the orchestrator picks by shape):**
-
-```
-Use the orchestrator to investigate the performance anomaly:
-first use fermi to bracket the expected latency,
-then curie to isolate the residual,
-then knuth to profile and identify the hot path
-```
-
-**Common pairings:**
-
-| Situation | Agent sequence |
-|---|---|
-| Anomaly found → isolate → explain | mcclintock → curie → shannon or noether |
-| Estimate → measure → formalize | fermi → curie → shannon |
-| Conjecture → prove → implement | ramanujan → dijkstra or lamport → engineer |
-| Design under failure → specify → implement | hamilton → lamport → engineer |
-| Product quality audit | jobs (experience spec) → galileo (strip to essential) → dijkstra (correctness) |
-| Cargo cult detected → rederive → rebuild | feynman → dijkstra or hopper |
-| New tool design | engelbart (augmentation) → hopper (abstraction) → kay (malleability) → jobs (integration) |
-| Statistical anomaly → intervention → persuasion | semmelweis → fisher → feynman (integrity) |
-
-**As a standalone CLI session (worktree, no permission blocks):**
-
-```bash
-# The spawn script auto-resolves genius agents by name
-scripts/spawn-agent.sh fermi "Estimate the cost of retraining the model at 10x data scale"
-scripts/spawn-agent.sh curie "Investigate why p99 latency exceeds the sum of profiled stages"
-scripts/spawn-agent.sh jobs  "Audit the checkout flow for seams and quality-dimension failures"
-```
-
-### Permissions
-
-Genius agents (and all agents) need tool permissions to be effective. Without permissions, agents get stuck waiting for approval on every file read, search, or edit.
-
-**Option 1: `bypassPermissions` in an isolated worktree (recommended for automation)**
-
-The `spawn-agent.sh` script handles this automatically — it creates an isolated git worktree and runs `claude --permission-mode bypassPermissions`. The agent has full access but can only affect the worktree, not your main checkout.
-
-```bash
-scripts/spawn-agent.sh einstein "Audit all observer-dependent assumptions in the consistency model"
-# → runs in ../myrepo-einstein-20260409-143000/ on branch agent/einstein/20260409-143000
-# → full permissions, isolated filesystem
-```
-
-**Option 2: `acceptEdits` for interactive use (recommended for pairing)**
-
-When working interactively with a genius agent inside your main session, `acceptEdits` auto-approves file reads and edits but still prompts for shell commands:
-
-```bash
-claude --permission-mode acceptEdits
-# then inside the session:
-# "Use the lamport agent to write a TLA+ spec for the replication protocol"
-```
-
-**Option 3: Per-project `.claude/settings.json` (recommended for teams)**
-
-Configure allowed tools per-project so agents are never blocked:
-
-```json
-{
-  "permissions": {
-    "allow": [
-      "Read",
-      "Edit",
-      "Write",
-      "Glob",
-      "Grep",
-      "Bash(git *)",
-      "Bash(npm test*)",
-      "Bash(npx tsc*)"
-    ]
-  }
-}
-```
-
-This allows file operations and safe bash commands while still prompting for destructive operations. Adjust the `Bash(...)` patterns to match your project's safe commands.
-
-**Option 4: Global `~/.claude/settings.json` (recommended for solo developers)**
-
-Same format as Option 3 but applies to all projects. Useful if you trust your agents across all repos.
-
-**Permission cheat sheet:**
-
-| Permission mode | File ops | Shell | Best for |
-|---|---|---|---|
-| `bypassPermissions` | Auto | Auto | Headless / worktree isolation |
-| `acceptEdits` | Auto | Prompt | Interactive pairing |
-| Per-project settings | Configurable | Configurable | Team standards |
-| Default (no config) | Prompt | Prompt | First-time exploration |
-
-> **Safety note:** genius agents are reasoning agents — they analyze, audit, propose, and report. Most of their work is reading and searching, which is safe to auto-approve. Agents that write code (when paired with engineer) should run in a worktree so changes are reviewable before merge.
-
-### The Orchestrator
-
-The orchestrator decomposes tasks, spawns specialized agents in parallel using isolated git worktrees, and merges results:
-
-1. Analyzes the task and decides which agents to spawn
-2. Creates isolated worktrees for parallel work
-3. Monitors progress and resolves conflicts
-4. Merges results back to the main branch
-
-#### Dynamic Agent Synthesis
-
-When a task requires expertise outside the 17 static agents, the orchestrator **synthesizes ephemeral agents on the fly**:
-
-1. **Decision tree**: exact match → use static agent, partial match → augment delegation, no match → synthesize
-2. **Base template**: every dynamic agent inherits three non-negotiable invariant sections — memory (Cortex integration), zetetic (scientific standard), and architecture (Clean Architecture + SOLID, when writing code)
-3. **Generated sections**: the orchestrator composes role-specific identity, thinking, principles, workflow, and anti-patterns tailored to the domain
-4. **Lifecycle**: the agent lives only for the task — its context is discarded on completion, but its knowledge persists through Cortex memory under a scoped `agent_topic`
-5. **Quality gates**: pre-spawn validation (7 checks) and post-completion verification ensure dynamic agents maintain the same rigor as static ones
-6. **Promotion**: if the same archetype is synthesized 3+ times, the orchestrator recommends creating a permanent static agent
-
-## Running Agents as Standalone CLI Sessions (Worktrees, No Permission Blocks)
-
-Using agents via the parent session's subagent mechanism (`Use the engineer agent to …`) is convenient, but it shares the parent's context window and funnels every tool call through the parent's permission prompts. For real parallel work — one agent per terminal, each in its own git worktree, none of them blocked on approval dialogs — spawn each agent as its **own `claude` process**.
-
-### The spawn script
-
-```bash
-# from inside the repo you want the agent to work ON
-/path/to/zetetic-team-subagents/scripts/spawn-agent.sh engineer "Fix the auth bug in login.py"
-
-# or interactive REPL
-/path/to/zetetic-team-subagents/scripts/spawn-agent.sh architect
-```
-
-What it does:
-
-1. Reads `agents/<name>.md` and strips the YAML frontmatter to get the raw system prompt.
-2. Creates a fresh git worktree next to your repo on branch `agent/<name>/<timestamp>` — the agent cannot stomp on your working tree.
-3. Launches `claude` in that worktree with:
-   - `--append-system-prompt "<agent body>"` — installs the agent persona into a *top-level* session (not a subagent).
-   - `--permission-mode bypassPermissions` — no interactive approval prompts, so the session is not blocked waiting on you to click allow.
-   - `-p "<task>"` for headless one-shot, or no `-p` for an interactive REPL.
-
-Because each agent is a separate `claude` process with its own PID, context window, and working directory, you can open N terminals and run N agents truly in parallel:
-
-```bash
-# terminal 1
-spawn-agent.sh architect    "Propose a module split for src/core"
-# terminal 2
-spawn-agent.sh engineer     "Implement the split from the architect branch"
-# terminal 3
-spawn-agent.sh test-engineer "Write coverage for the new modules"
-# terminal 4
-spawn-agent.sh code-reviewer "Review diff against main"
-```
-
-When an agent finishes, merge its branch back the normal way:
-
-```bash
-git -C <main-repo> merge agent/engineer/20260407-154210
-git worktree remove ../<repo>-engineer-20260407-154210
-```
-
-### Authentication
-
-Spawned sessions reuse whatever credentials your normal `claude` command already uses — the script does **not** force an API key. The CLI's standard resolution order applies:
-
-1. OAuth token from `claude /login` or `claude setup-token` (Claude Pro / Max / Team subscription)
-2. macOS Keychain
-3. `ANTHROPIC_API_KEY` environment variable
-4. `apiKeyHelper` configured in settings
-
-So if `claude` works interactively for you, `spawn-agent.sh` will work with the same identity and billing. Avoid `--bare` (not used by the script) — that flag explicitly disables OAuth/keychain and requires `ANTHROPIC_API_KEY`, which is usually not what you want on a subscription plan.
-
-### Why `bypassPermissions`?
-
-`--permission-mode bypassPermissions` disables the approval UI for the session — the minimum needed to unblock a headless agent. Use it **only inside an isolated worktree** (which the script enforces) so a runaway agent cannot damage your main checkout. If you want a stricter posture, swap it for `acceptEdits` (auto-approves file edits only, still prompts for shell) — edit the script's `--permission-mode` line.
-
-### Manual invocation (no script)
-
-If you do not want the script, the one-liner equivalent is:
-
-```bash
-git worktree add -b agent/engineer/test ../myrepo-engineer
-cd ../myrepo-engineer
-claude --permission-mode bypassPermissions \
-       --append-system-prompt "$(awk 'BEGIN{f=0}/^---$/{f++;next}f>=2' /path/to/zetetic-team-subagents/agents/engineer.md)" \
-       -p "Fix the auth bug in login.py"
-```
-
-The `awk` strips the YAML frontmatter; everything after the second `---` is the agent's system prompt.
-
-### When to use which mode
-
-| Mode | Use when |
-|---|---|
-| Parent-session subagent (`Use the engineer agent…`) | Light delegation inside an existing conversation; you want the parent to synthesize results. |
-| `spawn-agent.sh` standalone worktree | True parallelism, isolated filesystems, independent context windows, no permission prompts blocking automation. |
-| `orchestrator` agent | You want one coordinator to do the spawning and merging for you. |
-
-## Cortex Memory Integration (Optional)
-
-Each agent includes a "Cortex Memory Integration" section for [Cortex](https://github.com/cdeust/Cortex), a persistent memory MCP server. This enables agents to recall prior work, remember decisions, and share context across sessions. Without Cortex, the memory sections are safely ignored.
 
 ## Customization
 
-Each agent is a Markdown file with YAML frontmatter:
+Every file is Markdown with YAML frontmatter. Fork, edit, extend:
 
-```yaml
----
-name: engineer
-description: Software engineer specializing in Clean Architecture, SOLID, and root-cause problem solving
-model: opus  # or sonnet, haiku
-when_to_use: When code needs to be written, modified, or fixed
-agent_topic: engineer
----
-```
+- **Change model tier** — `model: sonnet` for speed, `model: opus` for depth
+- **Edit the methodology** — tailor to your team's standards
+- **Add domain skills** — use `skills/_template.md` as the starting point
+- **Create new genius agents** — use `agents/genius/curie.md` as the template. Every canonical move needs a primary-source citation
+- **Write new hooks** — see `hooks/README.md` for the settings.json format
 
-You can:
-- **Change the model** — use `sonnet` for faster/cheaper, `opus` for complex reasoning
-- **Edit the system prompt** — tailor to your team's standards
-- **Add project-specific rules** — append sections for your stack or compliance needs
-- **Remove the Cortex section** — if not using persistent memory
+---
 
 ## License
 
