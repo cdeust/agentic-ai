@@ -30,12 +30,21 @@ if [[ -z "$AGENT" ]]; then
 fi
 
 REPO_ROOT="$(git -C "$(dirname "$0")/.." rev-parse --show-toplevel)"
+
+# Resolve agent file: check agents/<name>.md first, then agents/genius/<name>.md
 AGENT_FILE="$REPO_ROOT/agents/$AGENT.md"
+if [[ ! -f "$AGENT_FILE" ]]; then
+  AGENT_FILE="$REPO_ROOT/agents/genius/$AGENT.md"
+fi
 
 if [[ ! -f "$AGENT_FILE" ]]; then
-  echo "error: agent not found: $AGENT_FILE" >&2
-  echo "available:" >&2
-  ls "$REPO_ROOT/agents" | sed 's/\.md$//' | sed 's/^/  /' >&2
+  echo "error: agent not found: $AGENT" >&2
+  echo "" >&2
+  echo "team agents:" >&2
+  ls "$REPO_ROOT/agents"/*.md 2>/dev/null | xargs -I{} basename {} .md | sed 's/^/  /' >&2
+  echo "" >&2
+  echo "genius agents:" >&2
+  ls "$REPO_ROOT/agents/genius"/*.md 2>/dev/null | grep -v INDEX | xargs -I{} basename {} .md | sed 's/^/  genius\//' >&2
   exit 1
 fi
 

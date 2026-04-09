@@ -155,6 +155,19 @@ Agents that extract **reproducible reasoning procedures** from the primary-sourc
 | **hopper** | Compile as abstraction barrier — debugging first-class, make tangible | Hopper 1952 ACM; HoPL keynote 1978 |
 | **engelbart** | Augment not automate — bootstrap, H-LAM/T, demo-as-argument, raise the ceiling | Engelbart 1962 SRI; Mother of All Demos 1968 |
 | **ramanujan** | Conjecture generator — pattern from special cases, **mandatory prover pairing** | Notebooks (Berndt ed. 1985–98); Hardy-Ramanujan 1918 |
+| **turing** | Reduce to simplest mechanism — universality, decidability-first | Turing 1936 Proc London Math Soc |
+| **vonneumann** | Cross-domain formal transfer — game-theoretic decomposition, code-as-data | von Neumann & Morgenstern 1944; EDVAC 1945 |
+| **lavoisier** | Mass-balance — conservation accounting, residual as discovery, rename to clarify | Traité élémentaire 1789 |
+| **fisher** | Experimental design — randomize, block, replicate, factorial, design-before-run | Fisher 1935 Design of Experiments |
+| **einstein** | Gedankenexperiment — operational definitions, demand covariance, equivalence principle | Einstein 1905 Ann Phys |
+| **galileo** | Idealize away friction — inclined plane, quantitative over qualitative, minimal model | Discorsi 1638 |
+| **liskov** | Substitutability as contract — behavioral subtyping, data abstraction | Liskov & Wing 1994 TOPLAS |
+| **semmelweis** | Statistical anomaly between groups — data against institution, Semmelweis reflex | Semmelweis 1861 |
+| **fleming** | Serendipity capture — structured readiness, follow up immediately, publish before application | Fleming 1929 BJEP |
+| **kay** | Late binding — messaging over procedure, runtime malleability, build for children | Kay 1993 SIGPLAN |
+| **knuth** | Profile before optimizing — premature optimization in full context, literate programming | Knuth 1974 Computing Surveys; TAOCP |
+| **kekule** | Structural hypothesis from constraints — valence counting, shape from bonding | Kekulé 1865 Bull Soc Chim Paris |
+| **jobs** | Integrated experience as spec — no seams, all dimensions simultaneously, "it just works" | Apple HIG 1987; Jobs WWDC 1997; D8 2010 |
 
 **Design rules:**
 - No biography worship — each agent is a procedure, not an icon
@@ -198,6 +211,117 @@ Use the code-reviewer agent to review the changes in this PR
 ```
 Use the orchestrator to run architect, engineer, and test-engineer in parallel on this task
 ```
+
+### Using Genius Agents
+
+Genius agents are invoked the same way as team agents — by name. The orchestrator can also route to them automatically by problem shape (see [`INDEX.md`](agents/genius/INDEX.md)).
+
+**As a subagent (inside a Claude Code session):**
+
+```
+Use the fermi agent to estimate whether this service can handle 10x traffic
+
+Use the curie agent to investigate why latency exceeds the sum of profiled components
+
+Use the dijkstra agent to review this concurrent code for local-reasoning violations
+
+Use the jobs agent to audit the onboarding flow for "it just works" violations
+
+Use the semmelweis agent to analyze why team A's error rate is 5x higher than team B's
+```
+
+**Composing genius agents (the orchestrator picks by shape):**
+
+```
+Use the orchestrator to investigate the performance anomaly:
+first use fermi to bracket the expected latency,
+then curie to isolate the residual,
+then knuth to profile and identify the hot path
+```
+
+**Common pairings:**
+
+| Situation | Agent sequence |
+|---|---|
+| Anomaly found → isolate → explain | mcclintock → curie → shannon or noether |
+| Estimate → measure → formalize | fermi → curie → shannon |
+| Conjecture → prove → implement | ramanujan → dijkstra or lamport → engineer |
+| Design under failure → specify → implement | hamilton → lamport → engineer |
+| Product quality audit | jobs (experience spec) → galileo (strip to essential) → dijkstra (correctness) |
+| Cargo cult detected → rederive → rebuild | feynman → dijkstra or hopper |
+| New tool design | engelbart (augmentation) → hopper (abstraction) → kay (malleability) → jobs (integration) |
+| Statistical anomaly → intervention → persuasion | semmelweis → fisher → feynman (integrity) |
+
+**As a standalone CLI session (worktree, no permission blocks):**
+
+```bash
+# The spawn script auto-resolves genius agents by name
+scripts/spawn-agent.sh fermi "Estimate the cost of retraining the model at 10x data scale"
+scripts/spawn-agent.sh curie "Investigate why p99 latency exceeds the sum of profiled stages"
+scripts/spawn-agent.sh jobs  "Audit the checkout flow for seams and quality-dimension failures"
+```
+
+### Permissions
+
+Genius agents (and all agents) need tool permissions to be effective. Without permissions, agents get stuck waiting for approval on every file read, search, or edit.
+
+**Option 1: `bypassPermissions` in an isolated worktree (recommended for automation)**
+
+The `spawn-agent.sh` script handles this automatically — it creates an isolated git worktree and runs `claude --permission-mode bypassPermissions`. The agent has full access but can only affect the worktree, not your main checkout.
+
+```bash
+scripts/spawn-agent.sh einstein "Audit all observer-dependent assumptions in the consistency model"
+# → runs in ../myrepo-einstein-20260409-143000/ on branch agent/einstein/20260409-143000
+# → full permissions, isolated filesystem
+```
+
+**Option 2: `acceptEdits` for interactive use (recommended for pairing)**
+
+When working interactively with a genius agent inside your main session, `acceptEdits` auto-approves file reads and edits but still prompts for shell commands:
+
+```bash
+claude --permission-mode acceptEdits
+# then inside the session:
+# "Use the lamport agent to write a TLA+ spec for the replication protocol"
+```
+
+**Option 3: Per-project `.claude/settings.json` (recommended for teams)**
+
+Configure allowed tools per-project so agents are never blocked:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "Bash(git *)",
+      "Bash(npm test*)",
+      "Bash(npx tsc*)"
+    ]
+  }
+}
+```
+
+This allows file operations and safe bash commands while still prompting for destructive operations. Adjust the `Bash(...)` patterns to match your project's safe commands.
+
+**Option 4: Global `~/.claude/settings.json` (recommended for solo developers)**
+
+Same format as Option 3 but applies to all projects. Useful if you trust your agents across all repos.
+
+**Permission cheat sheet:**
+
+| Permission mode | File ops | Shell | Best for |
+|---|---|---|---|
+| `bypassPermissions` | Auto | Auto | Headless / worktree isolation |
+| `acceptEdits` | Auto | Prompt | Interactive pairing |
+| Per-project settings | Configurable | Configurable | Team standards |
+| Default (no config) | Prompt | Prompt | First-time exploration |
+
+> **Safety note:** genius agents are reasoning agents — they analyze, audit, propose, and report. Most of their work is reading and searching, which is safe to auto-approve. Agents that write code (when paired with engineer) should run in a worktree so changes are reviewable before merge.
 
 ### The Orchestrator
 
