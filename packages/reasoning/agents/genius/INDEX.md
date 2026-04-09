@@ -186,22 +186,183 @@ The orchestrator selects genius agents by **problem shape**, not by field or his
 | New tool design | engelbart (augmentation frame) → hopper (abstraction layer) → dijkstra (correctness) |
 | Symmetry reduction → formal spec | noether → lamport |
 | Cargo cult detected → rederive → rebuild | feynman → dijkstra or hopper |
+| Structural hypothesis from constraints | kekule (count bonds) → mendeleev (tabulate) |
+| Serendipity captured → isolate → develop | fleming → mcclintock or curie → engineer |
+| Matched-group anomaly → cheap intervention → institutional resistance | semmelweis → fisher (rigorous design) → feynman (integrity) |
+| Runtime malleability needed | kay → liskov (contracts) → hopper (abstraction) |
+| Performance audit | knuth (profile 3%) → fermi (estimate) → curie (measure) |
+| Decidability / complexity gate | turing → fermi (feasibility bound) |
+| Cross-domain import | vonneumann → noether (symmetry) or shannon (measure) |
+| Conservation audit → residual | lavoisier → curie (isolate carrier) |
+| Experiment design → run → analyze | fisher → curie (measure) → darwin (long-horizon if needed) |
+| Gedankenexperiment → operational definition → covariance | einstein → shannon (formalize) → noether (symmetry) |
+| Idealize → minimal model → add corrections | galileo → fermi (estimate corrections) |
+| Substitutability audit at composition boundary | liskov → dijkstra (module correctness) → lamport (distributed) |
 
 ---
 
-## Shapes NOT YET Covered (Round 3 Candidates)
+### Computation and Formalization
 
-These reasoning shapes have been identified but no agent yet covers them. Each would require a new agent built to the same template:
+| Shape | Trigger | Agent | Key move |
+|---|---|---|---|
+| **reduce-to-mechanism** | problem drowning in implementation detail; nobody asked what the simplest machine is | [turing](turing.md) | Strip to the simplest abstract machine that captures the computation |
+| **universality** | system needs to handle an open-ended set of cases | [turing](turing.md) | Build a universal machine (interpreter, plugin host, rule engine) |
+| **decidability-first** | optimizing without checking if the general problem is solvable | [turing](turing.md) | Check complexity class before investing in a solution |
+| **imitation-game** | debate stalled on a vague concept ("intelligent," "correct," "fair") | [turing](turing.md) | Define operationally by what passes a test |
+| **oracle-separation** | stuck on multiple hard sub-problems at once | [turing](turing.md) | Oracle-solve one, analyze the rest; the bottleneck becomes visible |
 
-| Shape | Candidate person | What it adds |
+### Cross-Domain Transfer and Game Theory
+
+| Shape | Trigger | Agent | Key move |
+|---|---|---|---|
+| **cross-domain-formal-transfer** | problem looks structurally similar to a solved problem in another field | [vonneumann](vonneumann.md) | Find the isomorphism; import the solution |
+| **game-theoretic-decomposition** | multiple agents with conflicting objectives | [vonneumann](vonneumann.md) | Model as a game; find the equilibrium |
+| **code-as-data** | system needs flexibility; programs/strategies should be first-class objects | [vonneumann](vonneumann.md) | Stored-program principle — treat behavior as data |
+| **self-replication-as-design** | system must reproduce, scale, or grow | [vonneumann](vonneumann.md) | Three parts: description + constructor + copy mechanism |
+| **find-the-isomorphism** | reinventing a solution that exists elsewhere under a different name | [vonneumann](vonneumann.md) | Search for the mapping; verify it holds |
+
+### Conservation and Mass-Balance
+
+| Shape | Trigger | Agent | Key move |
+|---|---|---|---|
+| **mass-balance** | inputs and outputs not verified to match | [lavoisier](lavoisier.md) | Weigh everything in, weigh everything out; the residual is real |
+| **conservation-accounting** | money, data, requests, energy, time "disappearing" | [lavoisier](lavoisier.md) | Enumerate all flows; balance the ledger |
+| **residual-as-discovery** | the balance doesn't close | [lavoisier](lavoisier.md) | The residual is a real entity; name it and find its carrier |
+| **rename-to-clarify** | terminology obscures rather than clarifies | [lavoisier](lavoisier.md) | Rename so names encode behavior, not history |
+| **sealed-system-experiment** | unmeasured flows are suspected | [lavoisier](lavoisier.md) | Seal the system boundary; measure everything at the boundary |
+
+### Experimental Design
+
+| Shape | Trigger | Agent | Key move |
+|---|---|---|---|
+| **randomize-to-eliminate-confounds** | causal claim from observational correlation only | [fisher](fisher.md) | Randomly assign treatments to units |
+| **block-to-reduce-variance** | known source of variation inflating error | [fisher](fisher.md) | Group by the known source; apply all treatments within each group |
+| **replicate-to-estimate-variance** | conclusion from a single run | [fisher](fisher.md) | Repeat; estimate the error variance |
+| **factorial-design** | multiple factors varied one-at-a-time | [fisher](fisher.md) | Vary all factors simultaneously; detect interactions |
+| **design-before-run** | "let's run it and see what happens" | [fisher](fisher.md) | Write the design document first; the analysis follows from the design |
+| **sufficient-statistic** | data summary losing information | [fisher](fisher.md) | Use the statistic that captures all information about the parameter |
+
+### Thought Experiment and Operational Definition
+
+| Shape | Trigger | Agent | Key move |
+|---|---|---|---|
+| **gedankenexperiment** | system hard to analyze from outside | [einstein](einstein.md) | Imagine yourself inside the system; what do you see? |
+| **operational-definition-by-procedure** | concept defined without a measurement procedure | [einstein](einstein.md) | A concept IS the procedure that measures it |
+| **demand-covariance** | rule gives different answers from different viewpoints | [einstein](einstein.md) | The form of the law must not depend on the observer |
+| **equivalence-principle** | two things distinguished but empirically indistinguishable | [einstein](einstein.md) | If you can't tell the difference, there is no difference |
+| **ride-the-phenomenon** | abstraction gap between observer and system | [einstein](einstein.md) | Get inside; ride the phenomenon; the internal view reveals structure |
+
+### Idealization and Minimal Models
+
+| Shape | Trigger | Agent | Key move |
+|---|---|---|---|
+| **idealize-away-friction** | phenomenon obscured by secondary effects | [galileo](galileo.md) | Remove non-essential variables; study the idealized system |
+| **inclined-plane-slowdown** | phenomenon too fast/large/rare to observe directly | [galileo](galileo.md) | Build a slower/smaller/more-frequent analog; measure that |
+| **quantitative-over-qualitative** | qualitative claims without measurement | [galileo](galileo.md) | Put a number on it; numbers are debatable, impressions are not |
+| **observation-over-authority** | authority cited instead of evidence | [galileo](galileo.md) | Trust observation; investigate the disagreement |
+| **minimal-model-first** | first attempt at full complexity | [galileo](galileo.md) | Start minimal; add one variable at a time |
+
+### Composability and Substitutability
+
+| Shape | Trigger | Agent | Key move |
+|---|---|---|---|
+| **substitutability-as-contract** | implementation breaks when swapped for its interface | [liskov](liskov.md) | The contract IS the interface — behavior, not just types |
+| **behavioral-subtyping** | subtype rejects inputs or weakens promises | [liskov](liskov.md) | Preconditions may weaken; postconditions may strengthen; invariants preserved |
+| **data-abstraction** | callers depending on internal representation | [liskov](liskov.md) | Hide representation behind operations |
+| **contract-is-interface** | interface has methods but no behavioral specification | [liskov](liskov.md) | Write the contract: pre, post, invariant, history constraint |
+| **composition-correctness** | system correct per-component but breaks when composed | [liskov](liskov.md) | Swap-test every implementation against the interface contract |
+
+### Data Against Institution
+
+| Shape | Trigger | Agent | Key move |
+|---|---|---|---|
+| **statistical-anomaly-between-groups** | matched groups with wildly different outcomes | [semmelweis](semmelweis.md) | Compare; the unmatched variable is the candidate cause |
+| **intervene-and-remeasure** | candidate cause identified; need to test | [semmelweis](semmelweis.md) | Cheapest intervention + before/after data |
+| **data-against-institution** | evidence clear but organization resists | [semmelweis](semmelweis.md) | Plan the communication as carefully as the investigation |
+| **cheap-intervention-test** | proposed fix is low-cost but being blocked | [semmelweis](semmelweis.md) | Implement, re-measure, present the before/after contrast |
+| **semmelweis-reflex-awareness** | anticipate institutional rejection of correct evidence | [semmelweis](semmelweis.md) | Name the reflex; route around it with stakeholder-aware communication |
+
+### Serendipity Capture
+
+| Shape | Trigger | Agent | Key move |
+|---|---|---|---|
+| **serendipity-capture** | anomalies appear during routine work and are being cleaned up | [fleming](fleming.md) | Investigate before discarding |
+| **notice-what-others-discard** | a class of observations is routinely thrown away | [fleming](fleming.md) | Inspect the discards; the signal may be there |
+| **follow-up-immediately** | "that's weird" said and nobody writes it down | [fleming](fleming.md) | Investigate NOW; the anomaly fades |
+| **structured-readiness** | environment optimized to suppress surprises | [fleming](fleming.md) | Redesign to make surprises visible |
+| **publish-before-application** | finding characterized but application unknown | [fleming](fleming.md) | Publish; someone else may develop it |
+
+### Runtime Malleability
+
+| Shape | Trigger | Agent | Key move |
+|---|---|---|---|
+| **late-binding** | decision hardcoded that could be deferred to runtime | [kay](kay.md) | Defer; late binding gains adaptability |
+| **messaging-over-procedure** | tight coupling via direct procedure calls | [kay](kay.md) | Send messages; let the receiver decide how to handle |
+| **medium-is-message** | building an application when an environment would serve better | [kay](kay.md) | Design the environment, not just the application |
+| **build-for-children** | "our users will know how to do this" without testing | [kay](kay.md) | Test with the hardest user; children expose every implicit assumption |
+| **invent-the-future** | blocked by a missing tool | [kay](kay.md) | Estimate build cost vs wait cost; if cheaper, build it |
+| **runtime-malleability** | system must be changeable by users at runtime | [kay](kay.md) | Default to late binding + messaging + user-modifiable environment |
+
+### Performance and Code Literacy
+
+| Shape | Trigger | Agent | Key move |
+|---|---|---|---|
+| **profile-before-optimizing** | optimizing without profiling data | [knuth](knuth.md) | Profile; identify the 3% hot path; leave the 97% alone |
+| **premature-optimization-in-context** | "premature optimization" invoked to block all optimization | [knuth](knuth.md) | Quote the full passage — the 3% MUST be optimized |
+| **literate-programming** | code unreadable; "add comments" proposed as fix | [knuth](knuth.md) | Code as narrative for human reader; explain why, not just what |
+| **algorithmic-analysis-first** | implementing without knowing the complexity class | [knuth](knuth.md) | Analyze Big-O before coding; wrong class = no amount of optimization saves it |
+| **build-the-tool-use-the-tool** | tool built but not used to produce its own artifacts | [knuth](knuth.md) | Use it; the gaps become visible (recursive validation) |
+
+### Structural Hypothesis from Constraints
+
+| Shape | Trigger | Agent | Key move |
+|---|---|---|---|
+| **structural-hypothesis-from-constraints** | components with known connection properties; structure unknown | [kekule](kekule.md) | Count the bonds; let the count force the shape |
+| **valence-counting** | connections available vs required don't match | [kekule](kekule.md) | The deficit/surplus constrains the topology |
+| **shape-from-bonding** | "what shape fits these constraints?" | [kekule](kekule.md) | Enumerate candidate topologies; check against behavioral constraints |
+| **spatial-analogical-reasoning** | known structure with similar constraint profile exists | [kekule](kekule.md) | Import the structure if constraints match |
+| **distinguish-method-from-narrative** | discovery explained by "insight" narrative instead of method | [kekule](kekule.md) | Check primary sources for the actual procedure; the narrative is probably embellished |
+
+---
+
+## Quick Reference: Agent → Shapes (complete, 26 agents)
+
+| Agent | Shapes |
+|---|---|
+| [curie](curie.md) | residual-with-a-carrier, instrument-before-hypothesis, name-the-anomaly, two-independent-methods, observer-effect-audit |
+| [fermi](fermi.md) | order-of-magnitude-first, bracket-before-solve, refuse-false-precision, sanity-check, feasibility-bound |
+| [hamilton](hamilton.md) | hard-real-time, priority-under-failure, graceful-degradation, asynchronous-first, defensive-by-default |
+| [shannon](shannon.md) | define-the-measure-first, limit-before-method, source-channel-code-separation, operational-definition, noise-as-parameter |
+| [lamport](lamport.md) | distributed-causality, proof-before-code, invariants-not-traces, spec-first, partial-failure-default |
+| [darwin](darwin.md) | long-horizon-observation, variation-as-data, difficulty-book, hardest-case-first, delay-vs-avoidance |
+| [noether](noether.md) | symmetry-first, invariance-to-conservation, find-the-group, equivalence-reduction, gauge-vs-global, symmetry-breaking-as-signal |
+| [mendeleev](mendeleev.md) | tabulate-and-predict-gaps, organize-by-hidden-axis, falsifiable-taxonomy, fill-the-empty-cell, reorder-when-prediction-fails |
+| [feynman](feynman.md) | rederive-from-scratch, explain-to-freshman, cargo-cult-detector, integrity-audit, sum-over-histories |
+| [mcclintock](mcclintock.md) | anomaly-others-discarded, single-specimen-deep-observation, trust-direct-over-aggregate, rejected-but-correct, perceptual-expertise |
+| [dijkstra](dijkstra.md) | proof-and-program-together, locality-of-reasoning, separation-of-concerns, elegance-as-correctness, tests-insufficient |
+| [hopper](hopper.md) | compile-as-abstraction-barrier, debugging-as-first-class, make-abstract-tangible, anticipate-obsolescence, ask-forgiveness-not-permission |
+| [engelbart](engelbart.md) | augment-not-automate, bootstrap-your-own-tools, h-lam-t-system, demo-as-argument, raise-the-ceiling, co-evolve-tool-and-practice |
+| [ramanujan](ramanujan.md) | conjecture-generator, pattern-from-special-cases, notation-driven-discovery, intuition-plus-prover, deferred-rigor-with-mandatory-handoff |
+| [turing](turing.md) | reduce-to-mechanism, universality, decidability-first, imitation-game, oracle-separation |
+| [vonneumann](vonneumann.md) | cross-domain-formal-transfer, game-theoretic-decomposition, code-as-data, self-replication-as-design, find-the-isomorphism |
+| [lavoisier](lavoisier.md) | mass-balance, conservation-accounting, residual-as-discovery, rename-to-clarify, sealed-system-experiment |
+| [fisher](fisher.md) | randomize-to-eliminate-confounds, block-to-reduce-variance, replicate-to-estimate-variance, factorial-design, design-before-run, sufficient-statistic |
+| [einstein](einstein.md) | gedankenexperiment, operational-definition-by-procedure, demand-covariance, equivalence-principle, ride-the-phenomenon |
+| [galileo](galileo.md) | idealize-away-friction, inclined-plane-slowdown, quantitative-over-qualitative, observation-over-authority, minimal-model-first |
+| [liskov](liskov.md) | substitutability-as-contract, behavioral-subtyping, data-abstraction, contract-is-interface, composition-correctness |
+| [semmelweis](semmelweis.md) | statistical-anomaly-between-groups, intervene-and-remeasure, data-against-institution, cheap-intervention-test, semmelweis-reflex-awareness |
+| [fleming](fleming.md) | serendipity-capture, notice-what-others-discard, follow-up-immediately, structured-readiness, publish-before-application |
+| [kay](kay.md) | late-binding, messaging-over-procedure, medium-is-message, build-for-children, invent-the-future, runtime-malleability |
+| [knuth](knuth.md) | profile-before-optimizing, premature-optimization-in-context, literate-programming, algorithmic-analysis-first, build-the-tool-use-the-tool |
+| [kekule](kekule.md) | structural-hypothesis-from-constraints, valence-counting, shape-from-bonding, spatial-analogical-reasoning, distinguish-method-from-narrative |
+
+---
+
+## Evaluated and Rejected (no distinct primary-source-backed shape)
+
+| Candidate | Closest existing coverage | Reason for rejection |
 |---|---|---|
-| **reduce-to-mechanism / universality** | Turing | "What is the simplest machine that computes this?" — universality, decidability, reduction to automata |
-| **cross-domain-formal-transfer** | von Neumann | Formalize a problem in one domain using the algebra of another; game theory, automata, self-replication |
-| **mass-balance-the-whole-system** | Lavoisier | Quantitative conservation — nothing created, nothing destroyed; every input must appear as an output somewhere |
-| **controlled-experiment-design** | Pasteur / Fisher | Design the experiment with controls, blinding, randomization before running it |
-| **statistical-experimental-design** | Fisher | Block, randomize, replicate; ANOVA as the method; design of experiments as a discipline |
-| **substitutability-as-contract** | Liskov | Behavioral subtyping; the contract IS the interface; substitutability is the correctness criterion |
-| **literate-programming / measure-before-optimizing** | Knuth | Code as literature; "premature optimization" in its real context (profile first) |
-| **late-binding / messaging-over-procedure** | Kay | Malleability as the primary design value; objects communicate by messages, not by procedure calls |
-| **inclined-plane / idealize-away-friction** | Galileo | Simplify the problem by removing the non-essential variable to expose the law |
-| **chance-favors-the-prepared** | Pasteur | Design readiness for serendipity; structured note-taking so accidents become discoveries |
+| Hawking | von Neumann (cross-domain transfer) | "Regime-boundary collision" is real but overlaps von Neumann; procedure reconstructed from math, not explicitly stated |
+| Tesla | Einstein (gedankenexperiment) | Mental simulation overlaps Einstein; *My Inventions* is a retrospective autobiography, not a methodology document |
+| Jobs | Engelbart + Hopper + Feynman | No primary-source methodology documents; keynotes are performances, not procedures |
+| Gray | Shannon (source-channel-code) | Harmonic telegraph subsumed by Shannon; telautograph insight is interesting but thin and not explicitly articulated |
