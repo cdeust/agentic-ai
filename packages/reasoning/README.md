@@ -45,8 +45,8 @@
 
 ```bash
 # Install from marketplace
-/plugin marketplace add cdeust/zetetic-team-subagents
-/plugin install zetetic-agents@zetetic-marketplace
+claude plugin marketplace add cdeust/zetetic-team-subagents
+claude plugin install zetetic-team-subagents
 ```
 
 ### Manual install
