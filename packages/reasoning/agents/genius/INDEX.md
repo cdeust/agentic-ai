@@ -253,6 +253,18 @@ The orchestrator selects genius agents by **problem shape**, not by field or his
 | Process inefficiency → find theoretical limit → locate waste | carnot → shannon (define measure) → lavoisier (conservation audit) |
 | Users can't find things → faceted classification → test | ranganathan → eco (model reader) → vygotsky (progressive disclosure) |
 | Network structure → phase transition → vulnerability | erdos → mandelbrot (scale-free) → hamilton (failure design) |
+| Argument construction → structure → review | toulmin → aristotle (persuasion) → feynman (integrity) |
+| Literature synthesis → pool → grade | cochrane → fisher (design) → laplace (Bayesian) |
+| Text interpretation → meaning → application | gadamer → wittgenstein (language) → hart (legal reasoning) |
+| Cultural understanding → observe → describe | geertz → ekman (behavioral coding) → bruner (narrative) |
+| Theory from data → code → saturate | strauss → peirce (abduction) → popper (falsify) |
+| Outbreak investigation → trace → intervene | snow → pearl (causal graph) → fisher (experiment) |
+| Diagnosis → differential → treat | feinstein → laplace (Bayesian update) → kahneman (debias) |
+| Rule application → precedent → balance | hart → rawls (justice) → aristotle (four causes) |
+| Cross-case comparison → necessary/sufficient | mill → mendeleev (taxonomy) → popper (falsify) |
+| Discourse shapes reality → expose → reframe | foucault → midgley (hidden metaphor) → wittgenstein (dissolve) |
+| Micro-rules → macro-patterns → predict | schelling → kauffman (edge-of-chaos) → meadows (leverage) |
+| Narrative as data → structure → meaning | bruner → propp (sequence grammar) → geertz (thick description) |
 
 ---
 
