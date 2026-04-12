@@ -32,7 +32,8 @@ echo ""
 echo -e "${LIGHT}  every claim cites its source · every commit is checked${RESET}"
 echo -e "${LIGHT}  every agent says \"I don't know\" when it doesn't${RESET}"
 echo ""
-echo -e "${TEAL}  ai-architect.tools${RESET}"
+printf "%65s\n" "powered by" | sed "s/.*/${TEAL}&${RESET}/"
+printf "%65s\n" "ai-architect.tools" | sed "s/.*/${TEAL}&${RESET}/"
 echo ""
 
 # --- Status ---

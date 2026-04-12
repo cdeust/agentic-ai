@@ -32,5 +32,6 @@
   <text class="mono" x="32" y="312" fill="#bec3be" font-size="10">every claim cites its source · every commit is checked · every agent says "I don't know"  when it doesn't</text>
 
   <!-- Ecosystem brand -->
-  <text class="mono" x="640" y="312" fill="#7fbbb3" font-size="10" opacity="0.6">ai-architect.tools</text>
+  <text class="mono" x="788" y="312" fill="#7fbbb3" font-size="10" opacity="0.6" text-anchor="end">powered by</text>
+  <text class="mono" x="788" y="326" fill="#7fbbb3" font-size="10" opacity="0.6" text-anchor="end">ai-architect.tools</text>
 </svg>
