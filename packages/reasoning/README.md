@@ -1,342 +1,247 @@
-# Zetetic Agents for Claude Code
+<p align="center">
+  <h1 align="center">Zetetic Agents</h1>
+  <p align="center"><strong>97 reasoning patterns from history's greatest minds.<br>One epistemic standard none of them can bypass.</strong></p>
+</p>
 
-**The only Claude Code agent system where every claim must cite its source, every commit is checked for invented constants, and every agent refuses to answer when it doesn't know.**
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License"></a>
+  <img src="https://img.shields.io/badge/Agents-97_genius_+_18_team-8A2BE2" alt="Agents">
+  <img src="https://img.shields.io/badge/Skills-63-green" alt="Skills">
+  <img src="https://img.shields.io/badge/Tools-17-orange" alt="Tools">
+</p>
 
-45 agents. 36 skills. 16 commands. 13 tools. 8 hooks. One epistemic standard that none of them can bypass.
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-
----
-
-## Why This Exists
-
-Most Claude Code agent repos ship role prompts: "You are a senior engineer. Follow best practices." The agent sounds authoritative. It invents constants, cites papers it hasn't read, and ships code with confidence inversely proportional to its correctness.
-
-**This repo takes a different position:** an AI agent that cannot say "I don't know" is more dangerous than one that cannot say anything at all.
-
-Every agent in this repo inherits a hard epistemic standard — the **zetetic method** — that is not a suggestion but an enforced constraint:
-
-- No source? Say "I don't know" and stop.
-- Single source? It's a hypothesis, not a fact.
-- Blog post? Not a source. Read the actual paper.
-- Hardcoded number? Cite the equation or the ablation data.
-- Confident answer? List what could invalidate it first.
-
-The hooks enforce this automatically. Every `git commit` is scanned for invented constants. Every `git push` is checked for unsourced claims. The standard is not voluntary.
+<p align="center">
+  The open-source research and engineering agent system for <a href="https://claude.com/claude-code">Claude Code</a>.<br>
+  Every claim cites its source. Every commit is checked. Every agent says "I don't know" when it doesn't.
+</p>
 
 ---
 
-## What's In the Box
+## What you type → what happens
 
 ```
-zetetic-team-subagents/
-  agents/             18 team agents (engineer, architect, security-auditor, ...)
-  agents/genius/      27 genius agents (curie, fermi, dijkstra, jobs, ...)
-  skills/             36 skills across 7 categories
-  commands/           16 slash commands (/zcommit, /qestimate, /qverify, ...)
-  tools/              13 shell utilities (zetetic-checker, difficulty-book-manager, ...)
-  hooks/               8 automated enforcement hooks
-  scripts/             2 agent spawning scripts
+/genius route "p99 latency exceeds the sum of profiled components"
+→ Routes to Curie (residual-with-a-carrier) + Knuth (profile-before-optimizing)
+
+/genius invoke fermi "Can our database handle 10x users?"
+→ Decomposes into bracketable factors, produces a two-sided bound
+
+/deep-research "transformer attention alternatives 2024-2026"
+→ Plans search → parallel researchers → synthesizes → verifies citations → writes cited brief + provenance sidecar
+
+/systematic-review "effect of code review on defect rate"
+→ PICO protocol → exhaustive search → screen → extract effect sizes → heterogeneity test → GRADE evidence → forest plot
+
+/incident-investigation
+→ Forensic timeline (Ginzburg) → three-timescale decomposition (Braudel) → common vs special cause (Deming) → structural root cause (Peirce) → remediation (Hamilton)
+
+/paper-vs-code-audit arxiv:2401.12345 ./src/
+→ Extracts every claim → finds corresponding code → flags mismatches → produces traceability matrix
+
+/autoresearch-loop "optimize beam search for abstention"
+→ Hypothesis → implement → commit → benchmark → keep/revert → iterate until diminishing returns
 ```
-
-### Team Agents (18)
-
-Standard engineering and research roles — but each inherits Clean Architecture, SOLID, and the zetetic standard. Not just "you are an engineer"; rather, an engineer who traces every fix to its root cause, never applies band-aids, and refuses to ship code that violates layer boundaries.
-
-| | | | |
-|---|---|---|---|
-| engineer | architect | code-reviewer | test-engineer |
-| dba | frontend-engineer | devops-engineer | security-auditor |
-| ux-designer | research-scientist | paper-writer | experiment-runner |
-| data-scientist | mlops | reviewer-academic | latex-engineer |
-| professor | **orchestrator** | | |
-
-### Genius Agents (27)
-
-**This is the part no one else has.**
-
-27 agents that extract reproducible reasoning *procedures* from the primary-source record of history's most productive thinkers. Not personas. Not "pretend to be Einstein." Actual methods — each with 4-7 canonical moves, primary-source citations, documented blind spots, explicit refusal conditions, and hand-off protocols to other agents.
-
-Routed by **problem shape**, not by field. Curie is not "the chemistry agent" — she is the agent you call when a measurement exceeds what known parts predict and the residual needs a carrier. That applies to latency debugging, cost analysis, ML leakage detection, and security traffic anomalies.
-
-<details>
-<summary><b>Full genius roster (click to expand)</b></summary>
-
-| Agent | Reasoning Shape | When to Use |
-|---|---|---|
-| **curie** | Residual with a carrier | Measured > predicted; signal buried in noise; need isolation |
-| **fermi** | Order-of-magnitude first | "We don't have data"; need a bracket before a decision |
-| **hamilton** | Hard real-time / priority under failure | System must degrade gracefully, not crash |
-| **shannon** | Define the measure first | Optimizing without a defined objective; layers tangled |
-| **lamport** | Distributed causality / spec before code | Concurrency bugs; "works on my machine"; no written spec |
-| **darwin** | Long-horizon observation | Slow phenomenon; theory without a difficulty book |
-| **noether** | Symmetry / invariance | Hidden regularity; unexplained conserved quantity |
-| **mendeleev** | Tabulate and predict gaps | Many items, suspected pattern, unnamed holes |
-| **feynman** | Rederive / cargo-cult detector | Claimed understanding nobody can explain simply |
-| **mcclintock** | Anomaly others discarded | "One-off, ignore it" — but is it? |
-| **dijkstra** | Proof and program together | Correctness can't be established by testing |
-| **hopper** | Compile as abstraction barrier | Users forced to think like the machine |
-| **engelbart** | Augment, don't automate | "Automate this" when "augment this" is better |
-| **ramanujan** | Conjecture generator | Need many candidates fast — **mandatory prover pairing** |
-| **turing** | Reduce to mechanism | Drowning in detail; nobody asked what the simplest machine is |
-| **vonneumann** | Cross-domain transfer | Problem isomorphic to a solved one in another field |
-| **lavoisier** | Mass-balance | Inputs ≠ outputs; something is disappearing |
-| **fisher** | Experimental design | Causal claim without randomization, blocking, replication |
-| **einstein** | Gedankenexperiment | Concept without operational definition; frame-dependent rule |
-| **galileo** | Idealize away friction | Phenomenon obscured by secondary effects |
-| **liskov** | Substitutability as contract | Swap-test fails; interface has no behavioral spec |
-| **semmelweis** | Data against institution | Evidence is clear; the organization refuses to act |
-| **fleming** | Serendipity capture | Anomaly during routine work; "that's weird" goes uninvestigated |
-| **kay** | Late binding / malleability | Hardcoded decisions that should be deferred to runtime |
-| **knuth** | Profile before optimizing | Optimizing without profiling; misquoting "premature optimization" |
-| **kekule** | Structure from constraints | Components have connection rules; topology unknown |
-| **jobs** | Integrated experience | "It works" per component but the user experience is broken |
-
-</details>
-
-> See [`agents/genius/INDEX.md`](agents/genius/INDEX.md) for the full 130+ shape lookup table with triggers, common pairings, and composition chains.
-
-### Skills (36)
-
-Reusable procedures invocable as workflows. Every skill has **four zetetic gates** (logical, critical, rational, essential) that must pass before output is delivered. A skill that can't clear its gates says so and stops.
-
-| Category | Skills | Examples |
-|---|---|---|
-| **Zetetic** (4) | Epistemic backbone | `/verify-claim` `/difficulty-book` `/cargo-cult-check` `/seek-disconfirmation` |
-| **Engineering** (9) | Daily workflows | `/review` `/implement` `/debug` `/optimize` `/secure` `/refactor` `/test` `/deploy` `/migrate-db` |
-| **Analysis** (6) | Investigation | `/estimate` `/investigate` `/benchmark` `/balance` `/experiment` `/audit-integrity` |
-| **Architecture** (5) | Structural decisions | `/decompose` `/adr` `/spec` `/contract` `/evaluate-tool` |
-| **Research** (5) | Academic & ML | `/literature-review` `/explain` `/write-paper` `/pre-submit-review` `/design-experiment` |
-| **Compose** (7) | Multi-agent chains | `/performance-investigation` `/anomaly-to-explanation` `/conjecture-to-code` `/failure-resilient-design` `/product-quality-audit` `/new-tool-design` `/statistical-intervention` |
-
-### Commands (16)
-
-Quick slash commands for daily use:
-
-| Category | Commands |
-|---|---|
-| **Agent management** | `/agent-list` `/agent-spawn` `/agent-status` |
-| **Git workflow** | `/zcommit` `/zpr` `/zclean` |
-| **Session** | `/session-save` `/session-recall` |
-| **Quality gates** | `/pre-commit` `/pre-push` |
-| **Zetetic shortcuts** | `/qverify` `/qestimate` `/qreview` `/qdifficulty` `/qintegrity` |
-
-### Tools (13)
-
-Shell utilities that agents, commands, and hooks call:
-
-`agent-catalog` `zetetic-checker` `difficulty-book-manager` `shape-router` `skill-runner` `worktree-manager` `session-store` `hook-runner` `balance-auditor` `profile-runner` `docker-runner` `mlx-compute` `live-preview`
-
-### Hooks (8) — The Differentiator
-
-**This is what no other agent repo does: automated epistemic enforcement.**
-
-| Hook | Trigger | What it enforces |
-|------|---------|-----------------|
-| **pre-commit-zetetic** | Before `git commit` | Blocks on: invented constants, unsourced claims, orphaned TODOs |
-| **pre-push-review** | Before `git push` | Blocks on: zetetic violations in the push diff |
-| **pre-edit-layer-check** | Before file edit | Warns on: core/ files at risk of layer violation |
-| **post-commit-difficulty** | After `git commit` | Reminds: update difficulty book if related area was changed |
-| **post-edit-balance** | After pipeline edit | Reminds: verify data conservation (inputs = outputs) |
-| **session-start** | Session begins | Loads: repo state, difficulty books, cached context |
-| **session-end** | Session ends | Saves: decisions, files changed, open questions |
-| **notification-handler** | Subagent completes | Logs result, checks for unmerged worktrees |
-
-The hooks turn the zetetic standard from a prompt instruction into an automated gate. You cannot commit a magic number without citing its source. You cannot push code with unsourced claims in comments. The standard is not "please follow these guidelines" — it is "the commit is blocked until you do."
 
 ---
 
-## Quick Start
-
-### 1. Install agents
+## Install
 
 ```bash
 git clone https://github.com/cdeust/zetetic-team-subagents.git
 
-# Global (all projects)
-cp zetetic-team-subagents/agents/*.md ~/.claude/agents/
-cp -r zetetic-team-subagents/agents/genius ~/.claude/agents/genius
-cp -r zetetic-team-subagents/commands/* ~/.claude/commands/
+# Global install (all projects)
+cp -r zetetic-team-subagents/agents/ ~/.claude/agents/
+cp -r zetetic-team-subagents/commands/ ~/.claude/commands/
+cp -r zetetic-team-subagents/skills/ ~/.claude/skills/
 
-# Or per-project
-mkdir -p .claude/agents/genius .claude/commands
-cp zetetic-team-subagents/agents/*.md .claude/agents/
-cp zetetic-team-subagents/agents/genius/*.md .claude/agents/genius/
-cp -r zetetic-team-subagents/commands/* .claude/commands/
+# Add tools to PATH
+export PATH="$PATH:$(pwd)/zetetic-team-subagents/tools"
 ```
 
-### 2. Use agents
-
-```
-Use the engineer agent to fix the authentication bug in login.py
-
-Use the fermi agent to estimate whether this service can handle 10x traffic
-
-Use the curie agent to investigate why p99 latency exceeds the sum of profiled components
-
-Use the jobs agent to audit the onboarding flow for "it just works" violations
-```
-
-### 3. Use commands
-
-```
-/qestimate How much would retraining cost at 10x data?
-
-/qverify "PostgreSQL is faster than MySQL for analytical queries"
-
-/zcommit
-
-/qintegrity
-```
-
-### 4. Enable hooks (optional but recommended)
-
-Add to your project's `.claude/settings.json`:
-
-```json
-{
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "command": "/path/to/zetetic-team-subagents/hooks/pre-commit-zetetic.sh",
-        "timeout": 30000
-      },
-      {
-        "matcher": "Bash",
-        "command": "/path/to/zetetic-team-subagents/hooks/pre-push-review.sh",
-        "timeout": 60000
-      }
-    ],
-    "Stop": [
-      {
-        "command": "/path/to/zetetic-team-subagents/hooks/session-end.sh",
-        "timeout": 15000
-      }
-    ]
-  }
-}
-```
-
-See [`hooks/README.md`](hooks/README.md) for the full configuration with all 8 hooks.
-
----
-
-## Parallel Agents in Worktrees
-
-Spawn any agent as its own `claude` process in an isolated git worktree:
-
+Skills-only (no agents):
 ```bash
-# One agent per terminal, full parallel execution, no permission blocks
-scripts/spawn-agent.sh engineer     "Fix the auth bug in login.py"
-scripts/spawn-agent.sh architect    "Propose a module split for src/core"
-scripts/spawn-agent.sh code-reviewer "Review diff against main"
-scripts/spawn-agent.sh fermi        "Estimate the cost of retraining at 10x"
-```
-
-Each agent gets its own branch (`agent/<name>/<timestamp>`), its own filesystem, and `--permission-mode bypassPermissions` so it is never blocked. Merge when done:
-
-```bash
-git merge agent/engineer/20260409-143000
-git worktree remove ../myrepo-engineer-20260409-143000
+cp -r zetetic-team-subagents/skills/ ~/.claude/skills/
 ```
 
 ---
 
-## Compose Chains
+## 97 Genius Agents — Reasoning Patterns, Not Personas
 
-The most powerful skills chain genius agents in pipelines:
+Not "pretend to be Einstein." Actual methods — each with 5 canonical moves, primary-source citations, blind spots, refusal conditions, and hand-off protocols. Routed by **problem shape**, not by field.
 
-| Skill | Pipeline | What it does |
+| Domain | Agents | Example trigger |
 |---|---|---|
-| `/performance-investigation` | fermi → curie → knuth | Bracket expected → measure actual → profile hot 3% |
-| `/anomaly-to-explanation` | mcclintock → curie → shannon | Notice → isolate carrier → formalize |
-| `/conjecture-to-code` | ramanujan → dijkstra → engineer | Generate candidates → prove → implement |
-| `/failure-resilient-design` | hamilton → lamport → engineer | Design degradation → specify → build |
-| `/product-quality-audit` | jobs → galileo → dijkstra | Experience spec → strip essential → verify |
-| `/new-tool-design` | engelbart → hopper → kay → jobs | Augment → abstract → make malleable → integrate |
-| `/statistical-intervention` | semmelweis → fisher → feynman | Detect anomaly → design experiment → integrity-check |
+| **Measurement & Signal** | Curie, Ekman, Wu | "The measurement exceeds what known parts predict" |
+| **Estimation & Bounding** | Fermi, Erlang, Laplace | "We don't have data — can we bracket it?" |
+| **Causal & Abductive** | Pearl, Peirce, Snow/Hill | "Does X cause Y, or is it confounded?" |
+| **Systems & Leverage** | Meadows, Beer, Kauffman, Deming, Maxwell | "Where should we intervene for maximum effect?" |
+| **Formal & Correctness** | Dijkstra, Lamport, Panini, Godel, Turing | "Can we prove this correct?" |
+| **Design & Pattern** | Alexander, Altshuller, Liskov, Kay | "The trade-off seems inescapable" |
+| **Failure & Resilience** | Hamilton, Taleb, Carnot, Boyd | "What happens when everything goes wrong?" |
+| **Reverse Engineering** | Rejewski, Champollion, Ventris | "The system is a black box — reconstruct it" |
+| **Decision & Bias** | Kahneman, Schon, Roger Fisher, Simon | "Is this decision driven by bias?" |
+| **Ethics & Justice** | Rawls, Arendt, Le Guin, Ostrom | "Who benefits and who bears the cost?" |
+| **Research Method** | Toulmin, Cochrane, Strauss, Geertz, Gadamer | "How do we build a rigorous argument from evidence?" |
+| **Scale & Dynamics** | Mandelbrot, Thompson, Poincare, Schelling | "What breaks when this grows 10x?" |
+| **Language & Meaning** | Wittgenstein, Eco, Foucault, Midgley, Aristotle | "We're all using the same word to mean different things" |
+| **History & Civilization** | Braudel, Ibn Khaldun, Ginzburg, Borges | "At which timescale does the cause live?" |
+| **Biology & Evolution** | Darwin, Margulis, Fleming, Noether | "Could this be cooperation, not competition?" |
+| **Discovery & Invention** | Archimedes, Polya, Ramanujan, Euler, Lem | "I'm stuck — what heuristic should I try?" |
+| **Narrative & Pedagogy** | Bruner, Propp, Vygotsky, Zhuangzi | "Is the metric we're optimizing the right one?" |
+| **Legal & Comparative** | Hart, Mill, Coase, Bateson | "The rule doesn't clearly determine the outcome" |
+| **Ancient & Non-Western** | Al-Khwarizmi, Ibn al-Haytham, Nagarjuna, Panini | "Reduce this to canonical form" |
+
+> **Full shape-to-agent routing table:** [`agents/genius/INDEX.md`](agents/genius/INDEX.md) — 400+ problem shapes with triggers, pairings, and composition chains.
 
 ---
 
-## Permissions
+## 63 Skills — Research & Engineering Workflows
 
-| Mode | File ops | Shell | Best for |
-|---|---|---|---|
-| `bypassPermissions` | Auto | Auto | Worktree isolation (spawn script default) |
-| `acceptEdits` | Auto | Prompt | Interactive pairing |
-| Per-project `settings.json` | Configurable | Configurable | Team standards |
-| Default | Prompt | Prompt | First-time exploration |
+Every skill has **four zetetic gates** (logical, critical, rational, essential) that must pass before output is delivered.
 
-```json
-{
-  "permissions": {
-    "allow": ["Read", "Edit", "Write", "Glob", "Grep", "Bash(git *)", "Bash(npm test*)"]
-  }
-}
+| Category | Skills |
+|---|---|
+| **Research** (16) | `/deep-research` `/systematic-review` `/literature-review` `/paper-vs-code-audit` `/autoresearch-loop` `/lab-notebook` `/source-comparison-matrix` `/research-watch` `/replication-assessment` `/research-question-formulation` `/mixed-methods-design` `/qualitative-analysis` `/write-paper` `/pre-submit-review` `/design-experiment` `/explain` |
+| **Engineering** (11) | `/review` `/implement` `/debug` `/optimize` `/secure` `/refactor` `/test` `/deploy` `/migrate-db` `/incident-investigation` `/security-audit` |
+| **Architecture** (9) | `/decompose` `/adr` `/spec` `/contract` `/evaluate-tool` `/architecture-review` `/system-design-document` `/api-design-review` `/database-design-review` |
+| **Compose** (12) | `/performance-investigation` `/anomaly-to-explanation` `/conjecture-to-code` `/failure-resilient-design` `/product-quality-audit` `/new-tool-design` `/statistical-intervention` `/migrate-system` `/sunset-decision` `/translation-across-systems` `/argument-construction` `/onboarding-curriculum` |
+| **Zetetic** (7) | `/verify-claim` `/difficulty-book` `/cargo-cult-check` `/seek-disconfirmation` `/citation-verifier` `/provenance-tracking` `/ethical-review` |
+
+---
+
+## Compose Chains — Multi-Agent Pipelines
+
+The most powerful skills chain genius agents in sequence:
+
 ```
+/performance-investigation     fermi → curie → knuth
+  Bracket expected → measure actual → profile hot 3%
+
+/incident-investigation        ginzburg → braudel → deming → peirce → hamilton
+  Forensic trace → three timescales → common/special cause → root cause → remediation
+
+/anomaly-to-explanation        mcclintock → curie → shannon
+  Notice → isolate carrier → formalize
+
+/deep-research                 peirce → cochrane → feynman → toulmin
+  Hypothesize → synthesize evidence → integrity check → structure argument
+
+/failure-resilient-design      hamilton → lamport → engineer
+  Design degradation → specify → build
+
+/autoresearch-loop             peirce → fisher → curie → laplace → schon
+  Hypothesize → design experiment → measure → compare → detect diminishing returns
+```
+
+---
+
+## 17 Tools
+
+| Tool | What it does |
+|---|---|
+| `genius-invoker` | Lightweight agent invocation, routing, composition |
+| `provenance-manager` | Track sources consulted/accepted/rejected per file |
+| `lab-notebook-manager` | Structured research notebook with tags and timeline |
+| `research-session-manager` | Start/resume/close research sessions with hypothesis tracking |
+| `docker-runner` | Isolated research containers with workspace mount |
+| `mlx-compute` | Apple Silicon ML via MLX — benchmark, convert, run |
+| `live-preview` | Browser preview for .md/.tex/.html with auto-recompile |
+| `shape-router` | Route problems to genius agents by shape |
+| `zetetic-checker` | Scan for magic numbers, unsourced claims, orphaned TODOs |
+| `difficulty-book-manager` | Track contradictions and open problems |
+| `agent-catalog` | List, search, describe agents |
+| `worktree-manager` | Manage parallel agent worktrees |
+| `balance-auditor` | Conservation check: inputs = outputs |
+| `profile-runner` | Auto-detect profiler (Python/Node/Go/Rust) |
+| `skill-runner` | Resolve and execute skills |
+| `session-store` | Save/load session context |
+| `hook-runner` | Execute hooks with timeout/fallback |
+
+---
+
+## 14 Hooks — Automated Epistemic Enforcement
+
+**The part no other agent system has.** The zetetic standard is not a prompt suggestion — it is an automated gate.
+
+| Hook | What it enforces |
+|---|---|
+| `pre-commit-zetetic` | Blocks commits with invented constants or unsourced claims |
+| `pre-push-review` | Blocks pushes with zetetic violations |
+| `pre-push-provenance` | Verifies provenance sidecars exist for research files |
+| `pre-tool-claim-gate` | Catches unsourced constants at edit time |
+| `pre-edit-layer-check` | Warns on Clean Architecture layer violations |
+| `post-research-provenance` | Auto-logs sources during research to .provenance.md |
+| `post-commit-difficulty` | Reminds to update difficulty book |
+| `post-commit-lab-notebook` | Prompts notebook entry during research sessions |
+| `post-edit-balance` | Reminds to verify data conservation |
+| `post-tool-error-routing` | Suggests diagnostic genius agent on errors |
+| `session-start` | Loads repo state, difficulty books, research context |
+| `session-start-research` | Loads active research question, hypotheses, notebook |
+| `session-end` | Saves decisions, open questions to memory |
+| `notification-handler` | Logs subagent completion |
 
 ---
 
 ## The Zetetic Standard
 
-Every agent, skill, command, and hook inherits this. It is not optional.
+Every agent, skill, and hook inherits this. It is not optional.
 
-**Four pillars** (Adel.M):
+| Pillar | Question |
+|---|---|
+| **Logical** | *Is it consistent?* |
+| **Critical** | *Is it true?* |
+| **Rational** | *Is it useful?* |
+| **Essential** | *Is it necessary?* |
 
-| Pillar | Question | What it does |
-|---|---|---|
-| **Logical** | *"Is it consistent?"* | Check internal structure, validity, contradictions |
-| **Critical** | *"Is it true?"* | Compare claims against evidence and verifiable data |
-| **Rational** | *"Is it useful?"* | Evaluate practical rationality given the circumstances |
-| **Essential** | *"Is it necessary?"* | Remove what doesn't serve the goal. *"Why this? Why now?"* |
-
-**Seven rules:**
-
+**The rules:**
 1. No source → say "I don't know" and stop
 2. Single source = hypothesis. Cross-reference required
-3. Read the actual paper, not summaries or blog posts
+3. Read the actual paper, not the blog post
 4. No invented constants. Cite the equation or the data
-5. Benchmark every change. No regressions
-6. A confident wrong answer destroys trust. "I don't know" preserves it
+5. Benchmark every change. No regressions accepted
+6. "I don't know" preserves trust. Confident wrong answers destroy it
 7. Actively seek disconfirming evidence
 
-Grounded in published epistemology: Friedman 2020 (*Zetetic Epistemology*), Flores & Woodard 2023 (*Epistemic norms on evidence-gathering*).
-
 ---
 
-## Architecture Standard
-
-Agents that write code enforce Clean Architecture and SOLID:
+## How It Works
 
 ```
-TRANSPORT → SERVER → HANDLERS → CORE ← SHARED
-                                  ↓
-                            INFRASTRUCTURE → SHARED
+You describe a problem
+  ↓
+Shape router matches problem shapes in INDEX.md (400+ shapes)
+  ↓
+Routes to 1-3 genius agents with the right reasoning pattern
+  ↓
+Each agent applies its canonical moves with primary-source methodology
+  ↓
+Zetetic gates verify: sourced? tested? proportional? necessary?
+  ↓
+Hooks enforce: no unsourced claims committed, no magic numbers pushed
+  ↓
+Output: cited, verified, with provenance sidecar and difficulty book
 ```
 
-- **Core**: pure logic, zero I/O, testable without mocks
-- **Infrastructure**: all I/O, implements interfaces defined by core
-- **Handlers**: composition roots, the ONLY layer that wires core + infrastructure
-- Inner layers NEVER import outer layers. The hooks catch violations automatically.
-
 ---
 
-## Cortex Memory Integration
+## What Makes This Different
 
-Each agent includes a memory section for [Cortex](https://github.com/cdeust/Cortex), a persistent memory MCP server. Agents recall prior decisions, remember lessons, and share context across sessions. Without Cortex, the memory sections are safely ignored.
+Most AI agent systems ship role prompts — "you are a senior engineer" — and hope for the best. The agent sounds confident. It invents constants, cites papers it hasn't read, and ships code with conviction inversely proportional to its correctness.
 
----
+**Zetetic Agents take a different position:** an AI that cannot say "I don't know" is more dangerous than one that cannot say anything at all.
 
-## Customization
-
-Every file is Markdown with YAML frontmatter. Fork, edit, extend:
-
-- **Change model tier** — `model: sonnet` for speed, `model: opus` for depth
-- **Edit the methodology** — tailor to your team's standards
-- **Add domain skills** — use `skills/_template.md` as the starting point
-- **Create new genius agents** — use `agents/genius/curie.md` as the template. Every canonical move needs a primary-source citation
-- **Write new hooks** — see `hooks/README.md` for the settings.json format
+| Capability | What it means |
+|---|---|
+| **97 reasoning patterns** | Not personas. Actual methods from primary sources — each with canonical moves, blind spots, refusal conditions |
+| **Automated epistemic enforcement** | Hooks block commits with invented constants, pushes with unsourced claims. The standard is not voluntary |
+| **Every domain of human inquiry** | Engineering, mathematics, physics, biology, medicine, philosophy, law, economics, social science, humanities |
+| **Cochrane-style evidence synthesis** | Systematic review with GRADE, heterogeneity testing, publication bias detection |
+| **Toulmin argument structure** | Claim-evidence-warrant-backing-qualifier-rebuttal. Every paper is an argument; structure it properly |
+| **Full provenance tracking** | Automated .provenance.md sidecars tracking every source consulted, accepted, or rejected |
+| **Local ML compute** | MLX on Apple Silicon — benchmark, convert, train without cloud costs |
+| **Paper production pipeline** | Paper-writer + LaTeX-engineer + live-preview with citation verification |
+| **Clinical diagnostic reasoning** | Differential diagnosis, likelihood ratios, treatment thresholds — not just for medicine |
+| **Ethical reasoning framework** | Veil of ignorance, thoughtlessness audit, irreducible trade-off naming |
 
 ---
 
