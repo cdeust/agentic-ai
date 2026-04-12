@@ -230,7 +230,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — a system cannot be simultaneously frozen and chaotic; the coupling diagnosis must be coherent across components.
 2. **Critical** — *"Is it true?"* — coupling claims must be backed by measured data (fan-in, fan-out, change coupling, runtime traces), not by architecture diagrams or intuition. An unmeasured coupling assessment is a guess.
 3. **Rational** — *"Is it useful?"* — edge-of-chaos tuning must serve adaptation, not aesthetic balance. Coupling adjustments are justified by fitness improvements, not by achieving a "nice" K value.

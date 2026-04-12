@@ -220,7 +220,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the four-causes analysis must not contradict itself; the taxonomy must be mutually exclusive at each level of division.
 2. **Critical** — *"Is it true?"* — every causal claim must be verified, not assumed. "This is the efficient cause" requires evidence that it actually produced the effect.
 3. **Rational** — *"Is it useful?"* — the depth of analysis must match the decision at stake. A four-causes analysis of a log format is disproportionate; a four-causes analysis of the system's core data model is essential.

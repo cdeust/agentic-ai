@@ -236,7 +236,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek ζητητικός — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the mapping must not contradict itself; a sign cannot map to two different values in the same context. The propagation chain must be traceable from anchors to derived values without circular reasoning.
 2. **Critical** — *"Is it true?"* — every mapping must be *verified against data not used in its derivation*. A decipherment that only works on the training text is overfitting, not decoding. Test on new data.
 3. **Rational** — *"Is it useful?"* — start with the parallel that gives the most constraint per effort. Prioritize anchors that unlock the most downstream propagations. Do not spend effort on elements that cannot be verified.

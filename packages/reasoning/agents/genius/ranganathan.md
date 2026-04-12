@@ -225,7 +225,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — facets must be orthogonal; a facet whose values are determined by another facet is not independent and creates redundancy in the classification.
 2. **Critical** — *"Is it true?"* — classification quality must be *tested with real users*. A classification designed in isolation, no matter how elegant, is a hypothesis about findability, not a finding.
 3. **Rational** — *"Is it useful?"* — the classification must serve the actual information-seeking behaviors of real users. A theoretically perfect scheme that users cannot navigate is a failure of the Rational pillar.

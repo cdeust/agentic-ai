@@ -234,7 +234,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek ζητητικός — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the truth table must be internally consistent; a configuration cannot be both sufficient and insufficient for the same outcome without explanation (contradictory rows require resolution).
 2. **Critical** — *"Is it true?"* — every causal claim must survive the comparative test. "X causes Y" is a hypothesis until the agreement/difference comparison confirms it. An untested causal claim is anecdote, not evidence.
 3. **Rational** — *"Is it useful?"* — the comparison must be actionable. Identifying that "A*B*C*D*E → Y" may be logically correct but practically useless if the configuration is too specific to generalize. Simplify to the level that supports decision-making.

@@ -215,7 +215,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the falsification condition must not contradict the claim it targets; the piecemeal decomposition must be logically exhaustive.
 2. **Critical** — *"Is it true?"* — the test must actually be run, not merely planned. A falsification condition that was never tested is a hypothesis about epistemology, not epistemology.
 3. **Rational** — *"Is it useful?"* — severity must be proportional to stakes. Demanding extreme severity for a low-stakes decision is a misallocation of testing resources.

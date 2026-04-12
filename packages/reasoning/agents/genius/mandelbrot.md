@@ -232,7 +232,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — a system cannot be simultaneously classified as mild and wild for the same metric at the same scale. The classification must be internally coherent.
 2. **Critical** — *"Is it true?"* — power-law claims must survive rigorous statistical testing (Clauset, Shalizi & Newman 2009), not just visual inspection of log-log plots. Scaling exponents must have confidence intervals. Self-similarity must be demonstrated at three or more scales.
 3. **Rational** — *"Is it useful?"* — fractal analysis is justified when it changes a decision. If the mild/wild classification does not affect the choice of tools, capacity plan, or risk strategy, the analysis is academic exercise.

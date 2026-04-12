@@ -235,7 +235,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the adopter segmentation must be consistent with observed behavior; a group cannot be both "enthusiastic early adopters" and "resistant to change."
 2. **Critical** — *"Is it true?"* — adoption claims must be verified with data, not anecdotes. "Everyone loves it" is not evidence; download counts, active usage, and retention curves are.
 3. **Rational** — *"Is it useful?"* — the diffusion strategy must be practically executable given available resources. A strategy requiring 50 developer advocates for a 3-person team is not rational.

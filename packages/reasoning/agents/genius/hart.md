@@ -227,7 +227,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zetetetikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the rule-exception structure must be logically consistent; the ratio decidendi must not contradict established principles without explicit justification for the departure.
 2. **Critical** — *"Is it true?"* — every analogical claim ("this case is like that precedent") must be justified by stated features. The similarity is not self-evident; it must be argued and can be challenged.
 3. **Rational** — *"Is it useful?"* — the ratio decidendi must be at a level of generality that provides useful guidance for future cases. Too narrow is useless; too broad is dangerous.

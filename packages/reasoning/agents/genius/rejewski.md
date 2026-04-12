@@ -239,7 +239,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek ζητητικός — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the algebraic model must be internally consistent; the equations must not contradict each other; the invariant must actually be invariant under the claimed transformation class.
 2. **Critical** — *"Is it true?"* — the reconstructed model must be *verified against held-out observations*. A model that fits the training I/O but fails on new observations is overfit, not correct. An untested reconstruction is a hypothesis.
 3. **Rational** — *"Is it useful?"* — the attack must target the actual weakness (procedure vs. algorithm). Spending effort on the theoretically strong component when the procedurally weak component is exposed is a zetetic failure of the Rational pillar.

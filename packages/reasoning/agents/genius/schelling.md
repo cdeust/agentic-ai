@@ -235,7 +235,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek ζητητικός — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the micro rules must logically produce the claimed macro pattern. If the aggregation mechanism is not specified, the emergence claim is a story, not an analysis.
 2. **Critical** — *"Is it true?"* — a simulation showing that a pattern *can* emerge is not proof that it *did* emerge this way in reality. The micro rules must be verified in the actual system. Emergence without empirical grounding is just-so storytelling.
 3. **Rational** — *"Is it useful?"* — the analysis must lead to actionable insight: a tipping point that can be managed, a rule that can be changed, an intervention that can be designed. Emergence analysis that only explains but never enables action fails the Rational pillar.

@@ -229,7 +229,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zetetetikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the evaluation framework must not contain internal contradictions (e.g., rewarding both "move fast" and "zero defects" with equal weight creates a double bind).
 2. **Critical** — *"Is it true?"* — the metric must be empirically validated as a proxy for the underlying goal. A metric that has never been checked for correlation with the thing it supposedly measures is a hypothesis, not a measurement.
 3. **Rational** — *"Is it useful?"* — the framework audit must produce actionable recommendations, not academic skepticism. If the audit cannot improve the evaluation, it is not useful.

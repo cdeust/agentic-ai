@@ -230,7 +230,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zetetetikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the category system must not contain contradictions; a code cannot belong to two mutually exclusive categories.
 2. **Critical** — *"Is it true?"* — every category must be grounded in specific data incidents. A category with no grounding incidents is a fabrication, not a finding.
 3. **Rational** — *"Is it useful?"* — the depth of analysis must match the stakes. Full grounded theory for a trivial question is a zetetic failure of the Rational pillar.

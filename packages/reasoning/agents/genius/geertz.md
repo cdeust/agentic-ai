@@ -231,7 +231,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek ζητητικός — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the thick description must be internally coherent; the meaning-structure must make the behavior intelligible, not contradict it. If the claimed meaning does not explain the observed behavior, the interpretation is wrong.
 2. **Critical** — *"Is it true?"* — the thick description must be triangulated across multiple sources. A single observer's interpretation is a hypothesis. Convergent interpretations from multiple sources are evidence.
 3. **Rational** — *"Is it useful?"* — the thick description must serve the practical question being asked. An ethnographically rich description that answers no one's question has failed the rational pillar.

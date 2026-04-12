@@ -230,7 +230,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zetetetikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the scaling exponents must be dimensionally consistent; a quantity claimed to scale as L^2 must actually have units of area or an area-equivalent.
 2. **Critical** — *"Is it true?"* — scaling predictions must be validated against empirical measurement. A theoretical scale break at 10K users is a hypothesis until you measure performance at 10K users.
 3. **Rational** — *"Is it useful?"* — the scaling analysis must inform an actionable design decision. Identifying a scale break that will occur in 10 years when the system will be rewritten next quarter is zetetically Rational to deprioritize.

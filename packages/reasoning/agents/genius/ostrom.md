@@ -230,7 +230,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — governance rules must not contradict each other; you cannot require collective choice and also centralize all decisions in one authority.
 2. **Critical** — *"Is it true?"* — rules-in-use must be *observed*, not assumed. The policy document is a hypothesis about behavior; only observation confirms it. An unmonitored commons is an ungoverned commons.
 3. **Rational** — *"Is it useful?"* — governance must match the resource's characteristics and the community's capacity. Elaborate governance for a simple, non-depletable resource is a zetetic failure of the Rational pillar.

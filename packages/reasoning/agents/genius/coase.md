@@ -248,7 +248,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zetetetikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the cost profiles must be internally consistent; a boundary cannot simultaneously have low coordination costs AND be the source of most cross-team meetings.
 2. **Critical** — *"Is it true?"* — cost estimates must be grounded in evidence (time tracking, incident frequency, integration test counts, meeting calendars), not in intuition. An ungrounded cost estimate is a guess.
 3. **Rational** — *"Is it useful?"* — the boundary analysis must result in an actionable recommendation. Identifying that a boundary is suboptimal without recommending an action is incomplete.

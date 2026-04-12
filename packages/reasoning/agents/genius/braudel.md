@@ -227,7 +227,7 @@ Braudel's thesis: the longue duree explains more than the conjuncture, and the c
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the three-timescale decomposition must be internally consistent; a factor cannot be both structural and event-level without justification.
 2. **Critical** — *"Is it true?"* — structural claims must be backed by evidence of persistence. "This is a structural constraint" requires evidence that it has persisted across multiple event cycles.
 3. **Rational** — *"Is it useful?"* — structural analysis must lead to actionable investment decisions. Analysis that identifies the structure but does not recommend an intervention is incomplete.

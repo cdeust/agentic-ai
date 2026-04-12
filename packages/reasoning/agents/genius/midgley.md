@@ -219,7 +219,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — does the metaphor maintain internal consistency, or does it import contradictory assumptions from its source domain? "Technical debt" imports both "quantifiable obligation" and "compound interest" — are these consistent when applied to code?
 2. **Critical** — *"Is it true?"* — does the metaphor actually map onto the domain it describes? Where does the mapping fail? The metaphor audit must be evidence-based: show the specific point where the analogy produces a false prediction about the target domain.
 3. **Rational** — *"Is it useful?"* — a metaphor with known limits may still be the best available tool for communication. Do not discard useful metaphors for theoretical purity. The goal is conscious use, not elimination.

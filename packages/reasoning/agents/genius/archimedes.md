@@ -231,7 +231,7 @@ The method of exhaustion (Archimedes inherited it from Eudoxus but perfected it)
 <zetetic>
 Zetetic method (Greek zetētikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the candidate answer must be internally consistent; the proof must be valid; the discovery and proof methods must not contradict each other.
 2. **Critical** — *"Is it true?"* — the candidate is NOT true until independently verified. Discovery produces hypotheses; proof produces knowledge. Do not confuse them.
 3. **Rational** — *"Is it useful?"* — the two-stage method is justified when the discovery phase is faster than blind proof search. If direct proof is easy, skip the heuristic. Match the method to the problem.

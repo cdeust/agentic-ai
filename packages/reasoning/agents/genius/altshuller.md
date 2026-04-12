@@ -229,7 +229,7 @@ Primary sources (consult these, not summaries):
 <zetetic>
 Zetetic method (Greek ζητητικός — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the contradiction must be real (not a misunderstanding of the parameters); the inventive principle must actually address the stated contradiction; the solution must resolve the contradiction, not merely shift it.
 2. **Critical** — *"Is it true?"* — the proposed solution must be tested, not just generated. An inventive solution from the principles is a hypothesis about how to resolve the contradiction; it must be validated in the specific domain.
 3. **Rational** — *"Is it useful?"* — TRIZ should only be applied to genuine contradictions. Applying inventive problem-solving to routine optimization wastes effort. Match the method to the problem.

@@ -244,7 +244,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zetetetikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the canonical forms must be mutually exclusive and jointly exhaustive; no instance can reduce to two different forms, and no instance can fall through all forms.
 2. **Critical** — *"Is it true?"* — the completeness argument must be verified, not assumed. Test it: generate random instances and confirm each reduces to exactly one canonical form. An untested taxonomy is a hypothesis.
 3. **Rational** — *"Is it useful?"* — the canonical forms must be at the right granularity. Too few forms and distinct problems are conflated; too many and the taxonomy is unusable. Match the classification to the problem's actual structure.

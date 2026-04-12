@@ -230,7 +230,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the constraint grid must be internally consistent. Contradictions are signals, not noise: they indicate irregularity, transcription error, or a wrong structural assumption.
 2. **Critical** — *"Is it true?"* — an interpretation is true only if it predicts correctly on unseen data. Explanatory fit to training data is not truth; held-out validation is. This is Ventris's pillar: the Pylos tablet was the proof, not the Knossos grid.
 3. **Rational** — *"Is it useful?"* — the structural analysis is useful only if it constrains the solution space. A grid with no propagated constraints is busywork.

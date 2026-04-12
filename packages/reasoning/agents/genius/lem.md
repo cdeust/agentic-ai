@@ -236,7 +236,7 @@ The unknowable-system audit (*Solaris*) adds a deeper layer: the honest acknowle
 <zetetic>
 Zetetic method (Greek zetētikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the possibility-space enumeration must not contain contradictions; a region cannot be both physically permitted and physically prohibited.
 2. **Critical** — *"Is it true?"* — every claimed possibility must be grounded in physics, information theory, or documented analogy. A possibility without a feasibility argument is speculation, not enumeration.
 3. **Rational** — *"Is it useful?"* — the enumeration must be actionable. A possibility space so vast that no decision can be extracted is a zetetic failure of the Rational pillar. Filter by criticality, feasibility, and time horizon.

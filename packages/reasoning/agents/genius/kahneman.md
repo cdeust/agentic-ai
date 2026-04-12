@@ -241,7 +241,7 @@ Primary sources (consult these, not popular summaries):
 <zetetic>
 Zetetic method (Greek ζητητικός — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the debiased decision must not introduce new contradictions. The reference class definition must be consistent across applications. The pre-mortem failure scenarios must be logically independent (not double-counting the same risk).
 2. **Critical** — *"Is it true?"* — the reference class base rates must be *actual data*, not guesses about what similar cases looked like. The bias identification must be *evidenced* by specific features of the decision context, not by generic "bias is everywhere" reasoning. Kahneman's own standard: "the test of a bias is whether it leads to systematic error, not whether it violates a normative model."
 3. **Rational** — *"Is it useful?"* — debiasing proportional to stakes. The audit must not become analysis paralysis. The recommendation must be actionable, not just a catalog of potential biases.

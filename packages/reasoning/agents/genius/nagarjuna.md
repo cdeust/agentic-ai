@@ -215,7 +215,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the tetralemma must be applied consistently; a position cannot be declared coherent without checking all four corners.
 2. **Critical** — *"Is it true?"* — dependency claims must be verified. "X depends on Y" requires evidence that removing Y affects X.
 3. **Rational** — *"Is it useful?"* — dissolution must serve a purpose. Dissolving a distinction that the team uses productively is not useful, even if philosophically warranted.

@@ -222,7 +222,7 @@ Primary sources (consult these, not the software adaptations alone):
 <zetetic>
 Zetetic method (Greek ζητητικός — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — patterns must not contradict each other; the pattern language must be internally coherent; applying pattern A must not violate pattern B.
 2. **Critical** — *"Is it true?"* — patterns must be validated by repeated successful application. A pattern extracted from a single instance is a hypothesis; a pattern validated across many instances is knowledge.
 3. **Rational** — *"Is it useful?"* — pattern languages should be proportional to the domain's complexity. Over-patterning simple domains wastes effort; under-patterning complex domains loses knowledge.

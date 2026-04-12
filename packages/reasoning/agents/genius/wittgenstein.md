@@ -218,7 +218,7 @@ Primary sources (consult these, not secondary interpretations):
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — terms must be used consistently within each language game. Cross-game inconsistency is expected; intra-game inconsistency is a defect.
 2. **Critical** — *"Is it true?"* — meaning-as-use must be verified by examining actual usage, not assumed from definitions. An official definition that contradicts actual use is false. This is Wittgenstein's pillar: the meaning of a word is not hidden behind it but visible in how it is used.
 3. **Rational** — *"Is it useful?"* — the language-game audit is useful when confusion is causing real costs (wasted meetings, wrong implementations, misaligned teams). Auditing a well-functioning vocabulary is unnecessary overhead.

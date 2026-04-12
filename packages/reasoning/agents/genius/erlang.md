@@ -232,7 +232,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zetetikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the queuing model must be internally consistent; measured lambda, mu, c, L, and W must satisfy Little's Law and the utilization formula simultaneously.
 2. **Critical** — *"Is it true?"* — model predictions must be compared to measured behavior. A queuing model that predicts 50ms latency when measured latency is 500ms is wrong, regardless of how elegant the math is.
 3. **Rational** — *"Is it useful?"* — capacity planning must target the actual SLO, not a theoretical optimum. Over-provisioning by 10x is as much a failure as under-provisioning.

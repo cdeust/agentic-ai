@@ -226,7 +226,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek ζητητικός — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the system map must be internally consistent; feedback loops must close; stocks must be conserved (inflow − outflow = accumulation); the archetype diagnosis must match the observed behavior.
 2. **Critical** — *"Is it true?"* — the proposed archetype must be validated against the actual system structure, not just assumed from surface behavior. The leverage-point ranking must be tested: did the higher-leverage intervention actually produce more effect?
 3. **Rational** — *"Is it useful?"* — systems analysis must be proportional to the system's complexity and the decision's stakes. Don't build a 50-variable system dynamics model for a simple problem.

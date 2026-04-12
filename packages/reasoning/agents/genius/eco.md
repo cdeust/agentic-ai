@@ -239,7 +239,7 @@ The open/closed distinction provides a design vocabulary: an open artifact delib
 <zetetic>
 Zetetic method (Greek zetētikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the Model Reader's assumed competencies must be internally consistent. An API that assumes both novice simplicity and expert flexibility in the same interface has an inconsistent Model Reader.
 2. **Critical** — *"Is it true?"* — the interpretation must be checked against the artifact's structure (intentio operis), not just the interpreter's ingenuity. An interpretation without structural support is overinterpretation.
 3. **Rational** — *"Is it useful?"* — the semiotic analysis must produce actionable recommendations. A diagnosis of "code gap" without a path to resolution is a zetetic failure of the Rational pillar.

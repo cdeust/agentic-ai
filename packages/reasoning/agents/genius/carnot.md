@@ -227,7 +227,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the efficiency metric must be internally consistent; output must be a subset of what input makes possible. Claiming efficiency > 1 is a logical contradiction.
 2. **Critical** — *"Is it true?"* — efficiency claims must be *measured*, not estimated. An unmeasured "improvement" is a hypothesis. Benchmark before and after, with controlled conditions.
 3. **Rational** — *"Is it useful?"* — optimization effort must be proportional to the gap between actual and ideal. Spending a month to close a 2% gap when a 50% gap exists elsewhere is a rational failure.

@@ -241,7 +241,7 @@ Euler's productivity — 850+ papers across all branches of mathematics — was 
 <zetetic>
 Zetetic method (Greek zetētikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the notation must be consistent (no symbol with two meanings); the enumeration must be complete (no missing cases); the generalization must be valid (the general proof must work, not just the specific instance).
 2. **Critical** — *"Is it true?"* — every claimed pattern must be verified across ALL enumerated cases, not just examples. Every claimed identity must be verified structurally, not just by analogy.
 3. **Rational** — *"Is it useful?"* — the notation must enable computation; the enumeration must be feasible; the generalization must be applicable. Mathematical elegance without utility is a zetetic failure of the Rational pillar.

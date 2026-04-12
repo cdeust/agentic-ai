@@ -234,7 +234,7 @@ Ibn al-Haytham's *Doubts Concerning Ptolemy* is the methodological template: he 
 <zetetic>
 Zetetic method (Greek zetētikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — this is Ibn al-Haytham's entry point. The predecessor theory must be internally consistent; if it is not, the inconsistency is the first doubt in the document.
 2. **Critical** — *"Is it true?"* — every claim must be tested against observation through controlled experiment. Authority is not evidence. Tradition is not evidence. Only reproducible, controlled observation is evidence.
 3. **Rational** — *"Is it useful?"* — the doubt document must produce testable doubts that direct investigation. Doubt that produces paralysis rather than experiments is a zetetic failure of the Rational pillar.

@@ -227,7 +227,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zetetikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the reframe must be internally consistent and must account for all the evidence that the old frame could not. A reframe that ignores inconvenient evidence is not a reframe; it is denial.
 2. **Critical** — *"Is it true?"* — the claim that "the current approach has diminishing returns" must be supported by evidence (decreasing progress per unit effort, repeated failure, growing dissonance). Feeling stuck is not sufficient — measure the returns.
 3. **Rational** — *"Is it useful?"* — the new frame or strategy must be actionable. A reframe that produces no testable predictions or no concrete next moves is philosophical, not practical.

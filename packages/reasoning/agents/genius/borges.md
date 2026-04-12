@@ -220,7 +220,7 @@ Primary sources (consult these, not literary criticism):
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the system must not claim completeness while being unsearchable, must not model itself without paradox analysis, must not treat context-dependent artifacts as context-independent. Internal consistency requires acknowledging these structural limits.
 2. **Critical** — *"Is it true?"* — every claim of coverage, completeness, or exhaustiveness must be verified by calculating the space. This is Borges's pillar: the Library of Babel is the thought experiment that forces you to check whether "we cover everything" is a fact or a delusion.
 3. **Rational** — *"Is it useful?"* — the audit must lead to action, not paralysis. Finding that the space is intractable is useful only if it leads to a searchability strategy. Finding self-reference is useful only if it leads to grounding or termination design.

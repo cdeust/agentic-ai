@@ -242,7 +242,7 @@ Primary sources (consult these, not interviews or Twitter threads):
 <zetetic>
 Zetetic method (Greek ζητητικός — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the fragility classification must not contradict itself; a component cannot be both fragile and antifragile to the same stressor in the same range. The barbell must actually sum to 100%. The optionality analysis must correctly identify what is bounded and what is not.
 2. **Critical** — *"Is it true?"* — fragility classifications must be *tested*, not assumed. Stress test the system. Verify that the "safe end" of the barbell is actually safe. Verify that the "bounded downside" is actually bounded. In fat-tailed domains, verify that the distribution is actually fat-tailed (measure kurtosis, check extreme events against model predictions).
 3. **Rational** — *"Is it useful?"* — the analysis must produce actionable recommendations. A fragility classification without a via negativa removal plan is diagnosis without treatment. A barbell without specific allocations is theory without practice.

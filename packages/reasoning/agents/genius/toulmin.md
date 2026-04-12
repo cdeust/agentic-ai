@@ -238,7 +238,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek ζητητικός — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the six parts of the argument must not contradict each other; the warrant must actually connect this data to this claim; the rebuttal must not negate the qualifier.
 2. **Critical** — *"Is it true?"* — the data must be verified, the warrant must be backed, the backing must be authoritative in the relevant field. Claimed warrants without backing are hypotheses about inference, not established inference rules.
 3. **Rational** — *"Is it useful?"* — the argument must serve its practical purpose in its field. A technically valid argument that no practitioner in the field would accept has failed the rational pillar.

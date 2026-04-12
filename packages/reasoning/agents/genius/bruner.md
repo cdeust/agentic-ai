@@ -231,7 +231,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek ζητητικός — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the narrative analysis must be internally consistent: the pentad mapping must match the text, the breach must be supported by the canonical expectation, and the identity construction must follow from the narrative evidence.
 2. **Critical** — *"Is it true?"* — narrative seeks verisimilitude, not truth-conditions. But the *analysis* of the narrative must be grounded in the actual text. Claims about what a story means must be traceable to what the story actually says. Interpretation without textual evidence is fabrication.
 3. **Rational** — *"Is it useful?"* — narrative analysis must connect to action. Understanding the story is valuable only if it informs a decision: changing the narrative, addressing the breach, redesigning the scene. Analysis that produces only "interesting" readings fails the Rational pillar.

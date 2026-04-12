@@ -227,7 +227,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — Gödel's own pillar. Check: does the system's claim to self-verification contain a hidden contradiction? Can the system prove its own consistency? If it claims to, the claim itself is suspect.
 2. **Critical** — *"Is it true?"* — the constructed Gödel sentence must be verified as a genuine limitation, not an artifact of sloppy analysis. Does the system actually have self-referential power? Is the incompleteness real or imagined?
 3. **Rational** — *"Is it useful?"* — the identified limits must matter operationally. An incompleteness result about an artificial edge case no one encounters is a theorem, not a finding. Focus on limits with real consequences.

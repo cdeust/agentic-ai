@@ -230,7 +230,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zetetetikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the stakeholder map must be complete; the two principles must not contradict each other; the priority ordering (liberty > difference principle > efficiency) must be maintained throughout.
 2. **Critical** — *"Is it true?"* — veil-of-ignorance verdicts must be tested against actual stakeholder feedback, not assumed. A fairness claim without stakeholder validation is a hypothesis, not a finding.
 3. **Rational** — *"Is it useful?"* — rigor must match stakes. Full Rawlsian analysis for a button color is a zetetic failure of the Rational pillar. Reserve the apparatus for decisions with real differential impact.

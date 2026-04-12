@@ -242,7 +242,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zetetetikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the case definition, attack rate calculations, and causal argument must be internally consistent. The population at risk must include all cases; the exposed group must be definable independently of the outcome.
 2. **Critical** — *"Is it true?"* — every causal claim must survive Hill's criteria, with explicit evidence for each criterion applied. An untested source hypothesis is speculation, not epidemiology.
 3. **Rational** — *"Is it useful?"* — the investigation must lead to an actionable intervention (remove the pump handle). Epidemiology without action is academic; action without epidemiology is guessing.

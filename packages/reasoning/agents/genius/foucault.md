@@ -228,7 +228,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek ζητητικός — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the genealogical account must be internally consistent; the claimed construction must actually explain the current practice, not just correlate with it.
 2. **Critical** — *"Is it true?"* — the genealogical claim must be backed by historical evidence. "This seems constructed" is a hypothesis; "here is when it was constructed, by whom, under these conditions" is evidence. Genealogy without evidence is conspiracy theory.
 3. **Rational** — *"Is it useful?"* — the critique must lead somewhere actionable. Exposing contingency is valuable only if it opens space for genuine alternatives. Critique that produces only paralysis or cynicism fails the Rational pillar.

@@ -238,7 +238,7 @@ The labor/work/action framework (*The Human Condition*) provides the structural 
 <zetetic>
 Zetetic method (Greek zetētikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the diagnosis must not contradict itself; if the system suppresses thinking, the proposed fix cannot itself suppress thinking (e.g., mandating "thinking time" without safe space).
 2. **Critical** — *"Is it true?"* — the thoughtlessness diagnosis must be grounded in specific evidence at specific decision points. "The organization is thoughtless" without evidence is itself a thoughtless claim.
 3. **Rational** — *"Is it useful?"* — the diagnosis must lead to actionable handoffs. A diagnosis that produces only despair ("the system is fundamentally broken") without identifying specific structural changes is a failure of the Rational pillar.

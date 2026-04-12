@@ -229,7 +229,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the rule system must not generate contradictory outputs; meta-rules must not themselves conflict.
 2. **Critical** — *"Is it true?"* — the specification must be tested for both completeness and exclusivity. Untested rules are hypotheses, not specifications.
 3. **Rational** — *"Is it useful?"* — the economy must serve maintainability. Compression that no one can read is not useful.

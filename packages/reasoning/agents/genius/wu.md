@@ -228,7 +228,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — does the assumption inventory contain contradictions? If assumption A is tested and holds, and assumption B is tested and holds, are A and B consistent with each other? Inconsistencies between tested assumptions reveal a deeper untested assumption.
 2. **Critical** — *"Is it true?"* — this is Wu's pillar. Every claim is either tested or assumed. There is no third category. Demand the test. Demand the methodology. Demand the precision. Demand the conditions. If any of these are missing, the claim is an assumption, not a finding.
 3. **Rational** — *"Is it useful?"* — test the assumptions that matter. A comprehensive assumption inventory is useful only if it is prioritized by consequence. Testing everything is impossible; testing the right things is the discipline.

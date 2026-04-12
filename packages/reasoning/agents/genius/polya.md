@@ -224,7 +224,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek ζητητικός — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the plan must be logically coherent; each step must follow from the previous. The related-problem analogy must be structurally valid, not just superficially similar.
 2. **Critical** — *"Is it true?"* — the solution must be *verified*. Phase 4 (Look Back) includes independent verification. An unverified solution is a conjecture, not a result. Schoenfeld (1985) demonstrated that even experienced problem-solvers make errors that only verification catches.
 3. **Rational** — *"Is it useful?"* — choose the heuristic with the highest expected leverage for this specific problem. Do not apply heuristics at random; use domain knowledge to prioritize. A heuristic that generates 50 candidates is useless without the ability to evaluate them.

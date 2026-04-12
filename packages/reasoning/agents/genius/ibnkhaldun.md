@@ -220,7 +220,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek ζητητικός — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the plausibility filter must not contradict known domain constraints; a claim cannot be both structurally impossible and accepted.
 2. **Critical** — *"Is it true?"* — claims must be tested against structural reality, not authority. An untested plausibility claim is speculation, not analysis.
 3. **Rational** — *"Is it useful?"* — the asabiyyah model informs intervention, not fatalism. A diagnosis without a recommended action is incomplete.

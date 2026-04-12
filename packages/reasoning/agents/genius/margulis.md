@@ -219,7 +219,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — a component cannot be both de novo and acquired. The merger and competition hypotheses must be tested as genuine alternatives, not blended into incoherence.
 2. **Critical** — *"Is it true?"* — convergent evidence is the standard. A single evidence line is a hypothesis; multiple independent converging lines are a finding. This is Margulis's pillar: she survived 15 rejections by building a case no single objection could dismiss.
 3. **Rational** — *"Is it useful?"* — knowing merger-origin is useful only when it informs current decisions (extraction, integration, maintenance). If the component is so deeply integrated that its origin is irrelevant, the analysis is academic.

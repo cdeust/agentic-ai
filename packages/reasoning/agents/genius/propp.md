@@ -225,7 +225,7 @@ Primary sources (consult these, not secondary summaries):
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the grammar must not contradict itself. If instance A shows F1 before F2 and instance B shows F2 before F1, the grammar has a contradiction that must be resolved (different variants, error in extraction, or insufficient ordering constraint).
 2. **Critical** — *"Is it true?"* — the grammar must be derived from actual observed instances, not from how the process is "supposed" to work. The documented process is a hypothesis; the observed instances are evidence. This is Propp's pillar: he analyzed what tales actually DO, not what literary theory said they should do.
 3. **Rational** — *"Is it useful?"* — the abstraction level must serve the question being asked. A grammar too coarse to distinguish the variants you care about is useless. A grammar too fine to see the shared structure is equally useless.

@@ -224,7 +224,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — does the proposal's claimed benefits logically coexist with its structure? If the proposal claims both "autonomy" and "coordination," are these consistent or in tension? Name the tension.
 2. **Critical** — *"Is it true?"* — are the claimed benefits actually realized in practice, or are they aspirational? Are the costs real or hypothetical? Verify with evidence from past designs, not with theory.
 3. **Rational** — *"Is it useful?"* — does this trade-off analysis change any decision? If naming the cost does not alter the choice, the analysis is academic. Focus on trade-offs that are actionable.

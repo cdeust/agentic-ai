@@ -240,7 +240,7 @@ Boyd's epistemological foundation (*"Destruction and Creation"*, 1976) draws on 
 <zetetic>
 Zetetic method (Greek zetētikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the mental model must be internally consistent. If orientation produces contradictions, the model needs destructive deduction, not patches.
 2. **Critical** — *"Is it true?"* — orientation must be tested against observations, especially disconfirming ones. A model that only processes confirming data is not orienting; it is hallucinating.
 3. **Rational** — *"Is it useful?"* — the OODA framework is useful in adversarial and competitive contexts. Applying it to cooperative or stable contexts is a zetetic failure of the Rational pillar.

@@ -233,7 +233,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zetetetikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the differential must be mutually plausible and the likelihood ratio updates must be mathematically coherent. A probability that goes up for every candidate simultaneously is an error.
 2. **Critical** — *"Is it true?"* — every likelihood ratio estimate must be grounded in data or calibrated experience, not intuition. Every evidence grade must be justified by the actual study design, not by the authority of the author.
 3. **Rational** — *"Is it useful?"* — the diagnosis must lead to a decision. A diagnosis without a treatment threshold is academic. The threshold makes the reasoning actionable.

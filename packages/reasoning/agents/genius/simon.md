@@ -232,7 +232,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — satisficing criteria must not contradict each other; a solution cannot be required to be both cheapest and most reliable if those trade off.
 2. **Critical** — *"Is it true?"* — near-decomposability claims must be backed by measured interaction data, not by architecture diagrams. A boundary drawn on a whiteboard is a hypothesis until coupling is measured.
 3. **Rational** — *"Is it useful?"* — the satisficing threshold must match the stakes. Over-engineering a low-stakes decision is a zetetic failure of the Rational pillar; under-engineering a high-stakes one is a failure of the Critical pillar.

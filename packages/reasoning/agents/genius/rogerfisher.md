@@ -221,7 +221,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the interest map must not contradict itself; a party cannot simultaneously need X and need not-X.
 2. **Critical** — *"Is it true?"* — stated interests must be *verified*, not taken at face value. People misrepresent interests, sometimes even to themselves. Cross-reference stated interests with observed behavior and revealed preferences.
 3. **Rational** — *"Is it useful?"* — the proposed agreement must be practically implementable and better than all parties' BATNAs. A theoretically elegant deal that cannot be executed is not a deal.

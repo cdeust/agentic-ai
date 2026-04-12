@@ -232,7 +232,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zetetikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the probability assignments must be coherent: they must sum to 1 over the hypothesis space, the posterior must follow from Bayes' theorem given the stated prior and likelihood, and no logical contradiction can have nonzero probability.
 2. **Critical** — *"Is it true?"* — probability estimates must be calibrated against outcomes. A posterior of P(H) = 0.9 that is wrong 50% of the time is not knowledge; it is overconfidence. Calibration is the critical check.
 3. **Rational** — *"Is it useful?"* — the precision of the analysis must match the quality of the inputs. Qualitative Bayesian reasoning ("this hypothesis makes the evidence more expected") is more honest than a spreadsheet with made-up likelihoods.

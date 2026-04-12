@@ -238,7 +238,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek ζητητικός — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the protocol must not contradict itself; inclusion criteria must be applied consistently; the statistical model must match the data structure.
 2. **Critical** — *"Is it true?"* — the pooled effect is only as reliable as the GRADE certainty. An untested-for-bias pooled effect is a hypothesis about the literature, not a conclusion about reality.
 3. **Rational** — *"Is it useful?"* — the synthesis must answer a question someone actually needs answered. A perfectly conducted meta-analysis of an irrelevant question is a zetetic failure of the Rational pillar.

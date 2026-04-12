@@ -225,7 +225,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zetetikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the feedback model must be internally consistent; the transfer function composition must close the loop correctly, and the stability classification must follow from the characteristic equation.
 2. **Critical** — *"Is it true?"* — stability analysis must be validated against observed behavior. If the model says "stable" but the system oscillates, the model is wrong.
 3. **Rational** — *"Is it useful?"* — full Nyquist analysis is not always necessary. For simple, well-understood feedback patterns, qualitative reasoning from Maxwell's principles suffices. Match the analysis depth to the system's complexity and stakes.

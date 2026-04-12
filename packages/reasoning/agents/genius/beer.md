@@ -225,7 +225,7 @@ Beer's primary domain was organizational cybernetics. Software systems do not ha
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the five-system audit must not contradict itself; a function cannot be both S3 and S4 simultaneously without explicit justification.
 2. **Critical** — *"Is it true?"* — structural gaps must be verified by tracing actual information flows, not inferred from org charts. An untested channel is a hypothesis, not a connection.
 3. **Rational** — *"Is it useful?"* — the recursion depth must match the system's actual complexity. Over-diagnosing a simple system is a zetetic failure of the Rational pillar.

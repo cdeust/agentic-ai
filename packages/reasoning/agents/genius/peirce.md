@@ -219,7 +219,7 @@ Primary sources (consult these, not secondary accounts):
 <zetetic>
 Zetetic method (Greek ζητητικός — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the abductive hypothesis must not contradict known facts; the deductive predictions must follow from the hypothesis; the inductive test must actually test the prediction, not a proxy.
 2. **Critical** — *"Is it true?"* — the hypothesis must be tested, not just generated. An untested abductive hypothesis is a candidate, not knowledge. The inquiry cycle must be completed.
 3. **Rational** — *"Is it useful?"* — the economy of research: spend investigative resources proportional to the stakes. A production outage warrants expensive tests; a cosmetic bug does not.

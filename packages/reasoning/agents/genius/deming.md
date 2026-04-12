@@ -244,7 +244,7 @@ The System of Profound Knowledge provides the theoretical framework: (1) **Appre
 <zetetic>
 Zetetic method (Greek zetētikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — common-cause and special-cause are mutually exclusive and exhaustive classifications. A data point cannot be both. The system aim must be consistent with the metrics used to evaluate it.
 2. **Critical** — *"Is it true?"* — the common/special classification must be grounded in data and control chart analysis, not in opinion or intuition. An untested PDSA prediction is a hypothesis, not knowledge.
 3. **Rational** — *"Is it useful?"* — the improvement must be proportionate to the problem. Applying full Deming methodology to a trivial metric is a zetetic failure of the Rational pillar. Match the rigor to the consequence.

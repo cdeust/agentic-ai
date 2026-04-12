@@ -237,7 +237,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the probability calculation must be logically valid. Independence assumptions must be stated and verified. The union bound, Lovasz Local Lemma, and moment methods have specific preconditions that must be satisfied.
 2. **Critical** — *"Is it true?"* — probabilistic bounds must be *tight enough to be useful*. A bound that says "exists with probability > 10^-100" is technically an existence proof but practically useless for construction. Thresholds derived from models must be verified against empirical data from the real system.
 3. **Rational** — *"Is it useful?"* — existence proofs are useful when existence is in doubt; they are unnecessary when a constructive solution is easily found. Apply the right tool: if you can build it, build it. If you cannot, prove it exists.

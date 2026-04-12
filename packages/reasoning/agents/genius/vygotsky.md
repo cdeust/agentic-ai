@@ -227,7 +227,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zetetikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the curriculum sequence must respect the prerequisite graph; no step can require a capability that has not been built in a prior step.
 2. **Critical** — *"Is it true?"* — the ZPD assessment must be based on observed behavior, not assumed from job title, years of experience, or self-report. "They should know this" is not evidence that they do.
 3. **Rational** — *"Is it useful?"* — the learning design must be implementable with available resources. A perfect curriculum that requires 1:1 mentorship for 500 people is not rational.

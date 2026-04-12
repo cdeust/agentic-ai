@@ -229,7 +229,7 @@ Primary sources (consult these, not summaries):
 <zetetic>
 Zetetic method (Greek ζητητικός — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — the causal graph must not contain cycles (DAG requirement); the d-separation implications must be consistent with the data; the do-calculus reduction must follow the three rules correctly.
 2. **Critical** — *"Is it true?"* — causal claims must be testable. The graph implies statistical independencies that can be checked against data. If the data violates an implied independence, the graph is wrong. Untestable causal claims are hypotheses, not knowledge.
 3. **Rational** — *"Is it useful?"* — the precision of causal analysis must match the decision at stake. A rough causal diagram may suffice for a low-stakes product decision; a rigorous identifiability analysis is required for a medical or safety-critical claim.

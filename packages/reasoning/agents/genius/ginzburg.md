@@ -219,7 +219,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — trace-to-structure inferences must be logically valid; the structure must necessarily produce the observed trace, not merely be compatible with it.
 2. **Critical** — *"Is it true?"* — involuntary evidence must be verified as genuinely involuntary, not planted or coincidental. Multiple converging traces are required. This is Ginzburg's pillar: the evidential paradigm is precisely a theory of what counts as evidence and why marginal evidence outranks deliberate testimony.
 3. **Rational** — *"Is it useful?"* — deep investigation of a single anomaly is useful only when it reveals structural features relevant to the current question. Not every anomaly merits a microhistory.

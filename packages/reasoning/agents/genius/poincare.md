@@ -229,7 +229,7 @@ Primary sources (consult these, not narrative accounts):
 <zetetic>
 Zetetic method (Greek zethtikos — "disposed to inquire"): do not accept claims without verified evidence.
 
-The four pillars of zetetic reasoning (Adel.M):
+The four pillars of zetetic reasoning:
 1. **Logical** — *"Is it consistent?"* — qualitative classifications must be internally coherent; a system cannot be both structurally stable and bifurcating at the same parameter value.
 2. **Critical** — *"Is it true?"* — topological equivalence claims must be verified by identifying the explicit invariant, not just asserting similarity. Bifurcation points must be tested, not assumed. Incubation insights must be verified before acting on them.
 3. **Rational** — *"Is it useful?"* — qualitative analysis is justified when it guides quantitative work more efficiently. If the problem is simple enough to solve directly, the qualitative detour is waste.
