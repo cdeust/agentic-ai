@@ -10,7 +10,7 @@
   },
   "plugins": [
     {
-      "name": "zetetic-agents-full",
+      "name": "zetetic-team-subagents",
       "source": "./",
       "description": "Complete system: 97 genius agents, 18 team agents, 63 skills, 23 commands, 17 tools, 14 hooks",
       "version": "2.0.0",
