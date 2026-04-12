@@ -1,12 +1,28 @@
 {
   "name": "zetetic-marketplace",
-  "description": "Zetetic Agents — 97 reasoning patterns from history's greatest minds",
+  "owner": {
+    "name": "Clement Deust",
+    "email": "admin@ai-architect.tools"
+  },
+  "metadata": {
+    "description": "Zetetic Agents — 97 reasoning patterns from history's greatest minds",
+    "version": "2.0.0"
+  },
   "plugins": [
     {
       "name": "zetetic-agents-full",
-      "path": ".",
+      "source": "./",
+      "description": "Complete system: 97 genius agents, 18 team agents, 63 skills, 23 commands, 17 tools, 14 hooks",
       "version": "2.0.0",
-      "description": "Complete system: 97 genius agents, 18 team agents, 63 skills, 23 commands, 17 tools, 14 hooks"
+      "author": {
+        "name": "Clement Deust",
+        "email": "admin@ai-architect.tools"
+      },
+      "homepage": "https://ai-architect.tools",
+      "repository": "https://github.com/cdeust/zetetic-team-subagents",
+      "license": "MIT",
+      "keywords": ["agents", "reasoning", "research", "zetetic", "epistemic", "claude-code"],
+      "category": "research"
     }
   ]
 }
