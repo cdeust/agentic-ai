@@ -1,6 +1,5 @@
 <p align="center">
-  <h1 align="center">Zetetic Agents</h1>
-  <p align="center"><strong>97 reasoning patterns from history's greatest minds.<br>One epistemic standard none of them can bypass.</strong></p>
+  <img src="assets/banner.svg" alt="Zetetic Agents — 97 reasoning patterns, one epistemic standard" width="100%"/>
 </p>
 
 <p align="center">
@@ -8,11 +7,7 @@
   <img src="https://img.shields.io/badge/Agents-97_genius_+_18_team-8A2BE2" alt="Agents">
   <img src="https://img.shields.io/badge/Skills-63-green" alt="Skills">
   <img src="https://img.shields.io/badge/Tools-17-orange" alt="Tools">
-</p>
-
-<p align="center">
-  The open-source research and engineering agent system for <a href="https://claude.com/claude-code">Claude Code</a>.<br>
-  Every claim cites its source. Every commit is checked. Every agent says "I don't know" when it doesn't.
+  <img src="https://img.shields.io/badge/Hooks-14-red" alt="Hooks">
 </p>
 
 ---

@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 340" width="820" height="340">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&amp;display=swap');
+      .mono { font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="820" height="340" rx="8" fill="#0d1117"/>
+
+  <!-- ASCII art title -->
+  <text class="mono" x="32" y="52" fill="#7fbbb3" font-size="13" font-weight="700" xml:space="preserve">███████╗███████╗████████╗███████╗████████╗██╗ ██████╗</text>
+  <text class="mono" x="32" y="70" fill="#7fbbb3" font-size="13" font-weight="700" xml:space="preserve">╚══███╔╝██╔════╝╚══██╔══╝██╔════╝╚══██╔══╝██║██╔════╝</text>
+  <text class="mono" x="32" y="88" fill="#7fbbb3" font-size="13" font-weight="700" xml:space="preserve">  ███╔╝ █████╗     ██║   █████╗     ██║   ██║██║</text>
+  <text class="mono" x="32" y="106" fill="#7fbbb3" font-size="13" font-weight="700" xml:space="preserve"> ███╔╝  ██╔══╝     ██║   ██╔══╝     ██║   ██║██║</text>
+  <text class="mono" x="32" y="124" fill="#7fbbb3" font-size="13" font-weight="700" xml:space="preserve">███████╗███████╗   ██║   ███████╗   ██║   ██║╚██████╗</text>
+  <text class="mono" x="32" y="142" fill="#7fbbb3" font-size="13" font-weight="700" xml:space="preserve">╚══════╝╚══════╝   ╚═╝   ╚══════╝   ╚═╝   ╚═╝ ╚═════╝</text>
+
+  <!-- Subtitle -->
+  <text class="mono" x="32" y="174" fill="#859289" font-size="14">A G E N T S</text>
+
+  <!-- Stats -->
+  <text class="mono" x="32" y="208" fill="#9da9a0" font-size="12">97 reasoning patterns  ·  63 skills  ·  14 hooks  ·  17 tools</text>
+
+  <!-- Agent chain -->
+  <text class="mono" x="32" y="244" fill="#4e5a5a" font-size="11">Pearl ── Peirce ── Feynman ── Toulmin ── Cochrane</text>
+  <text class="mono" x="32" y="260" fill="#4e5a5a" font-size="11">causal    abductive  integrity   argument   evidence</text>
+  <text class="mono" x="32" y="276" fill="#4e5a5a" font-size="11">graphs    hypotheses checks      structure  synthesis</text>
+
+  <!-- Principles -->
+  <text class="mono" x="32" y="312" fill="#3b4546" font-size="10">every claim cites its source · every commit is checked · every agent says "I don't know" when it doesn't</text>
+
+  <!-- for Claude Code -->
+  <text class="mono" x="660" y="312" fill="#3b4546" font-size="10">for Claude Code</text>
+</svg>
