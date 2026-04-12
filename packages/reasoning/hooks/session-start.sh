@@ -32,6 +32,8 @@ echo ""
 echo -e "${LIGHT}  every claim cites its source · every commit is checked${RESET}"
 echo -e "${LIGHT}  every agent says \"I don't know\" when it doesn't${RESET}"
 echo ""
+echo -e "${TEAL}  ai-architect.tools${RESET}"
+echo ""
 
 # --- Status ---
 echo -e "${WHITE}${BOLD}  ◆ Repository${RESET}"

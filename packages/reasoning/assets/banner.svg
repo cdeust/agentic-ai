@@ -31,6 +31,6 @@
   <!-- Principles -->
   <text class="mono" x="32" y="312" fill="#bec3be" font-size="10">every claim cites its source · every commit is checked · every agent says "I don't know"  when it doesn't</text>
 
-  <!-- for Claude Code -->
-  <text class="mono" x="660" y="312" fill="#96a09b" font-size="10">for Claude Code</text>
+  <!-- Ecosystem brand -->
+  <text class="mono" x="640" y="312" fill="#7fbbb3" font-size="10" opacity="0.6">ai-architect.tools</text>
 </svg>
