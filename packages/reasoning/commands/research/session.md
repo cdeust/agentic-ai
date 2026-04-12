@@ -29,4 +29,10 @@ Start, resume, or close a research session. Manages research context: question, 
 
 7. All notebook entries during a session should reference the active research question. Remind the user to use `/research-notebook add` for detailed entries.
 
+8. During an active session, the following compute and preview tools are available:
+   - `tools/docker-runner.sh` — run experiments in isolated Docker containers
+   - `tools/mlx-compute.sh` — run ML experiments on Apple Silicon with MLX
+   - `tools/live-preview.sh` — preview research documents (Markdown, LaTeX, HTML)
+   All three tools auto-log to the lab notebook when a session is active.
+
 $ARGUMENTS

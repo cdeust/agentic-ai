@@ -2,7 +2,7 @@
 
 **The only Claude Code agent system where every claim must cite its source, every commit is checked for invented constants, and every agent refuses to answer when it doesn't know.**
 
-45 agents. 36 skills. 16 commands. 10 tools. 8 hooks. One epistemic standard that none of them can bypass.
+45 agents. 36 skills. 16 commands. 13 tools. 8 hooks. One epistemic standard that none of them can bypass.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -34,7 +34,7 @@ zetetic-team-subagents/
   agents/genius/      27 genius agents (curie, fermi, dijkstra, jobs, ...)
   skills/             36 skills across 7 categories
   commands/           16 slash commands (/zcommit, /qestimate, /qverify, ...)
-  tools/              10 shell utilities (zetetic-checker, difficulty-book-manager, ...)
+  tools/              13 shell utilities (zetetic-checker, difficulty-book-manager, ...)
   hooks/               8 automated enforcement hooks
   scripts/             2 agent spawning scripts
 ```
@@ -121,11 +121,11 @@ Quick slash commands for daily use:
 | **Quality gates** | `/pre-commit` `/pre-push` |
 | **Zetetic shortcuts** | `/qverify` `/qestimate` `/qreview` `/qdifficulty` `/qintegrity` |
 
-### Tools (10)
+### Tools (13)
 
 Shell utilities that agents, commands, and hooks call:
 
-`agent-catalog` `zetetic-checker` `difficulty-book-manager` `shape-router` `skill-runner` `worktree-manager` `session-store` `hook-runner` `balance-auditor` `profile-runner`
+`agent-catalog` `zetetic-checker` `difficulty-book-manager` `shape-router` `skill-runner` `worktree-manager` `session-store` `hook-runner` `balance-auditor` `profile-runner` `docker-runner` `mlx-compute` `live-preview`
 
 ### Hooks (8) — The Differentiator
 

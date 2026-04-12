@@ -61,6 +61,8 @@ hand_off:
 9. **Commit the change.** `git commit` with message linking to the hypothesis:
    `hypothesis: [description] — expected [direction] on [metric]`.
 10. **curie: run benchmark.** Execute the same measurement procedure as baseline. Same N, same conditions.
+    Use `tools/mlx-compute.sh benchmark` for Apple Silicon ML experiments or
+    `tools/docker-runner.sh run` for isolated reproducible environments.
 11. **laplace: Bayesian comparison.** Prior: previous iterations' results. Likelihood: current data.
     Posterior: probability that this change is an improvement. Report: posterior probability,
     credible interval, Bayes factor.
