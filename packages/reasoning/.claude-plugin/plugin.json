@@ -1,0 +1,29 @@
+{
+  "name": "zetetic-agents",
+  "description": "97 genius reasoning patterns from history's greatest minds. One epistemic standard none of them can bypass.",
+  "version": "2.0.0",
+  "author": {
+    "name": "Adel M.",
+    "url": "https://github.com/cdeust"
+  },
+  "homepage": "https://github.com/cdeust/zetetic-team-subagents",
+  "repository": "https://github.com/cdeust/zetetic-team-subagents",
+  "license": "MIT",
+  "keywords": [
+    "research",
+    "reasoning",
+    "epistemology",
+    "zetetic",
+    "genius-agents",
+    "scientific-method",
+    "causal-reasoning",
+    "evidence-synthesis",
+    "paper-writing",
+    "systematic-review"
+  ],
+  "skills": "./skills/",
+  "commands": "./commands/",
+  "agents": "./agents/",
+  "hooks": "./hooks/hooks.json",
+  "bin": "./tools/"
+}

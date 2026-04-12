@@ -1,0 +1,12 @@
+{
+  "name": "zetetic-marketplace",
+  "description": "Zetetic Agents — 97 reasoning patterns from history's greatest minds",
+  "plugins": [
+    {
+      "name": "zetetic-agents-full",
+      "path": ".",
+      "version": "2.0.0",
+      "description": "Complete system: 97 genius agents, 18 team agents, 63 skills, 23 commands, 17 tools, 14 hooks"
+    }
+  ]
+}

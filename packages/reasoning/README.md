@@ -46,6 +46,16 @@
 
 ## Install
 
+### Plugin install (recommended)
+
+```bash
+# Install from marketplace
+/plugin marketplace add cdeust/zetetic-team-subagents
+/plugin install zetetic-agents@zetetic-marketplace
+```
+
+### Manual install
+
 ```bash
 git clone https://github.com/cdeust/zetetic-team-subagents.git
 
