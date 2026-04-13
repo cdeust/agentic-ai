@@ -1,11 +1,23 @@
 #!/usr/bin/env bash
 # post-tool-error-routing.sh — Suggest diagnostic genius agent when a tool call fails
-# Runs after tool errors; must complete in <500ms.
-# Input: $1 = tool name, $2 = error message (or excerpt)
+# Runs after PostToolUseFailure; reads context from stdin JSON.
 set -euo pipefail
 
-TOOL="${1:-}"
-ERROR="${2:-}"
+# Read hook context from stdin
+HOOK_INPUT=""
+if ! [ -t 0 ]; then HOOK_INPUT="$(timeout 3 cat 2>/dev/null)" || HOOK_INPUT=""; fi
+[[ -z "$HOOK_INPUT" ]] && exit 0
+
+# Extract tool name and error from stdin JSON
+if command -v jq &>/dev/null; then
+  TOOL=$(echo "$HOOK_INPUT" | jq -r '.tool_name // empty' 2>/dev/null || echo "")
+  ERROR=$(echo "$HOOK_INPUT" | jq -r '.error // .tool_error // empty' 2>/dev/null || echo "")
+else
+  TOOL=$(echo "$HOOK_INPUT" | grep -oE '"tool_name":\s*"[^"]*"' 2>/dev/null | head -1 | sed 's/.*"tool_name":\s*"//' | sed 's/"$//' || echo "")
+  ERROR=$(echo "$HOOK_INPUT" | grep -oE '"error":\s*"[^"]*"' 2>/dev/null | head -1 | sed 's/.*"error":\s*"//' | sed 's/"$//' || echo "")
+fi
+
+[[ -z "$ERROR" ]] && exit 0
 ERROR_LOWER="$(echo "$ERROR" | tr '[:upper:]' '[:lower:]')"
 
 suggest() {

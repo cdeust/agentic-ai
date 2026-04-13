@@ -4,8 +4,19 @@
 # Input: $1 = file path being written/edited, $2 = temp file with new content (or stdin)
 set -euo pipefail
 
-FILE="${1:-}"
-CONTENT_FILE="${2:-}"
+# Read hook context from stdin (Claude Code passes tool args as JSON)
+HOOK_INPUT=""
+if ! [ -t 0 ]; then
+  HOOK_INPUT="$(timeout 3 cat 2>/dev/null)" || HOOK_INPUT=""
+fi
+
+# Extract file path from context
+if command -v jq &>/dev/null; then
+  FILE=$(echo "$HOOK_INPUT" | jq -r '.tool_input.file_path // empty' 2>/dev/null || echo "")
+else
+  FILE=$(echo "$HOOK_INPUT" | grep -oE '"file_path":\s*"[^"]*"' 2>/dev/null | head -1 | sed 's/.*"file_path":\s*"//' | sed 's/"$//' || echo "")
+fi
+
 VIOLATIONS=0
 
 [[ -z "$FILE" ]] && exit 0
@@ -15,13 +26,12 @@ case "$FILE" in
   *.md|*.json|*.yaml|*.yml|*.toml|*.lock|*.txt|*.csv) exit 0 ;;
 esac
 
-# Read content from temp file or stdin
-if [[ -n "$CONTENT_FILE" && -f "$CONTENT_FILE" ]]; then
-  CONTENT="$(cat "$CONTENT_FILE")"
-elif [[ ! -t 0 ]]; then
-  CONTENT="$(cat)"
+# Extract content from hook context (new_string for Edit, content for Write)
+if command -v jq &>/dev/null; then
+  CONTENT=$(echo "$HOOK_INPUT" | jq -r '.tool_input.new_string // .tool_input.content // empty' 2>/dev/null || echo "")
 else
-  exit 0
+  CONTENT=$(echo "$HOOK_INPUT" | grep -oE '"new_string":\s*"[^"]*"' 2>/dev/null | head -1 | sed 's/.*"new_string":\s*"//' | sed 's/"$//' || echo "")
+  [[ -z "$CONTENT" ]] && CONTENT=$(echo "$HOOK_INPUT" | grep -oE '"content":\s*"[^"]*"' 2>/dev/null | head -1 | sed 's/.*"content":\s*"//' | sed 's/"$//' || echo "")
 fi
 
 [[ -z "$CONTENT" ]] && exit 0

@@ -8,7 +8,7 @@ set -euo pipefail
 # Read hook context from stdin if available
 CONTEXT=""
 if ! [ -t 0 ]; then
-  CONTEXT="$(cat)"
+  CONTEXT="$(timeout 3 cat 2>/dev/null)" || CONTEXT=""
 fi
 
 # Extract file path from context (Claude Code passes tool args as JSON)

@@ -3,19 +3,27 @@
 # Fires after WebFetch/WebSearch. Lightweight (< 1s). Silent no-op if no active provenance.
 set -euo pipefail
 
+# Path resolution: CLAUDE_PLUGIN_ROOT → script-relative → git root
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(dirname "$SCRIPT_DIR")}"
+TOOLS="${PLUGIN_ROOT}/tools"
+[[ ! -d "$TOOLS" ]] && TOOLS="$(git rev-parse --show-toplevel 2>/dev/null || pwd)/tools"
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-TOOLS="$REPO_ROOT/tools"
 RESEARCH_DIR="$REPO_ROOT/research"
 
 # Guard: provenance-manager must exist
 [[ ! -x "$TOOLS/provenance-manager.sh" ]] && exit 0
+
+# Read hook context from stdin
+HOOK_INPUT=""
+if ! [ -t 0 ]; then HOOK_INPUT="$(timeout 3 cat 2>/dev/null)" || HOOK_INPUT=""; fi
 
 # Guard: check for active research session
 PROVENANCE_FILE=""
 if [[ -f "$RESEARCH_DIR/NOTEBOOK.md" ]]; then
   # Find the most recent .provenance.md in the research directory
   PROVENANCE_FILE="$(find "$RESEARCH_DIR" -maxdepth 2 -name '*.provenance.md' -type f -print0 \
-    | xargs -0 ls -t 2>/dev/null | head -1)"
+    | xargs -0 ls -t 2>/dev/null | head -1 || true)"
 fi
 
 # Also check for standalone .provenance.md in repo root
@@ -26,10 +34,15 @@ fi
 # Guard: no active provenance file — silent no-op
 [[ -z "$PROVENANCE_FILE" ]] && exit 0
 
-# Extract URL or query from hook arguments
-# $1 = tool name (WebFetch or WebSearch), $2 = URL or query string
-TOOL_NAME="${1:-unknown}"
-SOURCE="${2:-}"
+# Extract URL or query from hook stdin context
+if command -v jq &>/dev/null; then
+  TOOL_NAME=$(echo "$HOOK_INPUT" | jq -r '.tool_name // "unknown"' 2>/dev/null || echo "unknown")
+  SOURCE=$(echo "$HOOK_INPUT" | jq -r '.tool_input.url // .tool_input.query // empty' 2>/dev/null || echo "")
+else
+  TOOL_NAME=$(echo "$HOOK_INPUT" | grep -oE '"tool_name":\s*"[^"]*"' 2>/dev/null | head -1 | sed 's/.*"tool_name":\s*"//' | sed 's/"$//' || echo "unknown")
+  SOURCE=$(echo "$HOOK_INPUT" | grep -oE '"url":\s*"[^"]*"' 2>/dev/null | head -1 | sed 's/.*"url":\s*"//' | sed 's/"$//' || echo "")
+  [[ -z "$SOURCE" ]] && SOURCE=$(echo "$HOOK_INPUT" | grep -oE '"query":\s*"[^"]*"' 2>/dev/null | head -1 | sed 's/.*"query":\s*"//' | sed 's/"$//' || echo "")
+fi
 [[ -z "$SOURCE" ]] && exit 0
 
 TIMESTAMP="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
@@ -42,7 +55,7 @@ TIMESTAMP="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
   --status "consulted" \
   --timestamp "$TIMESTAMP" 2>/dev/null || {
   # Fallback: direct append if manager fails
-  echo "| $TIMESTAMP | $TOOL_NAME | $SOURCE | consulted |" >> "$PROVENANCE_FILE"
+  echo "| $TIMESTAMP | $TOOL_NAME | $SOURCE | consulted |" >> "$PROVENANCE_FILE" || true
 }
 
 exit 0

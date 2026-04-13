@@ -2,8 +2,13 @@
 # session-start-research.sh — Load research-specific context at session start
 # Extension to session-start.sh for active research sessions.
 set -euo pipefail
+
+# Path resolution: CLAUDE_PLUGIN_ROOT → script-relative → git root
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(dirname "$SCRIPT_DIR")}"
+TOOLS="${PLUGIN_ROOT}/tools"
+[[ ! -d "$TOOLS" ]] && TOOLS="$(git rev-parse --show-toplevel 2>/dev/null || pwd)/tools"
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-TOOLS="$REPO_ROOT/tools"
 SESSION_FILE="$REPO_ROOT/research/.session.json"
 NOTEBOOK="$REPO_ROOT/research/NOTEBOOK.md"
 
@@ -35,11 +40,11 @@ else
 fi
 
 # Provenance files
-prov_count=$(find "$REPO_ROOT" -name '.provenance-*.md' -type f 2>/dev/null | wc -l | tr -d ' ')
+prov_count=$(find "$REPO_ROOT" -name '.provenance-*.md' -type f 2>/dev/null | wc -l | tr -d ' ' || echo "0")
 if [[ "$prov_count" -gt 0 ]]; then
   echo "## Provenance Files"
   echo "Active provenance sidecars: $prov_count"
-  "$TOOLS/provenance-manager.sh" list 2>/dev/null | head -5
+  "$TOOLS/provenance-manager.sh" list 2>/dev/null | head -5 || true
   [[ "$prov_count" -gt 5 ]] && echo "  ... and $((prov_count - 5)) more"
   echo ""
 fi

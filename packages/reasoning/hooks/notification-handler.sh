@@ -6,7 +6,7 @@ REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 # Read notification from stdin
 NOTIFICATION=""
 if ! [ -t 0 ]; then
-  NOTIFICATION="$(cat)"
+  NOTIFICATION="$(timeout 3 cat 2>/dev/null)" || NOTIFICATION=""
 fi
 
 # Log the notification
@@ -14,7 +14,7 @@ echo "=== Agent Task Completed ===" >&2
 echo "$NOTIFICATION" | head -5 >&2
 
 # Check for unmerged agent worktrees
-ACTIVE=$(git -C "$REPO_ROOT" worktree list 2>/dev/null | grep "agent/" | wc -l | tr -d ' ')
+ACTIVE=$(git -C "$REPO_ROOT" worktree list 2>/dev/null | grep "agent/" | wc -l | tr -d ' ' || echo "0")
 if [[ "$ACTIVE" -gt 0 ]]; then
   echo "Active agent worktrees: $ACTIVE (run /agent-status for details)" >&2
 fi

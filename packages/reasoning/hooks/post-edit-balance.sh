@@ -4,7 +4,7 @@ set -euo pipefail
 
 CONTEXT=""
 if ! [ -t 0 ]; then
-  CONTEXT="$(cat)"
+  CONTEXT="$(timeout 3 cat 2>/dev/null)" || CONTEXT=""
 fi
 
 FILE_PATH=$(echo "$CONTEXT" | grep -oE '"file_path":\s*"[^"]*"' 2>/dev/null | head -1 | sed 's/.*"file_path":\s*"//' | sed 's/"//' || echo "")

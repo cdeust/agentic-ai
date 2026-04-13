@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 # session-start.sh — Load context at session start
 set -euo pipefail
+
+# Path resolution: CLAUDE_PLUGIN_ROOT → script-relative → git root
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(dirname "$SCRIPT_DIR")}"
+TOOLS="${PLUGIN_ROOT}/tools"
+[[ ! -d "$TOOLS" ]] && TOOLS="$(git rev-parse --show-toplevel 2>/dev/null || pwd)/tools"
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-TOOLS="$REPO_ROOT/tools"
 
 # --- Colors (true color RGB — readable on dark backgrounds) ---
 TEAL="\033[1;38;2;127;187;179m"
@@ -56,3 +61,5 @@ echo -e "${WHITE}${BOLD}  ◆ Session Cache${RESET}"
 echo ""
 
 echo -e "${LIGHT}  Reminder: call query_methodology for cognitive profile, recall for Cortex context.${RESET}"
+
+exit 0

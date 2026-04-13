@@ -2,6 +2,17 @@
 # pre-push-provenance.sh — Verify provenance sidecars exist for research files before push
 # Configurable strictness: PROVENANCE_STRICT=block (default) or PROVENANCE_STRICT=warn
 set -euo pipefail
+
+# Command guard: only fire on git push
+HOOK_INPUT=""
+if ! [ -t 0 ]; then HOOK_INPUT="$(timeout 3 cat 2>/dev/null)" || HOOK_INPUT=""; fi
+if command -v jq &>/dev/null; then
+  BASH_CMD=$(echo "$HOOK_INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null || echo "")
+else
+  BASH_CMD=$(echo "$HOOK_INPUT" | grep -oE '"command":\s*"[^"]*"' 2>/dev/null | head -1 | sed 's/.*"command":\s*"//' | sed 's/"$//' || echo "")
+fi
+if ! echo "$BASH_CMD" | grep -q 'git push' 2>/dev/null; then exit 0; fi
+
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 STRICTNESS="${PROVENANCE_STRICT:-warn}"
 
@@ -55,7 +66,7 @@ if [[ $MISSING -gt 0 ]]; then
   echo "$MISSING file(s) with research content lack provenance sidecars."
   if [[ "$STRICTNESS" == "block" ]]; then
     echo "BLOCKED: Set PROVENANCE_STRICT=warn to override."
-    exit 1
+    exit 2
   else
     echo "WARNING: Consider adding provenance before merging."
   fi

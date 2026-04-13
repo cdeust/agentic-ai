@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
 # post-commit-difficulty.sh — After commit, check if difficulty books need updating
 set -euo pipefail
+
+# Command guard: only fire after git commit (matcher: "Bash" fires on ALL Bash calls)
+HOOK_INPUT=""
+if ! [ -t 0 ]; then HOOK_INPUT="$(timeout 3 cat 2>/dev/null)" || HOOK_INPUT=""; fi
+if command -v jq &>/dev/null; then
+  BASH_CMD=$(echo "$HOOK_INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null || echo "")
+else
+  BASH_CMD=$(echo "$HOOK_INPUT" | grep -oE '"command":\s*"[^"]*"' 2>/dev/null | head -1 | sed 's/.*"command":\s*"//' | sed 's/"$//' || echo "")
+fi
+if ! echo "$BASH_CMD" | grep -q 'git commit' 2>/dev/null; then exit 0; fi
+
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 DB_DIR="$REPO_ROOT/tasks"
 
