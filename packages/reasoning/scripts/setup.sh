@@ -5,6 +5,7 @@
 #   scripts/setup.sh [install]       Install all components to ~/.claude/
 #   scripts/setup.sh update          Update from plugin source (preserves user edits)
 #   scripts/setup.sh uninstall       Remove all installed components
+#   scripts/setup.sh configure       Create/show model override config
 #   scripts/setup.sh --dry-run       Show what would be done without doing it
 #   scripts/setup.sh --verbose       Show detailed progress
 #   scripts/setup.sh --help          Show this help
@@ -21,8 +22,9 @@
 set -euo pipefail
 
 # ── Config ─────────────────────────────────────────────────────────────
-VERSION="2.1.0"
+VERSION="2.2.0"
 MANIFEST_FILE="$HOME/.claude/.zetetic-manifest.json"
+MODEL_CONFIG="$HOME/.claude/zetetic-agent-models.json"
 BACKUP_SUFFIX=".zetetic-backup"
 NAMESPACE="zetetic"  # prefix for collision avoidance
 
@@ -141,6 +143,142 @@ save_manifest() {
 MANIFEST
 }
 
+# ── Model override resolution ─────────────────────────────────────────
+# Reads ~/.claude/zetetic-agent-models.json and resolves the model for an agent.
+# Config schema:
+#   { "agents": { "engineer": "sonnet", ... }, "patterns": [ { "glob": "genius/*", "model": "sonnet" } ] }
+# Precedence: exact match > first glob match > default from frontmatter
+MODEL_OVERRIDES_LOADED=false
+MODEL_OVERRIDES_AGENTS=""
+MODEL_OVERRIDES_PATTERNS=""
+
+load_model_overrides() {
+  [[ "$MODEL_OVERRIDES_LOADED" == true ]] && return
+  MODEL_OVERRIDES_LOADED=true
+
+  if [[ ! -f "$MODEL_CONFIG" ]]; then
+    return
+  fi
+
+  if ! command -v python3 &>/dev/null; then
+    warn "python3 not found — model overrides require python3. Skipping."
+    return
+  fi
+
+  # Validate config
+  if ! python3 -c "import json; json.load(open('$MODEL_CONFIG'))" 2>/dev/null; then
+    warn "Invalid JSON in $MODEL_CONFIG — skipping model overrides."
+    return
+  fi
+
+  MODEL_OVERRIDES_AGENTS=$(python3 -c "
+import json
+with open('$MODEL_CONFIG') as f:
+    d = json.load(f)
+for name, model in d.get('agents', {}).items():
+    print(f'{name}={model}')
+" 2>/dev/null || true)
+
+  MODEL_OVERRIDES_PATTERNS=$(python3 -c "
+import json
+with open('$MODEL_CONFIG') as f:
+    d = json.load(f)
+for p in d.get('patterns', []):
+    print(f\"{p['glob']}={p['model']}\")
+" 2>/dev/null || true)
+
+  if [[ -n "$MODEL_OVERRIDES_AGENTS" || -n "$MODEL_OVERRIDES_PATTERNS" ]]; then
+    local agent_count; agent_count=$(echo "$MODEL_OVERRIDES_AGENTS" | grep -c '=' 2>/dev/null || echo "0")
+    local pattern_count; pattern_count=$(echo "$MODEL_OVERRIDES_PATTERNS" | grep -c '=' 2>/dev/null || echo "0")
+    ok "Model overrides loaded: $agent_count agents, $pattern_count patterns"
+  fi
+}
+
+resolve_model() {
+  local agent_rel_path="$1" default_model="$2"
+
+  # No config → use default
+  [[ -z "$MODEL_OVERRIDES_AGENTS" && -z "$MODEL_OVERRIDES_PATTERNS" ]] && { echo "$default_model"; return; }
+
+  # Agent name: strip .md, use relative path with / → / for genius/fermi style
+  local agent_name="${agent_rel_path%.md}"
+
+  # 1. Exact match in agents dict
+  local exact
+  exact=$(echo "$MODEL_OVERRIDES_AGENTS" | grep "^${agent_name}=" 2>/dev/null | head -1 | cut -d= -f2)
+  if [[ -n "$exact" ]]; then
+    echo "$exact"
+    return
+  fi
+
+  # 2. Glob patterns — first match wins
+  while IFS= read -r pattern_line; do
+    [[ -z "$pattern_line" ]] && continue
+    local glob_pattern="${pattern_line%%=*}"
+    local glob_model="${pattern_line#*=}"
+    # Convert glob to bash pattern: * → anything
+    # shellcheck disable=SC2254
+    case "$agent_name" in
+      $glob_pattern) echo "$glob_model"; return ;;
+    esac
+  done <<< "$MODEL_OVERRIDES_PATTERNS"
+
+  # 3. No match → default
+  echo "$default_model"
+}
+
+# Apply model override to a .md file during copy
+# Writes to dst with model: line rewritten if override exists
+copy_file_with_model() {
+  local src="$1" dst="$2" agent_rel_path="$3"
+  local dst_dir; dst_dir="$(dirname "$dst")"
+
+  # Extract current model from frontmatter
+  local current_model
+  current_model=$(sed -n '/^---$/,/^---$/{ /^model:/s/^model: *//p; }' "$src" 2>/dev/null | head -1)
+  [[ -z "$current_model" ]] && current_model="opus"
+
+  # Resolve target model
+  local target_model
+  target_model=$(resolve_model "$agent_rel_path" "$current_model")
+
+  if [[ "$DRY_RUN" == true ]]; then
+    if [[ "$target_model" != "$current_model" ]]; then
+      dry "copy + model override ($current_model → $target_model): $(basename "$src")"
+    else
+      dry "copy: $src → $dst"
+    fi
+    return
+  fi
+
+  mkdir -p "$dst_dir"
+
+  # Backup user-modified files (same logic as copy_file)
+  if [[ -f "$dst" ]]; then
+    local src_hash; src_hash="$(sha256_file "$src")"
+    local dst_hash; dst_hash="$(sha256_file "$dst")"
+    if [[ "$src_hash" != "$dst_hash" ]]; then
+      local manifest_hash=""
+      if [[ -f "$MANIFEST_FILE" ]]; then
+        manifest_hash=$(grep -o "\"$dst\"[^}]*\"hash\":\"[^\"]*\"" "$MANIFEST_FILE" 2>/dev/null | grep -o '"hash":"[^"]*"' | cut -d'"' -f4 || true)
+      fi
+      if [[ -n "$manifest_hash" ]] && [[ "$manifest_hash" != "$dst_hash" ]]; then
+        cp "$dst" "${dst}${BACKUP_SUFFIX}"
+        warn "backed up user-modified: $(basename "$dst")"
+      fi
+    fi
+  fi
+
+  # Copy with model rewrite if needed
+  if [[ "$target_model" != "$current_model" ]]; then
+    sed "s/^model: .*/model: $target_model/" "$src" > "$dst"
+    verb "  $(basename "$src") (model: $current_model → $target_model)"
+  else
+    cp "$src" "$dst"
+    verb "  $(basename "$src")"
+  fi
+}
+
 # ── File copy with safety ─────────────────────────────────────────────
 copy_file() {
   local src="$1" dst="$2"
@@ -177,9 +315,10 @@ copy_file() {
 
 # ── Install component directory ───────────────────────────────────────
 # Copies files from $src_dir to $dst_dir, tracking in manifest entries
+# Pass "model" as $5 to apply model overrides on .md files (agents only)
 install_component() {
-  local component="$1" src_dir="$2" dst_dir="$3" pattern="${4:-*.md}"
-  local count=0
+  local component="$1" src_dir="$2" dst_dir="$3" pattern="${4:-*.md}" apply_models="${5:-}"
+  local count=0 overridden=0
 
   step "$component"
 
@@ -195,9 +334,25 @@ install_component() {
     # Compute relative path from src_dir
     local rel_path="${src_file#$src_dir/}"
     local dst_file="$dst_dir/$rel_path"
-    local hash; hash="$(sha256_file "$src_file")"
 
-    copy_file "$src_file" "$dst_file"
+    # For agents: apply model overrides before copying
+    if [[ "$apply_models" == "model" ]] && [[ "$src_file" == *.md ]]; then
+      copy_file_with_model "$src_file" "$dst_file" "$rel_path"
+      # Hash the destination (may differ from source due to model rewrite)
+      local hash
+      if [[ "$DRY_RUN" != true ]] && [[ -f "$dst_file" ]]; then
+        hash="$(sha256_file "$dst_file")"
+      else
+        hash="$(sha256_file "$src_file")"
+      fi
+      # Track if model was overridden
+      local src_model; src_model=$(sed -n '/^---$/,/^---$/{ /^model:/s/^model: *//p; }' "$src_file" 2>/dev/null | head -1)
+      local dst_model; dst_model=$(resolve_model "${rel_path%.md}" "${src_model:-opus}")
+      [[ "$dst_model" != "${src_model:-opus}" ]] && overridden=$((overridden + 1))
+    else
+      copy_file "$src_file" "$dst_file"
+      local hash; hash="$(sha256_file "$src_file")"
+    fi
 
     # Append to manifest entries
     MANIFEST_ENTRIES+=("{\"path\":\"$dst_file\",\"hash\":\"$hash\",\"component\":\"$component\",\"source\":\"$rel_path\"}")
@@ -233,7 +388,11 @@ install_component() {
     done < <(find "$src_dir" -name "*.json" -type f 2>/dev/null | sort)
   fi
 
-  ok "$count files → $dst_dir"
+  if [[ "$overridden" -gt 0 ]]; then
+    ok "$count files → $dst_dir ($overridden model overrides applied)"
+  else
+    ok "$count files → $dst_dir"
+  fi
 }
 
 # ── Merge hooks into plugin.json ──────────────────────────────────────
@@ -410,10 +569,15 @@ do_install() {
   # Collect manifest entries
   MANIFEST_ENTRIES=()
 
+  # Load model overrides config (if present)
+  load_model_overrides
+
   # Install components
   install_component "Agents" \
     "$PLUGIN_ROOT/agents" \
-    "$HOME/.claude/agents"
+    "$HOME/.claude/agents" \
+    "*.md" \
+    "model"
 
   install_component "Skills" \
     "$PLUGIN_ROOT/skills" \
@@ -492,8 +656,9 @@ do_install() {
     echo "  Restart Claude Code to activate."
     echo "  Agents are now at ~/.claude/agents/ with full frontmatter power."
     echo ""
-    echo "  To update:    $0 update"
-    echo "  To uninstall: $0 uninstall"
+    echo "  To configure models: $0 configure"
+    echo "  To update:           $0 update"
+    echo "  To uninstall:        $0 uninstall"
   else
     echo -e "${YELLOW}${BOLD}Setup completed with warnings.${NC}"
     echo "  Some components may be missing. Check the warnings above."
@@ -636,13 +801,79 @@ with open('$plugin_json', 'w') as f:
   fi
 }
 
+# ── CONFIGURE (model overrides) ───────────────────────────────────────
+do_configure() {
+  echo -e "\n${BOLD}Zetetic Team Subagents — Model Configuration${NC}\n"
+
+  if [[ -f "$MODEL_CONFIG" ]]; then
+    info "Existing config: $MODEL_CONFIG"
+    echo ""
+    cat "$MODEL_CONFIG"
+    echo ""
+    echo -e "  Edit this file directly, then run ${CYAN}$0 update${NC} to apply."
+    echo ""
+    echo "  To reset: rm $MODEL_CONFIG && $0 configure"
+    return
+  fi
+
+  step "Creating model override config"
+
+  # Generate default config with sensible defaults
+  cat > "$MODEL_CONFIG" <<'CONF'
+{
+  "//": "Zetetic Agent Model Overrides",
+  "//note": "Configure which model each agent uses. Survives plugin updates.",
+  "//models": "opus (most capable), sonnet (balanced), haiku (fastest/cheapest)",
+  "//precedence": "per-call > this config > agent frontmatter default",
+
+  "patterns": [
+    { "glob": "genius/*", "model": "sonnet" }
+  ],
+
+  "agents": {
+    "architect": "opus",
+    "engineer": "sonnet",
+    "code-reviewer": "sonnet",
+    "test-engineer": "sonnet",
+    "frontend-engineer": "sonnet",
+    "dba": "sonnet",
+    "devops-engineer": "sonnet",
+    "data-scientist": "sonnet",
+    "experiment-runner": "sonnet",
+    "mlops": "sonnet",
+    "latex-engineer": "sonnet",
+    "security-auditor": "sonnet",
+    "ux-designer": "sonnet",
+    "research-scientist": "opus",
+    "paper-writer": "opus",
+    "reviewer-academic": "opus",
+    "professor": "sonnet",
+    "orchestrator": "opus"
+  }
+}
+CONF
+
+  ok "Created $MODEL_CONFIG"
+  echo ""
+  echo "  Default config:"
+  echo "    - 97 genius agents → sonnet (via pattern)"
+  echo "    - architect, orchestrator, research-scientist, paper-writer, reviewer-academic → opus"
+  echo "    - All other team agents → sonnet"
+  echo ""
+  echo "  Edit the file to customize, then run:"
+  echo -e "    ${CYAN}$0 update${NC}"
+  echo ""
+  echo "  This config is yours — it will never be overwritten by plugin updates."
+}
+
 # ── Main dispatch ─────────────────────────────────────────────────────
 case "$ACTION" in
   install)   do_install ;;
   update)    do_install ;;  # update is just install with version diffing
   uninstall) do_uninstall ;;
+  configure) do_configure ;;
   *)
-    echo "usage: $0 [install|update|uninstall] [--dry-run] [--verbose]" >&2
+    echo "usage: $0 [install|update|uninstall|configure] [--dry-run] [--verbose]" >&2
     exit 2
     ;;
 esac
