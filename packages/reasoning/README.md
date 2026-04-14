@@ -49,24 +49,139 @@ claude plugin marketplace add cdeust/zetetic-team-subagents
 claude plugin install zetetic-team-subagents
 ```
 
-### Manual install
+The plugin ships a `setup.sh` installer (Cortex-style) that copies agents, skills, commands, hooks, tools, and rules into `~/.claude/` and merges lifecycle hooks into `plugin.json`. It runs automatically via the plugin's `postInstall` hook. You can also invoke it directly:
+
+```bash
+bash scripts/setup.sh install      # install or re-install
+bash scripts/setup.sh update       # re-apply agent models, pull new assets, prune orphans
+bash scripts/setup.sh configure    # create ~/.claude/zetetic-agent-models.json with sensible defaults
+bash scripts/setup.sh uninstall    # remove tracked files; keeps user-modified copies
+bash scripts/setup.sh --dry-run    # preview any of the above
+```
+
+### Manual install (no plugin system)
 
 ```bash
 git clone https://github.com/cdeust/zetetic-team-subagents.git
-
-# Global install (all projects)
-cp -r zetetic-team-subagents/agents/ ~/.claude/agents/
-cp -r zetetic-team-subagents/commands/ ~/.claude/commands/
-cp -r zetetic-team-subagents/skills/ ~/.claude/skills/
-
-# Add tools to PATH
-export PATH="$PATH:$(pwd)/zetetic-team-subagents/tools"
+cd zetetic-team-subagents
+bash scripts/setup.sh install
 ```
 
 Skills-only (no agents):
 ```bash
 cp -r zetetic-team-subagents/skills/ ~/.claude/skills/
 ```
+
+---
+
+## Configuration & customization
+
+Three config files are yours to keep — plugin updates never overwrite them.
+
+### 1. `~/.claude/zetetic-agent-models.json` — per-agent model overrides
+
+Controls which model each agent uses (opus / sonnet / haiku). Run `setup.sh configure` to create it with sensible defaults: genius agents on sonnet, team specialists on sonnet except architect/orchestrator/research-scientist/paper-writer/reviewer-academic on opus. Edit freely.
+
+```json
+{
+  "patterns": [{ "glob": "genius/*", "model": "sonnet" }],
+  "agents": {
+    "architect": "opus",
+    "engineer": "sonnet",
+    "code-reviewer": "sonnet"
+  }
+}
+```
+
+Precedence: per-call `model` parameter > this file > agent frontmatter default.
+
+Re-run `setup.sh update` to apply changes to installed agents.
+
+### 2. `<repo-root>/.zetetic.conf` — per-project checker config
+
+Controls `tools/zetetic-checker.sh` behavior for a specific project. Committed, auditable.
+
+```bash
+# .zetetic.conf — project-local zetetic checker config
+ZETETIC_PROFILE=standard           # strict | standard | permissive
+ZETETIC_CHECK_DATA_FORMATS=false   # true to scan .json/.yaml/.toml/.sql/.csv (default: skipped)
+```
+
+**Profile meanings:**
+- `strict` — UNSOURCED, MAGIC_NUMBER, and TODO_NO_REF all block commits
+- `standard` (default) — UNSOURCED blocks; MAGIC_NUMBER / TODO_NO_REF warn only
+- `permissive` — everything informational; never blocks (useful during transition — see next section)
+
+**What you cannot do in `.zetetic.conf`:** disable or remove built-in rules. Directives like `DISABLE_UNSOURCED=true`, `SKIP_RULE`, `EXCLUDE_RULE` cause the checker to refuse to load the config. You can override file/path exclusions and the profile; you cannot silence the checks themselves.
+
+### 3. `<repo-root>/.zetetic-check.sh` — project-local extensions
+
+Optional Bash script sourced by `zetetic-checker.sh` if present. Can add project-specific checks that increment `ERRORS` or `WARNINGS`. Cannot disable built-in checks (same guarantee as `.zetetic.conf`).
+
+---
+
+## Adopting this plugin in an existing (non-compliant) project
+
+The plugin's defaults assume a greenfield project. For an existing codebase with historical constants, TODOs without trackers, and "always" / "never" comments, running `--staged` on every commit would be painful. Here's the migration path.
+
+### Step 1 — Scan once to measure the backlog
+
+```bash
+bash tools/zetetic-checker.sh --full
+```
+
+This scans every tracked file. Count the findings by type:
+- **UNSOURCED** (errors) — absolute claims without citations; usually small and worth fixing
+- **MAGIC_NUMBER** (warnings) — tuning constants without `# source:`; usually large
+- **TODO_NO_REF** (warnings) — orphan TODOs; often fixable by linking to your issue tracker
+
+### Step 2 — Set `ZETETIC_PROFILE=permissive` for the transition
+
+Create `.zetetic.conf` at the repo root:
+
+```bash
+ZETETIC_PROFILE=permissive
+```
+
+In permissive mode, the checker reports findings but never blocks. Commits go through. This lets you keep the instrument visible while paying down the backlog at your own pace.
+
+### Step 3 — Burn down existing violations
+
+The plugin ships a `refactorer` team agent and a `code-reviewer` team agent. Use them incrementally:
+
+```
+# For magic numbers:
+Ask the engineer or refactorer to add // source: annotations to constants
+they can verify from docs, benchmarks, or the standard library. For the rest,
+consider extracting to a named constant with a derivation comment.
+
+# For orphan TODOs:
+# TODO: refactor later                    → bad
+# TODO(#264): extract shared validator    → good
+```
+
+You do not have to fix everything. Some constants are truly infrastructure (HTTP status codes, array sizes, port numbers) and the default regex already skips them.
+
+### Step 4 — Graduate to `ZETETIC_PROFILE=standard`
+
+When the `--full` scan returns 0 UNSOURCED errors (or a manageable number you can triage per PR), switch:
+
+```bash
+ZETETIC_PROFILE=standard
+```
+
+Now UNSOURCED blocks commits, but MAGIC_NUMBER and TODO_NO_REF still only warn. The hooks will catch any regression without overwhelming the team.
+
+### Step 5 — Lock in `strict` on the components that matter most
+
+For the high-stakes parts of your system (algorithms from papers, financial logic, crypto, ML hyperparameters, the components listed in rules/coding-standards.md §10 "High stakes"), you can enforce strict locally via a directory-scoped `.zetetic.conf`, a pre-push hook that runs `ZETETIC_PROFILE=strict` on those paths, or an ADR that formalizes the stricter threshold.
+
+### Customizing which team agents proactively fire
+
+Eight agents auto-delegate by default (refactorer, code-reviewer, test-engineer, security-auditor, architect, Feynman, Curie, Dijkstra). If you want them invoked less aggressively on an existing project that is not yet compliant, you can:
+
+1. Edit the installed agent copy in `~/.claude/agents/` to remove the `Proactively` lead-in and scenario examples (survives plugin updates because setup.sh detects user-modified files and backs them up before overwriting).
+2. Or set specific agents to `model: haiku` in `~/.claude/zetetic-agent-models.json` for cheaper evaluation during the transition period.
 
 ---
 
