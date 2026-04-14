@@ -9,19 +9,20 @@
 
 set -euo pipefail
 
-# Path resolution: ZETETIC_SKILLS env → ~/.claude/skills → plugin-relative → git root
-resolve_skills_dir() {
-  [[ -n "${ZETETIC_SKILLS:-}" ]] && [[ -d "$ZETETIC_SKILLS" ]] && { echo "$ZETETIC_SKILLS"; return; }
-  [[ -d "$HOME/.claude/skills" ]] && { echo "$HOME/.claude/skills"; return; }
-  local script_dir; script_dir="$(cd "$(dirname "$0")" && pwd)"
-  local plugin_dir; plugin_dir="$(dirname "$script_dir")"
-  [[ -d "$plugin_dir/skills" ]] && { echo "$plugin_dir/skills"; return; }
-  local git_root; git_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
-  [[ -n "$git_root" ]] && [[ -d "$git_root/skills" ]] && { echo "$git_root/skills"; return; }
-  echo "skills"  # fallback
+# Resolve skills directory: env var → ~/.claude/skills → plugin-relative → git root
+_resolve_skills_dir() {
+  local d
+  d="${ZETETIC_SKILLS:-}"
+  [[ -n "$d" && -d "$d" ]] && { echo "$d"; return; }
+  d="$HOME/.claude/skills"
+  [[ -d "$d" ]] && { echo "$d"; return; }
+  d="$(cd "$(dirname "$0")/.." && pwd)/skills"
+  [[ -d "$d" ]] && { echo "$d"; return; }
+  d="$(git rev-parse --show-toplevel 2>/dev/null || pwd)/skills"
+  echo "$d"
 }
 
-SKILLS_DIR="$(resolve_skills_dir)"
+SKILLS_DIR="$(_resolve_skills_dir)"
 
 NAME="${1:-}"
 [[ -z "$NAME" ]] && { echo "usage: $0 <skill-name>" >&2; exit 1; }

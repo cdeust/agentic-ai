@@ -11,19 +11,20 @@
 
 set -euo pipefail
 
-# Path resolution: ZETETIC_AGENTS env → ~/.claude/agents → plugin-relative → git root
-resolve_agents_dir() {
-  [[ -n "${ZETETIC_AGENTS:-}" ]] && [[ -d "$ZETETIC_AGENTS" ]] && { echo "$ZETETIC_AGENTS"; return; }
-  [[ -d "$HOME/.claude/agents/genius" ]] && { echo "$HOME/.claude/agents"; return; }
-  local script_dir; script_dir="$(cd "$(dirname "$0")" && pwd)"
-  local plugin_dir; plugin_dir="$(dirname "$script_dir")"
-  [[ -d "$plugin_dir/agents" ]] && { echo "$plugin_dir/agents"; return; }
-  local git_root; git_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
-  [[ -n "$git_root" ]] && [[ -d "$git_root/agents" ]] && { echo "$git_root/agents"; return; }
-  echo "agents"  # fallback
+# Resolve agent directory: env var → ~/.claude/agents → plugin-relative → git root
+_resolve_agents_dir() {
+  local d
+  d="${ZETETIC_AGENTS:-}"
+  [[ -n "$d" && -d "$d/genius" ]] && { echo "$d"; return; }
+  d="$HOME/.claude/agents"
+  [[ -d "$d/genius" ]] && { echo "$d"; return; }
+  d="$(cd "$(dirname "$0")/.." && pwd)/agents"
+  [[ -d "$d/genius" ]] && { echo "$d"; return; }
+  d="$(git rev-parse --show-toplevel 2>/dev/null || pwd)/agents"
+  echo "$d"
 }
 
-AGENTS_DIR="$(resolve_agents_dir)"
+AGENTS_DIR="$(_resolve_agents_dir)"
 GENIUS_DIR="$AGENTS_DIR/genius"
 INDEX="$GENIUS_DIR/INDEX.md"
 ACTION="${1:-}"
