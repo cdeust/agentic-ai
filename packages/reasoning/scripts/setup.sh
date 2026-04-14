@@ -22,7 +22,7 @@
 set -euo pipefail
 
 # ── Config ─────────────────────────────────────────────────────────────
-VERSION="2.2.0"
+VERSION="2.3.0"
 MANIFEST_FILE="$HOME/.claude/.zetetic-manifest.json"
 MODEL_CONFIG="$HOME/.claude/zetetic-agent-models.json"
 BACKUP_SUFFIX=".zetetic-backup"
