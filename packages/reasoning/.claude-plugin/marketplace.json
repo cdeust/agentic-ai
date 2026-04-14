@@ -5,15 +5,15 @@
     "email": "admin@ai-architect.tools"
   },
   "metadata": {
-    "description": "Zetetic Agents — 97 reasoning patterns from history's greatest minds",
-    "version": "2.0.0"
+    "description": "Zetetic Agents — 97 reasoning patterns from history's greatest minds + 19 team specialists under one epistemic standard",
+    "version": "2.4.0"
   },
   "plugins": [
     {
       "name": "zetetic-team-subagents",
       "source": "./",
-      "description": "Complete system: 97 genius agents, 18 team agents, 63 skills, 23 commands, 17 tools, 14 hooks",
-      "version": "2.0.0",
+      "description": "Complete system: 97 genius agents, 19 team agents (incl. refactorer), 63 skills, 24 commands, 17 tools, 16 hooks, authoritative coding-standards rules",
+      "version": "2.4.0",
       "author": {
         "name": "Clement Deust",
         "email": "admin@ai-architect.tools"
@@ -21,7 +21,7 @@
       "homepage": "https://ai-architect.tools",
       "repository": "https://github.com/cdeust/zetetic-team-subagents",
       "license": "MIT",
-      "keywords": ["agents", "reasoning", "research", "zetetic", "epistemic", "claude-code"],
+      "keywords": ["agents", "reasoning", "research", "zetetic", "epistemic", "claude-code", "refactoring", "clean-architecture"],
       "category": "research"
     }
   ]

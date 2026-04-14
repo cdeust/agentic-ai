@@ -184,7 +184,7 @@ do_uninstall() {
   # Clean empty directories
   if [[ "$DRY_RUN" == false ]]; then
     find "${CLAUDE_DIR}/agents/genius" -type d -empty -delete 2>/dev/null || true
-    for subdir in skills commands hooks tools; do
+    for subdir in skills commands hooks tools rules; do
       find "${CLAUDE_DIR}/${subdir}" -mindepth 1 -type d -empty -delete 2>/dev/null || true
     done
 
@@ -339,6 +339,7 @@ count_skills=0
 count_commands=0
 count_hooks=0
 count_tools=0
+count_rules=0
 count_overridden=0
 
 # Stage a file (with optional model override for agent .md files)
@@ -407,8 +408,9 @@ stage_tree "$PLUGIN_ROOT/skills"   "skills"   false _n; count_skills=$_n
 stage_tree "$PLUGIN_ROOT/commands" "commands" false _n; count_commands=$_n
 stage_tree "$PLUGIN_ROOT/hooks"    "hooks"    false _n; count_hooks=$_n
 stage_tree "$PLUGIN_ROOT/tools"    "tools"    false _n; count_tools=$_n
+stage_tree "$PLUGIN_ROOT/rules"    "rules"    false _n; count_rules=$_n
 
-ok "Staged: $count_agents team + $count_genius genius agents, $count_skills skills, $count_commands commands, $count_hooks hooks, $count_tools tools"
+ok "Staged: $count_agents team + $count_genius genius agents, $count_skills skills, $count_commands commands, $count_hooks hooks, $count_tools tools, $count_rules rules"
 [[ "$count_overridden" -gt 0 ]] && ok "Applied $count_overridden model overrides"
 
 if [[ "$DRY_RUN" == true ]]; then
@@ -591,6 +593,9 @@ ok "Skills installed ($skill_count)"
 cmd_count=$(find "$CLAUDE_DIR/commands" -name "*.md" -not -name "_*" 2>/dev/null | wc -l | tr -d ' ')
 ok "Commands installed ($cmd_count)"
 
+rules_count=$(find "$CLAUDE_DIR/rules" -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
+ok "Rules installed ($rules_count)"
+
 # ── Summary ────────────────────────────────────────────────────────────
 echo ""
 echo -e "${GREEN}${BOLD}Zetetic Team Subagents v${PLUGIN_VERSION} setup complete!${NC}"
@@ -600,6 +605,7 @@ echo "  $count_skills skills                              → ~/.claude/skills/"
 echo "  $count_commands commands                            → ~/.claude/commands/"
 echo "  $count_hooks hooks                                → ~/.claude/hooks/"
 echo "  $count_tools tools                                → ~/.claude/tools/"
+echo "  $count_rules rules                                → ~/.claude/rules/"
 [[ "$count_overridden" -gt 0 ]] && echo "  $count_overridden model overrides applied from ~/.claude/zetetic-agent-models.json"
 echo ""
 echo "  Next steps:"

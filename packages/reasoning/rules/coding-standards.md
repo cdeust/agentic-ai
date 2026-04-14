@@ -1,0 +1,263 @@
+---
+name: coding-standards
+description: Zetetic coding standards — SOLID, Clean Architecture, 3R (readability/reliability/reusability), size limits, reverse dependency injection, factory pattern. Authoritative rules all coding agents must follow.
+version: 1.0.0
+applies_to: [engineer, architect, code-reviewer, frontend-engineer, dba, devops-engineer, test-engineer, mlops, refactorer]
+---
+
+# Zetetic Coding Standards
+
+These are **hard rules**. Coding agents enforce them; refactorer strictly applies them. Exceptions must be justified with a written rationale (comment at use site or ADR) and approved by a human reviewer.
+
+Primary sources cited per section. Rules without a source are not standards — they are preferences.
+
+---
+
+## 1. SOLID Principles
+
+Source: Martin, R. C. (2000). *"Design Principles and Design Patterns."* Object Mentor.
+
+### 1.1 Single Responsibility Principle (SRP)
+- One reason to change per module, class, or function.
+- If two stakeholders can independently require changes to the same code, split.
+- **Test:** if you describe what the code does and the description contains "and," you are violating SRP.
+
+### 1.2 Open/Closed Principle (OCP)
+- Extend behavior through new implementations, not by modifying existing ones.
+- Use the language's abstraction mechanism (interface, protocol, trait, abstract class) and a registry or dispatch table — not conditional chains that grow per new case.
+- **Test:** adding a new kind-of-thing requires zero edits to existing code? → OCP satisfied.
+
+### 1.3 Liskov Substitution Principle (LSP)
+- Subtypes must be substitutable for their base types without breaking correctness.
+- **Never** override a method to throw `NotImplementedError`, silently weaken postconditions, or strengthen preconditions.
+- Source: Liskov, B. (1987). *"Data Abstraction and Hierarchy."* OOPSLA '87.
+
+### 1.4 Interface Segregation Principle (ISP)
+- Small, focused interfaces. No god interfaces.
+- Clients should not depend on methods they do not use.
+- **Test:** if a client's mock of the interface has stub methods it doesn't care about, the interface is too wide.
+
+### 1.5 Dependency Inversion Principle (DIP)
+- High-level modules must not depend on low-level modules. Both depend on abstractions.
+- Abstractions must not depend on details. Details depend on abstractions.
+- **Practical form:** core defines the interface; infrastructure implements it; composition roots wire them at construction time.
+
+---
+
+## 2. Clean Architecture
+
+Source: Martin, R. C. (2017). *Clean Architecture*. Prentice Hall. Chapters 15–23.
+
+### 2.1 Concentric Layers with Inward Dependencies
+Identify the project's specific layer vocabulary (`core/domain/infrastructure/handlers`, `domain/application/adapters`, `pkg/internal/cmd`, etc.) before touching code.
+
+Standard layer roles:
+- **Core / Domain** — pure business logic. Zero I/O. No filesystem, network, or database. Testable without mocks.
+- **Application / Use Cases** — orchestrates domain objects. Defines use-case contracts.
+- **Infrastructure / Adapters** — all I/O. Implements interfaces defined by inner layers.
+- **Handlers / Controllers** — the composition roots. The only layer that wires core + infrastructure together.
+- **Shared / Common** — pure utility functions with no dependencies on other project layers.
+
+### 2.2 Dependency Rule (absolute)
+- Shared/common → standard library only
+- Core/domain → shared/common + standard library only
+- Application/use-case → core/domain + shared/common
+- Infrastructure → application + core + shared + standard library (NOT handlers)
+- Handlers → core + infrastructure (wiring layer)
+- Server/transport → handlers (NOT core or infrastructure directly)
+
+**Violation of this rule is a code-reviewer block. No exceptions without an ADR.**
+
+### 2.3 Ports and Adapters
+- Core declares *ports* (interfaces it needs) in its own type system.
+- Infrastructure provides *adapters* (implementations of those ports).
+- Handlers inject adapters at construction.
+
+---
+
+## 3. The 3R's — Readability, Reliability, Reusability
+
+### 3.1 Readability
+- Descriptive names over terse. `normalizePaymentAmount` > `nrm`.
+- Logic flows top-down within a function.
+- No magic numbers. Every numeric constant has a name or a source comment (see §7).
+- Comments only when the *why* is non-obvious. Never explain *what* — well-named code does that.
+
+### 3.2 Reliability
+- Use the language's type system fully. Type hints / interfaces / generics / traits / protocols — all of it.
+- Validate at system boundaries only. Trust internal contracts.
+- Handle errors at the appropriate layer — don't catch-and-log in core.
+- No `any` / `unknown` / untyped `dict` / `interface{}` in consumer code.
+- Follow the language's error-handling idiom: exceptions in Python/Java, Result in Rust, error returns in Go, try/catch with typed Error unions in TypeScript.
+
+### 3.3 Reusability
+- Extract shared logic into the common/shared layer (pure functions, no I/O).
+- Parameterize behavior through dependency injection.
+- **Three concrete uses before extracting.** Premature abstraction is worse than duplication.
+
+---
+
+## 4. Size Limits (hard rules)
+
+Source: Martin, R. C. (2008). *Clean Code*, Ch. 3 (functions) and Ch. 10 (classes). Informed by measured refactoring benchmarks.
+
+### 4.1 File size: **500 lines max**
+- A file exceeding 500 lines is a structural failure — split along a concern boundary.
+- Exception: auto-generated files (parsers, protobuf, GraphQL schemas) — mark with `// auto-generated`.
+
+### 4.2 Method / function size: **50 lines max**
+- A method exceeding 50 lines is a structural failure — extract helpers.
+- Exception: pure dispatch tables (a switch/match with one line per case).
+- **Test:** if you cannot see the whole function on one screen, it is too long.
+
+### 4.3 Class size: **300 lines max**
+- A class exceeding 300 lines is violating SRP — extract collaborators.
+
+### 4.4 Parameter count: **4 parameters max**
+- More than 4 parameters is a missing data type. Introduce a parameter object / DTO / struct.
+- Exception: constructor of an explicit composition root with justified wiring.
+
+### 4.5 Nesting depth: **3 levels max**
+- More than 3 levels of nested control flow (if/for/try/with) is unreadable — extract or use guard clauses / early returns.
+
+---
+
+## 5. Reverse Dependency Injection + Factory Pattern
+
+Source: Martin (2017) Ch. 11 (DIP) and Ch. 22 (Clean Architecture Main component).
+
+### 5.1 Reverse DI — Core Declares What It Needs
+- Core modules declare what they need via **interface / protocol / trait types** in their constructors or function signatures.
+- Core NEVER imports concrete infrastructure types.
+- Example (Python): `class CheckoutService: def __init__(self, payments: PaymentGateway, inventory: InventoryRepo): ...` — `PaymentGateway` and `InventoryRepo` are Protocols defined in core.
+
+### 5.2 Factory / Composition Root
+- Factory functions or builder classes live in the composition-root layer (handlers, main, app).
+- They assemble the dependency graph at startup.
+- Pattern: `def build_checkout_service(config: Config) -> CheckoutService: return CheckoutService(payments=StripeGateway(config.stripe_key), inventory=PostgresInventoryRepo(config.db))`.
+
+### 5.3 Forbidden
+- **Service locators** — a global "get me a thing by name" registry that defeats static dependency analysis.
+- **Global mutable singletons** — anything except frozen configuration objects.
+- **Runtime monkey-patching / reflection-based wiring** when static wiring works.
+- **`import` statements in core that reference infrastructure modules** — layer violation.
+
+### 5.4 Mandatory
+- Constructor injection (or function-parameter injection for pure-functional codebases).
+- Each constructor parameter has a type annotation referring to an abstraction (interface / protocol / trait), not a concrete class.
+
+---
+
+## 6. Root-Cause Thinking (not band-aids)
+
+### 6.1 When something breaks
+1. **Reproduce.** No reproduction → no fix.
+2. **Trace.** Follow the call chain to where the invariant breaks.
+3. **Classify the cause** — one of:
+   - Missing or wrong contract (SRP/DIP boundary failure)
+   - Layer violation (§2.2 broken)
+   - Concerns tangled (SRP broken at the function level)
+   - Local-reasoning defeated (§7.3 broken)
+   - Stakes/discipline mismatch (rigor shortfall)
+4. **Fix at the classified source** — never at the throw site.
+5. **Verify** — reproduction passes, no other test regresses.
+
+### 6.2 Symptoms that indicate architectural failure
+- Circular imports → layer violation
+- God functions → SRP violation
+- Shotgun surgery (change one thing, edit 10 files) → missing abstraction
+- Feature envy (method uses another object's state more than its own) → wrong responsibility assignment
+- Flaky test → hidden shared state or timing assumption
+
+---
+
+## 7. Local Reasoning (structured constructs only)
+
+Source: Dijkstra, E. W. (1968). *"Go To Statement Considered Harmful."* CACM 11(3).
+
+### 7.1 Restrict yourself to constructs where behavior can be understood from the surrounding text
+- Sequence, selection (if/else/match), bounded iteration (for/while with termination argument), function call with clear contract.
+
+### 7.2 Default-refuse the following constructs
+| Construct | Default | Justification required to override |
+|---|---|---|
+| Global mutable state | Refuse | Read-once-at-startup config only |
+| Monkey-patching (runtime attribute injection) | Refuse | Test teardown only |
+| Reflection for control flow (`getattr` dispatch, `exec`, `eval`) | Refuse | DSL or serialization; isolated and audited |
+| Exceptions for expected control flow | Refuse | Only exceptional conditions (disk full, network drop) |
+| Pointer/reference aliasing on mutable objects | Refuse | Benchmark-validated performance; document the owner |
+| Dynamic dispatch where method body is unknown at call site | Refuse | Interface/protocol/trait with enumerated implementations |
+| "Clever" one-liners | Refuse | Benchmark-validated hot path; otherwise split into named steps |
+| Macros / codegen / operator overloading / decorators with side effects / context managers that mutate globals | Refuse | Isolated, audited, justified at use site |
+
+### 7.3 Trigger
+The next reader of this code would need to understand more than the function plus its contract to predict its behavior → refuse the construct.
+
+---
+
+## 8. Zetetic Source Discipline
+
+Applies to every coding claim, every algorithm, every constant.
+
+- **No source → no implementation.** Every algorithm, equation, constant, and threshold must trace to a published paper, verified benchmark, or documented empirical result.
+- **Multiple sources preferred.** A single source is a hypothesis; cross-reference before accepting.
+- **Read the actual paper,** not blog summaries.
+- **No invented constants.** Every hardcoded number must have:
+  - `// source: <citation>` comment, OR
+  - `// source: benchmark <path-to-benchmark>` with the benchmark committed, OR
+  - `// source: measured on <date> in <environment>, data at <link>`
+- **"It works" is not a source.**
+- **Say "I don't know"** when you don't. A confident wrong answer destroys trust; an honest "I don't know" preserves it.
+
+---
+
+## 9. Anti-Patterns (enumerated refusals)
+
+- Writing a function body before the signature and contract.
+- Catching / swallowing errors "just in case" without a named failure mode.
+- Creating utility grab-bag modules (`utils.py`, `helpers.ts`, `common.go`) — every module has a single cohesive purpose.
+- Passing untyped dictionaries / maps / objects across layer boundaries.
+- Importing from a layer that should not be visible (§2.2).
+- Dead code, backward-compat shims, or "future-proofing" code with no current caller. **If it's built, it must be called.**
+- Adding a conditional for a special case when the special case should be a separate strategy / implementation.
+- Defending "clever" code by the author's claim to understand it — §7.3 failure.
+- Tests as the primary correctness argument for code whose failure modes they cannot exercise (concurrency, numerical, adversarial input) — see Dijkstra.
+- Adding docstrings, comments, or type annotations to code you did not change.
+- Band-aid fixes at the throw site without root-cause analysis (§6).
+
+---
+
+## 10. Stakes-Calibrated Application
+
+These rules apply proportionally:
+
+- **High stakes** (auth/billing/crypto/concurrency/data-integrity, public API, DB migrations, files touched by >1 author in 90 days, files >500 lines): **full rule enforcement, no exceptions without ADR**.
+- **Medium stakes** (core business logic, user-facing): rules 1, 2, 3, 5, 7, 8, 9 fully enforced; 4 (size limits) enforced with ≤20% flexibility on limits.
+- **Low stakes** (scripts/experiments/prototypes marked as such, or UI polish / copy / CSS): rules 1, 7, 8 enforced; others can be informal.
+
+**Rules 1 (SOLID), 2 (layer dependency), 7 (local reasoning), 8 (sources) apply at all stakes levels.**
+
+Stakes classification is **objective**, never self-declared. See engineer.md Move 6 for criteria.
+
+---
+
+## 11. Compliance Check (how agents use this file)
+
+When referenced by an agent's `<domain-context>`, the agent:
+1. Loads this file's rules as binding constraints.
+2. Applies them in the agent's Moves — especially Move 3 (refuse constructs that defeat local reasoning) and any layer-assignment Move.
+3. Produces a compliance report as part of the output format — one line per rule referenced, with `pass / fail + rationale` for rules that apply to the change.
+4. **Refuses to ship** code violating a High-stakes rule without an approved ADR.
+
+---
+
+## Primary Sources
+
+- Martin, R. C. (2000). "Design Principles and Design Patterns." *Object Mentor.*
+- Martin, R. C. (2008). *Clean Code.* Prentice Hall.
+- Martin, R. C. (2017). *Clean Architecture.* Prentice Hall.
+- Liskov, B. (1987). "Data Abstraction and Hierarchy." *OOPSLA '87.*
+- Dijkstra, E. W. (1968). "Go To Statement Considered Harmful." *CACM* 11(3), 147–148.
+- Fowler, M. (2018). *Refactoring: Improving the Design of Existing Code,* 2nd ed. Addison-Wesley.
+- Feathers, M. (2004). *Working Effectively with Legacy Code.* Prentice Hall.
+- Evans, E. (2003). *Domain-Driven Design: Tackling Complexity in the Heart of Software.* Addison-Wesley.
