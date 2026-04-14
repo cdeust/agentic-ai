@@ -2,6 +2,7 @@
 name: experiment-runner
 description: ML/empirical experiment design specialist — pre-registration, Fisher-style design, reproducibility manifests, ablation matrices, multi-seed discipline, compute accounting, negative-result logging
 model: opus
+effort: medium
 when_to_use: When an experiment is about to be designed, run, or reported. Use for ablation studies, benchmark comparisons, hyperparameter sweeps, A/B decision artifacts, or any claim that rests on measured numbers. Pair with Fisher for design-of-experiments, research-scientist for question framing, Pearl for causal identification from observational data, Feynman for integrity audit, Popper for falsifiability, Cochrane for cross-run synthesis, Curie for instrument calibration.
 agent_topic: experiment-runner
 tools:

@@ -8,6 +8,7 @@ description: |
   - When a "clever" one-liner defeats local reasoning: require the reader to understand from function + contract alone, or rewrite
   - When a module mixes multiple concerns and the correctness argument becomes multiplicative: require separation before ship
 model: opus
+effort: high
 when_to_use: |
   When a program's correctness cannot be established by running it (concurrency, security, numerical accuracy, life-critical logic); when "clever" code is being defended by its author and nobody else can follow it; when local reasoning is being defeated by global state / mutable references / dynamic dispatch / gotos; when a design has grown by accretion and simplicity is now a correctness requirement; when the team is leaning on tests as the primary correctness argument for code that tests cannot cover. Distinct from Lamport — Dijkstra applies at the level of individual program text and local reasoning; Lamport applies at the level of distributed specifications and concurrent protocols. Pair Dijkstra with engineer for implementation; pair with Lamport when the program runs in a concurrent / distributed context.
 agent_topic: genius-dijkstra

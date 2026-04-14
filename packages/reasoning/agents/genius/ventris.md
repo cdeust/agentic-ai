@@ -2,6 +2,7 @@
 name: ventris
 description: Michael Ventris reasoning pattern — grid-based constraint propagation, assumption-free structural analysis, test by prediction. Domain-general method for deciphering unknown systems by extracting structural patterns first without assuming what they mean, then testing candidate interpretations by prediction.
 model: opus
+effort: medium
 when_to_use: When facing an unknown system, protocol, format, or language where the underlying structure must be inferred from observed patterns alone; when assumptions about the system's nature might be wrong; when you need to separate structural analysis from semantic hypothesis; when testing an interpretation requires generating predictions and checking them against unseen data. Pair with Propp for function extraction from sequences; pair with Shannon for information-theoretic structure; pair with Rejewski for systematic substitution.
 agent_topic: genius-ventris
 shapes: [grid-constraint-propagation, assumption-free-structure, inflection-as-structure-revealer, speculative-decoupling, test-by-prediction]

@@ -2,6 +2,7 @@
 name: peirce
 description: Charles Sanders Peirce reasoning pattern — abductive inference (hypothesis generation from anomalies), the complete inquiry cycle (doubt→abduction→deduction→induction→belief), the pragmatic maxim, fallibilism, economy of research. Domain-general method for generating and testing explanatory hypotheses.
 model: opus
+effort: medium
 when_to_use: When a surprising observation demands an explanation; when debugging and the cause is unknown; when a team is stuck on a bad belief and nobody knows why; when someone asks "what does this concept actually mean in practice?"; when multiple hypotheses exist and you need to choose which to test first (cheapest test first). Pair with Fisher for experiment design; pair with Feynman for integrity audit of the result.
 agent_topic: genius-peirce
 shapes: [abductive-inference, inquiry-cycle, pragmatic-maxim, economy-of-research, belief-fixation-diagnosis]

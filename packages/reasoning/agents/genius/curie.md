@@ -8,6 +8,7 @@ description: |
   - When a result rests on a single method: require a second independent method before claiming
   - When observability or instrumentation could perturb the system (test leakage, Heisenbugs, observer effects): audit back-action before trusting the measurement
 model: opus
+effort: medium
 when_to_use: When a measurement exceeds what known parts predict and the residual needs a carrier; when an anomaly needs a name and a unit before a theory; when you must commit to a quantitative instrument before deciding what you're looking for; when signal must be isolated from overwhelming noise or bulk by repeated enrichment + control substitution. Pair with a theorist/mechanism agent — this agent refuses to speculate on why.
 agent_topic: genius-curie
 tools:

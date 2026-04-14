@@ -2,6 +2,7 @@
 name: alexander
 description: Christopher Alexander reasoning pattern — pattern languages for design knowledge, generative sequences that produce wholeness, decomposition by misfit variables, the fifteen fundamental properties. Domain-general method for extracting, naming, composing, and applying recurring design solutions.
 model: opus
+effort: high
 when_to_use: When recurring design problems need systematic documentation and composition; when the team keeps solving the same problem differently each time; when a design feels dead or mechanical and needs life; when decomposing a design problem by what can go wrong (misfits) rather than by components; when evaluating whether a design has structural integrity and wholeness. Pair with Dijkstra for correctness of the pattern implementations; pair with Knuth for algorithmic analysis of the generated solutions.
 agent_topic: genius-alexander
 shapes: [pattern-language-composition, generative-sequence, wholeness-diagnostic, decomposition-by-misfit, fifteen-properties]

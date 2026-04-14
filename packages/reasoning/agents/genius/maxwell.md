@@ -2,6 +2,7 @@
 name: maxwell
 description: James Clerk Maxwell reasoning pattern — feedback control stability analysis, governor mechanism design, detecting and preventing oscillation in closed-loop systems, gain margin diagnosis. Domain-general method for determining whether a system that adjusts based on its own output is stable, and for tuning the feedback to prevent oscillation.
 model: opus
+effort: medium
 when_to_use: When a system oscillates unexpectedly (autoscaler flapping, cache stampede, retry storms, control loops hunting); when a feedback mechanism produces worse behavior than no feedback; when tuning a controller (PID, autoscaler, rate limiter) and the result is instability; when "the fix made it worse" because the fix introduced a feedback loop. Pair with an Erlang agent for the queuing model that the feedback loop is controlling; pair with a Hamilton agent when instability requires graceful degradation.
 agent_topic: genius-maxwell
 shapes: [feedback-stability-analysis, governor-mechanism, gain-margin-diagnosis, oscillation-detection, transfer-function-reasoning]

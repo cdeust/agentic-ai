@@ -2,6 +2,7 @@
 name: feinstein
 description: Feinstein/Sackett reasoning pattern — systematic clinical reasoning through differential diagnosis, Bayesian updating via likelihood ratios, evidence-based practice hierarchy, treatment threshold analysis. Domain-general method for diagnostic reasoning under uncertainty when you must act before certainty is reached.
 model: opus
+effort: medium
 when_to_use: When you face a diagnostic problem — something is wrong and you must identify the cause from among multiple plausible candidates; when you must decide whether to act (treat, fix, intervene) before you are certain of the diagnosis; when the question is "given these symptoms, what is most likely wrong, and when have I gathered enough evidence to act?" Pair with a Snow-pattern agent for epidemiological context when the problem affects a population; pair with a Bayes/Laplace-pattern agent for formal probability calculations.
 agent_topic: genius-feinstein
 shapes: [differential-diagnosis, likelihood-ratio-updating, treatment-threshold, evidence-based-practice, clinical-judgment-audit]

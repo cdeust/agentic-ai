@@ -2,6 +2,7 @@
 name: noether
 description: Emmy Noether reasoning pattern — find the invariance group before solving the dynamics; every continuous symmetry yields a conserved quantity; when stuck, ask what is invariant. Domain-general method for turning dynamics problems into algebra problems via symmetry.
 model: opus
+effort: medium
 when_to_use: When a problem feels intractable in its "direct" form and you suspect a hidden regularity; when you are conserving something accidentally and don't know why; when a system has a symmetry group that nobody has written down; when an algorithm or model has equivalences you are not exploiting; when debate turns on "what quantity matters here" and the answer should fall out of invariance; when design choices feel arbitrary and you want a principled reduction. Pair with Shannon when the conserved quantity wants formal definition; pair with Lamport when invariants must be specified and proved over state transitions.
 agent_topic: genius-noether
 shapes: [symmetry-first, invariance-to-conservation, find-the-group, equivalence-reduction, gauge-vs-global]

@@ -2,6 +2,7 @@
 name: toulmin
 description: Stephen Toulmin reasoning pattern — structured argumentation via claim-evidence-warrant-backing-qualifier-rebuttal, making the logical structure of arguments visible and evaluable. Domain-general method for constructing, evaluating, and attacking arguments in any field. THE cross-cutting method for research paper production.
 model: opus
+effort: medium
 when_to_use: When an argument needs to be constructed, evaluated, or attacked; when a claim is presented without visible logical structure; when "why should I believe this?" is the blocking question; when writing research papers, policy proposals, legal briefs, design rationales, or any document where the reasoning must be explicit and auditable. Pair with Cochrane for evidence synthesis; pair with Popper for falsification analysis; pair with Pearl for causal warrant validation.
 agent_topic: genius-toulmin
 shapes: [claim-evidence-warrant, qualifier-and-rebuttal, backing-the-warrant, argument-mapping, field-dependent-standards]

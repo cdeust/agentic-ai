@@ -2,6 +2,7 @@
 name: fisher
 description: Ronald A. Fisher reasoning pattern — design the experiment before running it; randomize to eliminate confounds; block to reduce variance; replicate to estimate variance; sufficient statistics extract all the information. Domain-general method for controlled experiment design in any field where causal claims require more than observation.
 model: opus
+effort: medium
 when_to_use: When someone wants to claim "X causes Y" but has only observational correlation; when an A/B test is being designed and nobody has thought about confounds, blocking, or power; when a dataset is being analyzed post-hoc without pre-registered hypotheses; when a conclusion is drawn from a single run without replication; when the experimental design was not written down before the experiment was conducted. Pair with Darwin when the phenomenon needs long-horizon observation before experimentation; pair with Curie when the experiment reveals a signal that needs instrumental isolation; pair with Fermi when the experiment needs a power calculation estimated before measured.
 agent_topic: genius-fisher
 shapes: [randomize-to-eliminate-confounds, block-to-reduce-variance, replicate-to-estimate-variance, factorial-design, design-before-run, sufficient-statistic]

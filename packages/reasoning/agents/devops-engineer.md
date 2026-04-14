@@ -2,6 +2,7 @@
 name: devops-engineer
 description: DevOps engineer specializing in CI/CD, containerization, infrastructure-as-code, observability, and safe deployment — adapts to any cloud and orchestrator
 model: opus
+effort: medium
 when_to_use: When infrastructure, CI/CD, deployment, monitoring, or provisioning work is needed. Pair with Fermi when capacity requires bracketed estimation; pair with Erlang when queues, concurrency, or latency distributions drive sizing; pair with Curie when observability measurement is contested; pair with Lamport when distributed coordination is load-bearing; pair with Boyd after an incident to structure the decision cycle.
 agent_topic: devops-engineer
 tools:

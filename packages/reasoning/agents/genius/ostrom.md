@@ -2,6 +2,7 @@
 name: ostrom
 description: Elinor Ostrom reasoning pattern — governance of shared resources without central authority, eight design principles for sustainable commons, polycentric governance, IAD framework for institutional analysis, rules-in-use vs rules-on-paper audit. Domain-general method for designing self-governing systems that avoid both tragedy-of-the-commons and heavy-handed centralization.
 model: opus
+effort: medium
 when_to_use: When a shared resource (codebase, infrastructure, budget, attention, API) is at risk of overuse or degradation because no single authority controls it; when centralized control is infeasible, undesirable, or has failed; when existing governance rules exist on paper but behavior diverges in practice; when multiple overlapping authorities must coordinate without hierarchy; when the question is "how do we prevent tragedy of the commons without a dictator?" Pair with Simon for decomposition of the governance problem; pair with Hamilton when the commons operates under real-time constraints.
 agent_topic: genius-ostrom
 shapes: [eight-design-principles, polycentric-governance, iad-framework, rules-in-use-vs-on-paper, commons-sustainability]

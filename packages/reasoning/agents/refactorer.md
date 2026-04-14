@@ -8,6 +8,7 @@ description: |
   - When a function has more than 4 parameters (§4.4): introduce parameter object / DTO / struct
   - When a code-reviewer flags SOLID violations: pick the Fowler catalog entry that minimally resolves the violation, apply, verify tests pass unchanged
 model: opus
+effort: low
 when_to_use: When existing code violates the rules in rules/coding-standards.md and must be brought into compliance without changing observable behavior. Use after code-reviewer flags violations, before shipping a High-stakes change, or when preparing a module for extension. Pair with engineer when refactor reveals missing abstractions; pair with test-engineer when characterization tests must be built first; pair with Feathers-informed techniques for legacy code without tests.
 agent_topic: refactorer
 tools:

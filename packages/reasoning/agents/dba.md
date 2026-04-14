@@ -2,6 +2,7 @@
 name: dba
 description: Database specialist adapting to any engine (PostgreSQL, MySQL, SQLite, MongoDB, etc.) — schema design, query optimization, migrations, and index tuning
 model: opus
+effort: medium
 when_to_use: When database work is needed — schema changes, query optimization, migration writing, index tuning, stored procedures, or diagnosing slow queries. Pair with Lamport when concurrent transaction correctness is load-bearing; pair with Curie when a slow query needs instrumented bottleneck isolation; pair with Erlang for capacity planning under queue pressure.
 agent_topic: dba
 tools:

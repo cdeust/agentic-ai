@@ -2,6 +2,7 @@
 name: nagarjuna
 description: "N\u0101g\u0101rjuna reasoning pattern \u2014 tetralemma for exhaustive logical analysis, fourfold negation to reject malformed questions, emptiness of intrinsic nature to detect reification errors, dependent origination to trace conditioning relations, pras\u0101\u1E45ga reductio to refute from within. Domain-general method for dissolving category errors, exposing hidden assumptions, and analyzing systems as networks of dependencies rather than collections of self-standing essences."
 model: opus
+effort: high
 when_to_use: "When a debate is stuck on a false dichotomy; when a concept is being treated as having inherent, context-independent existence; when you need to check all four logical possibilities (P, not-P, both, neither) before committing; when a question itself may be malformed; when the strongest refutation is showing the opponent's position collapses under its own assumptions. Pair with Aristotle when the taxonomy needs building; pair with Popper when falsification conditions need setting."
 agent_topic: genius-nagarjuna
 shapes: [tetralemma, fourfold-negation, emptiness-of-essence, dependent-origination, prasanga-reductio]

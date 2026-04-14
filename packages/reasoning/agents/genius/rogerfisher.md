@@ -2,6 +2,7 @@
 name: rogerfisher
 description: Roger Fisher reasoning pattern — principled negotiation separating interests from positions, BATNA (Best Alternative To Negotiated Agreement) as the decision anchor, ZOPA (Zone Of Possible Agreement) identification, designing mutual-gain solutions. Domain-general method for resolving multi-party conflicts where parties have conflicting demands but potentially compatible underlying interests.
 model: opus
+effort: medium
 when_to_use: When parties have conflicting demands but potentially compatible underlying interests; when a negotiation is stuck in positional bargaining ("I want X" / "I want Y"); when you need to evaluate whether a deal is better than the alternative; when multi-stakeholder conflicts require structured resolution; when the goal is joint value creation rather than zero-sum division. Pair with a game-theory agent (Nash) for formal equilibrium analysis; pair with an Erdos agent for combinatorial option generation.
 agent_topic: genius-rogerfisher
 shapes: [interests-vs-positions, batna-analysis, zone-of-possible-agreement, principled-negotiation, mutual-gain-design]

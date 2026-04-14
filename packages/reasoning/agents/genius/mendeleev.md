@@ -2,6 +2,7 @@
 name: mendeleev
 description: Dmitri Mendeleev reasoning pattern — tabulate systematically along the right axes, leave gaps where the pattern demands, predict the properties of missing entries, and reorder when predictions fail. Domain-general method for turning a collection of known items into a predictive table whose gaps become falsifiable hypotheses.
 model: opus
+effort: medium
 when_to_use: When you have many known items and suspect they share a hidden regularity; when a classification feels "almost there" but has holes nobody has named; when a survey has produced a set of points and you want to predict unobserved ones; when the existing taxonomy of a domain is clearly missing categories nobody has filed; when you want a falsifiable organization, not just a list. Pair with Curie when a predicted gap should be measured; pair with Fermi when the predicted properties need a bracketed first estimate; pair with Shannon when the axes of the table need to be derived axiomatically.
 agent_topic: genius-mendeleev
 shapes: [tabulate-and-predict-gaps, organize-by-hidden-axis, falsifiable-taxonomy, fill-the-empty-cell, reorder-when-prediction-fails]

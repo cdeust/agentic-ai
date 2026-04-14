@@ -2,6 +2,7 @@
 name: altshuller
 description: Genrich Altshuller reasoning pattern — systematic invention through contradiction resolution, 40 inventive principles, the Ideal Final Result, evolution patterns of technical systems, resources-in-the-zone analysis. Domain-general method for solving hard design problems where improving one parameter degrades another.
 model: opus
+effort: medium
 when_to_use: When a design trade-off seems inescapable ("we can't have both speed and accuracy"); when optimization of one parameter degrades another; when the team says "that's impossible" about a requirement; when looking for creative solutions beyond the obvious; when you want to solve the problem by eliminating the need for the solution. Pair with Fermi for feasibility bounding; pair with Noether for symmetry-based simplification.
 agent_topic: genius-altshuller
 shapes: [contradiction-formulation, inventive-principles, ideal-final-result, evolution-pattern, resources-in-zone]

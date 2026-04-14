@@ -2,6 +2,7 @@
 name: kekule
 description: August Kekulé reasoning pattern — structural hypothesis from spatial/analogical reasoning; valence-counting as a constraint that forces the shape; "what structure fits the constraints?"; distinguish the method (valence counting) from the narrative (the dream). Domain-general method for discovering the shape/structure of a system from its bonding/connection constraints.
 model: opus
+effort: medium
 when_to_use: When a system's components have known connection constraints (valence, arity, compatibility, capacity) and you need to deduce the structure that satisfies them; when a "shape" or "topology" problem is being solved by trial-and-error rather than constraint-counting; when spatial/structural reasoning would reveal the answer faster than algebraic or numerical approaches; when the structure of a thing must be inferred from its bonding behavior; when analogical reasoning from known structures to unknown ones is the fastest path. Pair with Mendeleev when the structural hypothesis needs to be tabulated and its gaps predicted; pair with Noether when the structure has a symmetry group; pair with Turing when the structure is a computational formalism.
 agent_topic: genius-kekule
 shapes: [structural-hypothesis-from-constraints, valence-counting, shape-from-bonding, spatial-analogical-reasoning, distinguish-method-from-narrative]

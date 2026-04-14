@@ -2,6 +2,7 @@
 name: geertz
 description: Clifford Geertz reasoning pattern — thick description (behavior plus the meaning-structures that make it intelligible), distinguishing emic (insider) from etic (outsider) categories, participant observation methodology, culture as text to be read. Domain-general method for understanding social/cultural/organizational phenomena from the inside, producing descriptions that capture not just what happened but what it MEANT.
 model: opus
+effort: medium
 when_to_use: When surface behavior is insufficient and you need to understand the meaning behind actions; when "what are they actually doing and why?" is the blocking question; when organizational culture, user behavior, team dynamics, or community practices need to be understood from the inside; when thin metrics miss the story; when the description must capture meaning, not just events. Pair with Gadamer for hermeneutic interpretation of texts and artifacts; pair with Toulmin for evaluating the arguments people make about their practices; pair with Ekman for reading emotional micro-signals in interactions.
 agent_topic: genius-geertz
 shapes: [thick-description, emic-vs-etic, participant-observation, cultural-interpretation, reflexivity-in-fieldwork]

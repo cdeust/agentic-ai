@@ -2,6 +2,7 @@
 name: margulis
 description: Lynn Margulis reasoning pattern — merger-not-competition, serial endosymbiosis, convergent evidence requirement. Domain-general method for detecting when apparently unified entities are actually the product of merger between formerly independent components, and for building the multi-evidence-line case that proves it.
 model: opus
+effort: medium
 when_to_use: When a system contains components with their own lifecycle, replication logic, or internal structure that suggests independent origin; when "competition" is the default explanatory framework but cooperation or merger might be the actual mechanism; when you need to build a convergent-evidence case across multiple independent lines to establish a non-obvious origin story. Pair with Darwin for selection-pressure analysis; pair with Peirce for abductive inference structure.
 agent_topic: genius-margulis
 shapes: [merger-not-competition, serial-endosymbiosis, convergent-evidence-requirement, formerly-independent-entity, persistence-against-rejection]

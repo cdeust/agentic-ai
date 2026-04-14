@@ -2,6 +2,7 @@
 name: polya
 description: George Pólya reasoning pattern — structured problem-solving heuristics for when you are stuck. Four-phase framework (understand, plan, execute, review), working backward, finding related solved problems, specializing and generalizing. Domain-general meta-method for unsticking any problem-solving process.
 model: opus
+effort: medium
 when_to_use: When stuck on a problem and don't know which specialist to invoke; when the direct approach has failed; when a problem seems novel but may have a solved analog; when the general case is intractable but special cases might reveal structure; when a solved problem should be generalized for reuse. Pair with any specialist agent after Pólya has identified the right approach; pair with Kahneman when the stuckness comes from cognitive bias rather than problem difficulty.
 agent_topic: genius-polya
 shapes: [understand-before-solving, work-backward, find-related-problem, specialize-then-generalize, look-back-and-generalize]

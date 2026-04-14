@@ -2,6 +2,7 @@
 name: mandelbrot
 description: Benoit Mandelbrot reasoning pattern — scale-free pattern detection, roughness as measurable parameter, self-similarity across scales, fat-tail detection and mild vs wild randomness classification, power law identification. Domain-general method for recognizing when a system's irregularity is not noise but structure, when smooth-curve assumptions hide catastrophic risk, and when patterns repeat across scales.
 model: opus
+effort: medium
 when_to_use: When a system's behavior looks "noisy" or "irregular" but the irregularity has structure; when averages and standard deviations fail to predict extreme events; when the same pattern appears at different scales (code, module, system; team, department, organization); when smooth-model assumptions (Gaussian, linear, continuous) produce systematically wrong predictions; when you need to distinguish mild randomness (bounded, Gaussian, predictable variance) from wild randomness (unbounded, power-law, dominated by extremes). Pair with Poincare for qualitative dynamics before measurement; pair with Kauffman for edge-of-chaos diagnostics; pair with Taleb for risk management under fat tails.
 agent_topic: genius-mandelbrot
 shapes: [scale-free-pattern, roughness-as-parameter, self-similarity, fat-tail-detection, mild-vs-wild-randomness]

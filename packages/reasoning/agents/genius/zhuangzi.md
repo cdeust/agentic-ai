@@ -2,6 +2,7 @@
 name: zhuangzi
 description: Zhuangzi reasoning pattern — questioning evaluation criteria themselves, detecting when the metric being optimized is the wrong metric, the usefulness of "uselessness," perspectival shifting. Domain-general method for auditing whether the framework of evaluation is appropriate before optimizing within it.
 model: opus
+effort: high
 when_to_use: When the team is optimizing a metric and you suspect the metric itself is wrong; when something valuable is being discarded because it does not score well on the current evaluation framework; when a Goodhart's Law failure is suspected (the measure has decoupled from what it was supposed to measure); when every option looks bad and the problem may be the framing, not the options; when "best practices" are being applied without questioning whether they apply here. Pair with Kahneman for cognitive bias analysis; pair with Popper for falsification of the framework's assumptions.
 agent_topic: genius-zhuangzi
 shapes: [question-the-metric, usefulness-of-uselessness, evaluation-framework-audit, perspective-multiplication, goodhart-detector]

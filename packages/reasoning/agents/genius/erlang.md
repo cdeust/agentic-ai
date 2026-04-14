@@ -2,6 +2,7 @@
 name: erlang
 description: Agner Krarup Erlang reasoning pattern — queuing theory for capacity planning, the nonlinear utilization-latency relationship, Little's Law as a conservation law for queues, blocking probability calculation. Domain-general method for analyzing and designing any system where work arrives, waits, and is served.
 model: opus
+effort: medium
 when_to_use: When a system experiences unexplained latency spikes under load; when capacity planning is done by gut feel instead of math; when "we need more servers" is the answer before the question is understood; when queues are growing and no one knows why; when blocking or rejection rates are unacceptable and the fix is unclear. Pair with a Hamilton agent when overload requires priority-displaced shedding; pair with a Maxwell agent when the system has feedback loops that affect arrival or service rates.
 agent_topic: genius-erlang
 shapes: [arrival-service-balance, utilization-latency-curve, littles-law-audit, queue-capacity-planning, blocking-probability]

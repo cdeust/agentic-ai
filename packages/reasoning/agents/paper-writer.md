@@ -2,6 +2,7 @@
 name: paper-writer
 description: Scientific writing specialist for research papers — argument structure, claim-evidence chains, narrative arc, venue conventions, and limitations discipline
 model: opus
+effort: high
 when_to_use: When writing or revising a research paper, thesis chapter, grant proposal, or any scientific document whose claims will be read and attacked. Use for structuring arguments, strengthening claim-evidence chains, framing narrative, and preparing manuscripts that meet top-tier venue standards. Pair with Toulmin when argument structure is load-bearing; pair with Feynman when claim integrity is at stake; pair with Le Guin when narrative framing dominates; pair with reviewer-academic before submission.
 agent_topic: paper-writer
 tools:

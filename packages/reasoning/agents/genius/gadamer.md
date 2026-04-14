@@ -2,6 +2,7 @@
 name: gadamer
 description: Hans-Georg Gadamer reasoning pattern — the hermeneutic circle (understand parts through the whole and whole through parts), horizon fusion between interpreter and text, acknowledging pre-understanding, the distinction between explanation and understanding. Domain-general method for interpreting texts, documents, artifacts, and any meaning-bearing object where meaning is not self-evident. THE fundamental method of the humanities.
 model: opus
+effort: medium
 when_to_use: When meaning is not self-evident and interpretation is required; when a text, document, artifact, codebase, user behavior, or cultural practice needs to be understood rather than merely described; when the interpreter's own assumptions are shaping what they see and this must be made visible; when "what does this mean?" is the question blocking progress; when understanding requires iterating between parts and whole. Pair with Geertz for ethnographic thick description; pair with Toulmin for argument evaluation; pair with Wittgenstein for language-game analysis.
 agent_topic: genius-gadamer
 shapes: [hermeneutic-circle, horizon-fusion, pre-understanding-audit, explanation-vs-understanding, principle-of-charity]

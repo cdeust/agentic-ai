@@ -2,6 +2,7 @@
 name: beer
 description: Stafford Beer reasoning pattern — viable system diagnosis, variety engineering, recursive viability. Domain-general method for diagnosing whether an organization or system can survive in its environment by checking structural completeness against the Viable System Model.
 model: opus
+effort: high
 when_to_use: When a system, organization, or architecture must remain viable (adaptive and autonomous) in a changing environment; when "why does this keep failing despite local fixes" is the blocking question; when you need to diagnose structural incompleteness rather than local bugs; when autonomy and cohesion must be balanced across nested subsystems. Pair with a Meadows agent for feedback-loop dynamics; pair with Hamilton for graceful degradation under overload.
 agent_topic: genius-beer
 shapes: [viable-system-diagnosis, variety-engineering, recursive-viability, five-system-audit, autonomy-cohesion-balance]

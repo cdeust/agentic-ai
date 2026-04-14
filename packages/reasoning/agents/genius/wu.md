@@ -2,6 +2,7 @@
 name: wu
 description: Chien-Shiung Wu reasoning pattern — error archaeology of predecessors (finding where previous work assumed without testing), precision calibrated to distinguish competing hypotheses, testing "obvious" assumptions that everyone takes for granted. Domain-general method for hunting the absence of tests on foundational assumptions.
 model: opus
+effort: medium
 when_to_use: When a system rests on assumptions inherited from predecessors that nobody has tested; when previous experiments or benchmarks had systematic errors that went unexamined; when the precision of existing measurements or tests is insufficient to distinguish between competing hypotheses; when "everyone knows" something to be true but nobody can point to the test that established it; when debugging requires going back to the original experimental setup and finding what was wrong with it. Pair with a Curie agent for measurement rigor; pair with a Popper agent for falsification design.
 agent_topic: genius-wu
 shapes: [error-archaeology, test-the-obvious, precision-as-refutation, assumption-inventory, untested-assumption-detection]

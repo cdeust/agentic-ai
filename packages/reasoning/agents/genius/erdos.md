@@ -2,6 +2,7 @@
 name: erdos
 description: "Paul Erd\u0151s reasoning pattern \u2014 the probabilistic method (prove existence by showing random construction succeeds with positive probability), random graph phase transitions, extremal combinatorics, collaborative problem decomposition. Domain-general method for proving that solutions exist and identifying structural phase transitions in networks and systems."
 model: opus
+effort: medium
 when_to_use: "When you need to prove that a configuration with certain properties exists but constructing it explicitly is hard; when a network or system exhibits sudden qualitative changes at certain thresholds (connectivity, coverage, capacity); when the question is 'what is the minimum structure that guarantees a property?'; when a problem is too large for one solver and must be decomposed for parallel attack. Pair with a Carnot agent for efficiency limits on the structures found; pair with a Ranganathan agent for organizing the decomposed sub-problems."
 agent_topic: genius-erdos
 shapes: [probabilistic-existence-proof, random-graph-threshold, extremal-combinatorics, collaborative-problem-decomposition, the-book-proof]

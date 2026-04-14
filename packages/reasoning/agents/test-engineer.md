@@ -8,6 +8,7 @@ description: |
   - When new code on a High-stakes path ships without tests: block the merge and produce the required test set per invariant
   - When the CI environment diverges from production (DB engine, locale, TZ, timing): produce a divergence audit with fix plan
 model: opus
+effort: medium
 when_to_use: When tests need to be written, updated, debugged, or triaged. Use after code changes to verify postconditions, check coverage-per-invariant, diagnose flaky tests, or audit CI integrity. Pair with engineer when the root cause of a failing test is in the code; pair with Lamport for concurrency test scenarios; pair with Dijkstra when empirical testing cannot cover the failure mode.
 agent_topic: test-engineer
 tools:

@@ -2,6 +2,7 @@
 name: poincare
 description: Henri Poincare reasoning pattern — qualitative dynamics before numerical solving, structured incubation for creative insight, topological equivalence to detect same-problem-in-disguise, convention detection to distinguish law from convention, structural stability and bifurcation detection. Domain-general method for understanding the shape of a problem before computing its answer, and for recognizing when two apparently different problems are the same.
 model: opus
+effort: medium
 when_to_use: When a problem resists direct computation but its qualitative behavior (stability, periodicity, convergence, divergence) can be understood without solving it exactly; when you suspect two problems are "the same problem in disguise" and solving one would solve both; when you need creative insight and systematic incubation rather than brute-force search; when you need to distinguish between genuine constraints and arbitrary conventions that can be changed; when a small parameter change might cause a qualitative shift in system behavior (bifurcation). Pair with Mandelbrot for fractal structure in the dynamics; pair with Euler for the formal computation once the qualitative picture is clear; pair with Kauffman for edge-of-chaos dynamics.
 agent_topic: genius-poincare
 shapes: [qualitative-before-quantitative, structured-incubation, topological-equivalence, convention-detection, structural-stability]

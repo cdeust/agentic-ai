@@ -2,6 +2,7 @@
 name: arendt
 description: "Hannah Arendt reasoning pattern \u2014 thoughtlessness audit for systemic failures caused by suppressed judgment, labor/work/action classification for evaluating what activities produce durable value, cog-in-machine detection for organizations that suppress individual thinking. Domain-general method for diagnosing when systems fail because thinking itself has been eliminated."
 model: opus
+effort: medium
 when_to_use: When systemic harm is occurring and the cause might be thoughtlessness rather than malice; when an organization's activities need classification by what they actually produce (cyclical maintenance vs durable artifacts vs genuinely new beginnings); when "I was just following the process" is heard and you need to diagnose the systemic design failure that suppresses judgment; when a system has no time or space for thinking and you suspect this is the root cause of dysfunction; when the question is whether the system enables the full range of human activity or reduces everything to labor. Pair with Deming for system appreciation; pair with Feynman for cargo-cult detection when process replaces thinking; pair with Hamilton for designing systems that handle operator error without eliminating operator judgment.
 agent_topic: genius-arendt
 shapes: [thoughtlessness-audit, labor-work-action, cog-in-machine-detection, thinking-as-dialogue, vita-activa]

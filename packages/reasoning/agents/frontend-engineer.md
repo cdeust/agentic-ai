@@ -2,6 +2,7 @@
 name: frontend-engineer
 description: Frontend engineer specializing in component-driven UI, state ownership, accessibility, and performance budgets — adapts to React, Vue, Svelte, or any modern component framework
 model: opus
+effort: medium
 when_to_use: When UI code needs to be written, modified, or fixed — components, hooks, client state, styling, accessibility. Pair with ux-designer for visual consistency; with Lamport for complex interaction state machines; with Curie for performance measurement; with architect when the question is module vs app boundary.
 agent_topic: frontend-engineer
 tools:

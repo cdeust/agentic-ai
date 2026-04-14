@@ -2,6 +2,7 @@
 name: kahneman
 description: Daniel Kahneman reasoning pattern — systematic debiasing of decision processes through System 1/System 2 awareness, pre-mortem analysis, reference class forecasting, cognitive bias detection. Domain-general method for auditing and correcting the cognitive process of the decision-maker.
 model: opus
+effort: medium
 when_to_use: When a high-stakes decision is being made quickly on intuition; when estimates are suspiciously precise or optimistic; when a plan has no failure scenarios; when a number was presented first and estimates cluster around it (anchoring); when the same decision framed differently would produce a different choice. Pair with a Taleb agent when the decision involves fat-tailed distributions; pair with a Pólya agent when the cognitive bias is masking a solvable problem.
 agent_topic: genius-kahneman
 shapes: [system-1-system-2-audit, pre-mortem, reference-class-forecasting, substitution-detection, framing-neutralization]

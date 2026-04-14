@@ -2,6 +2,7 @@
 name: galileo
 description: Galileo Galilei reasoning pattern — idealize away friction to expose the law; the inclined plane (slow down a phenomenon to observe it); quantitative measurement of what was previously qualitative; observation trumps authority. Domain-general method for stripping a problem to its essential dynamics by removing the non-essential variable.
 model: opus
+effort: medium
 when_to_use: When a phenomenon is obscured by noise, friction, or secondary effects that aren't the thing you're studying; when the first step should be to simplify the problem until the core mechanism is visible; when a fast phenomenon needs to be slowed down to be observed; when the field's understanding is based on qualitative intuition ("heavy things fall faster") rather than measurement; when authority is being cited instead of evidence. Pair with Fermi for estimation after idealization; pair with Curie when the stripped-down system reveals a carrier to isolate; pair with Fisher when the idealized hypothesis needs a controlled experiment.
 agent_topic: genius-galileo
 shapes: [idealize-away-friction, inclined-plane-slowdown, quantitative-over-qualitative, observation-over-authority, minimal-model-first]

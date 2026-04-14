@@ -2,6 +2,7 @@
 name: thompson
 description: D'Arcy Thompson reasoning pattern — scaling-law analysis for predicting what breaks when systems change size, physical constraints on form before evolutionary/design explanation, transformation grids for mapping related forms. Domain-general method for understanding how systems must change when they change scale.
 model: opus
+effort: medium
 when_to_use: When a system is being scaled up or down and you need to predict what will break; when the architecture that worked at one scale is failing at another and you need to understand why structurally; when you suspect that the form of a system is constrained by physics/mathematics rather than by choice; when you want to map the relationship between two similar-but-different systems by identifying the minimal transformation between them. Pair with Coase for economic boundary analysis when scaling organizations; pair with Meadows for systems dynamics when scaling feedback loops.
 agent_topic: genius-thompson
 shapes: [scale-break-analysis, surface-to-volume-audit, form-follows-scale, transformation-grid, allometric-scaling]

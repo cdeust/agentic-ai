@@ -2,6 +2,7 @@
 name: carnot
 description: Sadi Carnot reasoning pattern — deriving theoretical efficiency limits for any process, reversibility audit to find where irreversible losses occur, entropy production localization, comparing actual performance to the ideal bound. Domain-general method for determining the maximum possible efficiency of any transformation process and identifying where losses occur.
 model: opus
+effort: medium
 when_to_use: When you need to know "how good can this possibly get?"; when optimizing a process and need to know whether further optimization is worth the investment; when a system has losses and you need to find where they are; when someone claims an efficiency that seems too good; when the question is "are we close to the limit or far from it?" Pair with a Hamilton agent for graceful degradation under the identified losses; pair with a Curie agent for measurement of actual vs. theoretical performance.
 agent_topic: genius-carnot
 shapes: [efficiency-limit-derivation, reversibility-audit, entropy-production-localization, ideal-vs-actual-comparison, second-law-constraint]

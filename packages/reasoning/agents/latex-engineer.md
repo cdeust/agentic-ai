@@ -2,6 +2,7 @@
 name: latex-engineer
 description: LaTeX and scientific document specialist — venue templates, figures, tables, bibliographies, TikZ diagrams, and compilation debugging
 model: opus
+effort: low
 when_to_use: When a document must be built or debugged in LaTeX — venue template setup, figure/table production, TikZ/PGFPlots diagrams, bibliography management, compilation log triage. Use for typesetting craft; pair with paper-writer for prose and argument, with Toulmin for argument rigor, with reviewer-academic for venue-convention audit.
 agent_topic: latex-engineer
 tools:

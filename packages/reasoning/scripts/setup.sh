@@ -79,68 +79,88 @@ read_version() {
   fi
 }
 
-# ── Model override resolution ──────────────────────────────────────────
-# Reads ~/.claude/zetetic-agent-models.json and resolves the model for an agent.
-# Config schema:
-#   { "agents": { "engineer": "sonnet", ... },
-#     "patterns": [ { "glob": "genius/*", "model": "sonnet" } ] }
+# ── Agent override resolution (model + effort) ─────────────────────────
+# Reads ~/.claude/zetetic-agent-models.json and resolves model + effort per agent.
+# Config schema (backward compatible):
+#   { "agents": {
+#       "engineer": "sonnet",                                 # shorthand: model only
+#       "architect": { "model": "opus", "effort": "high" },    # full: model + effort
+#       "refactorer": { "effort": "low" }                      # effort only (keeps frontmatter model)
+#     },
+#     "patterns": [
+#       { "glob": "genius/*", "model": "sonnet" },             # shorthand
+#       { "glob": "genius/*", "model": "sonnet", "effort": "medium" }  # full
+#     ] }
 # Precedence: exact match > first glob match > default from frontmatter
-MODEL_OVERRIDES_LOADED=false
-MODEL_OVERRIDES_AGENTS=""
-MODEL_OVERRIDES_PATTERNS=""
+# Lines stored as: "name=model|effort" where model or effort may be empty.
+OVERRIDES_LOADED=false
+OVERRIDES_AGENTS=""
+OVERRIDES_PATTERNS=""
 
-load_model_overrides() {
-  [[ "$MODEL_OVERRIDES_LOADED" == true ]] && return
-  MODEL_OVERRIDES_LOADED=true
+load_overrides() {
+  [[ "$OVERRIDES_LOADED" == true ]] && return
+  OVERRIDES_LOADED=true
   [[ ! -f "$MODEL_CONFIG" ]] && return
-  command -v python3 &>/dev/null || { warn "python3 required for model overrides — skipping"; return; }
+  command -v python3 &>/dev/null || { warn "python3 required for overrides — skipping"; return; }
 
   if ! python3 -c "import json; json.load(open('$MODEL_CONFIG'))" 2>/dev/null; then
-    warn "Invalid JSON in $MODEL_CONFIG — skipping model overrides"
+    warn "Invalid JSON in $MODEL_CONFIG — skipping overrides"
     return
   fi
 
-  MODEL_OVERRIDES_AGENTS=$(python3 -c "
+  OVERRIDES_AGENTS=$(python3 -c "
 import json
-with open('$MODEL_CONFIG') as f: d = json.load(f)
-for name, model in d.get('agents', {}).items():
-    print(f'{name}={model}')
+d = json.load(open('$MODEL_CONFIG'))
+for name, v in d.get('agents', {}).items():
+    if isinstance(v, str):
+        print(f'{name}={v}|')
+    elif isinstance(v, dict):
+        print(f'{name}={v.get(\"model\",\"\")}|{v.get(\"effort\",\"\")}')
 " 2>/dev/null || true)
 
-  MODEL_OVERRIDES_PATTERNS=$(python3 -c "
+  OVERRIDES_PATTERNS=$(python3 -c "
 import json
-with open('$MODEL_CONFIG') as f: d = json.load(f)
+d = json.load(open('$MODEL_CONFIG'))
 for p in d.get('patterns', []):
-    print(f\"{p['glob']}={p['model']}\")
+    print(f\"{p['glob']}={p.get('model','')}|{p.get('effort','')}\")
 " 2>/dev/null || true)
 
   local ac pc
-  ac=$(echo "$MODEL_OVERRIDES_AGENTS" | grep -c '=' 2>/dev/null || echo "0")
-  pc=$(echo "$MODEL_OVERRIDES_PATTERNS" | grep -c '=' 2>/dev/null || echo "0")
-  [[ "$ac" -gt 0 || "$pc" -gt 0 ]] && ok "Model overrides loaded: $ac agents, $pc patterns"
+  ac=$(echo "$OVERRIDES_AGENTS" | grep -c '=' 2>/dev/null || echo "0")
+  pc=$(echo "$OVERRIDES_PATTERNS" | grep -c '=' 2>/dev/null || echo "0")
+  [[ "$ac" -gt 0 || "$pc" -gt 0 ]] && ok "Overrides loaded: $ac agents, $pc patterns"
 }
 
-resolve_model() {
-  local agent_name="$1" default_model="$2"
-  [[ -z "$MODEL_OVERRIDES_AGENTS" && -z "$MODEL_OVERRIDES_PATTERNS" ]] && { echo "$default_model"; return; }
+# Returns "model|effort" (either may be empty = keep default).
+resolve_override() {
+  local agent_name="$1"
+  [[ -z "$OVERRIDES_AGENTS" && -z "$OVERRIDES_PATTERNS" ]] && { echo "|"; return; }
 
   # Exact match
   local exact
-  exact=$(echo "$MODEL_OVERRIDES_AGENTS" | grep "^${agent_name}=" 2>/dev/null | head -1 | cut -d= -f2)
+  exact=$(echo "$OVERRIDES_AGENTS" | grep "^${agent_name}=" 2>/dev/null | head -1 | cut -d= -f2-)
   [[ -n "$exact" ]] && { echo "$exact"; return; }
 
   # Glob patterns — first match wins
   while IFS= read -r pattern_line; do
     [[ -z "$pattern_line" ]] && continue
     local glob_pattern="${pattern_line%%=*}"
-    local glob_model="${pattern_line#*=}"
+    local glob_rest="${pattern_line#*=}"
     # shellcheck disable=SC2254
     case "$agent_name" in
-      $glob_pattern) echo "$glob_model"; return ;;
+      $glob_pattern) echo "$glob_rest"; return ;;
     esac
-  done <<< "$MODEL_OVERRIDES_PATTERNS"
+  done <<< "$OVERRIDES_PATTERNS"
 
-  echo "$default_model"
+  echo "|"
+}
+
+# Back-compat alias (older callers expect just model)
+load_model_overrides() { load_overrides; }
+resolve_model() {
+  local ov; ov="$(resolve_override "$1")"
+  local model="${ov%%|*}"
+  [[ -n "$model" ]] && echo "$model" || echo "$2"
 }
 
 # ── Uninstall ──────────────────────────────────────────────────────────
@@ -219,7 +239,7 @@ with open('$plugin_json', 'w') as f: json.dump(d, f, indent=2); f.write('\n')
 
 # ── Configure (model overrides) ────────────────────────────────────────
 do_configure() {
-  step "Model override configuration"
+  step "Agent override configuration (model + effort)"
 
   if [[ -f "$MODEL_CONFIG" ]]; then
     info "Existing config: $MODEL_CONFIG"
@@ -233,8 +253,10 @@ do_configure() {
 
   cat > "$MODEL_CONFIG" <<'CONF'
 {
-  "//": "Zetetic Agent Model Overrides — survives plugin updates",
+  "//": "Zetetic Agent Overrides (model + effort) — survives plugin updates",
   "//models": "opus (most capable), sonnet (balanced), haiku (fastest/cheapest)",
+  "//effort": "low (terse procedural), medium (balanced), high (deep reasoning), max (opus 4.6 only)",
+  "//schema": "string value = model shorthand; object value = {model?, effort?}. Either field may be omitted to keep the frontmatter default.",
   "//precedence": "per-call > this config > agent frontmatter default",
 
   "patterns": [
@@ -242,37 +264,48 @@ do_configure() {
   ],
 
   "agents": {
-    "architect": "opus",
-    "engineer": "sonnet",
-    "code-reviewer": "sonnet",
-    "test-engineer": "sonnet",
-    "frontend-engineer": "sonnet",
-    "dba": "sonnet",
-    "devops-engineer": "sonnet",
-    "data-scientist": "sonnet",
-    "experiment-runner": "sonnet",
-    "mlops": "sonnet",
-    "latex-engineer": "sonnet",
-    "security-auditor": "sonnet",
-    "ux-designer": "sonnet",
-    "research-scientist": "opus",
-    "paper-writer": "opus",
-    "reviewer-academic": "opus",
-    "professor": "sonnet",
-    "orchestrator": "opus"
+    "refactorer":        { "model": "haiku",  "effort": "low"    },
+    "latex-engineer":    { "model": "haiku",  "effort": "low"    },
+
+    "engineer":          { "model": "sonnet", "effort": "medium" },
+    "code-reviewer":     { "model": "sonnet", "effort": "medium" },
+    "test-engineer":     { "model": "sonnet", "effort": "medium" },
+    "frontend-engineer": { "model": "sonnet", "effort": "medium" },
+    "dba":               { "model": "sonnet", "effort": "medium" },
+    "devops-engineer":   { "model": "sonnet", "effort": "medium" },
+    "data-scientist":    { "model": "sonnet", "effort": "medium" },
+    "experiment-runner": { "model": "sonnet", "effort": "medium" },
+    "mlops":             { "model": "sonnet", "effort": "medium" },
+    "ux-designer":       { "model": "sonnet", "effort": "medium" },
+    "professor":         { "model": "sonnet", "effort": "medium" },
+
+    "architect":          { "model": "opus", "effort": "high" },
+    "orchestrator":       { "model": "opus", "effort": "medium" },
+    "security-auditor":   { "model": "opus", "effort": "high" },
+    "research-scientist": { "model": "opus", "effort": "high" },
+    "paper-writer":       { "model": "opus", "effort": "high" },
+    "reviewer-academic":  { "model": "opus", "effort": "high" }
   }
 }
 CONF
 
   ok "Created $MODEL_CONFIG"
   echo ""
-  echo "  Default config:"
-  echo "    - 97 genius agents → sonnet (via glob pattern)"
-  echo "    - architect, orchestrator, research-scientist, paper-writer, reviewer-academic → opus"
-  echo "    - Other team agents → sonnet"
+  echo "  Default config (model + effort):"
+  echo "    - refactorer, latex-engineer          → haiku  + low     (mechanical)"
+  echo "    - most team agents                     → sonnet + medium  (balanced)"
+  echo "    - architect, security, research roles  → opus   + high    (deep)"
+  echo "    - 97 genius agents                     → sonnet (effort kept from frontmatter:"
+  echo "                                              deep-reasoning geniuses default to high,"
+  echo "                                              procedural geniuses default to medium)"
   echo ""
   echo -e "  Edit to customize, then run ${CYAN}$0 update${NC} to apply."
   echo "  Config is yours — plugin updates never overwrite it."
+  echo ""
+  echo "  Schema notes:"
+  echo "    - String value ('sonnet') = model shorthand; effort unchanged"
+  echo "    - Object value { model, effort } = set either or both"
+  echo "    - Omit a field to keep the frontmatter default"
 }
 
 # ── Install dispatch guards ────────────────────────────────────────────
@@ -323,7 +356,7 @@ fi
 # ── Load model overrides ───────────────────────────────────────────────
 step "Model overrides"
 load_model_overrides
-[[ "$MODEL_OVERRIDES_LOADED" == true && -z "$MODEL_OVERRIDES_AGENTS$MODEL_OVERRIDES_PATTERNS" ]] && \
+[[ "$OVERRIDES_LOADED" == true && -z "$OVERRIDES_AGENTS$OVERRIDES_PATTERNS" ]] && \
   info "No overrides — using agent frontmatter defaults (run '$0 configure' to customize)"
 
 # ── Stage files to temp directory (atomic copy) ────────────────────────
@@ -342,22 +375,47 @@ count_tools=0
 count_rules=0
 count_overridden=0
 
-# Stage a file (with optional model override for agent .md files)
+# Stage a file (with optional model+effort override for agent .md files)
 stage_file() {
-  local src="$1" rel_dest="$2" apply_models="${3:-false}"
+  local src="$1" rel_dest="$2" apply_overrides="${3:-false}"
   local dest_dir; dest_dir="$(dirname "$STAGING/$rel_dest")"
   mkdir -p "$dest_dir"
 
-  if [[ "$apply_models" == true ]] && [[ "$src" == *.md ]]; then
+  if [[ "$apply_overrides" == true ]] && [[ "$src" == *.md ]]; then
     local agent_rel="${rel_dest#agents/}"
     local agent_name="${agent_rel%.md}"
-    local current_model target_model
+
+    # Current frontmatter values
+    local current_model current_effort
     current_model=$(sed -n '/^---$/,/^---$/{ /^model:/s/^model: *//p; }' "$src" 2>/dev/null | head -1)
     [[ -z "$current_model" ]] && current_model="opus"
-    target_model=$(resolve_model "$agent_name" "$current_model")
+    current_effort=$(sed -n '/^---$/,/^---$/{ /^effort:/s/^effort: *//p; }' "$src" 2>/dev/null | head -1)
 
-    if [[ "$target_model" != "$current_model" ]]; then
-      sed "s/^model: .*/model: $target_model/" "$src" > "$STAGING/$rel_dest"
+    # Resolve overrides — "model|effort" (either may be empty = keep default)
+    local override; override="$(resolve_override "$agent_name")"
+    local ov_model="${override%%|*}"
+    local ov_effort="${override#*|}"
+    local target_model="${ov_model:-$current_model}"
+    local target_effort="${ov_effort:-$current_effort}"
+
+    if [[ "$target_model" != "$current_model" ]] || [[ "$target_effort" != "$current_effort" ]]; then
+      # Rewrite both lines (sed handles each; if effort line is absent and override provides one, insert it)
+      local tmp; tmp=$(mktemp)
+      cp "$src" "$tmp"
+      if [[ "$target_model" != "$current_model" ]]; then
+        sed -i.bak "s/^model: .*/model: $target_model/" "$tmp" && rm -f "${tmp}.bak"
+      fi
+      if [[ -n "$target_effort" ]] && [[ "$target_effort" != "$current_effort" ]]; then
+        if [[ -n "$current_effort" ]]; then
+          sed -i.bak "s/^effort: .*/effort: $target_effort/" "$tmp" && rm -f "${tmp}.bak"
+        else
+          # Insert effort: after model: line
+          sed -i.bak "/^model:/a\\
+effort: $target_effort
+" "$tmp" && rm -f "${tmp}.bak"
+        fi
+      fi
+      mv "$tmp" "$STAGING/$rel_dest"
       count_overridden=$((count_overridden + 1))
     else
       cp "$src" "$STAGING/$rel_dest"

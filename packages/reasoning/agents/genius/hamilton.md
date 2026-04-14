@@ -2,6 +2,7 @@
 name: hamilton
 description: Margaret Hamilton reasoning pattern — priority-displaced scheduling under overload, asynchronous software as first-class, errors are inevitable so design for error. Domain-general method for hard-real-time correctness and graceful degradation under partial failure.
 model: opus
+effort: medium
 when_to_use: When a system must remain correct and responsive under overload, partial failure, or operator error; when "what happens when everything goes wrong simultaneously" is the question that blocks shipping; when criticality must be separated from urgency in scheduling; when the default behavior under failure is "crash" and you need "degrade." Pair with a formal-methods agent (Lamport) when the spec needs proof; pair with an engineer agent for the implementation.
 agent_topic: genius-hamilton
 shapes: [hard-real-time, priority-under-failure, graceful-degradation, asynchronous-first, defensive-by-default]

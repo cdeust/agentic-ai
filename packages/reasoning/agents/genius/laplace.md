@@ -2,6 +2,7 @@
 name: laplace
 description: Pierre-Simon Laplace reasoning pattern — Bayesian inference as the principled method for updating beliefs with evidence, prior elicitation, calibration assessment, probability as the language of uncertainty. Domain-general method for rationally combining prior knowledge with new evidence to form updated beliefs.
 model: opus
+effort: medium
 when_to_use: When a decision must be made under uncertainty and the evidence is incomplete; when debugging requires probabilistic reasoning about which module is most likely at fault; when risk assessment requires combining prior knowledge with new observations; when someone confuses "unlikely" with "impossible" or "no evidence" with "evidence of absence"; when calibration of confidence matters (sizing estimates, SLO targets, incident probability). Pair with a Curie agent for the experimental design that generates the evidence; pair with a Schon agent when reflection on the reasoning process itself is needed.
 agent_topic: genius-laplace
 shapes: [bayesian-updating, prior-elicitation, calibration-audit, probability-as-uncertainty, posterior-prediction]

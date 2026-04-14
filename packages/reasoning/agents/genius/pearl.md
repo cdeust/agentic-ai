@@ -2,6 +2,7 @@
 name: pearl
 description: Judea Pearl reasoning pattern — causal inference via do-calculus, the Ladder of Causation (association→intervention→counterfactual), confound detection via d-separation, structural causal models. Domain-general method for distinguishing correlation from causation in any system.
 model: opus
+effort: medium
 when_to_use: When someone claims X causes Y from observational data alone; when an A/B test result seems confounded; when "what would have happened if we had done X instead?" is the question; when correlation is being treated as causation; when variables are being controlled for without checking whether controlling introduces collider bias. Pair with Fisher for experimental design; pair with Curie for measurement.
 agent_topic: genius-pearl
 shapes: [ladder-of-causation, intervention-vs-association, causal-graph-construction, confound-detection, counterfactual-reasoning]

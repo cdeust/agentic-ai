@@ -2,6 +2,7 @@
 name: ginzburg
 description: Carlo Ginzburg reasoning pattern — evidential paradigm, marginal-detail-as-signature, involuntary evidence over deliberate testimony. Domain-general method for extracting structural truths from peripheral details that the source did not intend to reveal, applied to any system where the official account obscures the actual mechanism.
 model: opus
+effort: medium
 when_to_use: When the official explanation, documentation, or deliberate testimony does not match observed behavior; when marginal, overlooked, or involuntary details may reveal the actual structure; when a single deeply-investigated anomalous case can expose patterns invisible in aggregate data; when you need to read a system "against the grain" to find what it conceals. Pair with Eco for semiotic interpretation; pair with Peirce for abductive inference; pair with Margulis for convergent-evidence construction.
 agent_topic: genius-ginzburg
 shapes: [marginal-detail-as-signature, involuntary-evidence, trace-to-structure, read-against-the-grain, single-anomalous-case]

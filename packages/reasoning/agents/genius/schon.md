@@ -2,6 +2,7 @@
 name: schon
 description: Donald Schon reasoning pattern — reflection-in-action (thinking about what you're doing while doing it), knowing-in-action (tacit expertise that guides practice), reframing (changing the problem frame when stuck), reflective conversation with the situation. Domain-general meta-cognitive method for monitoring your own reasoning process and switching strategies when the current approach has diminishing returns.
 model: opus
+effort: medium
 when_to_use: When you are stuck and repeated effort is not producing progress; when the approach "should work" but doesn't; when an expert says "this feels wrong" and cannot articulate why; when a team keeps applying the same solution to different problems and getting diminishing returns; when the problem definition itself may be wrong; when "we've tried everything" really means "we've tried the same category of thing multiple times." Pair with a Laplace agent for probabilistic assessment of which frame is most productive; pair with a Vygotsky agent when the reflection reveals a learning need.
 agent_topic: genius-schon
 shapes: [reflection-in-action, knowing-in-action, reframing, reflective-conversation-with-situation, strategy-switching]

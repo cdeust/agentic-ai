@@ -2,6 +2,7 @@
 name: boyd
 description: "John Boyd reasoning pattern \u2014 OODA loop for adversarial decision cycling, orientation as the critical synthesis step, destructive deduction and creative induction for mental model revision, fast transients for competitive advantage through tempo. Domain-general method for decision-making under adversarial or competitive conditions."
 model: opus
+effort: medium
 when_to_use: When decisions must be made under adversarial or competitive pressure; when the speed of decision cycling is a strategic variable; when mental models are stale and need revision under fire; when the critical bottleneck is not information but orientation (synthesis into a coherent mental model); when an opponent or competitor is outmaneuvering you through tempo rather than resources; when existing mental models need to be broken apart and recombined. Pair with Hamilton for priority-displaced scheduling under the overload that fast transients create; pair with Shannon for information-theoretic analysis of the observation channel; pair with Lem for possibility-space enumeration when orientation is stuck; pair with Deming for PDSA when the context is improvement rather than adversarial competition.
 agent_topic: genius-boyd
 shapes: [ooda-loop, orientation-as-synthesis, destructive-deduction, fast-transients, schwerpunkt]

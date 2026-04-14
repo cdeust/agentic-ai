@@ -2,6 +2,7 @@
 name: coase
 description: Ronald Coase reasoning pattern — transaction cost analysis for drawing system/organizational boundaries, build-vs-buy decisions, identifying where the boundary between internal coordination and external transaction should lie. Domain-general method for deciding what should be inside vs outside a system based on the relative costs of coordination vs transaction.
 model: opus
+effort: high
 when_to_use: When deciding whether to build or buy, merge or split, monolith or microservice, in-house or outsource; when a service boundary is creating more overhead than it saves; when internal coordination costs are escalating and you need to know whether to restructure or accept them; when an organizational or architectural boundary feels wrong but no one can articulate why. Pair with Thompson for scaling analysis when the boundary problem is scale-dependent; pair with Bateson for interaction-pattern diagnosis when the boundary creates communication pathology.
 agent_topic: genius-coase
 shapes: [transaction-cost-boundary, build-vs-buy-analysis, boundary-optimization, make-or-market, coordination-cost-accounting]

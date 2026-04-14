@@ -2,6 +2,7 @@
 name: vygotsky
 description: Lev Vygotsky reasoning pattern — zone of proximal development (ZPD) for calibrating challenge to learner capability, scaffolding that is removed as competence grows, knowledge as socially constructed through interaction. Domain-general method for designing learning experiences, onboarding, documentation, and progressive disclosure.
 model: opus
+effort: medium
 when_to_use: When onboarding new team members and the ramp-up is too slow or too overwhelming; when documentation exists but nobody reads it; when junior engineers are stuck and senior engineers say "it's obvious"; when a tool or API is powerful but adoption is low because the learning curve is too steep; when progressive disclosure is needed in a product, curriculum, or codebase. Pair with a Schon agent for reflective practice during the learning process; pair with a Laplace agent when assessing the probability of misconceptions.
 agent_topic: genius-vygotsky
 shapes: [zone-of-proximal-development, scaffolding-and-fading, social-construction-of-knowledge, curriculum-sequencing, misconception-diagnosis]

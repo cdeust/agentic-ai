@@ -2,6 +2,7 @@
 name: foucault
 description: Michel Foucault reasoning pattern — genealogy (tracing contingent historical origins of what seems natural), discourse analysis (identifying rules governing what can be said/known), power/knowledge nexus (knowledge is produced by and serves power), archaeology of assumptions (excavating the unstated rules beneath current practice). Domain-general method for exposing how what appears natural, inevitable, or "just the way things are" was actually constructed by specific historical processes and power relations.
 model: opus
+effort: medium
 when_to_use: When the question is "why do we do it this way?" and the answer is "we've always done it this way"; when a practice, metric, category, or vocabulary is treated as natural or inevitable but may be a contingent construction; when you need to surface the unstated assumptions beneath a design, process, or organizational structure; when "best practice" documents need interrogation for whose interests they serve; when the question is not "is this correct?" but "who decided what counts as correct, and why?" Pair with a Mill agent when the construction needs comparative evidence; pair with a Bruner agent when narrative analysis is the right mode.
 agent_topic: genius-foucault
 shapes: [genealogy-of-practice, discourse-formation-analysis, power-knowledge-nexus, archaeology-of-assumptions, subject-position-mapping]

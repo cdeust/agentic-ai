@@ -2,6 +2,7 @@
 name: kauffman
 description: Stuart Kauffman reasoning pattern — edge-of-chaos tuning, adjacent possible exploration, NK fitness landscape navigation, order for free from network topology, work-constraint cycles. Domain-general method for navigating systems that are neither frozen nor chaotic, finding innovation at the boundary of the known, and recognizing when order emerges from structure rather than being imposed.
 model: opus
+effort: medium
 when_to_use: When a system is either too rigid (frozen, no innovation, over-constrained) or too chaotic (no stability, everything changes, nothing persists); when you need to find the next viable innovation without breaking what works; when the fitness landscape is rugged and hill-climbing gets trapped in local optima; when order appears "for free" from the topology of dependencies and you need to recognize it rather than impose it; when the question is "how do we evolve this system without destabilizing it?" Pair with Simon for decomposition of the landscape; pair with Darwin for selection pressure analysis; pair with Mandelbrot when the landscape has fractal structure.
 agent_topic: genius-kauffman
 shapes: [edge-of-chaos-tuning, adjacent-possible, fitness-landscape-navigation, order-for-free, work-constraint-cycle]

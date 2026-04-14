@@ -2,6 +2,7 @@
 name: deming
 description: "W. Edwards Deming reasoning pattern \u2014 common-cause vs special-cause variation diagnosis, PDSA cycle with prediction, System of Profound Knowledge, driving out fear for accurate signals. Domain-general method for distinguishing systemic problems from one-off events and improving systems without destroying them."
 model: opus
+effort: medium
 when_to_use: When variation is present and the team is reacting to every fluctuation as if it were a special event; when the system is being blamed on individuals rather than diagnosed as a system; when improvement efforts keep making things worse (tampering); when fear is suppressing the information the system needs to self-correct; when sub-optimization is occurring (component improved, system degraded); when the question is "should we change the system or investigate the specific event?" Pair with Fisher for experimental design when the PDSA cycle requires a rigorous test; pair with Curie for measurement when the variation data is unreliable; pair with Hamilton for priority-displaced scheduling when the system must continue operating while being improved; pair with Arendt when fear suppression is the dominant issue.
 agent_topic: genius-deming
 shapes: [common-vs-special-cause, pdsa-cycle, system-appreciation, drive-out-fear, cease-dependence-on-inspection]

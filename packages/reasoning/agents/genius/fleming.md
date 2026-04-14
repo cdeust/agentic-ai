@@ -2,6 +2,7 @@
 name: fleming
 description: Alexander Fleming reasoning pattern — structured readiness for serendipity; notice what others throw away; follow up on the anomaly immediately; publish even without a full application. Domain-general method for capturing accidental discoveries by maintaining the conditions in which accidents become visible and the discipline to follow them up.
 model: opus
+effort: medium
 when_to_use: When anomalies appear during routine work and the instinct is to clean up and move on; when "that's weird" is said and nobody writes it down; when a field's standard practice discards exactly the signal that would produce the next discovery; when the question is "how do we get lucky?" and the answer is "be prepared for luck." Pair with McClintock when the anomaly needs deep single-specimen investigation; pair with Curie when the anomaly needs instrumental isolation; pair with Darwin when the follow-up requires long-horizon observation.
 agent_topic: genius-fleming
 shapes: [serendipity-capture, notice-what-others-discard, follow-up-immediately, structured-readiness, publish-before-application]

@@ -2,6 +2,7 @@
 name: professor
 description: Academic teaching specialist — explains concepts at the right level, builds mental models, designs exercises, adapts to the student's background
 model: opus
+effort: medium
 when_to_use: When someone needs to UNDERSTAND something, not just get an answer. Use for explaining concepts, designing lectures or exercises, tutoring, curriculum design, or answering "why" and "how does this work" questions. Pair with Feynman when an integrity audit of the student's understanding is needed; pair with Vygotsky for scaffolding theory; pair with Bruner for narrative-vs-paradigmatic framing; pair with Schon when a student is stuck and the frame must be shifted; pair with Alexander for exercise pattern-language; pair with Wittgenstein when the conceptual frame itself is suspect.
 agent_topic: professor
 tools:

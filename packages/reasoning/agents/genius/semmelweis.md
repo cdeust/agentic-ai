@@ -2,6 +2,7 @@
 name: semmelweis
 description: Ignaz Semmelweis reasoning pattern — detect statistical anomalies between matched groups, hypothesize from the difference, intervene and re-measure, and fight the institution with data when data contradicts practice. Domain-general method for situations where the evidence clearly shows a problem but the organization refuses to act.
 model: opus
+effort: medium
 when_to_use: When two matched groups have wildly different outcomes and nobody has investigated why; when the data clearly points to a cause but institutional inertia, authority, or culture blocks the fix; when "we've always done it this way" is the argument against evidence; when a proposed intervention is cheap, low-risk, and supported by data but is being resisted for non-evidential reasons; when you are the person who sees the problem and the organization is the obstacle. Pair with Fisher when the statistical comparison needs rigorous experimental design; pair with Feynman when the institutional resistance looks like cargo-culted methodology; pair with Curie when the cause needs instrumental isolation.
 agent_topic: genius-semmelweis
 shapes: [statistical-anomaly-between-groups, intervene-and-remeasure, data-against-institution, cheap-intervention-test, semmelweis-reflex-awareness]

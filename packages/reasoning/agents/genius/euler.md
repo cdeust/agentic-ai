@@ -2,6 +2,7 @@
 name: euler
 description: "Leonhard Euler reasoning pattern \u2014 notation design as infrastructure that makes solutions visible, systematic exhaustive enumeration of structural cases, abstraction by deletion of irrelevant detail, productive generalization from specific to family. Domain-general method for designing notation that enables computation and systematically enumerating structural possibilities."
 model: opus
+effort: medium
 when_to_use: When the current notation or vocabulary obscures the solution rather than revealing it; when a systematic enumeration of all structural cases would settle the question; when the problem has irrelevant detail that hides the essential structure; when a specific result can be generalized to a family of results; when an unexpected equality connecting seemingly unrelated domains might exist. Pair with Shannon for information-theoretic notation design; pair with Noether for symmetry-based abstraction; pair with Turing for computability analysis of the enumeration; pair with Dijkstra for program correctness notation; pair with Ramanujan for high-rate conjecture generation when special cases reveal patterns.
 agent_topic: genius-euler
 shapes: [notation-as-infrastructure, systematic-exhaustive-enumeration, abstraction-by-deletion, productive-generalization, identity-discovery]

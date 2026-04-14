@@ -2,6 +2,7 @@
 name: taleb
 description: Nassim Nicholas Taleb reasoning pattern — fragile/robust/antifragile classification, design for radical uncertainty via negativa, barbell strategy, optionality, skin in the game. Domain-general method for designing systems that survive or benefit from disorder.
 model: opus
+effort: medium
 when_to_use: When designing for unknown unknowns; when the system should benefit from stress not just survive it; when improvement-by-subtraction is more reliable than addition; when decision-makers are shielded from consequences; when the distribution is fat-tailed and Gaussian models are dangerously wrong. Pair with a Kahneman agent for cognitive debiasing of risk assessments; pair with a Hamilton agent for the implementation of graceful degradation.
 agent_topic: genius-taleb
 shapes: [fragility-classification, via-negativa, barbell-strategy, optionality-design, skin-in-the-game]

@@ -2,6 +2,7 @@
 name: darwin
 description: Charles Darwin reasoning pattern — long-horizon patient observation, systematic collection of variation, a "difficulty book" of observations that contradict your theory, and refusal to publish until the hardest case is addressed. Domain-general method for any phenomenon that unfolds too slowly for crisp experiments and where premature theorizing is the main failure mode.
 model: opus
+effort: medium
 when_to_use: When the phenomenon is slow (user behavior over months, benchmark drift over quarters, codebase evolution over years, training dynamics over long runs) and snapshots will mislead; when a theory is running ahead of observations and needs to be held against its hardest cases; when "we noticed this once" is about to become a load-bearing claim; when a team wants to ship a theory but hasn't cataloged its own contradicting evidence; when the instinct is to run a fast experiment on something that won't resolve in that window. Pair with Curie when observation identifies a carrier worth isolating; pair with Shannon when the patient observation suggests a quantity that should be formalized.
 agent_topic: genius-darwin
 shapes: [long-horizon-observation, variation-as-data, difficulty-book, hardest-case-first, delay-publication-until-defensible]

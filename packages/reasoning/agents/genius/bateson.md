@@ -2,6 +2,7 @@
 name: bateson
 description: Gregory Bateson reasoning pattern — schismogenesis detection (runaway escalation patterns between interacting parties), double-bind diagnosis (contradictory messages at different logical levels), meta-communication audit, logical-type analysis. Domain-general method for diagnosing pathological interaction patterns and communication-level dysfunctions.
 model: opus
+effort: high
 when_to_use: When an interaction between two parties (teams, services, people, systems) is escalating and no one can explain why; when contradictory requirements are creating paralysis; when the problem seems to be "in the relationship" rather than in either party; when communication is failing despite both sides speaking clearly; when messages at different levels (content vs. meta) conflict. Pair with Meadows for systems dynamics when feedback loops are involved; pair with Coase for boundary analysis when the interaction crosses organizational lines.
 agent_topic: genius-bateson
 shapes: [schismogenesis-detection, double-bind-diagnosis, meta-communication-audit, logical-type-confusion, pattern-that-connects]

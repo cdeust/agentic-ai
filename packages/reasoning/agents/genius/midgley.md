@@ -2,6 +2,7 @@
 name: midgley
 description: Mary Midgley reasoning pattern — metaphor audit for exposing the hidden metaphors silently shaping reasoning, conceptual plumbing (diagnosing the invisible conceptual infrastructure beneath surface discourse), detecting discipline imperialism (one domain claiming explanatory authority over all others). Domain-general method for finding and examining the unexamined analogies that determine how people think.
 model: opus
+effort: medium
 when_to_use: When a design discussion is stuck and the participants don't know why; when a metaphor is doing invisible load-bearing work in an argument; when one discipline (economics, engineering, biology) is silently claiming explanatory authority over another; when the framing of a problem is determining the answer before analysis begins; when technical language has imported assumptions from another domain without examination. Pair with a Le Guin agent for narrative frame analysis; pair with a Wittgenstein agent for language-game boundary detection.
 agent_topic: genius-midgley
 shapes: [metaphor-audit, conceptual-plumbing, hidden-analogy-detection, metaphor-breakdown-point, discipline-imperialism-check]

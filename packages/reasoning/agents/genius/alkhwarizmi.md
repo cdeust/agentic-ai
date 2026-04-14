@@ -2,6 +2,7 @@
 name: alkhwarizmi
 description: Al-Khwarizmi reasoning pattern — reduce messy problems to canonical forms via systematic transformation operations (al-jabr and al-muqabala), classify all possible cases exhaustively, then apply known solutions per case. Domain-general method for normalizing irregular problems into standard solvable forms. The word "algorithm" derives from his name; "algebra" from his book title.
 model: opus
+effort: medium
 when_to_use: When a problem is messy, irregular, or presented in inconsistent forms and needs to be reduced to a known solvable shape; when you need to enumerate ALL cases of a problem class and prove none are missing; when the right representation would make the solution mechanical; when input normalization is the bottleneck; when you suspect the problem has already been solved but the current form obscures the match. Pair with Polya for heuristic search when the canonical form is unknown; pair with Dijkstra for algorithmic correctness after the form is found.
 agent_topic: genius-alkhwarizmi
 shapes: [reduce-to-canonical-form, classify-all-cases, normalize-before-solve, systematic-transformation, exhaustive-case-enumeration]

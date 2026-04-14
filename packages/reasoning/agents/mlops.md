@@ -2,6 +2,7 @@
 name: mlops
 description: ML infrastructure specialist — training pipelines, model serving, GPU optimization, distributed training, and reproducible environments as contracts with SLOs
 model: opus
+effort: medium
 when_to_use: When ML systems need to be built, deployed, or made reliable. Use for training pipeline design, model serving with latency SLOs, GPU utilization analysis, experiment tracking discipline, model versioning, canary/shadow rollouts, and drift monitoring. Pair with Erlang for queuing behavior, Lamport for distributed training correctness, Fisher for evaluation significance, Curie for instrument calibration, experiment-runner for reproducibility, devops-engineer for infrastructure provisioning.
 agent_topic: mlops
 tools:

@@ -2,6 +2,7 @@
 name: champollion
 description: Jean-François Champollion reasoning pattern — decipherment of unknown representational systems via bilingual bootstrapping, anchor-and-propagate constraint solving, dual-nature recognition. Domain-general method for decoding unknown systems using parallel known references and progressive constraint propagation.
 model: opus
+effort: medium
 when_to_use: When facing an unknown/undocumented system and a parallel known system exists; when reverse-engineering legacy code with partial documentation; when a simple counting argument can disprove a dominant theory; when a system resists classification as type A or type B (it may be both); when a "living descendant" of the dead system exists. Pair with a Rejewski agent when the unknown system is mechanical rather than representational; pair with a Pólya agent when you are stuck on which decipherment strategy to try.
 agent_topic: genius-champollion
 shapes: [bilingual-bootstrapping, anchor-and-propagate, counting-disproof, dual-nature-recognition, living-descendant-decoder]

@@ -2,6 +2,7 @@
 name: snow
 description: Snow/Hill reasoning pattern — epidemiological investigation of how things spread through populations, Hill's nine criteria for distinguishing association from causation in observational data, outbreak investigation procedure. Domain-general method for tracing the source and mechanism of anything that spreads (disease, failure, misinformation, adoption) through a population.
 model: opus
+effort: medium
 when_to_use: When something is spreading through a population (failures, bugs, adoption, churn, misinformation) and you need to trace the source; when you observe an association and must determine whether it is causal; when you cannot run a controlled experiment and must reason from observational data; when the question is "where is this coming from and how is it spreading?" Pair with a Fisher-pattern agent for experimental design when intervention is possible; pair with a Pearl-pattern agent for formal causal graph construction.
 agent_topic: genius-snow
 shapes: [outbreak-investigation, hills-criteria, epidemic-curve-analysis, attack-rate-calculation, case-definition]

@@ -2,6 +2,7 @@
 name: aristotle
 description: Aristotle reasoning pattern — four-causes interrogation for complete causal explanation, fallacy catalog for argument hygiene, division by differentiae for classification, knowing-that vs knowing-why for depth of understanding, persuasion architecture for structured communication. Domain-general method for systematic analysis, classification, and argumentation.
 model: opus
+effort: medium
 when_to_use: When an explanation is incomplete and you need to ask "what is it made of, what pattern does it follow, what brought it about, what is it for?"; when an argument contains a hidden fallacy; when a domain needs systematic taxonomy; when the team knows *that* something works but not *why*; when a proposal needs to persuade a specific audience through structured argument. Pair with Popper when claims need falsification; pair with Pearl when causal direction needs formal verification.
 agent_topic: genius-aristotle
 shapes: [four-causes-interrogation, fallacy-catalog, division-by-differentiae, knowing-that-vs-knowing-why, persuasion-architecture]

@@ -2,6 +2,7 @@
 name: reviewer-academic
 description: Academic peer reviewer — evaluates paper drafts against NeurIPS/ICML/CVPR/ACL reviewer standards for novelty, clarity, significance, reproducibility, and evidence-claim match
 model: opus
+effort: high
 when_to_use: When a paper draft, extended abstract, or rebuttal needs pre-submission peer review. Use to simulate a rigorous reviewer — identify unsupported claims, missing baselines, reproducibility gaps, and anticipate objections before the real review cycle. Pair with Feynman when claim integrity is load-bearing; pair with Fisher when statistical validity is in question; pair with Pearl when causal claims are made.
 agent_topic: reviewer-academic
 tools:

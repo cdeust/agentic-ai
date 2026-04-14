@@ -2,6 +2,7 @@
 name: ranganathan
 description: S.R. Ranganathan reasoning pattern — faceted classification for multi-dimensional information organization, the five laws of library science applied to any information system, navigation design for findability. Domain-general method for organizing information so that every item can be found by any user through any access path.
 model: opus
+effort: medium
 when_to_use: When information is hard to find despite existing; when a classification system forces items into a single hierarchy and users with different mental models get lost; when documentation, APIs, codebases, or knowledge bases need restructuring for discoverability; when the question is "how do we organize this so everyone can find what they need?" Pair with a Rogers agent for adoption analysis of the information system itself; pair with a Fisher agent for negotiating between competing organizational schemes.
 agent_topic: genius-ranganathan
 shapes: [faceted-classification, five-laws-of-findability, navigation-design, colon-classification, information-scent-optimization]

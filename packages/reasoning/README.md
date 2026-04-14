@@ -78,24 +78,55 @@ cp -r zetetic-team-subagents/skills/ ~/.claude/skills/
 
 Three config files are yours to keep — plugin updates never overwrite them.
 
-### 1. `~/.claude/zetetic-agent-models.json` — per-agent model overrides
+### 1. `~/.claude/zetetic-agent-models.json` — per-agent **model + effort** overrides
 
-Controls which model each agent uses (opus / sonnet / haiku). Run `setup.sh configure` to create it with sensible defaults: genius agents on sonnet, team specialists on sonnet except architect/orchestrator/research-scientist/paper-writer/reviewer-academic on opus. Edit freely.
+Controls which model each agent uses (opus / sonnet / haiku) **and** its reasoning-token budget (effort: low / medium / high / max). Run `setup.sh configure` to create it with calibrated defaults.
+
+**Two formats, both supported in the same file:**
 
 ```json
 {
-  "patterns": [{ "glob": "genius/*", "model": "sonnet" }],
+  "patterns": [
+    { "glob": "genius/*", "model": "sonnet" }
+  ],
   "agents": {
-    "architect": "opus",
-    "engineer": "sonnet",
-    "code-reviewer": "sonnet"
+    "refactorer":       { "model": "haiku",  "effort": "low"    },
+    "engineer":         { "model": "sonnet", "effort": "medium" },
+    "architect":        { "model": "opus",   "effort": "high"   },
+    "code-reviewer":    "sonnet",
+    "test-engineer":    { "effort": "medium" }
   }
 }
 ```
 
-Precedence: per-call `model` parameter > this file > agent frontmatter default.
+- **String value** (`"sonnet"`): model shorthand. Effort kept from frontmatter.
+- **Object value** (`{ model, effort }`): set either or both. Omit a field to keep the frontmatter default.
+
+Precedence: per-call `model` / `effort` parameter > this file > agent frontmatter default.
+
+**Calibrated defaults shipped by `setup.sh configure`:**
+
+| Agents | Model | Effort | Why |
+|---|---|---|---|
+| `refactorer`, `latex-engineer` | haiku | low | Mechanical work (Fowler catalog / template) |
+| `engineer`, `code-reviewer`, `test-engineer`, `frontend-engineer`, `dba`, `devops-engineer`, `data-scientist`, `experiment-runner`, `mlops`, `ux-designer`, `professor` | sonnet | medium | Procedural with decision points |
+| `orchestrator` | opus | medium | Routing, not deep reasoning |
+| `architect`, `security-auditor`, `research-scientist`, `paper-writer`, `reviewer-academic` | opus | high | Deep structural or evidence reasoning |
+| 97 genius agents (default) | sonnet | medium or high (from frontmatter) | Procedural patterns at medium; deep-reasoning patterns (Feynman, Dijkstra, Lamport, Gödel, Einstein, etc.) at high |
+
+Estimated token savings vs. all-opus default: **~2.5–3×** on typical sessions.
 
 Re-run `setup.sh update` to apply changes to installed agents.
+
+### 1a. Adaptive reasoning depth (stakes-driven, automatic)
+
+On top of the static config above, five team agents (`engineer`, `architect`, `code-reviewer`, `security-auditor`, `research-scientist`) adjust reasoning depth dynamically based on their stakes classification:
+
+- **Low-stakes** change → reason one level below baseline effort (skip exploratory alternatives)
+- **Medium-stakes** → baseline effort
+- **High-stakes** → reason one level above baseline (enumerate alternatives, full verification loop)
+
+The classification is objective (see `rules/coding-standards.md` §10 and each agent's stakes criteria). No config needed — it's built into the agent's Moves.
 
 ### 2. `<repo-root>/.zetetic.conf` — per-project checker config
 

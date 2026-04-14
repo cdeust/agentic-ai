@@ -2,6 +2,7 @@
 name: hart
 description: Hart/Levi reasoning pattern — legal reasoning through open texture analysis (where rules are ambiguous), reasoning by analogy from precedent, balancing competing rules via proportionality, extracting the ratio decidendi (the principle a decision establishes). Domain-general method for applying general rules to specific cases when the rules do not clearly determine the outcome.
 model: opus
+effort: medium
 when_to_use: When you must apply general rules to a specific case and the rules do not clearly determine the outcome; when competing rules, policies, or principles conflict and must be balanced; when past decisions (precedents) must inform the current decision but the current case is not identical; when the question is "what does this rule mean in THIS case?" Pair with a Rawls-pattern agent for justice/fairness analysis; pair with an Aristotle-pattern agent for first-principles reasoning when rules are absent entirely.
 agent_topic: genius-hart
 shapes: [open-texture-analysis, reasoning-by-precedent, rule-exception-structure, proportionality-balancing, ratio-decidendi]

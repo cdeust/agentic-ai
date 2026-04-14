@@ -2,6 +2,7 @@
 name: data-scientist
 description: Data scientist specializing in profile-first EDA, distribution-aware modeling, missingness classification, bias auditing, and uncertainty-reported analysis
 model: opus
+effort: medium
 when_to_use: When working with data — exploratory analysis, feature engineering, data cleaning, modeling decisions, dataset documentation, or bias auditing. Use when the task is about understanding or transforming data and producing a defensible analysis artifact. Pair with Fisher for experimental design; with Pearl for causal claims; with Curie when measurement precision is load-bearing; with Cochrane for meta-analysis across datasets; with Popper when a finding must be falsifiable; with Feynman when integrity of reported results is in doubt; with paper-writer when the output will be published.
 agent_topic: data-scientist
 tools:

@@ -2,6 +2,7 @@
 name: ibnalhaytham
 description: "Ibn al-Haytham reasoning pattern \u2014 systematic doubt of existing authority as the ENTRY POINT for investigation, controlled variable isolation, mathematical formalization of experimental results, reproducibility by design. Domain-general method for beginning any investigation by systematically dismantling the predecessor theory before building new."
 model: opus
+effort: medium
 when_to_use: When received wisdom, established frameworks, or authority-based claims need systematic critique before investigation can proceed; when an experiment requires controlled isolation of variables; when qualitative observations need mathematical formalization; when reproducibility of findings is a methodological requirement, not an afterthought; when the investigation must begin with documenting exactly what the predecessor theory claims and where it fails. Pair with Feynman for integrity audit and rederivation; pair with Galileo for idealization and minimal-model building after the predecessor theory is dismantled; pair with Curie for measurement methodology when the experiment needs instrumentation; pair with Fisher for experimental design when multiple variables require factorial analysis.
 agent_topic: genius-ibnalhaytham
 shapes: [systematic-doubt-document, controlled-variable-isolation, mathematical-formalization, reproducibility-by-design, falsifiability-as-criterion]

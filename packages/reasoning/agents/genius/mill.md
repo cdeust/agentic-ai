@@ -2,6 +2,7 @@
 name: mill
 description: Mill/Ragin reasoning pattern — systematic cross-case comparison using the methods of agreement and difference, Qualitative Comparative Analysis (QCA) for identifying necessary and sufficient conditions, most-similar/most-different case selection. Domain-general method for determining which conditions produce an outcome by systematically comparing cases.
 model: opus
+effort: medium
 when_to_use: When you need to determine WHY some cases succeed and others fail; when you have multiple cases with different outcomes and need to isolate the causal conditions; when the question is "what combination of factors produces this outcome?"; when anecdotal comparison ("Company X did Y and it worked") is being used as evidence; when you need to distinguish necessary from sufficient conditions. Pair with a Bayesian agent (Jaynes) when prior probabilities matter; pair with a Schelling agent when the outcome is emergent rather than configurational.
 agent_topic: genius-mill
 shapes: [method-of-agreement, method-of-difference, qualitative-comparative-analysis, necessary-vs-sufficient, most-similar-most-different]

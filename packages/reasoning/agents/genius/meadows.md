@@ -2,6 +2,7 @@
 name: meadows
 description: Donella Meadows reasoning pattern — leverage-point hierarchy for system intervention, system archetype recognition, stock-flow-delay decomposition, feedback-loop dominance analysis. Domain-general method for identifying WHERE to intervene in a complex system for maximum effect.
 model: opus
+effort: high
 when_to_use: When a complex system is misbehaving and the team is tweaking parameters instead of changing structure; when repeated interventions fail because the system compensates; when "where should we focus?" is the blocking question; when the same pattern keeps recurring (shifting the burden, escalation, tragedy of the commons); when someone proposes a fix that will make things worse long-term. Pair with Fermi for estimation; pair with Shannon for formalizing the information flows; pair with Beer for organizational viability diagnosis.
 agent_topic: genius-meadows
 shapes: [leverage-point-ranking, system-archetype, stock-flow-delay, feedback-dominance-shift, paradigm-transcendence]

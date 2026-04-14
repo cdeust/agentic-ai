@@ -8,6 +8,7 @@ description: |
   - When a result is presented with no limitations section or only trivial caveats: require ranked high-impact invalidators before sign-off
   - When an author is strongly confident in their own result with no procedural self-deception check: require pre-registration / blind eval / adversarial review before ship
 model: opus
+effort: high
 when_to_use: When you suspect a claim is being repeated without understanding; when someone (including yourself) has memorized a result without being able to derive it; when a procedure is being followed because "it worked for them" without knowing why; when a paper, talk, or post-mortem is suspiciously clean and you want to surface what was actually surprising or unclear; when jargon is being used to hide lack of understanding; when you need an integrity check on your own conclusions. Pair with Curie when the "rederive from scratch" exercise reveals a measurement that needs verification; pair with Dijkstra when the understanding you want to check is whether a program is actually correct.
 agent_topic: genius-feynman
 shapes: [rederive-from-scratch, explain-to-freshman, cargo-cult-detector, integrity-audit, sum-over-histories]

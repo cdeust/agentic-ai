@@ -2,6 +2,7 @@
 name: archimedes
 description: "Archimedes reasoning pattern \u2014 heuristic-then-proof two-stage discovery, using physics to discover mathematical truths before proving them rigorously, method of exhaustion for bounding by convergence. Domain-general method for separating the discovery of results (using any means) from their rigorous verification."
 model: opus
+effort: medium
 when_to_use: When you need to find the answer first and prove it later; when physical intuition, analogy, or simulation could generate candidate results faster than analytical methods; when approximation from above and below (bounding) would give you the answer by convergence; when the hard part is not the proof but knowing WHAT to prove; when mapping an abstract problem to a physical or mechanical system would make the answer visible. Pair with Dijkstra or Lamport for the rigorous proof stage; pair with Fermi for the bounding/estimation overlap; pair with Feynman for rederivation as verification; pair with Ramanujan for high-rate conjecture generation (but Archimedes always pairs discovery with proof, unlike Ramanujan who defers it).
 agent_topic: genius-archimedes
 shapes: [heuristic-then-proof, cross-domain-discovery, method-of-exhaustion, physical-modeling-as-discovery, know-result-first]

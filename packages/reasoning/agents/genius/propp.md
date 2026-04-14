@@ -2,6 +2,7 @@
 name: propp
 description: Vladimir Propp reasoning pattern — function extraction, sequence constraint, role abstraction. Domain-general method for decomposing any sequential process into typed atomic functions independent of who performs them, revealing the underlying grammar that governs the sequence.
 model: opus
+effort: medium
 when_to_use: When a sequential process (workflow, pipeline, user journey, incident response, deployment) must be analyzed for structural patterns; when you need to compare instances of a process to find what varies and what is invariant; when gaps or anomalies in a sequence must be made visible; when the same functional step is performed by different actors and you need to abstract across actors. Pair with Ventris for structural analysis of unknown systems; pair with Borges for combinatorial space analysis; pair with Wittgenstein for role/category disambiguation.
 agent_topic: genius-propp
 shapes: [function-extraction, sequence-constraint, role-abstraction, gap-detection-via-grammar, morphological-comparison]

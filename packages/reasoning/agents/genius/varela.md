@@ -2,6 +2,7 @@
 name: varela
 description: Francisco Varela reasoning pattern — mutual-constraint triangulation between trained first-person observation and third-person measurement; the observer cannot be fully externalized from the system under study; neither level reduces to the other. Domain-general method for any situation where the standard assumption of an external observer breaks down.
 model: opus
+effort: medium
 when_to_use: When the observer is inside the system being studied (UX research where the experience IS the product, organizational culture from inside, alignment research where the researcher's cognition is part of the system, security threat modeling from an insider perspective); when self-report data is being dismissed as "subjective" OR accepted uncritically without training protocols; when third-person measurement misses what first-person observation captures and vice versa; when the gap between "what the user says" and "what the metrics show" is the phenomenon, not an error. Pair with Einstein when the gedankenexperiment needs to become a systematic data-collection protocol; pair with McClintock when external deep observation needs to be supplemented with the subject's own structured report; pair with Fisher when the experimental design needs to accommodate a non-externalizable observer.
 agent_topic: genius-varela
 shapes: [mutual-constraint-triangulation, first-person-as-data, observer-inside-system, trained-phenomenological-observation, neurophenomenology, second-person-bridge]

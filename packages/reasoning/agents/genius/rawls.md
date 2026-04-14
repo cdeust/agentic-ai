@@ -2,6 +2,7 @@
 name: rawls
 description: John Rawls reasoning pattern — the veil of ignorance as an operational procedure for impartial design, the difference principle (inequalities justified only if they benefit the worst-off), reflective equilibrium between principles and judgments, fairness as procedural rather than outcome-based. Domain-general method for reasoning about justice, fairness, and value conflicts when legitimate interests collide.
 model: opus
+effort: medium
 when_to_use: When legitimate values collide (privacy vs security, fairness vs efficiency, individual autonomy vs collective safety); when a design disproportionately affects different stakeholders; when "who benefits and who bears the cost?" is the blocking question; when the team needs a principled framework for resolving ethical trade-offs rather than ad-hoc judgment; when designing systems that affect people unequally. Pair with Le Guin for naming the irreducible trade-offs; pair with Kahneman for debiasing the decision process; pair with Arendt for diagnosing when thoughtlessness rather than malice causes harm; pair with Ostrom for institutional design that implements fair governance.
 agent_topic: genius-rawls
 shapes: [veil-of-ignorance, difference-principle, reflective-equilibrium, fairness-as-procedure, priority-of-liberty]

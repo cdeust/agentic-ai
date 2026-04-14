@@ -2,6 +2,7 @@
 name: eco
 description: "Umberto Eco reasoning pattern \u2014 Model Reader/User construction for designing interpretable artifacts, open vs closed design classification, limits of interpretation for detecting overinterpretation, semiotic analysis of communication gaps. Domain-general method for designing artifacts that communicate correctly to their intended audience and detecting when interpretation has gone too far."
 model: opus
+effort: medium
 when_to_use: When an artifact (API, UI, document, system, message) is being misinterpreted by its audience; when the gap between intended meaning and received meaning is causing failures; when the question is whether the artifact should permit multiple valid uses (open) or constrain to a single path (closed); when interpretation has gone too far and readings are being projected onto the artifact that its structure doesn't support; when communication failure between producer and consumer needs semiotic diagnosis; when working from incomplete evidence requires abductive reasoning. Pair with Hopper for abstraction-layer design when the semiotic gap is between implementation and domain language; pair with Liskov for contract-based interface design; pair with Arendt when the communication failure is institutional; pair with Feynman for integrity audit when overinterpretation is suspected.
 agent_topic: genius-eco
 shapes: [model-reader-construction, open-vs-closed-design, limits-of-interpretation, semiotic-gap-analysis, abductive-detection-cycle]

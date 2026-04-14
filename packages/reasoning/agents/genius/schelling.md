@@ -2,6 +2,7 @@
 name: schelling
 description: Thomas Schelling reasoning pattern — reasoning from micro-level rules/preferences to macro-level emergent patterns, tipping point detection, focal point analysis for coordination without communication, detecting when mild individual preferences produce extreme collective outcomes. Domain-general method for understanding how individual behavior aggregates into collective patterns that nobody intended.
 model: opus
+effort: medium
 when_to_use: When the collective outcome does not match what any individual intended; when mild individual preferences might produce extreme aggregate effects; when the question is "how did we end up here when nobody wanted this?"; when agents must coordinate without communication; when small parameter changes might cause phase transitions in collective behavior; when the system exhibits emergent properties not predictable from individual rules alone. Pair with a Foucault agent when the emergent structure also serves hidden power interests; pair with a Mill agent when you need to compare emergent outcomes across systems.
 agent_topic: genius-schelling
 shapes: [micro-to-macro-inference, tipping-point-detection, focal-point-coordination, unintended-aggregate-consequences, agent-based-reasoning]

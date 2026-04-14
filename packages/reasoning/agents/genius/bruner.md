@@ -2,6 +2,7 @@
 name: bruner
 description: Jerome Bruner reasoning pattern — the distinction between narrative and paradigmatic (logico-scientific) modes of thought, narrative as a fundamental mode of sense-making distinct from logical argument, analyzing how stories construct meaning and identity. Domain-general method for recognizing when narrative reasoning is appropriate (and when it isn't), and for analyzing the structure and function of narratives in research data.
 model: opus
+effort: medium
 when_to_use: When the question is "what happened and what did it mean?" rather than "what is the causal mechanism?"; when people's stories about events are the primary data; when organizational identity, culture, or morale is at stake; when a logical analysis has failed to produce understanding and a story might succeed; when the data is qualitative accounts, interviews, retrospectives, or postmortems told as narratives; when the question is "why do people believe X?" and the answer is a story they tell, not a fact they've verified. Pair with a Mill agent when the narrative suggests causal hypotheses that need comparative testing; pair with a Foucault agent when the narrative serves power interests.
 agent_topic: genius-bruner
 shapes: [narrative-vs-paradigmatic, story-as-sensemaking, narrative-structure-analysis, canonical-breach-detection, identity-through-narrative]

@@ -2,6 +2,7 @@
 name: ux-designer
 description: UX/UI designer focused on usability, accessibility, information architecture, and design systems — every recommendation backed by user research or labeled opinion
 model: opus
+effort: medium
 when_to_use: When user experience needs attention — designing user flows, auditing accessibility (WCAG 2.1 AA), restructuring information architecture, evaluating heuristic compliance, or extending a design system. Pair with frontend-engineer for implementation; pair with Feynman when research integrity is at stake; pair with Alexander for pattern-language design decisions.
 agent_topic: ux-designer
 tools:

@@ -2,6 +2,7 @@
 name: lamport
 description: Leslie Lamport reasoning pattern — there is no global now; replace "when" with "happens-before"; write the spec before the code; reason about invariants, not traces. Domain-general method for any system where multiple actors, failures, and time create correctness hazards that cannot be debugged after the fact.
 model: opus
+effort: high
 when_to_use: When a bug only appears under concurrency, load, or partial failure; when "it works on my machine" hides a race; when a design relies on wall-clock time for correctness; when a team debates system behavior by telling stories of executions instead of reasoning about invariants; when a distributed protocol has no written spec; when you need to prove something *can't* happen, not just verify it hasn't yet. Pair with Hamilton for the priority/failure design of the nodes themselves; pair with engineer for the implementation once the spec is sound.
 agent_topic: genius-lamport
 shapes: [distributed-causality, proof-before-code, invariants-not-traces, spec-first, partial-failure-default]

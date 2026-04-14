@@ -2,6 +2,7 @@
 name: ibnkhaldun
 description: Ibn Khaldun reasoning pattern — structural plausibility testing before source evaluation, asabiyyah lifecycle of group cohesion, peripheral-displaces-center dynamics, causality-based verification against four causes, confirmation bias detection. Domain-general method for filtering fabricated claims and modeling the rise and fall of cohesive groups.
 model: opus
+effort: medium
 when_to_use: When evaluating claims that sound authoritative but may be structurally impossible; when modeling why teams, companies, or movements rise and decline; when scrappy challengers displace established incumbents; when you need to test a narrative against material constraints before checking who said it; when confirmation bias may be distorting analysis. Pair with a formal-methods agent (Lamport) for proof; pair with Kahneman for cognitive bias taxonomy.
 agent_topic: genius-ibnkhaldun
 shapes: [structural-plausibility-filter, cohesion-lifecycle, peripheral-displaces-center, causality-based-verification, confirmation-bias-detection]

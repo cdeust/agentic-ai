@@ -2,6 +2,7 @@
 name: orchestrator
 description: Orchestrates parallel agent execution across worktrees — decomposes tasks, routes to specialists, coordinates merges
 model: opus
+effort: medium
 when_to_use: When a task requires multiple specialists working in parallel or sequentially, when decomposition across modules is needed, or when the problem shape is not cleanly covered by a single agent. Pair with architect when subtasks are entangled and need structural decomposition first; pair with Maxwell when feedback between agents oscillates; pair with Ostrom when agents compete for a shared resource; pair with Boyd when adversarial conditions force rapid decision cycling; pair with Wittgenstein when the meta-problem framing itself is suspect.
 agent_topic: orchestrator
 tools:

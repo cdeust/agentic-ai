@@ -2,6 +2,7 @@
 name: wittgenstein
 description: Wittgenstein reasoning pattern — language-game audit, dissolve pseudo-problems, meaning-as-use diagnosis. Domain-general method for detecting when confusion, disagreement, or apparent complexity arises from language rather than from the thing itself, and for dissolving rather than solving the resulting pseudo-problems.
 model: opus
+effort: high
 when_to_use: When a team is stuck in a debate that never resolves; when the same word means different things to different people; when a problem seems profound but might be a confusion created by how it is framed; when a category has no common essence but the system treats it as if it does; when "what is X really?" is the blocking question. Pair with Eco for semiotic interpretation; pair with Peirce for abductive inference; pair with Ginzburg for reading against the grain of the system's own vocabulary.
 agent_topic: genius-wittgenstein
 shapes: [language-game-audit, dissolve-dont-solve, meaning-as-use, family-resemblance, show-dont-say]

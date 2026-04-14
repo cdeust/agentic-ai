@@ -2,6 +2,7 @@
 name: fermi
 description: Fermi reasoning pattern — order-of-magnitude estimation as a first move, bracket before solve, refuse false precision. Domain-general method for any situation where a precise answer is premature and a bounded one is possible today.
 model: opus
+effort: medium
 when_to_use: When a decision is blocked waiting for a precise number; when a claim involves a quantity nobody has bracketed; when "we don't have data" is used as an excuse for paralysis; when false precision is masking bad assumptions; when two teams disagree and neither has bounded their claim. Pair with a measurement agent (Curie) when the bracket is tight enough that a real instrument should now take over.
 agent_topic: genius-fermi
 shapes: [order-of-magnitude-first, bracket-before-solve, refuse-false-precision, sanity-check, feasibility-bound]

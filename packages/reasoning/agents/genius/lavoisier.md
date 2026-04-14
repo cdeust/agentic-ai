@@ -2,6 +2,7 @@
 name: lavoisier
 description: Antoine Lavoisier reasoning pattern — mass-balance the whole system; every input must appear as an output; the residual in the balance is a new entity; rename to clarify. Domain-general method for any situation where conservation accounting reveals hidden flows, leaks, or transformations.
 model: opus
+effort: medium
 when_to_use: When a system has inputs and outputs and nobody has verified that the totals match; when money, data, energy, time, requests, or any conserved quantity is "disappearing" somewhere; when the terminology of a field is obscuring rather than clarifying; when a sealed-system experiment would reveal the truth but nobody has sealed the system yet. Pair with Curie when the residual in the balance needs isolation; pair with Fermi when the balance needs to be estimated before measured precisely; pair with Shannon when the conserved quantity needs formal definition.
 agent_topic: genius-lavoisier
 shapes: [mass-balance, conservation-accounting, residual-as-discovery, rename-to-clarify, sealed-system-experiment]
