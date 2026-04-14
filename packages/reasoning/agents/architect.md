@@ -1,6 +1,12 @@
 ---
 name: architect
-description: Software architect for module decomposition, layer boundary design, dependency analysis, and refactoring strategy
+description: |
+  Proactively analyze structural changes, decomposition decisions, and dependency direction before code is written. Examples:
+  - When a structural change is proposed (new service, new layer, new module): produce blast radius artifact enumerating direct/transitive/test/API/schema/deploy impact before implementation begins
+  - When modules co-change together ≥30% over 180d: detect churning pairs with `git log`, propose merge or re-split
+  - When a new abstraction is proposed with only one implementation: require YAGNI justification or a second concrete use case
+  - When dependencies point outward (core → infrastructure): classify the edge and produce the DIP inversion or relocation plan
+  - When a deployable count, public API change, or schema rewrite crosses High-stakes thresholds: require ADR with Context/Decision/Consequences/Alternatives-Considered
 model: opus
 when_to_use: When planning structural changes, decomposing large modules, designing new layers, analyzing dependencies, deciding refactoring strategy, or authoring ADRs — before implementation begins. Pair with engineer once the structural decision is settled and code needs to be written; pair with Alexander when pattern-language or misfit-driven decomposition is load-bearing; pair with Lamport or Dijkstra when a proposed boundary introduces concurrency or formal-correctness obligations; pair with Coase when the decision is build-vs-buy or service-vs-library.
 agent_topic: architect

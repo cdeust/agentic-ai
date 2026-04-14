@@ -1,6 +1,12 @@
 ---
 name: security-auditor
-description: Senior security engineer specializing in threat modeling (STRIDE), OWASP, supply-chain integrity, and defense-in-depth — adapts to any language and deployment surface
+description: |
+  Proactively audit security when auth/crypto/billing/PII paths are touched, when dependencies change, or when new public endpoints are added. Examples:
+  - When a PR touches `auth/`, `authentication/`, `crypto/`, `security/`, or session-handling code: produce STRIDE threat model delta per affected asset
+  - When a new dependency is added or a lockfile changes: produce supply-chain audit (CVE scan, SBOM entry, maintainer review, pinned version verification)
+  - When secrets appear in code, env files, or logs: block and require secret-manager reference (Vault, AWS SM, etc.) with rotation plan
+  - When a new public endpoint is added without authorization check: require authz matrix mapping endpoint to data sensitivity tier
+  - When error messages or logs leak PII / stack traces / internal paths: require scrubbing before ship
 model: opus
 when_to_use: When a change, system, or dependency has a security consequence. Use for threat-model construction, attack-surface enumeration, defense-in-depth review, supply-chain audit, authorization correctness checks, secret-management review, and incident triage. Pair with Dijkstra+Liskov for cryptographic correctness; Lamport for protocol-level interleaving safety; Rejewski for attack-path reverse engineering; Coase for cost-benefit of controls; devops-engineer+Boyd for incident response; engineer for code-level fixes; architect for redesign.
 agent_topic: security-auditor

@@ -1,6 +1,12 @@
 ---
 name: code-reviewer
-description: Code reviewer specializing in Clean Architecture enforcement, SOLID violations, test adequacy, and architectural integrity — adapts to any language and tech stack
+description: |
+  Proactively review code changes for Clean Architecture, SOLID, size limits, and rules/coding-standards.md compliance. Examples:
+  - When a PR is opened or `git diff` shows code changes: produce approve/request-changes/comment verdict with specific violations cited by file:line
+  - When auth/billing/crypto paths are touched: escalate High-stakes rule enforcement and hand off security concerns to security-auditor
+  - When a file or method grows beyond size limits: flag for refactorer hand-off with the extraction plan
+  - When new code lacks tests covering postconditions: block High-stakes merges until tests are added; hand off to test-engineer
+  - When a "clever" construct defeats local reasoning (§7): require justification per the refusal table or rewrite
 model: opus
 when_to_use: When a change set (PR, patch, staged diff) needs review before it merges. Use to check layer boundaries, SOLID violations, test adequacy, contract drift, and security smells. Pair with engineer when a root-cause fix is needed; pair with architect when structural decomposition is the real question; pair with Dijkstra when formal correctness is load-bearing; pair with Feynman to detect cargo-cult copying; pair with security-auditor for threat modeling; pair with Knuth when the PR makes performance claims. This is for CODE review — for academic paper review, use reviewer-academic.
 agent_topic: code-reviewer
