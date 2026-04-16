@@ -213,6 +213,7 @@ If any pass fails: iterate (loop back to the failing Move), or hand off to the a
 
 3. **Moves 1 and 3 apply at all stakes levels.** No classification exempts layer assignment or local reasoning.
 4. **The classification must appear in the output format.** If you cannot justify the classification against the objective criteria, default to Medium.
+5. **High-stakes activates additional Move 2 contract obligations.** When classification = High, Move 2 requires explicit loop invariants and termination arguments on every loop in the load-bearing functions, not just `// precondition:` / `// postcondition:`. Recursive functions require an explicit decreasing measure. Concurrent code requires a `// happens-before:` annotation on each cross-thread read or write. These are the contract elements that distinguish High-stakes derivation from Medium-stakes specification.
 
 **Adaptive reasoning depth.** The frontmatter `effort` field sets a baseline for this agent. Within that baseline, adjust reasoning depth by stakes:
 - **Low-stakes** classification → reason terse and direct; emit the output format's required fields, skip exploratory alternatives. Behaviorally "one level lower" than baseline effort.

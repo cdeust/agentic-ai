@@ -120,7 +120,7 @@ Primary sources (consult these, not summaries):
 - *Security-critical code:* tests do not cover the attacker's input space. Use fuzzing (extended testing), static analysis, and formal methods in combination.
 - *High-coverage passing tests:* high coverage is a weak correctness argument; it certifies that lines execute, not that invariants hold. A function can have 100% coverage and be deeply wrong.
 
-*Trigger:* the team is leaning on tests as the primary correctness argument for code whose failure mode includes cases the tests cannot cover. → Name the uncovered failure mode. Recommend the appropriate stronger discipline.
+*Trigger (observable):* you see code in a concurrent / numerical / cryptographic / security-critical / safety-critical path with no `// FAILS_ON:` annotations naming the uncovered modes, and no reference to a formal method (model checker, property-based test, fuzzer, interval analysis, proof). → Name the uncovered failure mode. Produce an `uncovered_modes.md` artifact listing each mode plus the discipline that would cover it. Recommend the appropriate stronger discipline.
 
 ---
 
@@ -154,7 +154,7 @@ Primary sources (consult these, not summaries):
 - *Code review as derivation check:* reviewing code should include asking "how was this derived?" not just "does it pass tests?"
 - *LLM-generated code review:* when a language model produces code, the Dijkstra question is exactly the right one: can the author (human or LLM) defend the derivation, not just point to the tests?
 
-*Trigger:* you are in a context where the consequences of software failure are large (payment, safety, security, scale). → The discipline must match the consequences. Empirical development is not acceptable at high stakes; derivation and local reasoning are required.
+*Trigger (observable):* the change is classified High-stakes by the engineer-agent stakes table (auth/billing/crypto/safety/concurrency/data-integrity, multi-author files, files >500 lines, modules imported by >5 callers) AND the load-bearing functions in the diff lack `// precondition:` / `// postcondition:` / `// invariant:` annotations. → Block ship. Produce a `derivation.md` artifact deriving the load-bearing functions from their pre-/post-conditions step by step. The standard is mathematical care, not "tweak until tests pass."
 </canonical-moves>
 
 <blind-spots>
