@@ -6,7 +6,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/Agents-97_genius_+_18_team-8A2BE2" alt="Agents">
   <img src="https://img.shields.io/badge/Skills-63-green" alt="Skills">
-  <img src="https://img.shields.io/badge/Tools-17-orange" alt="Tools">
+  <img src="https://img.shields.io/badge/Tools-18-orange" alt="Tools">
   <img src="https://img.shields.io/badge/Hooks-14-red" alt="Hooks">
 </p>
 
@@ -286,10 +286,11 @@ The most powerful skills chain genius agents in sequence:
 
 ---
 
-## 17 Tools
+## 18 Tools
 
 | Tool | What it does |
 |---|---|
+| `agent-definition-auditor` | 16 structural checks across all 116 agent files (frontmatter, tools, Moves, citations, shapes, collaboration hints) — exits non-zero on any blocker |
 | `genius-invoker` | Lightweight agent invocation, routing, composition |
 | `provenance-manager` | Track sources consulted/accepted/rejected per file |
 | `lab-notebook-manager` | Structured research notebook with tags and timeline |
@@ -396,6 +397,20 @@ Most AI agent systems ship role prompts — "you are a senior engineer" — and 
 
 ---
 
+## Companion projects
+
+| Project | Role |
+|---|---|
+| [Cortex](https://github.com/cdeust/Cortex) | Persistent memory — consolidates and reconsolidates across sessions; pre-loads cognitive profile at session start |
+| [ai-automatised-pipeline](https://github.com/cdeust/ai-automatised-pipeline) | Codebase intelligence MCP server — indexes code into a property graph; agents read this before reasoning |
+| [prd-spec-generator](https://github.com/cdeust/prd-spec-generator) | TypeScript PRD generator that consumes graph intelligence |
+
+---
+
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).
+
+---
+
+<p align="center"><sub>Built by <a href="https://github.com/cdeust">cdeust</a>. Every agent verified by structural audit. Every claim cites its source.</sub></p>
