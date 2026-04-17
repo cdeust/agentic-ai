@@ -374,6 +374,45 @@ Hooks enforce: no unsourced claims committed, no magic numbers pushed
 Output: cited, verified, with provenance sidecar and difficulty book
 ```
 
+### Agent file shape (since v2.13.0)
+
+Each agent ships as a single markdown file. Frontmatter is kept slim so cumulative description tokens across all 116 agents stay well under Claude Code's startup cap (currently ~12.6k tokens, was 28k in v2.12.0). Rich routing detail lives in a `<routing>` body section, loaded only when the agent is invoked — no methodology depth lost.
+
+```yaml
+---
+name: dijkstra
+description: "Proactively enforce correctness discipline when..."   # 1 sentence — the routing-discriminating signal
+when_to_use: "When a program's correctness cannot be established..." # 1 clause — the trigger
+model: opus
+effort: high
+shapes: [proof-and-program-together, locality-of-reasoning, ...]
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
+---
+
+<identity>...</identity>
+
+<routing>
+**When to use this agent (full guidance — pairings, triggers, examples,
+distinct-from-X clauses; loaded only when the agent is invoked):**
+[every word from the original verbose `when_to_use`, preserved here]
+</routing>
+
+<revolution>...</revolution>           <!-- genius template -->
+<domain-context>...</domain-context>   <!-- team template -->
+
+<codebase-intelligence>
+[Optional MCP server `ai-architect` tool table + workflow; graceful
+ degradation when the server is absent — see "Codebase Intelligence MCP"
+ below.]
+</codebase-intelligence>
+
+<canonical-moves>...</canonical-moves>
+<refusal-conditions>...</refusal-conditions>
+<blind-spots>...</blind-spots>
+```
+
+**Why this shape?** The orchestrator only needs the frontmatter to route correctly (a sentence is enough). The invoked agent reads its full body. This separates *routing cost* (paid every session) from *methodology cost* (paid only when used), aligning with Claude Code's design while preserving every word of the canonical moves and procedure depth.
+
 ---
 
 ## What Makes This Different
