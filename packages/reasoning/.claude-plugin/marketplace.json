@@ -6,14 +6,14 @@
   },
   "metadata": {
     "description": "Zetetic Agents — 97 reasoning patterns from history's greatest minds + 19 team specialists under one epistemic standard",
-    "version": "2.12.0"
+    "version": "2.13.0"
   },
   "plugins": [
     {
       "name": "zetetic-team-subagents",
       "source": "./",
       "description": "Complete system: 97 genius agents, 19 team agents (incl. refactorer), 63 skills, 24 commands, 18 tools, 16 hooks, authoritative coding-standards rules",
-      "version": "2.12.0",
+      "version": "2.13.0",
       "author": {
         "name": "Clement Deust",
         "email": "admin@ai-architect.tools"

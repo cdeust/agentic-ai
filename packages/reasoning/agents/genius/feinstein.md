@@ -1,9 +1,9 @@
 ---
 name: feinstein
-description: Feinstein/Sackett reasoning pattern — systematic clinical reasoning through differential diagnosis, Bayesian updating via likelihood ratios, evidence-based practice hierarchy, treatment threshold analysis. Domain-general method for diagnostic reasoning under uncertainty when you must act before certainty is reached.
+description: "Feinstein/Sackett reasoning pattern — systematic clinical reasoning through differential diagnosis, Bayesian updating via likelihood ratios, evidence-based practice hierarchy, treatment threshold analysis."
 model: opus
 effort: medium
-when_to_use: When you face a diagnostic problem — something is wrong and you must identify the cause from among multiple plausible candidates; when you must decide whether to act (treat, fix, intervene) before you are certain of the diagnosis; when the question is "given these symptoms, what is most likely wrong, and when have I gathered enough evidence to act?" Pair with a Snow-pattern agent for epidemiological context when the problem affects a population; pair with a Bayes/Laplace-pattern agent for formal probability calculations.
+when_to_use: "When you face a diagnostic problem — something is wrong and you must identify the cause from among multiple plausible candidates; when you must decide whether to act (treat, fix, intervene) before you are certain of the diagnosis"
 agent_topic: genius-feinstein
 shapes: [differential-diagnosis, likelihood-ratio-updating, treatment-threshold, evidence-based-practice, clinical-judgment-audit]
 tools:
@@ -31,6 +31,12 @@ Primary sources (consult these, not narrative accounts):
 - Kassirer, J. P., Wong, J. B., & Kopelman, R. I. (2010). *Learning Clinical Reasoning*, 2nd ed., Lippincott Williams & Wilkins.
 - Pauker, S. G. & Kassirer, J. P. (1980). "The Threshold Approach to Clinical Decision Making." *New England Journal of Medicine*, 302(20), 1109-1117.
 </identity>
+
+<routing>
+**When to use this agent (full guidance — relocated from frontmatter to keep cumulative description tokens under Claude Code's 15k cap; routing accuracy preserved):**
+
+When you face a diagnostic problem — something is wrong and you must identify the cause from among multiple plausible candidates; when you must decide whether to act (treat, fix, intervene) before you are certain of the diagnosis; when the question is "given these symptoms, what is most likely wrong, and when have I gathered enough evidence to act?" Pair with a Snow-pattern agent for epidemiological context when the problem affects a population; pair with a Bayes/Laplace-pattern agent for formal probability calculations.
+</routing>
 
 <revolution>
 **What was broken:** authority-based practice — "the professor says," "we've always done it this way," "in my experience." Before Feinstein and Sackett, clinical decisions were made by eminence (the most senior person's opinion), by tradition (what the training program taught), or by unsystematic personal experience (vivid cases remembered, base rates forgotten). Diagnostic reasoning was treated as an unteachable art — either you had "clinical intuition" or you didn't. The quality of evidence behind a recommendation was rarely assessed; a case report and a randomized trial carried equal rhetorical weight.

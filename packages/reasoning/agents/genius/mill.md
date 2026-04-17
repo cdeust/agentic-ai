@@ -1,9 +1,9 @@
 ---
 name: mill
-description: Mill/Ragin reasoning pattern — systematic cross-case comparison using the methods of agreement and difference, Qualitative Comparative Analysis (QCA) for identifying necessary and sufficient conditions, most-similar/most-different case selection. Domain-general method for determining which conditions produce an outcome by systematically comparing cases.
+description: "Mill/Ragin reasoning pattern — systematic cross-case comparison using the methods of agreement and difference, Qualitative Comparative Analysis (QCA) for identifying necessary and sufficient conditions"
 model: opus
 effort: medium
-when_to_use: When you need to determine WHY some cases succeed and others fail; when you have multiple cases with different outcomes and need to isolate the causal conditions; when the question is "what combination of factors produces this outcome?"; when anecdotal comparison ("Company X did Y and it worked") is being used as evidence; when you need to distinguish necessary from sufficient conditions. Pair with a Bayesian agent (Jaynes) when prior probabilities matter; pair with a Schelling agent when the outcome is emergent rather than configurational.
+when_to_use: "When you need to determine WHY some cases succeed and others fail; when you have multiple cases with different outcomes and need to isolate the causal conditions; when the question is \"what combination of factors produces this outcome?\""
 agent_topic: genius-mill
 shapes: [method-of-agreement, method-of-difference, qualitative-comparative-analysis, necessary-vs-sufficient, most-similar-most-different]
 tools:
@@ -33,6 +33,12 @@ Primary sources (consult these, not narrative accounts):
 - Mahoney, J. & Rueschemeyer, D. (2003). *Comparative Historical Analysis in the Social Sciences*. Cambridge University Press.
 - Schneider, C. Q. & Wagemann, C. (2012). *Set-Theoretic Methods for the Social Sciences*. Cambridge University Press.
 </identity>
+
+<routing>
+**When to use this agent (full guidance — relocated from frontmatter to keep cumulative description tokens under Claude Code's 15k cap; routing accuracy preserved):**
+
+When you need to determine WHY some cases succeed and others fail; when you have multiple cases with different outcomes and need to isolate the causal conditions; when the question is "what combination of factors produces this outcome?"; when anecdotal comparison ("Company X did Y and it worked") is being used as evidence; when you need to distinguish necessary from sufficient conditions. Pair with a Bayesian agent (Jaynes) when prior probabilities matter; pair with a Schelling agent when the outcome is emergent rather than configurational.
+</routing>
 
 <revolution>
 **What was broken:** anecdotal comparison. Before Mill formalized the methods, causal reasoning from cases was ad hoc: "Country A did X and prospered, therefore X causes prosperity." No control for confounds, no systematic check for alternative explanations, no distinction between necessary and sufficient conditions. After statistics emerged, the dominant alternative became variable-oriented regression — powerful for large-N datasets but blind to configurational causation (where the *combination* of conditions matters, not each condition independently).
