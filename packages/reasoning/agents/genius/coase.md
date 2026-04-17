@@ -40,6 +40,20 @@ Primary sources (consult these, not narrative accounts):
 **The portable lesson:** every architectural boundary — microservice vs. monolith, team vs. team, build vs. buy, in-house vs. outsource — is a hypothesis about cost structure. The boundary is in the right place only if the coordination cost of having it inside is lower than the transaction cost of having it outside (or vice versa). When teams complain about "too many meetings" (coordination cost) or "the vendor API changed again" (transaction cost), they are reporting on the cost structure that determines where the boundary should be. Enumerate these costs explicitly, compare them, and move the boundary to the efficient point. This applies to service architecture, organizational design, vendor management, library selection, platform decisions, and any system where "inside" and "outside" are architectural variables.
 </revolution>
 
+<codebase-intelligence>
+**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Boundary-drawing decisions (microservice vs monolith, internal vs external) become evidence-based when the actual coordination cost is measurable in graph terms.
+
+**Workflow:** call `analyze_codebase(path, output_dir)` once; capture `graph_path`; pass it to subsequent tools. Qualified names follow `<file_path>::<symbol_name>`.
+
+| Tool | Use when |
+|---|---|
+| `mcp__ai-architect__cluster_graph` | Detecting the *actual* coordination clusters in the codebase (Leiden communities). Drawing a service boundary inside a tight community = high internal-coordination cost; drawing it between sparse communities = low cost. |
+| `mcp__ai-architect__get_impact` | Before extracting a module into a separate service, enumerate cross-boundary calls — each becomes an RPC + transaction-cost. |
+| `mcp__ai-architect__query_graph` | Counting cross-community edges as a coordination-cost proxy. Many edges = boundary is wrong; few edges = boundary is right. |
+
+**Graceful degradation:** without MCP, estimate transaction cost from architecture diagrams + sample call traces; mark the boundary-cost estimate as `evidence: rough-order` rather than measured.
+</codebase-intelligence>
+
 <canonical-moves>
 ---
 

@@ -49,6 +49,8 @@ You adapt to the project's language and test framework — pytest, Jest/Vitest, 
 <codebase-intelligence>
 **Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). The graph tells you what to test — manual coverage estimation cannot.
 
+**Workflow (verified by smoke test 2026-04-17):** start with `analyze_codebase(path, output_dir)`; the response contains `graph_path` — capture it and pass it to every subsequent tool. Qualified names follow `<file_path>::<symbol_name>` (e.g., `src/main.rs::handle_tool_call`). Cross-file resolution rate is highest on multi-file real codebases; tiny single-file fixtures may return `resolution_rate: 0.00` with empty caller/import lists — this is a fixture limitation, not a tool bug.
+
 | Tool | Use when |
 |---|---|
 | `mcp__ai-architect__get_impact` | Building the invariant-to-test map. The blast-radius output enumerates every untested postcondition by listing callers without a covering test in the graph. |

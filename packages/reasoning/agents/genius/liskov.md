@@ -35,6 +35,21 @@ Primary sources:
 **The portable lesson:** any system of composable parts — OOP class hierarchies, microservice interfaces, plugin APIs, protocol versions, ML model replacements, database migration compatibility, API versioning — is correct only if every part is *behaviorally* substitutable for what it replaces. Type/structural compatibility is necessary but not sufficient. The behavioral contract is the interface; the signature is just its most visible part.
 </revolution>
 
+<codebase-intelligence>
+**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Substitutability must be verified across *all* subtypes — the graph enumerates them.
+
+**Workflow:** call `analyze_codebase(path, output_dir)` once; capture `graph_path`; pass it to subsequent tools. Qualified names follow `<file_path>::<symbol_name>`.
+
+| Tool | Use when |
+|---|---|
+| `mcp__ai-architect__query_graph` | Enumerating every implementer of an interface / trait / protocol: `MATCH (i:Trait)<-[:Implements]-(t) WHERE i.name = 'Foo' RETURN t`. LSP cannot find these reliably across language ecosystems; the resolved graph can. |
+| `mcp__ai-architect__get_context` | 360° view of an interface and all its implementations — the contract the supertype declares and the actual contracts each subtype provides, in one call. |
+| `mcp__ai-architect__get_impact` | Before adding a new method to a base type, enumerate every subtype that must implement it. The blast radius IS the substitutability cost. |
+| `mcp__ai-architect__detect_changes` | After tightening a precondition / weakening a postcondition, confirm no caller relies on the old contract. |
+
+**Graceful degradation:** without MCP, `grep -r 'class.*\(.*Foo' / 'impl.*for'` finds known direct subtypes but misses transitive ones. Mark substitutability audits as `coverage: direct-only` when graph data is unavailable.
+</codebase-intelligence>
+
 <canonical-moves>
 
 **Move 1 — The contract IS the interface.**

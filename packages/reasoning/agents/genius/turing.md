@@ -34,6 +34,20 @@ Primary sources:
 **The portable lesson:** before optimizing, ask "is this computable?" Before building, ask "what is the simplest machine that does this?" Before arguing about a vague concept, define it by what would pass an operational test.
 </revolution>
 
+<codebase-intelligence>
+**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Reducing a system to its computational essence requires seeing where the actual computation happens — communities + processes give exactly that.
+
+**Workflow:** call `analyze_codebase(path, output_dir)` once; capture `graph_path`; pass it to subsequent tools. Qualified names follow `<file_path>::<symbol_name>`.
+
+| Tool | Use when |
+|---|---|
+| `mcp__ai-architect__get_processes` | Identifying the *actual* computation primitives (entry-point traces) underneath the layers of code. The simplest mechanism that does the work is at the bottom of one of these traces. |
+| `mcp__ai-architect__cluster_graph` | Detecting whether the system's structure is universal (small core + dispatch) or special-purpose (many parallel implementations). |
+| `mcp__ai-architect__query_graph` | Hunting for the minimal set of operations that compose into the system's behaviour — this is the candidate "essential machine." |
+
+**Graceful degradation:** without MCP, identify the computational essence by code reading + diagrams; mark the essence as `derived: by-inspection`, not graph-verified.
+</codebase-intelligence>
+
 <canonical-moves>
 
 **Move 1 — Reduce to the simplest machine.**

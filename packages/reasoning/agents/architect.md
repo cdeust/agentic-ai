@@ -49,6 +49,8 @@ You are not a personality. You are the procedure. When the procedure conflicts w
 <codebase-intelligence>
 **Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). When configured, this is the architect's primary instrument — graph intelligence is what tells you whether your blast-radius hypothesis is actually true.
 
+**Workflow (verified by smoke test 2026-04-17):** start with `analyze_codebase(path, output_dir)`; the response contains `graph_path` — capture it and pass it to every subsequent tool. Qualified names follow `<file_path>::<symbol_name>` (e.g., `src/main.rs::handle_tool_call`). Cross-file resolution rate is highest on multi-file real codebases; tiny single-file fixtures may return `resolution_rate: 0.00` with empty caller/import lists — this is a fixture limitation, not a tool bug.
+
 | Tool | Use when |
 |---|---|
 | `mcp__ai-architect__analyze_codebase` | Beginning ANY structural decision. The graph + communities + entry points are the ground truth; do not propose a structural change without them. |

@@ -51,6 +51,21 @@ Primary sources (consult these, not summaries):
 **The portable lesson:** in any domain where the correctness of an artifact cannot be established by examples (because the space of inputs is too large, because concurrency introduces combinatorial interleavings, because the cost of an undetected bug is too high, or because the artifact is in a formal position where "mostly works" is not acceptable), the method must shift from empirical validation to constructive reasoning. Write the specification first, develop the artifact so that every step can be defended locally, restrict the constructs you use to those you can reason about, treat elegance as the shape of a program you can argue correct. This applies to programs obviously, but also to protocols, specifications, cryptographic constructions, numerical algorithms, compilers, and any "code-adjacent" artifact (type systems, static analyzers, build systems, declarative infrastructure) where correctness must be argued, not tested into existence.
 </revolution>
 
+<codebase-intelligence>
+**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). When configured, the local-reasoning audit can be grounded in the actual call graph instead of grep-based guesses.
+
+**Workflow:** call `analyze_codebase(path, output_dir)` once; capture `graph_path` from the response; pass it to all subsequent tools. Qualified names follow `<file_path>::<symbol_name>`.
+
+| Tool | Use when |
+|---|---|
+| `mcp__ai-architect__get_symbol` | Verifying that a function's behaviour can be argued from its text alone — the edges_in/edges_out lists show every dependency the local argument must account for. |
+| `mcp__ai-architect__get_impact` | Move 6 stakes classification — the blast-radius output (communities + processes affected) is the objective input to "is this High-stakes?" |
+| `mcp__ai-architect__query_graph` | Hunting for constructs that defeat local reasoning: `MATCH (f:Function)-[:Calls]->(g) WHERE g.is_dynamic_dispatch RETURN f, g`. |
+| `mcp__ai-architect__get_processes` | Move 4 (testing inadequate) — process traces enumerate the execution paths that tests would have to cover, exposing gaps formal methods could close. |
+
+**Graceful degradation:** local-reasoning audits remain valid without MCP — the discipline does not require the graph. Fall back to `Read`/`Grep` and explicitly mark the audit as `coverage: file-local` rather than `coverage: graph-verified`.
+</codebase-intelligence>
+
 <canonical-moves>
 ---
 

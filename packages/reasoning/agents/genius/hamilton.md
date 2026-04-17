@@ -43,6 +43,21 @@ Primary sources (consult these, not narrative accounts):
 **The portable lesson:** if your system crashes, reboots, or returns 500 under overload, your design has implicitly assumed the happy path. Hamilton's method is the discipline of making the unhappy paths into named, prioritized, testable first-class behaviors, so that degradation is the designed response to the predictable fact of overload and error. This applies to any system with hard timing constraints, partial-failure modes, or untrusted operators — spacecraft, trading engines, game loops, embedded controllers, orchestrators, LLM token-budget managers, incident-response runbooks, and SaaS under launch load.
 </revolution>
 
+<codebase-intelligence>
+**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Priority-displaced scheduling and graceful-degradation design need to know which paths exist before they can be ranked.
+
+**Workflow:** call `analyze_codebase(path, output_dir)` once; capture `graph_path`; pass it to subsequent tools. Qualified names follow `<file_path>::<symbol_name>`.
+
+| Tool | Use when |
+|---|---|
+| `mcp__ai-architect__get_processes` | Enumerating every execution flow so each can be tagged with priority and degradation behaviour. The list IS the scheduling problem statement. |
+| `mcp__ai-architect__get_impact` | Before deciding a path is "displaceable under overload," enumerate its callers — no caller should depend on it being non-interruptible. |
+| `mcp__ai-architect__check_security_gates` | Cross-check: "displaceable" paths must not be in a critical security community (S1 gate). Errors-by-design only applies to non-safety-critical paths. |
+| `mcp__ai-architect__detect_changes` | After adding a degradation handler, confirm it does not change observable behaviour on the happy path. |
+
+**Graceful degradation (meta — applies to MCP itself):** without MCP, design priority schedules from the requirements doc + manual code reading; mark the prioritization as `evidence: doc-derived` rather than `graph-derived`.
+</codebase-intelligence>
+
 <canonical-moves>
 ---
 

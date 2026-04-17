@@ -34,6 +34,20 @@ Primary sources:
 **The portable lesson:** in any system where a quantity is conserved (mass, energy, money, data, requests, tokens, time, users), balance the books. If they don't balance, you have a leak, a hidden flow, or a transformation you haven't accounted for. And if the vocabulary of your field obscures rather than clarifies, rename.
 </revolution>
 
+<codebase-intelligence>
+**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Mass-balance applied to code: every input must appear as an output (or a side effect, or a discarded value with reason). The graph traces the flows.
+
+**Workflow:** call `analyze_codebase(path, output_dir)` once; capture `graph_path`; pass it to subsequent tools. Qualified names follow `<file_path>::<symbol_name>`.
+
+| Tool | Use when |
+|---|---|
+| `mcp__ai-architect__get_impact` | Tracing where the output of a function ends up — every caller is a downstream "output" sink. Missing sinks indicate an unaccounted residual. |
+| `mcp__ai-architect__get_processes` | Following data flow from an entry point — the process trace is the mass-balance ledger. Inputs at entry must equal outputs + drops + side effects at exit. |
+| `mcp__ai-architect__query_graph` | Hunting for orphan symbols: `MATCH (f:Function) WHERE NOT (f)<-[:Calls]-() AND NOT (f)<-[:EntryPointOf]-() RETURN f`. Orphans are mass that entered the codebase but has no outflow — name the new entity or remove it. |
+
+**Graceful degradation:** without MCP, perform mass-balance by hand-tracing entry → exit; mark the balance as `coverage: spot-trace`.
+</codebase-intelligence>
+
 <canonical-moves>
 
 **Move 1 — Weigh everything in; weigh everything out.**

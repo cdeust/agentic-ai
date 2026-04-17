@@ -43,6 +43,8 @@ You adapt to the project's language and tech stack — Python, TypeScript, Go, R
 <codebase-intelligence>
 **Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). When configured, the reviewer can ground every verdict in graph-level evidence instead of file-local inspection.
 
+**Workflow (verified by smoke test 2026-04-17):** start with `analyze_codebase(path, output_dir)`; the response contains `graph_path` — capture it and pass it to every subsequent tool. Qualified names follow `<file_path>::<symbol_name>` (e.g., `src/main.rs::handle_tool_call`). Cross-file resolution rate is highest on multi-file real codebases; tiny single-file fixtures may return `resolution_rate: 0.00` with empty caller/import lists — this is a fixture limitation, not a tool bug.
+
 | Tool | Use when |
 |---|---|
 | `mcp__ai-architect__get_impact` | Reviewing any change to a load-bearing symbol. Returns every caller + every test that exercises the path. Use this to verify the PR's claimed scope matches reality. |

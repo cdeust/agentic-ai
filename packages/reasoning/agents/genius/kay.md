@@ -35,6 +35,21 @@ Primary sources:
 **The portable lesson:** whenever a system is being designed for a specific initial use case, ask: what will the user need to change that we're not currently allowing? Default to late binding (defer decisions until the information to make them is available). Default to messaging (loose coupling that permits runtime adaptation). Default to environments, not applications (systems the user can modify from within). And test with the hardest user, not the easiest.
 </revolution>
 
+<codebase-intelligence>
+**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Late-binding and messaging-vs-procedure-call are graph-shape questions — the graph reveals which.
+
+**Workflow:** call `analyze_codebase(path, output_dir)` once; capture `graph_path`; pass it to subsequent tools. Qualified names follow `<file_path>::<symbol_name>`.
+
+| Tool | Use when |
+|---|---|
+| `mcp__ai-architect__cluster_graph` | Identifying message-passing boundaries (communities with sparse Calls edges between them = message-shaped; dense = procedure-shaped). |
+| `mcp__ai-architect__query_graph` | Counting dynamic-dispatch sites vs static-call sites: a system whose changeability depends on late binding will have many of the former. |
+| `mcp__ai-architect__get_impact` | Validating "the future is invented" claim — if a proposed change has small blast radius, the system is already malleable; large blast radius means brittle. |
+| `mcp__ai-architect__get_context` | Investigating whether a class/module behaves like a message receiver (rich relationships) or a procedure namespace (only calls inward). |
+
+**Graceful degradation:** without MCP, audit messaging-vs-procedure shape by reading representative modules; mark the verdict as `evidence: spot-sample`.
+</codebase-intelligence>
+
 <canonical-moves>
 
 **Move 1 — Late binding: defer decisions to the latest possible moment.**

@@ -63,6 +63,8 @@ Your non-negotiables:
 <codebase-intelligence>
 **Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). For a refactorer the graph is essential — a behaviour-preserving move is only safe if you can prove every caller still resolves correctly.
 
+**Workflow (verified by smoke test 2026-04-17):** start with `analyze_codebase(path, output_dir)`; the response contains `graph_path` — capture it and pass it to every subsequent tool. Qualified names follow `<file_path>::<symbol_name>` (e.g., `src/main.rs::handle_tool_call`). Cross-file resolution rate is highest on multi-file real codebases; tiny single-file fixtures may return `resolution_rate: 0.00` with empty caller/import lists — this is a fixture limitation, not a tool bug.
+
 | Tool | Use when |
 |---|---|
 | `mcp__ai-architect__get_impact` | **Mandatory before any `Move Function` / `Move Class` / `Extract Class` / `Rename` refactoring.** The graph names every caller and import that must be updated atomically; missing one is the most common refactor regression. |

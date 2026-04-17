@@ -36,6 +36,21 @@ Primary sources:
 **The portable lesson:** (a) measure before optimizing, always; the bottleneck is almost never where you think it is. (b) code is read more often than it is written; optimize for the reader, not the writer. (c) understand the algorithm's complexity before implementing it. (d) when you need a tool and it doesn't exist, build it and use it to produce the work — the recursive use is the strongest validation.
 </revolution>
 
+<codebase-intelligence>
+**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Profile-before-optimize requires an actual map of where work happens — the graph supplies that map.
+
+**Workflow:** call `analyze_codebase(path, output_dir)` once; capture `graph_path`; pass it to subsequent tools. Qualified names follow `<file_path>::<symbol_name>`.
+
+| Tool | Use when |
+|---|---|
+| `mcp__ai-architect__get_processes` | Identifying the actual hot paths (entry-point traces) before any optimization. The premature-optimization refusal needs evidence; this is the evidence. |
+| `mcp__ai-architect__get_impact` | Confirming a candidate optimization is in a community / process that actually matters — small-blast-radius optimizations are by definition not the bottleneck. |
+| `mcp__ai-architect__detect_changes` | After applying an optimization, confirm the change did not silently alter behaviour outside the targeted hot path. |
+| `mcp__ai-architect__search_codebase` | Hunting for documentation-quality issues across the codebase (e.g., literate-programming compliance: "find functions >50 lines without leading prose"). |
+
+**Graceful degradation:** without MCP, fall back to language profilers (`cProfile`, `perf`, `pprof`, `instruments`) — those are the load-bearing source for "where is the time?" The MCP graph supplements but does not replace empirical profiling.
+</codebase-intelligence>
+
 <canonical-moves>
 
 **Move 1 — Profile before optimizing.**

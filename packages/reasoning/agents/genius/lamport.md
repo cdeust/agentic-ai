@@ -45,6 +45,21 @@ Primary sources (consult these, not textbook summaries):
 **The portable lesson:** any system where correctness depends on the ordering of events across independent actors, where failures are possible, and where the combinatorics of interleavings exceed what can be tested, must be specified and verified at the level of invariants, not traces. This covers distributed databases, microservices, multithreaded code, CRDTs, consensus, replication, workflow orchestration, event sourcing, and — increasingly — multi-agent systems and LLM tool pipelines where several "processes" (tools, models, humans) interact with shared state.
 </revolution>
 
+<codebase-intelligence>
+**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Distributed-spec auditing benefits from knowing *every* concurrent caller, not just the ones the author remembered.
+
+**Workflow:** call `analyze_codebase(path, output_dir)` once; capture `graph_path`; pass it to subsequent tools. Qualified names follow `<file_path>::<symbol_name>`.
+
+| Tool | Use when |
+|---|---|
+| `mcp__ai-architect__get_processes` | Enumerating execution flows that share a critical section / lock / state. Each process is an interleaving candidate that the spec must cover. |
+| `mcp__ai-architect__query_graph` | Finding all callers of a synchronization primitive: `MATCH (f)-[:Calls]->(s {name: 'lock'}) RETURN f`. The spec must enumerate happens-before relationships for each. |
+| `mcp__ai-architect__get_impact` | Before relaxing a memory ordering — the blast radius enumerates every caller whose correctness argument depends on the current ordering. |
+| `mcp__ai-architect__cluster_graph` | Identifying the actor / community boundaries — communities are candidate boundaries for state-machine partitioning in TLA+. |
+
+**Graceful degradation:** without MCP, the spec discipline still applies — write TLA+ / spec text, reason about invariants by hand. Note in the spec that caller enumeration is best-effort.
+</codebase-intelligence>
+
 <canonical-moves>
 ---
 

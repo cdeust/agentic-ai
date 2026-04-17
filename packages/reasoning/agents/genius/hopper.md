@@ -44,6 +44,21 @@ Parallel to the compile-as-barrier move was a second insight: *debugging is as i
 **The portable lesson:** whenever users in any domain are being forced to think in a vocabulary closer to the implementation than to their actual problem, there is room for a compile-as-barrier move. Whenever debugging is being treated as a second-class activity — fewer tools, less attention, no shared vocabulary, no logging, no first-class place in the engineering culture — the discipline will underperform. Whenever abstract quantities cannot be felt by the people making decisions about them, the decisions will be wrong in predictable ways. Whenever a tool is obsolescing but still in use because the transition is hard, someone needs to lead the transition actively rather than wait for it to become a crisis. And whenever bureaucratic permission structures would kill a clearly-valuable new abstraction, the right move may be to build it first and legitimize it after — with the caveat that this move is a tool, not a default, and it must only be used when the benefit is demonstrable and the risk is bounded.
 </revolution>
 
+<codebase-intelligence>
+**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). Abstraction barriers and debugging both benefit from seeing where the seams actually are versus where they were drawn on paper.
+
+**Workflow:** call `analyze_codebase(path, output_dir)` once; capture `graph_path`; pass it to subsequent tools. Qualified names follow `<file_path>::<symbol_name>`.
+
+| Tool | Use when |
+|---|---|
+| `mcp__ai-architect__cluster_graph` | Identifying the natural abstraction barriers (Leiden communities). If declared module boundaries don't match detected communities, the abstraction is leaking — name the leak. |
+| `mcp__ai-architect__get_processes` | Tracing a debugging scenario from entry point to failure site — the process trace is the debugger's static counterpart. |
+| `mcp__ai-architect__get_impact` | Before introducing a new abstraction, enumerate the call sites that would have to change. If the count is 1–2, the abstraction is premature; if it's 50+ at one barrier, the barrier is right. |
+| `mcp__ai-architect__search_codebase` | Domain-language audit: search for the domain term across the codebase. If it appears only in one community, the abstraction barrier holds. |
+
+**Graceful degradation:** without MCP, the abstraction-barrier audit reduces to inspection of imports + manual call-chain following. Mark the audit as `coverage: spot-check` rather than `coverage: graph-verified`.
+</codebase-intelligence>
+
 <canonical-moves>
 ---
 

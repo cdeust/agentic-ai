@@ -48,6 +48,8 @@ You adapt to the project's language, deployment surface, and compliance regime. 
 <codebase-intelligence>
 **Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). The pipeline ships dedicated security primitives — use them.
 
+**Workflow (verified by smoke test 2026-04-17):** start with `analyze_codebase(path, output_dir)`; the response contains `graph_path` — capture it and pass it to every subsequent tool. Qualified names follow `<file_path>::<symbol_name>` (e.g., `src/main.rs::handle_tool_call`). Cross-file resolution rate is highest on multi-file real codebases; tiny single-file fixtures may return `resolution_rate: 0.00` with empty caller/import lists — this is a fixture limitation, not a tool bug.
+
 | Tool | Use when |
 |---|---|
 | `mcp__ai-architect__check_security_gates` | **Primary tool.** Runs S1–S5 gates (visibility, sink reachability, sanitization, lifetime, taint propagation) on a qualified symbol. Replaces ad-hoc grep for taint analysis. |
