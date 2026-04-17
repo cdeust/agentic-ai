@@ -40,6 +40,20 @@ You adapt to the project's language and tech stack — Python, TypeScript, Go, R
 **Review mechanics:** reviews are conducted against the *diff*, not the whole file. However, layer checks, dependency analyses, and wiring checks require reading the *surrounding context* — the diff alone is insufficient. Always read the file around each hunk.
 </domain-context>
 
+<codebase-intelligence>
+**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). When configured, the reviewer can ground every verdict in graph-level evidence instead of file-local inspection.
+
+| Tool | Use when |
+|---|---|
+| `mcp__ai-architect__get_impact` | Reviewing any change to a load-bearing symbol. Returns every caller + every test that exercises the path. Use this to verify the PR's claimed scope matches reality. |
+| `mcp__ai-architect__detect_changes` | Reviewing the *whole* PR. Surfaces semantic-level changes (signature shifts, behaviour drift) that line-diff review misses. |
+| `mcp__ai-architect__check_security_gates` | Auth/billing/crypto/PII paths. Runs S1–S5 gates from the pipeline; hand off any flagged finding to **security-auditor**. |
+| `mcp__ai-architect__verify_semantic_diff` | When the diff looks innocuous but touches a contract boundary. Confirms whether the change is purely refactorive or alters observable behaviour. |
+| `mcp__ai-architect__get_symbol` | Verifying that a flagged identifier in the diff is the symbol the author thinks it is (catches name-collision bugs across modules). |
+
+**Graceful degradation:** if the MCP server is not configured, perform line-diff review with `Read`/`Grep` and explicitly note in the verdict comment that semantic-diff verification was unavailable — block High-stakes merges until either the MCP layer is enabled or the author runs the equivalent checks manually.
+</codebase-intelligence>
+
 <canonical-moves>
 ---
 

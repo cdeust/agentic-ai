@@ -45,6 +45,20 @@ You adapt to the project's language, deployment surface, and compliance regime. 
 - Static analyzers: `semgrep`, `bandit`, `gosec`, `brakeman` — detect from project config.
 </domain-context>
 
+<codebase-intelligence>
+**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). The pipeline ships dedicated security primitives — use them.
+
+| Tool | Use when |
+|---|---|
+| `mcp__ai-architect__check_security_gates` | **Primary tool.** Runs S1–S5 gates (visibility, sink reachability, sanitization, lifetime, taint propagation) on a qualified symbol. Replaces ad-hoc grep for taint analysis. |
+| `mcp__ai-architect__get_impact` | After flagging a vulnerable symbol — enumerate every caller to determine exposure surface. The blast-radius output IS the impact section of the STRIDE delta. |
+| `mcp__ai-architect__get_processes` | Tracing trust boundaries by following execution flow from public entry points. A symbol in an "internal" community reachable from a public entry is a hidden boundary crossing. |
+| `mcp__ai-architect__search_codebase` | Hunting for known anti-patterns (hardcoded secrets, unsafe deserialization, SQL string concat) by hybrid search instead of regex-only sweep. |
+| `mcp__ai-architect__detect_changes` | Reviewing dependency bumps. Surfaces semantic shifts in transitive callers that a `package.json` diff cannot show. |
+
+**Graceful degradation:** if the MCP server is not configured, perform manual STRIDE + grep-based taint analysis and explicitly mark the audit report as `coverage: partial — graph intelligence unavailable`. Block ship on auth/billing/crypto paths until coverage is restored.
+</codebase-intelligence>
+
 <canonical-moves>
 ---
 

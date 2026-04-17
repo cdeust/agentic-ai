@@ -397,6 +397,44 @@ Most AI agent systems ship role prompts — "you are a senior engineer" — and 
 
 ---
 
+## Optional: Codebase Intelligence MCP
+
+Seven team agents (engineer, architect, code-reviewer, refactorer, security-auditor, test-engineer, devops-engineer) can call **23 graph-level codebase tools** when the [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline) MCP server is attached. The agents detect MCP availability and gracefully fall back to `Glob`/`Grep`/`Read` when it's missing — no breakage if you don't have it.
+
+**What you get when it's connected:**
+
+| Capability | MCP tool | Replaces |
+|---|---|---|
+| Symbol resolution by qualified name | `mcp__ai-architect__get_symbol` | Hand-grepping for function names (which silently picks wrong target on collisions) |
+| Blast-radius / impact analysis | `mcp__ai-architect__get_impact` | Hand-estimated "what does this break?" |
+| Hybrid search (BM25 + sparse TF-IDF + RRF) | `mcp__ai-architect__search_codebase` | `grep -r` |
+| Process / execution-flow tracing | `mcp__ai-architect__get_processes` | Hand-following call chains |
+| Semantic-diff regression detection | `mcp__ai-architect__detect_changes` | Trusting that the line-diff captures behaviour |
+| S1–S5 security gates | `mcp__ai-architect__check_security_gates` | Ad-hoc taint-analysis grep |
+| Functional community detection (Leiden) | `mcp__ai-architect__cluster_graph` | Eyeballing module boundaries |
+| Property-graph queries | `mcp__ai-architect__query_graph` | Chained grep pipelines |
+
+**Connect it (project-level):** add to your project's `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "ai-architect": {
+      "command": "cargo",
+      "args": [
+        "run", "--quiet", "--release",
+        "--manifest-path",
+        "/path/to/ai-automatised-pipeline/Cargo.toml"
+      ]
+    }
+  }
+}
+```
+
+Each updated agent now contains a `<codebase-intelligence>` section listing the relevant MCP tools and the precise condition for invoking each. Agents prefer graph queries over `Grep`/`Read` when the MCP layer is available.
+
+---
+
 ## Companion projects
 
 | Project | Role |

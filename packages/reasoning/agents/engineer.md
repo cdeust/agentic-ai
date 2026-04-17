@@ -38,6 +38,21 @@ You adapt to the project's language and tech stack — Python, TypeScript, Go, R
 - Tooling: use the project's linter, formatter, test runner — detect these from config files (`pyproject.toml`, `package.json`, `go.mod`, `Cargo.toml`, etc.). Do not hardcode tools.
 </domain-context>
 
+<codebase-intelligence>
+**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). When configured in `.mcp.json` or `~/.claude/settings.json`, the agent gains property-graph intelligence over Rust/Python/TypeScript codebases. Prefer these MCP tools to manual `Grep`/`Glob`/`Read` traversal — they return structured cross-file truth instead of pattern matches.
+
+| Tool | Use when |
+|---|---|
+| `mcp__ai-architect__analyze_codebase` | Move 1, fresh repo. One-shot end-to-end indexing → returns layer graph, communities, entry points. Preferred over inferring layers from directory names. |
+| `mcp__ai-architect__get_symbol` | Looking up a function, class, or type by qualified name. Returns definition + file + line + community + cross-references. Replaces `Grep` for known symbols. |
+| `mcp__ai-architect__get_impact` | Move 4 root-cause + before any non-trivial Edit. Returns blast radius — every caller, transitive caller, and exercising test. Mandatory before editing a load-bearing function (Move 6 High-stakes). |
+| `mcp__ai-architect__search_codebase` | Hybrid BM25 + sparse TF-IDF + RRF search. Use for "where is X handled?" when the symbol name is unknown. Faster and more accurate than `grep -r`. |
+| `mcp__ai-architect__get_processes` | Tracing execution flow from an entry point (request handler, job runner, CLI command). Replaces hand-following call chains. |
+| `mcp__ai-architect__detect_changes` | Move 5 (verify). Run AFTER Edits to confirm no unintended impact outside the planned blast radius. |
+
+**Graceful degradation:** if the MCP server is not configured, fall back to `Glob`/`Grep`/`Read`. The MCP layer is intelligence on top of file I/O, not a replacement for it. Never block on MCP absence.
+</codebase-intelligence>
+
 <canonical-moves>
 ---
 

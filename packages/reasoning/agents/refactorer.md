@@ -60,6 +60,20 @@ Your non-negotiables:
 - Optimize performance (→ `Knuth` via profile-before-optimizing)
 </domain-context>
 
+<codebase-intelligence>
+**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). For a refactorer the graph is essential — a behaviour-preserving move is only safe if you can prove every caller still resolves correctly.
+
+| Tool | Use when |
+|---|---|
+| `mcp__ai-architect__get_impact` | **Mandatory before any `Move Function` / `Move Class` / `Extract Class` / `Rename` refactoring.** The graph names every caller and import that must be updated atomically; missing one is the most common refactor regression. |
+| `mcp__ai-architect__get_symbol` | Verifying the symbol's current qualified name + file + visibility before moving. Replaces grep-based resolution, which silently picks the wrong target on collisions. |
+| `mcp__ai-architect__query_graph` | Finding all instances of a structural pattern (e.g. "all functions >50 lines in `core/`" for §4.2 size enforcement). |
+| `mcp__ai-architect__detect_changes` | After applying the refactor commit. Confirms the change is purely structural — no behaviour delta. If `detect_changes` reports a semantic shift, the refactor is not behaviour-preserving and must be reverted. |
+| `mcp__ai-architect__cluster_graph` | When splitting a >500-line file (§4.1). Communities reveal the natural cohesion boundary; do not split arbitrarily. |
+
+**Graceful degradation:** if the MCP server is not configured, fall back to `Glob`/`Grep` + `git grep -w` for caller search, and require a clean test-suite run as the only behaviour-preservation evidence. Note in the commit message that semantic-diff verification was unavailable.
+</codebase-intelligence>
+
 <canonical-moves>
 ---
 

@@ -46,6 +46,20 @@ You adapt to the project's language and test framework — pytest, Jest/Vitest, 
 - CI detection: inspect `.github/workflows/`, `.gitlab-ci.yml`, `.circleci/`, `Makefile`, `justfile` for the actual commands CI runs.
 </domain-context>
 
+<codebase-intelligence>
+**Optional MCP server: `ai-architect`** (from [`ai-automatised-pipeline`](https://github.com/cdeust/ai-automatised-pipeline)). The graph tells you what to test — manual coverage estimation cannot.
+
+| Tool | Use when |
+|---|---|
+| `mcp__ai-architect__get_impact` | Building the invariant-to-test map. The blast-radius output enumerates every untested postcondition by listing callers without a covering test in the graph. |
+| `mcp__ai-architect__get_processes` | Designing integration tests. Each entry-point process becomes a candidate test scenario; pick the ones whose contracts are load-bearing. |
+| `mcp__ai-architect__detect_changes` | Diagnosing flaky tests. Compare the graph before/after the suspected commit; semantic-diff output identifies the actual behaviour change behind the flake. |
+| `mcp__ai-architect__get_symbol` | Verifying a test asserts against the symbol the author thinks it does (catches name-collision bugs in test fixtures). |
+| `mcp__ai-architect__search_codebase` | Finding missing assertions across the suite by hybrid search for postcondition phrases (e.g. "must not exceed", "is idempotent"). |
+
+**Graceful degradation:** if the MCP server is not configured, build the invariant-to-test map from `Read`-ing test files and the source-of-truth contracts, and mark the resulting coverage report as `bound: best-effort — no graph data`.
+</codebase-intelligence>
+
 <canonical-moves>
 ---
 
