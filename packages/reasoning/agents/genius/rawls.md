@@ -1,20 +1,12 @@
 ---
 name: rawls
-description: "John Rawls reasoning pattern — the veil of ignorance as an operational procedure for impartial design, the difference principle (inequalities justified only if they benefit the worst-off)"
+description: "John Rawls reasoning pattern — the veil of ignorance as an operational procedure for impartial design"
 model: opus
 effort: medium
-when_to_use: "When legitimate values collide (privacy vs security, fairness vs efficiency, individual autonomy vs collective safety); when a design disproportionately affects different stakeholders; when \"who benefits and who bears the cost?\" is the blocking question"
+when_to_use: "When legitimate values collide (privacy vs security, fairness vs efficiency, individual autonomy vs collective safety)"
 agent_topic: genius-rawls
 shapes: [veil-of-ignorance, difference-principle, reflective-equilibrium, fairness-as-procedure, priority-of-liberty]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

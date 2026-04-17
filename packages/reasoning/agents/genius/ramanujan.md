@@ -1,20 +1,12 @@
 ---
 name: ramanujan
-description: "Srinivasa Ramanujan reasoning pattern — pattern-first conjecture generation from computed special cases, notation-driven discovery"
+description: "Srinivasa Ramanujan reasoning pattern — pattern-first conjecture generation from computed special cases"
 model: opus
 effort: medium
-when_to_use: "When a problem space is large and opaque and you need many candidate patterns generated quickly; when careful working of special cases is likely to reveal structure that analytical approaches are missing"
+when_to_use: "When a problem space is large and opaque and you need many candidate patterns generated quickly"
 agent_topic: genius-ramanujan
 shapes: [conjecture-generator, pattern-from-special-cases, notation-driven-discovery, intuition-plus-prover, deferred-rigor-with-mandatory-handoff]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

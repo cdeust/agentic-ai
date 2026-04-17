@@ -1,20 +1,12 @@
 ---
 name: ventris
-description: "Michael Ventris reasoning pattern — grid-based constraint propagation, assumption-free structural analysis, test by prediction."
+description: "Michael Ventris reasoning pattern — grid-based constraint propagation, assumption-free structural analysis"
 model: opus
 effort: medium
-when_to_use: "When facing an unknown system, protocol, format, or language where the underlying structure must be inferred from observed patterns alone; when assumptions about the system's nature might be wrong; when you need to separate structural analysis from semantic hypothesis"
+when_to_use: "When facing an unknown system, protocol, format"
 agent_topic: genius-ventris
 shapes: [grid-constraint-propagation, assumption-free-structure, inflection-as-structure-revealer, speculative-decoupling, test-by-prediction]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

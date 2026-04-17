@@ -1,20 +1,12 @@
 ---
 name: kahneman
-description: "Daniel Kahneman reasoning pattern — systematic debiasing of decision processes through System 1/System 2 awareness, pre-mortem analysis, reference class forecasting, cognitive bias detection."
+description: "Daniel Kahneman reasoning pattern"
 model: opus
 effort: medium
-when_to_use: "When a high-stakes decision is being made quickly on intuition; when estimates are suspiciously precise or optimistic; when a plan has no failure scenarios; when a number was presented first and estimates cluster around it (anchoring)"
+when_to_use: "When a high-stakes decision is being made quickly on intuition; when estimates are suspiciously precise or optimistic"
 agent_topic: genius-kahneman
 shapes: [system-1-system-2-audit, pre-mortem, reference-class-forecasting, substitution-detection, framing-neutralization]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

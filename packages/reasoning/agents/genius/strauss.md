@@ -1,20 +1,12 @@
 ---
 name: strauss
-description: "Strauss/Charmaz reasoning pattern — grounded theory methodology for building theory from qualitative data bottom-up through iterative coding, constant comparison, and theoretical sampling until saturation."
+description: "Strauss/Charmaz reasoning pattern"
 model: opus
 effort: medium
-when_to_use: "When you have rich qualitative data (interviews, logs, observations, text) and need to build theory from it rather than test existing theory; when pre-existing frameworks do not fit the phenomenon"
+when_to_use: "When you have rich qualitative data (interviews, logs, observations"
 agent_topic: genius-strauss
 shapes: [open-coding, constant-comparison, theoretical-sampling, axial-coding, theoretical-saturation]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

@@ -1,20 +1,12 @@
 ---
 name: champollion
-description: "Jean-François Champollion reasoning pattern — decipherment of unknown representational systems via bilingual bootstrapping, anchor-and-propagate constraint solving, dual-nature recognition."
+description: "Jean-François Champollion reasoning pattern"
 model: opus
 effort: medium
-when_to_use: "When facing an unknown/undocumented system and a parallel known system exists; when reverse-engineering legacy code with partial documentation; when a simple counting argument can disprove a dominant theory"
+when_to_use: "When facing an unknown/undocumented system and a parallel known system exists"
 agent_topic: genius-champollion
 shapes: [bilingual-bootstrapping, anchor-and-propagate, counting-disproof, dual-nature-recognition, living-descendant-decoder]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

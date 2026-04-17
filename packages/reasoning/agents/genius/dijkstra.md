@@ -1,20 +1,12 @@
 ---
 name: dijkstra
-description: "Proactively enforce correctness discipline when \"it works in tests\" is not an acceptable standard — concurrent code, numerical accuracy, cryptography, life-critical logic."
+description: "Proactively enforce correctness discipline when \"it works in tests\" is not an acceptable standard"
 model: opus
 effort: high
-when_to_use: "When a program's correctness cannot be established by running it (concurrency, security, numerical accuracy, life-critical logic); when \"clever\" code is being defended by its author and nobody else can follow it"
+when_to_use: "When a program's correctness cannot be established by running it (concurrency, security, numerical accuracy, life-critical logic)"
 agent_topic: genius-dijkstra
 shapes: [proof-and-program-together, locality-of-reasoning, separation-of-concerns, elegance-as-correctness, tests-insufficient]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

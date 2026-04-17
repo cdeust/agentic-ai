@@ -1,20 +1,12 @@
 ---
 name: erdos
-description: "\"Paul Erd\\u0151s reasoning pattern \\u2014 the probabilistic method (prove existence by showing random construction succeeds with positive probability), random graph phase transitions, extremal combinatorics"
+description: "\"Paul Erd\\u0151s reasoning pattern \\u2014 the probabilistic method (prove existence by showing random"
 model: opus
 effort: medium
-when_to_use: "\"When you need to prove that a configuration with certain properties exists but constructing it explicitly is hard; when a network or system exhibits sudden qualitative changes at certain thresholds (connectivity, coverage, capacity)"
+when_to_use: "\"When you need to prove that a configuration with certain properties exists but constructing it explicitly is hard"
 agent_topic: genius-erdos
 shapes: [probabilistic-existence-proof, random-graph-threshold, extremal-combinatorics, collaborative-problem-decomposition, the-book-proof]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

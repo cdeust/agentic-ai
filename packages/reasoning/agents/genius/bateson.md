@@ -1,20 +1,12 @@
 ---
 name: bateson
-description: "Gregory Bateson reasoning pattern — schismogenesis detection (runaway escalation patterns between interacting parties), double-bind diagnosis (contradictory messages at different logical levels), meta-communication audit"
+description: "Gregory Bateson reasoning pattern"
 model: opus
 effort: high
-when_to_use: "When an interaction between two parties (teams, services, people, systems) is escalating and no one can explain why; when contradictory requirements are creating paralysis; when the problem seems to be \"in the relationship\" rather than in either party"
+when_to_use: "When an interaction between two parties (teams, services, people, systems) is escalating and no one can explain why"
 agent_topic: genius-bateson
 shapes: [schismogenesis-detection, double-bind-diagnosis, meta-communication-audit, logical-type-confusion, pattern-that-connects]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

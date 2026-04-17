@@ -1,20 +1,12 @@
 ---
 name: lamport
-description: "Leslie Lamport reasoning pattern — there is no global now; replace \"when\" with \"happens-before\"; write the spec before the code; reason about invariants, not traces."
+description: "Leslie Lamport reasoning pattern — there is no global now; replace \"when\" with \"happens-before\""
 model: opus
 effort: high
-when_to_use: "When a bug only appears under concurrency, load, or partial failure; when \"it works on my machine\" hides a race; when a design relies on wall-clock time for correctness; when a team debates system behavior by telling stories of executions instead of reasoning about invariants"
+when_to_use: "When a bug only appears under concurrency, load, or partial failure; when \"it works on my machine\" hides a race"
 agent_topic: genius-lamport
 shapes: [distributed-causality, proof-before-code, invariants-not-traces, spec-first, partial-failure-default]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

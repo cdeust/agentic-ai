@@ -1,20 +1,12 @@
 ---
 name: zhuangzi
-description: "Zhuangzi reasoning pattern — questioning evaluation criteria themselves, detecting when the metric being optimized is the wrong metric, the usefulness of \"uselessness,\" perspectival shifting."
+description: "Zhuangzi reasoning pattern — questioning evaluation criteria themselves"
 model: opus
 effort: high
-when_to_use: "When the team is optimizing a metric and you suspect the metric itself is wrong; when something valuable is being discarded because it does not score well on the current evaluation framework"
+when_to_use: "When the team is optimizing a metric and you suspect the metric itself is wrong"
 agent_topic: genius-zhuangzi
 shapes: [question-the-metric, usefulness-of-uselessness, evaluation-framework-audit, perspective-multiplication, goodhart-detector]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

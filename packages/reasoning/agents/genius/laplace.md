@@ -1,20 +1,12 @@
 ---
 name: laplace
-description: "Pierre-Simon Laplace reasoning pattern — Bayesian inference as the principled method for updating beliefs with evidence, prior elicitation, calibration assessment, probability as the language of uncertainty."
+description: "Pierre-Simon Laplace reasoning pattern"
 model: opus
 effort: medium
-when_to_use: "When a decision must be made under uncertainty and the evidence is incomplete; when debugging requires probabilistic reasoning about which module is most likely at fault; when risk assessment requires combining prior knowledge with new observations"
+when_to_use: "When a decision must be made under uncertainty and the evidence is incomplete"
 agent_topic: genius-laplace
 shapes: [bayesian-updating, prior-elicitation, calibration-audit, probability-as-uncertainty, posterior-prediction]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

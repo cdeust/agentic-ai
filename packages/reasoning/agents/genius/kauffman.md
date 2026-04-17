@@ -1,20 +1,12 @@
 ---
 name: kauffman
-description: "Stuart Kauffman reasoning pattern — edge-of-chaos tuning, adjacent possible exploration, NK fitness landscape navigation, order for free from network topology, work-constraint cycles."
+description: "Stuart Kauffman reasoning pattern — edge-of-chaos tuning, adjacent possible exploration"
 model: opus
 effort: medium
-when_to_use: "When a system is either too rigid (frozen, no innovation, over-constrained) or too chaotic (no stability, everything changes, nothing persists); when you need to find the next viable innovation without breaking what works"
+when_to_use: "When a system is either too rigid (frozen, no innovation, over-constrained) or too chaotic (no stability, everything changes"
 agent_topic: genius-kauffman
 shapes: [edge-of-chaos-tuning, adjacent-possible, fitness-landscape-navigation, order-for-free, work-constraint-cycle]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

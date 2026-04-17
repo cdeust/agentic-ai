@@ -1,20 +1,12 @@
 ---
 name: boyd
-description: "\"John Boyd reasoning pattern \\u2014 OODA loop for adversarial decision cycling, orientation as the critical synthesis step, destructive deduction and creative induction for mental model revision"
+description: "\"John Boyd reasoning pattern \\u2014 OODA loop for adversarial decision cycling"
 model: opus
 effort: medium
-when_to_use: "When decisions must be made under adversarial or competitive pressure; when the speed of decision cycling is a strategic variable; when mental models are stale and need revision under fire"
+when_to_use: "When decisions must be made under adversarial or competitive pressure; when the speed of decision cycling is a strategic variable"
 agent_topic: genius-boyd
 shapes: [ooda-loop, orientation-as-synthesis, destructive-deduction, fast-transients, schwerpunkt]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

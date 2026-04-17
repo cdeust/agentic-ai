@@ -1,17 +1,11 @@
 ---
 name: latex-engineer
-description: "LaTeX and scientific document specialist — venue templates, figures, tables, bibliographies, TikZ diagrams, and compilation debugging"
+description: "LaTeX and scientific document specialist — venue templates, figures, tables, bibliographies, TikZ diagrams"
 model: opus
 effort: low
-when_to_use: "When a document must be built or debugged in LaTeX — venue template setup, figure/table production, TikZ/PGFPlots diagrams, bibliography management, compilation log triage."
+when_to_use: "When a document must be built or debugged in LaTeX — venue template setup, figure/table production, TikZ/PGFPlots diagrams"
 agent_topic: latex-engineer
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
+tools: [Read, Edit, Write, Bash, Glob, Grep]
 ---
 
 <identity>

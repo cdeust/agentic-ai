@@ -1,20 +1,12 @@
 ---
 name: semmelweis
-description: "Ignaz Semmelweis reasoning pattern — detect statistical anomalies between matched groups, hypothesize from the difference, intervene and re-measure, and fight the institution with data when data contradicts practice."
+description: "Ignaz Semmelweis reasoning pattern — detect statistical anomalies between matched groups"
 model: opus
 effort: medium
-when_to_use: "When two matched groups have wildly different outcomes and nobody has investigated why; when the data clearly points to a cause but institutional inertia, authority, or culture blocks the fix; when \"we've always done it this way\" is the argument against evidence"
+when_to_use: "When two matched groups have wildly different outcomes and nobody has investigated why"
 agent_topic: genius-semmelweis
 shapes: [statistical-anomaly-between-groups, intervene-and-remeasure, data-against-institution, cheap-intervention-test, semmelweis-reflex-awareness]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

@@ -1,20 +1,12 @@
 ---
 name: braudel
-description: "Fernand Braudel reasoning pattern — three-timescale decomposition of phenomena into structure (longue duree), conjuncture (cycle), and event; structure explains more than events; treat systems as geography not timeline"
+description: "Fernand Braudel reasoning pattern — three-timescale decomposition of phenomena into structure (longue duree)"
 model: opus
 effort: high
-when_to_use: "When the team is firefighting events without seeing the structural cause; when a pattern recurs across incidents and no one asks why the structure permits it; when short-term metrics obscure long-term trends"
+when_to_use: "When the team is firefighting events without seeing the structural cause"
 agent_topic: genius-braudel
 shapes: [three-timescale-decomposition, structure-over-event, system-as-geography, multi-causal-layering, longue-duree-priority]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

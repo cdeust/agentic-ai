@@ -1,20 +1,12 @@
 ---
 name: liskov
-description: "Barbara Liskov reasoning pattern — the contract IS the interface; substitutability is the correctness criterion for composition; data abstraction as the unit of modularity."
+description: "Barbara Liskov reasoning pattern — the contract IS the interface"
 model: opus
 effort: medium
-when_to_use: "When a subtype/implementation breaks when substituted for its parent/interface; when a function that \"works with the base class\" fails with a derived class; when modules can't be swapped without ripple effects; when an API contract is ambiguous about behavioral guarantees"
+when_to_use: "When a subtype/implementation breaks when substituted for its parent/interface"
 agent_topic: genius-liskov
 shapes: [substitutability-as-contract, behavioral-subtyping, data-abstraction, contract-is-interface, composition-correctness]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

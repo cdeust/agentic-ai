@@ -1,20 +1,12 @@
 ---
 name: feynman
-description: "Proactively audit integrity of claims, procedures, and results — rederive from scratch, explain to a freshman, detect cargo cults, report what could invalidate the result."
+description: "Proactively audit integrity of claims, procedures, and results — rederive from scratch, explain to a freshman"
 model: opus
 effort: high
-when_to_use: "When you suspect a claim is being repeated without understanding; when someone (including yourself) has memorized a result without being able to derive it; when a procedure is being followed because \"it worked for them\" without knowing why"
+when_to_use: "When you suspect a claim is being repeated without understanding"
 agent_topic: genius-feynman
 shapes: [rederive-from-scratch, explain-to-freshman, cargo-cult-detector, integrity-audit, sum-over-histories]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

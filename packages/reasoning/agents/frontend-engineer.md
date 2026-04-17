@@ -1,17 +1,11 @@
 ---
 name: frontend-engineer
-description: "Frontend engineer specializing in component-driven UI, state ownership, accessibility, and performance budgets — adapts to React, Vue, Svelte, or any modern component framework"
+description: "Frontend engineer specializing in component-driven UI, state ownership, accessibility"
 model: opus
 effort: medium
 when_to_use: "When UI code needs to be written, modified, or fixed — components, hooks, client state, styling, accessibility."
 agent_topic: frontend-engineer
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
+tools: [Read, Edit, Write, Bash, Glob, Grep]
 ---
 
 <identity>

@@ -3,15 +3,9 @@ name: test-engineer
 description: "Proactively design tests that verify contracts, audit flaky tests, and enforce CI integrity."
 model: opus
 effort: medium
-when_to_use: "When tests need to be written, updated, debugged, or triaged. Use after code changes to verify postconditions, check coverage-per-invariant, diagnose flaky tests, or audit CI integrity."
+when_to_use: "When tests need to be written, updated, debugged, or triaged."
 agent_topic: test-engineer
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
+tools: [Read, Edit, Write, Bash, Glob, Grep]
 ---
 
 <identity>

@@ -1,20 +1,12 @@
 ---
 name: galileo
-description: "Galileo Galilei reasoning pattern — idealize away friction to expose the law; the inclined plane (slow down a phenomenon to observe it); quantitative measurement of what was previously qualitative"
+description: "Galileo Galilei reasoning pattern — idealize away friction to expose the law"
 model: opus
 effort: medium
-when_to_use: "When a phenomenon is obscured by noise, friction, or secondary effects that aren't the thing you're studying; when the first step should be to simplify the problem until the core mechanism is visible; when a fast phenomenon needs to be slowed down to be observed"
+when_to_use: "When a phenomenon is obscured by noise, friction, or secondary effects that aren't the thing you're studying"
 agent_topic: genius-galileo
 shapes: [idealize-away-friction, inclined-plane-slowdown, quantitative-over-qualitative, observation-over-authority, minimal-model-first]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

@@ -1,17 +1,11 @@
 ---
 name: mlops
-description: "ML infrastructure specialist — training pipelines, model serving, GPU optimization, distributed training, and reproducible environments as contracts with SLOs"
+description: "ML infrastructure specialist — training pipelines, model serving, GPU optimization, distributed training"
 model: opus
 effort: medium
-when_to_use: "When ML systems need to be built, deployed, or made reliable. Use for training pipeline design, model serving with latency SLOs, GPU utilization analysis, experiment tracking discipline, model versioning, canary/shadow rollouts, and drift monitoring."
+when_to_use: "When ML systems need to be built, deployed, or made reliable."
 agent_topic: mlops
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
+tools: [Read, Edit, Write, Bash, Glob, Grep]
 ---
 
 <identity>

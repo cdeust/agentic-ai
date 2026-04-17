@@ -1,20 +1,12 @@
 ---
 name: wu
-description: "Chien-Shiung Wu reasoning pattern — error archaeology of predecessors (finding where previous work assumed without testing), precision calibrated to distinguish competing hypotheses"
+description: "Chien-Shiung Wu reasoning pattern"
 model: opus
 effort: medium
-when_to_use: "When a system rests on assumptions inherited from predecessors that nobody has tested; when previous experiments or benchmarks had systematic errors that went unexamined"
+when_to_use: "When a system rests on assumptions inherited from predecessors that nobody has tested"
 agent_topic: genius-wu
 shapes: [error-archaeology, test-the-obvious, precision-as-refutation, assumption-inventory, untested-assumption-detection]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

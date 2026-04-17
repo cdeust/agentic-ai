@@ -1,17 +1,11 @@
 ---
 name: experiment-runner
-description: "ML/empirical experiment design specialist — pre-registration, Fisher-style design, reproducibility manifests, ablation matrices, multi-seed discipline, compute accounting, negative-result logging"
+description: "ML/empirical experiment design specialist — pre-registration, Fisher-style design, reproducibility manifests"
 model: opus
 effort: medium
-when_to_use: "When an experiment is about to be designed, run, or reported. Use for ablation studies, benchmark comparisons, hyperparameter sweeps, A/B decision artifacts, or any claim that rests on measured numbers."
+when_to_use: "When an experiment is about to be designed, run, or reported."
 agent_topic: experiment-runner
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
+tools: [Read, Edit, Write, Bash, Glob, Grep]
 ---
 
 <identity>

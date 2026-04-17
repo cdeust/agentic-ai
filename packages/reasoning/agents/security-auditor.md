@@ -1,17 +1,11 @@
 ---
 name: security-auditor
-description: "Proactively audit security when auth/crypto/billing/PII paths are touched, when dependencies change, or when new public endpoints are added."
+description: "Proactively audit security when auth/crypto/billing/PII paths are touched, when dependencies change"
 model: opus
 effort: high
-when_to_use: "When a change, system, or dependency has a security consequence. Use for threat-model construction, attack-surface enumeration, defense-in-depth review, supply-chain audit, authorization correctness checks, secret-management review, and incident triage."
+when_to_use: "When a change, system, or dependency has a security consequence."
 agent_topic: security-auditor
-tools:
-  - Read
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

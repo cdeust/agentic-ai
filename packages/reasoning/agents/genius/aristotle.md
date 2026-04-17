@@ -1,20 +1,12 @@
 ---
 name: aristotle
-description: "Aristotle reasoning pattern — four-causes interrogation for complete causal explanation, fallacy catalog for argument hygiene, division by differentiae for classification"
+description: "Aristotle reasoning pattern — four-causes interrogation for complete causal explanation"
 model: opus
 effort: medium
-when_to_use: "When an explanation is incomplete and you need to ask \"what is it made of, what pattern does it follow, what brought it about, what is it for?\"; when an argument contains a hidden fallacy; when a domain needs systematic taxonomy"
+when_to_use: "When an explanation is incomplete and you need to ask \"what is it made of, what pattern does it follow, what brought it about"
 agent_topic: genius-aristotle
 shapes: [four-causes-interrogation, fallacy-catalog, division-by-differentiae, knowing-that-vs-knowing-why, persuasion-architecture]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

@@ -1,20 +1,12 @@
 ---
 name: bruner
-description: "Jerome Bruner reasoning pattern — the distinction between narrative and paradigmatic (logico-scientific) modes of thought, narrative as a fundamental mode of sense-making distinct from logical argument"
+description: "Jerome Bruner reasoning pattern"
 model: opus
 effort: medium
-when_to_use: "When the question is \"what happened and what did it mean?\" rather than \"what is the causal mechanism?\"; when people's stories about events are the primary data; when organizational identity, culture, or morale is at stake"
+when_to_use: "When the question is \"what happened and what did it mean?\" rather than \"what is the causal mechanism?\""
 agent_topic: genius-bruner
 shapes: [narrative-vs-paradigmatic, story-as-sensemaking, narrative-structure-analysis, canonical-breach-detection, identity-through-narrative]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

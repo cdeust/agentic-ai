@@ -1,20 +1,12 @@
 ---
 name: alexander
-description: "Christopher Alexander reasoning pattern — pattern languages for design knowledge, generative sequences that produce wholeness, decomposition by misfit variables, the fifteen fundamental properties."
+description: "Christopher Alexander reasoning pattern — pattern languages for design knowledge"
 model: opus
 effort: high
-when_to_use: "When recurring design problems need systematic documentation and composition; when the team keeps solving the same problem differently each time; when a design feels dead or mechanical and needs life"
+when_to_use: "When recurring design problems need systematic documentation and composition"
 agent_topic: genius-alexander
 shapes: [pattern-language-composition, generative-sequence, wholeness-diagnostic, decomposition-by-misfit, fifteen-properties]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

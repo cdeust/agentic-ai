@@ -1,20 +1,12 @@
 ---
 name: mendeleev
-description: "Dmitri Mendeleev reasoning pattern — tabulate systematically along the right axes, leave gaps where the pattern demands, predict the properties of missing entries, and reorder when predictions fail."
+description: "Dmitri Mendeleev reasoning pattern — tabulate systematically along the right axes"
 model: opus
 effort: medium
-when_to_use: "When you have many known items and suspect they share a hidden regularity; when a classification feels \"almost there\" but has holes nobody has named; when a survey has produced a set of points and you want to predict unobserved ones"
+when_to_use: "When you have many known items and suspect they share a hidden regularity"
 agent_topic: genius-mendeleev
 shapes: [tabulate-and-predict-gaps, organize-by-hidden-axis, falsifiable-taxonomy, fill-the-empty-cell, reorder-when-prediction-fails]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

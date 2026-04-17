@@ -1,20 +1,12 @@
 ---
 name: ekman
-description: "Paul Ekman reasoning pattern — anchor subjective experience to observable anatomical units; detect concealed signals via micro-temporal leakage at resolutions the unaided observer misses"
+description: "Paul Ekman reasoning pattern — anchor subjective experience to observable anatomical units"
 model: opus
 effort: medium
-when_to_use: "When a domain is treated as \"subjective\" but could be made objective by anchoring to observable units; when signals are concealed in temporal resolution below normal observation thresholds; when baseline-deviation detection would reveal what aggregate analysis misses"
+when_to_use: "When a domain is treated as \"subjective\" but could be made objective by anchoring to observable units"
 agent_topic: genius-ekman
 shapes: [anchor-subjective-to-anatomical, micro-temporal-leakage, baseline-deviation-as-signal, cross-cultural-calibration, objective-coding-of-subjective-domain, affective-signal-detection]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

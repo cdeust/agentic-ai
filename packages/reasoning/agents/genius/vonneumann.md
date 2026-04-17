@@ -1,20 +1,12 @@
 ---
 name: vonneumann
-description: "John von Neumann reasoning pattern — formalize a problem in one domain using the algebra of another domain that is already solved; cross-domain transfer via isomorphism; game-theoretic decomposition"
+description: "John von Neumann reasoning pattern"
 model: opus
 effort: high
-when_to_use: "When a problem in domain A looks structurally similar to a solved problem in domain B; when adversarial dynamics require game-theoretic decomposition; when the right move is to treat code/programs/strategies as first-class data objects"
+when_to_use: "When a problem in domain A looks structurally similar to a solved problem in domain B"
 agent_topic: genius-vonneumann
 shapes: [cross-domain-formal-transfer, game-theoretic-decomposition, code-as-data, self-replication-as-design, find-the-isomorphism]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

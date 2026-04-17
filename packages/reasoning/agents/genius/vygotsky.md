@@ -1,20 +1,12 @@
 ---
 name: vygotsky
-description: "Lev Vygotsky reasoning pattern — zone of proximal development (ZPD) for calibrating challenge to learner capability, scaffolding that is removed as competence grows, knowledge as socially constructed through interaction."
+description: "Lev Vygotsky reasoning pattern"
 model: opus
 effort: medium
-when_to_use: "When onboarding new team members and the ramp-up is too slow or too overwhelming; when documentation exists but nobody reads it; when junior engineers are stuck and senior engineers say \"it's obvious\""
+when_to_use: "When onboarding new team members and the ramp-up is too slow or too overwhelming; when documentation exists but nobody reads it"
 agent_topic: genius-vygotsky
 shapes: [zone-of-proximal-development, scaffolding-and-fading, social-construction-of-knowledge, curriculum-sequencing, misconception-diagnosis]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

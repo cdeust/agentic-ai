@@ -1,20 +1,12 @@
 ---
 name: hart
-description: "Hart/Levi reasoning pattern — legal reasoning through open texture analysis (where rules are ambiguous), reasoning by analogy from precedent, balancing competing rules via proportionality"
+description: "Hart/Levi reasoning pattern — legal reasoning through open texture analysis (where rules are ambiguous)"
 model: opus
 effort: medium
-when_to_use: "When you must apply general rules to a specific case and the rules do not clearly determine the outcome; when competing rules, policies, or principles conflict and must be balanced"
+when_to_use: "When you must apply general rules to a specific case and the rules do not clearly determine the outcome"
 agent_topic: genius-hart
 shapes: [open-texture-analysis, reasoning-by-precedent, rule-exception-structure, proportionality-balancing, ratio-decidendi]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

@@ -1,20 +1,12 @@
 ---
 name: rogers
-description: "Everett Rogers reasoning pattern — diffusion of innovations theory for predicting and accelerating technology/practice adoption, adopter category segmentation (innovators, early adopters, early majority, late majority"
+description: "Everett Rogers reasoning pattern"
 model: opus
 effort: medium
-when_to_use: "When adoption of a technology, practice, tool, or process is slower than expected; when you need to understand WHO has adopted and WHO has not and WHY; when an innovation is stuck between early enthusiasts and mainstream users"
+when_to_use: "When adoption of a technology, practice, tool, or process is slower than expected"
 agent_topic: genius-rogers
 shapes: [adoption-curve-segmentation, chasm-diagnosis, diffusion-dynamics, adopter-category-analysis, innovation-attributes]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

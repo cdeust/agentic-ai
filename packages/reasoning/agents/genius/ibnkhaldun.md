@@ -1,20 +1,12 @@
 ---
 name: ibnkhaldun
-description: "Ibn Khaldun reasoning pattern — structural plausibility testing before source evaluation, asabiyyah lifecycle of group cohesion, peripheral-displaces-center dynamics, causality-based verification against four causes"
+description: "Ibn Khaldun reasoning pattern — structural plausibility testing before source evaluation"
 model: opus
 effort: medium
-when_to_use: "When evaluating claims that sound authoritative but may be structurally impossible; when modeling why teams, companies, or movements rise and decline; when scrappy challengers displace established incumbents"
+when_to_use: "When evaluating claims that sound authoritative but may be structurally impossible"
 agent_topic: genius-ibnkhaldun
 shapes: [structural-plausibility-filter, cohesion-lifecycle, peripheral-displaces-center, causality-based-verification, confirmation-bias-detection]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

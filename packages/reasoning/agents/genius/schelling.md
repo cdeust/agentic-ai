@@ -1,20 +1,12 @@
 ---
 name: schelling
-description: "Thomas Schelling reasoning pattern — reasoning from micro-level rules/preferences to macro-level emergent patterns, tipping point detection, focal point analysis for coordination without communication"
+description: "Thomas Schelling reasoning pattern"
 model: opus
 effort: medium
-when_to_use: "When the collective outcome does not match what any individual intended; when mild individual preferences might produce extreme aggregate effects; when the question is \"how did we end up here when nobody wanted this?\"; when agents must coordinate without communication"
+when_to_use: "When the collective outcome does not match what any individual intended"
 agent_topic: genius-schelling
 shapes: [micro-to-macro-inference, tipping-point-detection, focal-point-coordination, unintended-aggregate-consequences, agent-based-reasoning]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

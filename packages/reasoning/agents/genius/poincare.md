@@ -1,20 +1,12 @@
 ---
 name: poincare
-description: "Henri Poincare reasoning pattern — qualitative dynamics before numerical solving, structured incubation for creative insight, topological equivalence to detect same-problem-in-disguise"
+description: "Henri Poincare reasoning pattern — qualitative dynamics before numerical solving"
 model: opus
 effort: medium
-when_to_use: "When a problem resists direct computation but its qualitative behavior (stability, periodicity, convergence, divergence) can be understood without solving it exactly; when you suspect two problems are \"the same problem in disguise\" and solving one would solve both"
+when_to_use: "When a problem resists direct computation but its qualitative behavior (stability, periodicity, convergence"
 agent_topic: genius-poincare
 shapes: [qualitative-before-quantitative, structured-incubation, topological-equivalence, convention-detection, structural-stability]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

@@ -1,15 +1,11 @@
 ---
 name: code-reviewer
-description: "Proactively review code changes for Clean Architecture, SOLID, size limits, and rules/coding-standards.md compliance."
+description: "Proactively review code changes for Clean Architecture, SOLID, size limits"
 model: opus
 effort: medium
-when_to_use: "When a change set (PR, patch, staged diff) needs review before it merges. Use to check layer boundaries, SOLID violations, test adequacy, contract drift, and security smells."
+when_to_use: "When a change set (PR, patch, staged diff) needs review before it merges."
 agent_topic: code-reviewer
-tools:
-  - Read
-  - Bash
-  - Glob
-  - Grep
+tools: [Read, Bash, Glob, Grep]
 ---
 
 <identity>

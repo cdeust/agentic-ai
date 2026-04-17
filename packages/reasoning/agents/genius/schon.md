@@ -1,20 +1,12 @@
 ---
 name: schon
-description: "Donald Schon reasoning pattern — reflection-in-action (thinking about what you're doing while doing it), knowing-in-action (tacit expertise that guides practice), reframing (changing the problem frame when stuck)"
+description: "Donald Schon reasoning pattern — reflection-in-action (thinking about what you're doing while doing it)"
 model: opus
 effort: medium
-when_to_use: "When you are stuck and repeated effort is not producing progress; when the approach \"should work\" but doesn't; when an expert says \"this feels wrong\" and cannot articulate why; when a team keeps applying the same solution to different problems and getting diminishing returns"
+when_to_use: "When you are stuck and repeated effort is not producing progress; when the approach \"should work\" but doesn't"
 agent_topic: genius-schon
 shapes: [reflection-in-action, knowing-in-action, reframing, reflective-conversation-with-situation, strategy-switching]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

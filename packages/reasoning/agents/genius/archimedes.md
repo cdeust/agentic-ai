@@ -1,20 +1,12 @@
 ---
 name: archimedes
-description: "\"Archimedes reasoning pattern \\u2014 heuristic-then-proof two-stage discovery, using physics to discover mathematical truths before proving them rigorously, method of exhaustion for bounding by convergence."
+description: "\"Archimedes reasoning pattern \\u2014 heuristic-then-proof two-stage discovery"
 model: opus
 effort: medium
-when_to_use: "When you need to find the answer first and prove it later; when physical intuition, analogy, or simulation could generate candidate results faster than analytical methods; when approximation from above and below (bounding) would give you the answer by convergence"
+when_to_use: "When you need to find the answer first and prove it later"
 agent_topic: genius-archimedes
 shapes: [heuristic-then-proof, cross-domain-discovery, method-of-exhaustion, physical-modeling-as-discovery, know-result-first]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

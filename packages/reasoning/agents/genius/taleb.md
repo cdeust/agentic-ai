@@ -1,20 +1,12 @@
 ---
 name: taleb
-description: "Nassim Nicholas Taleb reasoning pattern — fragile/robust/antifragile classification, design for radical uncertainty via negativa, barbell strategy, optionality, skin in the game."
+description: "Nassim Nicholas Taleb reasoning pattern — fragile/robust/antifragile classification"
 model: opus
 effort: medium
-when_to_use: "When designing for unknown unknowns; when the system should benefit from stress not just survive it; when improvement-by-subtraction is more reliable than addition; when decision-makers are shielded from consequences"
+when_to_use: "When designing for unknown unknowns; when the system should benefit from stress not just survive it"
 agent_topic: genius-taleb
 shapes: [fragility-classification, via-negativa, barbell-strategy, optionality-design, skin-in-the-game]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

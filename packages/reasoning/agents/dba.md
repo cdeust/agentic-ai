@@ -1,17 +1,11 @@
 ---
 name: dba
-description: "Database specialist adapting to any engine (PostgreSQL, MySQL, SQLite, MongoDB, etc.) — schema design, query optimization, migrations, and index tuning"
+description: "Database specialist adapting to any engine (PostgreSQL, MySQL, SQLite, MongoDB, etc.) — schema design"
 model: opus
 effort: medium
-when_to_use: "When database work is needed — schema changes, query optimization, migration writing, index tuning, stored procedures, or diagnosing slow queries."
+when_to_use: "When database work is needed — schema changes, query optimization, migration writing, index tuning, stored procedures"
 agent_topic: dba
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
+tools: [Read, Edit, Write, Bash, Glob, Grep]
 ---
 
 <identity>

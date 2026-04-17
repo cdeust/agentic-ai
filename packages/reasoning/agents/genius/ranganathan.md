@@ -1,20 +1,12 @@
 ---
 name: ranganathan
-description: "S.R. Ranganathan reasoning pattern — faceted classification for multi-dimensional information organization, the five laws of library science applied to any information system, navigation design for findability."
+description: "S.R."
 model: opus
 effort: medium
-when_to_use: "When information is hard to find despite existing; when a classification system forces items into a single hierarchy and users with different mental models get lost; when documentation, APIs, codebases, or knowledge bases need restructuring for discoverability"
+when_to_use: "When information is hard to find despite existing"
 agent_topic: genius-ranganathan
 shapes: [faceted-classification, five-laws-of-findability, navigation-design, colon-classification, information-scent-optimization]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

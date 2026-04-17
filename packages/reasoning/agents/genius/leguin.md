@@ -3,18 +3,10 @@ name: leguin
 description: "Ursula K."
 model: opus
 effort: high
-when_to_use: "When a design proposal lists only benefits and no costs; when a team is telling a hero story about its project and the narrative is hiding real trade-offs; when a system looks good on paper but nobody has asked what it will be like to live with for years"
+when_to_use: "When a design proposal lists only benefits and no costs"
 agent_topic: genius-leguin
 shapes: [ambiguous-utopia, force-genuine-tradeoff, carrier-bag-narrative, live-with-the-design, narrative-frame-audit]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

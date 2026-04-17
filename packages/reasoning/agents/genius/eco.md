@@ -1,20 +1,12 @@
 ---
 name: eco
-description: "\"Umberto Eco reasoning pattern \\u2014 Model Reader/User construction for designing interpretable artifacts, open vs closed design classification, limits of interpretation for detecting overinterpretation"
+description: "\"Umberto Eco reasoning pattern \\u2014 Model Reader/User construction for designing interpretable artifacts"
 model: opus
 effort: medium
-when_to_use: "When an artifact (API, UI, document, system, message) is being misinterpreted by its audience; when the gap between intended meaning and received meaning is causing failures"
+when_to_use: "When an artifact (API, UI, document, system, message) is being misinterpreted by its audience"
 agent_topic: genius-eco
 shapes: [model-reader-construction, open-vs-closed-design, limits-of-interpretation, semiotic-gap-analysis, abductive-detection-cycle]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

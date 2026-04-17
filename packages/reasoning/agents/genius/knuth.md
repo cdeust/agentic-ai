@@ -1,20 +1,12 @@
 ---
 name: knuth
-description: "Donald Knuth reasoning pattern — profile before optimizing (premature optimization is the root of all evil, in context); literate programming (code as an argument written for humans)"
+description: "Donald Knuth reasoning pattern — profile before optimizing (premature optimization is the root of all evil"
 model: opus
 effort: high
-when_to_use: "When someone is optimizing code without profiling data; when \"premature optimization\" is being invoked to justify either optimizing too early OR never optimizing at all (the quote is misused in both directions)"
+when_to_use: "When someone is optimizing code without profiling data"
 agent_topic: genius-knuth
 shapes: [profile-before-optimizing, premature-optimization-in-context, literate-programming, algorithmic-analysis-first, build-the-tool-use-the-tool]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

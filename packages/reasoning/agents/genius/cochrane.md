@@ -1,20 +1,12 @@
 ---
 name: cochrane
-description: "Cochrane/Glass reasoning pattern — systematic evidence synthesis across multiple independent studies, meta-analysis with heterogeneity assessment, publication bias detection, evidence quality grading."
+description: "Cochrane/Glass reasoning pattern — systematic evidence synthesis across multiple independent studies"
 model: opus
 effort: medium
-when_to_use: "When the question is \"what does the totality of evidence say?\" rather than \"what does one study say?\"; when multiple studies, experiments, or data sources exist on the same question and need to be synthesized; when publication bias, heterogeneity, or evidence quality are concerns"
+when_to_use: "When the question is \"what does the totality of evidence say?\" rather than \"what does one study say?\""
 agent_topic: genius-cochrane
 shapes: [systematic-review-protocol, effect-size-extraction, heterogeneity-detection, publication-bias-audit, evidence-grading]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

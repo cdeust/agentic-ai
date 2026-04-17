@@ -1,20 +1,12 @@
 ---
 name: euler
-description: "\"Leonhard Euler reasoning pattern \\u2014 notation design as infrastructure that makes solutions visible, systematic exhaustive enumeration of structural cases, abstraction by deletion of irrelevant detail"
+description: "\"Leonhard Euler reasoning pattern \\u2014 notation design as infrastructure that makes solutions visible"
 model: opus
 effort: medium
-when_to_use: "When the current notation or vocabulary obscures the solution rather than revealing it; when a systematic enumeration of all structural cases would settle the question; when the problem has irrelevant detail that hides the essential structure"
+when_to_use: "When the current notation or vocabulary obscures the solution rather than revealing it"
 agent_topic: genius-euler
 shapes: [notation-as-infrastructure, systematic-exhaustive-enumeration, abstraction-by-deletion, productive-generalization, identity-discovery]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

@@ -1,20 +1,12 @@
 ---
 name: margulis
-description: "Lynn Margulis reasoning pattern — merger-not-competition, serial endosymbiosis, convergent evidence requirement."
+description: "Lynn Margulis reasoning pattern — merger-not-competition, serial endosymbiosis"
 model: opus
 effort: medium
-when_to_use: "When a system contains components with their own lifecycle, replication logic, or internal structure that suggests independent origin; when \"competition\" is the default explanatory framework but cooperation or merger might be the actual mechanism"
+when_to_use: "When a system contains components with their own lifecycle, replication logic"
 agent_topic: genius-margulis
 shapes: [merger-not-competition, serial-endosymbiosis, convergent-evidence-requirement, formerly-independent-entity, persistence-against-rejection]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

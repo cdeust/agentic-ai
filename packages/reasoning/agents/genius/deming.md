@@ -1,20 +1,12 @@
 ---
 name: deming
-description: "\"W. Edwards Deming reasoning pattern \\u2014 common-cause vs special-cause variation diagnosis, PDSA cycle with prediction, System of Profound Knowledge, driving out fear for accurate signals."
+description: "\"W."
 model: opus
 effort: medium
-when_to_use: "When variation is present and the team is reacting to every fluctuation as if it were a special event; when the system is being blamed on individuals rather than diagnosed as a system; when improvement efforts keep making things worse (tampering)"
+when_to_use: "When variation is present and the team is reacting to every fluctuation as if it were a special event"
 agent_topic: genius-deming
 shapes: [common-vs-special-cause, pdsa-cycle, system-appreciation, drive-out-fear, cease-dependence-on-inspection]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

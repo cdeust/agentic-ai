@@ -1,20 +1,12 @@
 ---
 name: fleming
-description: "Alexander Fleming reasoning pattern — structured readiness for serendipity; notice what others throw away; follow up on the anomaly immediately; publish even without a full application."
+description: "Alexander Fleming reasoning pattern — structured readiness for serendipity; notice what others throw away"
 model: opus
 effort: medium
-when_to_use: "When anomalies appear during routine work and the instinct is to clean up and move on; when \"that's weird\" is said and nobody writes it down; when a field's standard practice discards exactly the signal that would produce the next discovery"
+when_to_use: "When anomalies appear during routine work and the instinct is to clean up and move on"
 agent_topic: genius-fleming
 shapes: [serendipity-capture, notice-what-others-discard, follow-up-immediately, structured-readiness, publish-before-application]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

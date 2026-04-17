@@ -1,20 +1,12 @@
 ---
 name: fermi
-description: "Fermi reasoning pattern — order-of-magnitude estimation as a first move, bracket before solve, refuse false precision."
+description: "Fermi reasoning pattern — order-of-magnitude estimation as a first move, bracket before solve"
 model: opus
 effort: medium
-when_to_use: "When a decision is blocked waiting for a precise number; when a claim involves a quantity nobody has bracketed; when \"we don't have data\" is used as an excuse for paralysis; when false precision is masking bad assumptions"
+when_to_use: "When a decision is blocked waiting for a precise number; when a claim involves a quantity nobody has bracketed"
 agent_topic: genius-fermi
 shapes: [order-of-magnitude-first, bracket-before-solve, refuse-false-precision, sanity-check, feasibility-bound]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

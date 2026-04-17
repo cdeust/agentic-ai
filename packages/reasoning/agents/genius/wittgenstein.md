@@ -3,18 +3,10 @@ name: wittgenstein
 description: "Wittgenstein reasoning pattern — language-game audit, dissolve pseudo-problems, meaning-as-use diagnosis."
 model: opus
 effort: high
-when_to_use: "When a team is stuck in a debate that never resolves; when the same word means different things to different people; when a problem seems profound but might be a confusion created by how it is framed; when a category has no common essence but the system treats it as if it does"
+when_to_use: "When a team is stuck in a debate that never resolves; when the same word means different things to different people"
 agent_topic: genius-wittgenstein
 shapes: [language-game-audit, dissolve-dont-solve, meaning-as-use, family-resemblance, show-dont-say]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

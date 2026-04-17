@@ -1,20 +1,12 @@
 ---
 name: godel
-description: "Kurt Gödel reasoning pattern — detecting fundamental limits of self-referential systems, incompleteness as a structural property, the consistency-vs-completeness trade-off"
+description: "Kurt Gödel reasoning pattern — detecting fundamental limits of self-referential systems"
 model: opus
 effort: high
-when_to_use: "When a system attempts to validate, audit, or reason about itself; when you suspect a framework is treating itself as complete when it cannot be; when consistency and completeness are in tension; when self-referential loops create paradoxes or blind spots"
+when_to_use: "When a system attempts to validate, audit, or reason about itself"
 agent_topic: genius-godel
 shapes: [self-reference-limit, incompleteness-detection, consistency-vs-completeness, system-cannot-verify-itself, godel-sentence-construction]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

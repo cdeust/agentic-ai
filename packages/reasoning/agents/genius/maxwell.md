@@ -1,20 +1,12 @@
 ---
 name: maxwell
-description: "James Clerk Maxwell reasoning pattern — feedback control stability analysis, governor mechanism design, detecting and preventing oscillation in closed-loop systems, gain margin diagnosis."
+description: "James Clerk Maxwell reasoning pattern — feedback control stability analysis, governor mechanism design"
 model: opus
 effort: medium
-when_to_use: "When a system oscillates unexpectedly (autoscaler flapping, cache stampede, retry storms, control loops hunting); when a feedback mechanism produces worse behavior than no feedback; when tuning a controller (PID, autoscaler, rate limiter) and the result is instability"
+when_to_use: "When a system oscillates unexpectedly (autoscaler flapping, cache stampede, retry storms, control loops hunting)"
 agent_topic: genius-maxwell
 shapes: [feedback-stability-analysis, governor-mechanism, gain-margin-diagnosis, oscillation-detection, transfer-function-reasoning]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

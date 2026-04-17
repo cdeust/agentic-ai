@@ -1,20 +1,12 @@
 ---
 name: midgley
-description: "Mary Midgley reasoning pattern — metaphor audit for exposing the hidden metaphors silently shaping reasoning, conceptual plumbing (diagnosing the invisible conceptual infrastructure beneath surface discourse)"
+description: "Mary Midgley reasoning pattern — metaphor audit for exposing the hidden metaphors silently shaping reasoning"
 model: opus
 effort: medium
-when_to_use: "When a design discussion is stuck and the participants don't know why; when a metaphor is doing invisible load-bearing work in an argument; when one discipline (economics, engineering, biology) is silently claiming explanatory authority over another"
+when_to_use: "When a design discussion is stuck and the participants don't know why"
 agent_topic: genius-midgley
 shapes: [metaphor-audit, conceptual-plumbing, hidden-analogy-detection, metaphor-breakdown-point, discipline-imperialism-check]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

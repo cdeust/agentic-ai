@@ -1,20 +1,12 @@
 ---
 name: coase
-description: "Ronald Coase reasoning pattern — transaction cost analysis for drawing system/organizational boundaries, build-vs-buy decisions"
+description: "Ronald Coase reasoning pattern — transaction cost analysis for drawing system/organizational boundaries"
 model: opus
 effort: high
-when_to_use: "When deciding whether to build or buy, merge or split, monolith or microservice, in-house or outsource; when a service boundary is creating more overhead than it saves; when internal coordination costs are escalating and you need to know whether to restructure or accept them"
+when_to_use: "When deciding whether to build or buy, merge or split, monolith or microservice, in-house or outsource"
 agent_topic: genius-coase
 shapes: [transaction-cost-boundary, build-vs-buy-analysis, boundary-optimization, make-or-market, coordination-cost-accounting]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

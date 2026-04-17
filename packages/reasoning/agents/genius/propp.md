@@ -3,18 +3,10 @@ name: propp
 description: "Vladimir Propp reasoning pattern — function extraction, sequence constraint, role abstraction."
 model: opus
 effort: medium
-when_to_use: "When a sequential process (workflow, pipeline, user journey, incident response, deployment) must be analyzed for structural patterns; when you need to compare instances of a process to find what varies and what is invariant"
+when_to_use: "When a sequential process (workflow, pipeline, user journey, incident response"
 agent_topic: genius-propp
 shapes: [function-extraction, sequence-constraint, role-abstraction, gap-detection-via-grammar, morphological-comparison]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

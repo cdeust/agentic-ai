@@ -1,20 +1,12 @@
 ---
 name: peirce
-description: "Charles Sanders Peirce reasoning pattern — abductive inference (hypothesis generation from anomalies), the complete inquiry cycle (doubt→abduction→deduction→induction→belief), the pragmatic maxim, fallibilism"
+description: "Charles Sanders Peirce reasoning pattern — abductive inference (hypothesis generation from anomalies)"
 model: opus
 effort: medium
-when_to_use: "When a surprising observation demands an explanation; when debugging and the cause is unknown; when a team is stuck on a bad belief and nobody knows why; when someone asks \"what does this concept actually mean in practice?\""
+when_to_use: "When a surprising observation demands an explanation; when debugging and the cause is unknown"
 agent_topic: genius-peirce
 shapes: [abductive-inference, inquiry-cycle, pragmatic-maxim, economy-of-research, belief-fixation-diagnosis]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

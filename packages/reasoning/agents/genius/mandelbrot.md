@@ -1,20 +1,12 @@
 ---
 name: mandelbrot
-description: "Benoit Mandelbrot reasoning pattern — scale-free pattern detection, roughness as measurable parameter, self-similarity across scales, fat-tail detection and mild vs wild randomness classification"
+description: "Benoit Mandelbrot reasoning pattern — scale-free pattern detection, roughness as measurable parameter"
 model: opus
 effort: medium
-when_to_use: "When a system's behavior looks \"noisy\" or \"irregular\" but the irregularity has structure; when averages and standard deviations fail to predict extreme events; when the same pattern appears at different scales (code, module, system; team, department, organization)"
+when_to_use: "When a system's behavior looks \"noisy\" or \"irregular\" but the irregularity has structure"
 agent_topic: genius-mandelbrot
 shapes: [scale-free-pattern, roughness-as-parameter, self-similarity, fat-tail-detection, mild-vs-wild-randomness]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

@@ -80,8 +80,14 @@ check_file() {
   check_fm "$f" "$rel" agent_topic  F7p F7f BLOCKER
   check_fm "$f" "$rel" tools        F8p F8f BLOCKER
 
-  # F9 tools list non-empty
-  if awk '/^tools:/{flag=1; next} flag && /^[a-z_]+:/{flag=0} flag && /^  *-/{n++} END{exit (n>0?0:1)}' "$f"; then
+  # F9 tools list non-empty (recognise both YAML-list `  - X` and inline `tools: [A, B]` forms)
+  if awk '
+    /^tools:[[:space:]]*\[[^]]*[A-Za-z]+[^]]*\]/ { print; n++; exit }
+    /^tools:/ { flag=1; next }
+    flag && /^[a-z_]+:/ { flag=0 }
+    flag && /^  *-/ { n++ }
+    END { exit (n>0?0:1) }
+  ' "$f" >/dev/null; then
     F9p=$(( F9p + 1 ))
   else
     F9f=$(( F9f + 1 ))

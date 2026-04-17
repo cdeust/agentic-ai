@@ -1,20 +1,12 @@
 ---
 name: geertz
-description: "Clifford Geertz reasoning pattern — thick description (behavior plus the meaning-structures that make it intelligible), distinguishing emic (insider) from etic (outsider) categories, participant observation methodology"
+description: "Clifford Geertz reasoning pattern"
 model: opus
 effort: medium
-when_to_use: "When surface behavior is insufficient and you need to understand the meaning behind actions; when \"what are they actually doing and why?\" is the blocking question"
+when_to_use: "When surface behavior is insufficient and you need to understand the meaning behind actions"
 agent_topic: genius-geertz
 shapes: [thick-description, emic-vs-etic, participant-observation, cultural-interpretation, reflexivity-in-fieldwork]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

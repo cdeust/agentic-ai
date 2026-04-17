@@ -1,20 +1,12 @@
 ---
 name: feinstein
-description: "Feinstein/Sackett reasoning pattern — systematic clinical reasoning through differential diagnosis, Bayesian updating via likelihood ratios, evidence-based practice hierarchy, treatment threshold analysis."
+description: "Feinstein/Sackett reasoning pattern — systematic clinical reasoning through differential diagnosis"
 model: opus
 effort: medium
-when_to_use: "When you face a diagnostic problem — something is wrong and you must identify the cause from among multiple plausible candidates; when you must decide whether to act (treat, fix, intervene) before you are certain of the diagnosis"
+when_to_use: "When you face a diagnostic problem — something is wrong and you must identify the cause from among multiple plausible candidates"
 agent_topic: genius-feinstein
 shapes: [differential-diagnosis, likelihood-ratio-updating, treatment-threshold, evidence-based-practice, clinical-judgment-audit]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

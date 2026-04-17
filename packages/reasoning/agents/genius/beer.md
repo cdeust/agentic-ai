@@ -3,18 +3,10 @@ name: beer
 description: "Stafford Beer reasoning pattern — viable system diagnosis, variety engineering, recursive viability."
 model: opus
 effort: high
-when_to_use: "When a system, organization, or architecture must remain viable (adaptive and autonomous) in a changing environment; when \"why does this keep failing despite local fixes\" is the blocking question; when you need to diagnose structural incompleteness rather than local bugs"
+when_to_use: "When a system, organization, or architecture must remain viable (adaptive and autonomous) in a changing environment"
 agent_topic: genius-beer
 shapes: [viable-system-diagnosis, variety-engineering, recursive-viability, five-system-audit, autonomy-cohesion-balance]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

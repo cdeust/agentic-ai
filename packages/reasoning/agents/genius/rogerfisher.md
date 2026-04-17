@@ -1,20 +1,12 @@
 ---
 name: rogerfisher
-description: "Roger Fisher reasoning pattern — principled negotiation separating interests from positions, BATNA (Best Alternative To Negotiated Agreement) as the decision anchor, ZOPA (Zone Of Possible Agreement) identification"
+description: "Roger Fisher reasoning pattern — principled negotiation separating interests from positions"
 model: opus
 effort: medium
-when_to_use: "When parties have conflicting demands but potentially compatible underlying interests; when a negotiation is stuck in positional bargaining (\"I want X\" / \"I want Y\"); when you need to evaluate whether a deal is better than the alternative"
+when_to_use: "When parties have conflicting demands but potentially compatible underlying interests"
 agent_topic: genius-rogerfisher
 shapes: [interests-vs-positions, batna-analysis, zone-of-possible-agreement, principled-negotiation, mutual-gain-design]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

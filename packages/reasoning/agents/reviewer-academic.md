@@ -1,17 +1,11 @@
 ---
 name: reviewer-academic
-description: "Academic peer reviewer — evaluates paper drafts against NeurIPS/ICML/CVPR/ACL reviewer standards for novelty, clarity, significance, reproducibility, and evidence-claim match"
+description: "Academic peer reviewer — evaluates paper drafts against NeurIPS/ICML/CVPR/ACL reviewer standards for novelty"
 model: opus
 effort: high
-when_to_use: "When a paper draft, extended abstract, or rebuttal needs pre-submission peer review. Use to simulate a rigorous reviewer — identify unsupported claims, missing baselines, reproducibility gaps, and anticipate objections before the real review cycle."
+when_to_use: "When a paper draft, extended abstract, or rebuttal needs pre-submission peer review."
 agent_topic: reviewer-academic
-tools:
-  - Read
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

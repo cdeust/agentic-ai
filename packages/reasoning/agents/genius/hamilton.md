@@ -1,20 +1,12 @@
 ---
 name: hamilton
-description: "Margaret Hamilton reasoning pattern — priority-displaced scheduling under overload, asynchronous software as first-class, errors are inevitable so design for error."
+description: "Margaret Hamilton reasoning pattern — priority-displaced scheduling under overload"
 model: opus
 effort: medium
-when_to_use: "When a system must remain correct and responsive under overload, partial failure, or operator error; when \"what happens when everything goes wrong simultaneously\" is the question that blocks shipping; when criticality must be separated from urgency in scheduling"
+when_to_use: "When a system must remain correct and responsive under overload, partial failure, or operator error"
 agent_topic: genius-hamilton
 shapes: [hard-real-time, priority-under-failure, graceful-degradation, asynchronous-first, defensive-by-default]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

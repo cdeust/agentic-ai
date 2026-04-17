@@ -1,20 +1,12 @@
 ---
 name: rejewski
-description: "Marian Rejewski reasoning pattern — black-box algebraic reconstruction of unknown systems from input-output behavior, structural-invariant matching, exploiting procedural weakness rather than algorithmic weakness."
+description: "Marian Rejewski reasoning pattern"
 model: opus
 effort: medium
-when_to_use: "When a system's internals are unknown but its input-output behavior is observable; when you need to reconstruct the hidden structure from observed behavior; when the vulnerability is in the deployment procedure, not the algorithm"
+when_to_use: "When a system's internals are unknown but its input-output behavior is observable"
 agent_topic: genius-rejewski
 shapes: [black-box-reconstruction, structural-invariant-matching, exploit-procedure-not-algorithm, crib-anchored-constraint-solving, catalog-and-match]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

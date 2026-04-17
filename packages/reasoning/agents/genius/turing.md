@@ -1,20 +1,12 @@
 ---
 name: turing
-description: "Alan Turing reasoning pattern — reduce to the simplest mechanism that computes the thing; ask \"is this computable?\" before \"how fast?\"; universality as a design principle; the imitation game as operational definition."
+description: "Alan Turing reasoning pattern — reduce to the simplest mechanism that computes the thing"
 model: opus
 effort: medium
-when_to_use: "When a problem is drowning in implementation detail and nobody has asked what the simplest machine that solves it would be; when \"is this even decidable?\" has not been checked before optimization work begins"
+when_to_use: "When a problem is drowning in implementation detail and nobody has asked what the simplest machine that solves it would be"
 agent_topic: genius-turing
 shapes: [reduce-to-mechanism, universality, decidability-first, imitation-game, oracle-separation]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

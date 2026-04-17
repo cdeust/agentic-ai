@@ -1,20 +1,12 @@
 ---
 name: gadamer
-description: "Hans-Georg Gadamer reasoning pattern — the hermeneutic circle (understand parts through the whole and whole through parts), horizon fusion between interpreter and text, acknowledging pre-understanding"
+description: "Hans-Georg Gadamer reasoning pattern"
 model: opus
 effort: medium
-when_to_use: "When meaning is not self-evident and interpretation is required; when a text, document, artifact, codebase, user behavior, or cultural practice needs to be understood rather than merely described"
+when_to_use: "When meaning is not self-evident and interpretation is required"
 agent_topic: genius-gadamer
 shapes: [hermeneutic-circle, horizon-fusion, pre-understanding-audit, explanation-vs-understanding, principle-of-charity]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

@@ -3,18 +3,10 @@ name: polya
 description: "George Pólya reasoning pattern — structured problem-solving heuristics for when you are stuck."
 model: opus
 effort: medium
-when_to_use: "When stuck on a problem and don't know which specialist to invoke; when the direct approach has failed; when a problem seems novel but may have a solved analog; when the general case is intractable but special cases might reveal structure"
+when_to_use: "When stuck on a problem and don't know which specialist to invoke; when the direct approach has failed"
 agent_topic: genius-polya
 shapes: [understand-before-solving, work-backward, find-related-problem, specialize-then-generalize, look-back-and-generalize]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

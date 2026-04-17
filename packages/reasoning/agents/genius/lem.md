@@ -1,20 +1,12 @@
 ---
 name: lem
-description: "\"Stanis\\u0142aw Lem reasoning pattern \\u2014 systematic exploration of technology possibility spaces, push-to-logical-extreme stress testing, unknowable-system audit for systems beyond current categories"
+description: "\"Stanis\\u0142aw Lem reasoning pattern \\u2014 systematic exploration of technology possibility spaces"
 model: opus
 effort: high
-when_to_use: "When the question is \"what could this technology/system become?\" and the standard forecast is too narrow; when a design needs stress-testing by pushing every principle to its logical conclusion"
+when_to_use: "When the question is \"what could this technology/system become?\" and the standard forecast is too narrow"
 agent_topic: genius-lem
 shapes: [possibility-space-exploration, push-to-logical-extreme, unknowable-system-audit, review-of-nonexistent, evolution-as-design-analogy]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

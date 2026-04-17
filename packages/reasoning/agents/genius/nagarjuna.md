@@ -1,20 +1,12 @@
 ---
 name: nagarjuna
-description: "\"N\\u0101g\\u0101rjuna reasoning pattern \\u2014 tetralemma for exhaustive logical analysis, fourfold negation to reject malformed questions, emptiness of intrinsic nature to detect reification errors"
+description: "\"N\\u0101g\\u0101rjuna reasoning pattern \\u2014 tetralemma for exhaustive logical analysis"
 model: opus
 effort: high
-when_to_use: "\"When a debate is stuck on a false dichotomy; when a concept is being treated as having inherent, context-independent existence; when you need to check all four logical possibilities (P, not-P, both, neither) before committing; when a question itself may be malformed"
+when_to_use: "\"When a debate is stuck on a false dichotomy; when a concept is being treated as having inherent, context-independent existence"
 agent_topic: genius-nagarjuna
 shapes: [tetralemma, fourfold-negation, emptiness-of-essence, dependent-origination, prasanga-reductio]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

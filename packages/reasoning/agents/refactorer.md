@@ -1,17 +1,11 @@
 ---
 name: refactorer
-description: "Proactively refactor code to comply with rules/coding-standards.md through behavior-preserving transformations. No new features, no bug fixes."
+description: "Proactively refactor code to comply with rules/coding-standards.md through behavior-preserving"
 model: opus
 effort: low
-when_to_use: "When existing code violates the rules in rules/coding-standards.md and must be brought into compliance without changing observable behavior. Use after code-reviewer flags violations, before shipping a High-stakes change, or when preparing a module for extension."
+when_to_use: "When existing code violates the rules in rules/coding-standards.md and must be brought into compliance without changing"
 agent_topic: refactorer
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
+tools: [Read, Edit, Write, Bash, Glob, Grep]
 ---
 
 <identity>

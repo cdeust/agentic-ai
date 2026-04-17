@@ -1,20 +1,12 @@
 ---
 name: snow
-description: "Snow/Hill reasoning pattern — epidemiological investigation of how things spread through populations, Hill's nine criteria for distinguishing association from causation in observational data"
+description: "Snow/Hill reasoning pattern — epidemiological investigation of how things spread through populations"
 model: opus
 effort: medium
-when_to_use: "When something is spreading through a population (failures, bugs, adoption, churn, misinformation) and you need to trace the source; when you observe an association and must determine whether it is causal"
+when_to_use: "When something is spreading through a population (failures, bugs, adoption, churn"
 agent_topic: genius-snow
 shapes: [outbreak-investigation, hills-criteria, epidemic-curve-analysis, attack-rate-calculation, case-definition]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

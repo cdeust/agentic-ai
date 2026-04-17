@@ -1,20 +1,12 @@
 ---
 name: panini
-description: "\"P\\u0101\\u1E47ini reasoning pattern \\u2014 generative specification that produces all valid forms and no invalid ones, rule-conflict resolution via meta-rules, compression through metalanguage"
+description: "\"P\\u0101\\u1E47ini reasoning pattern \\u2014 generative specification that produces all valid forms and no"
 model: opus
 effort: medium
-when_to_use: "\"When a system needs a compact set of rules that generates all valid outputs and rejects all invalid ones; when rules conflict and you need principled resolution; when a specification is bloated and needs compression without loss"
+when_to_use: "\"When a system needs a compact set of rules that generates all valid outputs and rejects all invalid ones"
 agent_topic: genius-panini
 shapes: [generative-specification, rule-conflict-resolution, compression-by-metalanguage, auxiliary-markers, economy-principle]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

@@ -1,17 +1,11 @@
 ---
 name: research-scientist
-description: "Research scientist specializing in reproducible empirical ML/IR research — designs experiments, surveys literature, and analyzes failure modes"
+description: "Research scientist specializing in reproducible empirical ML/IR research — designs experiments"
 model: opus
 effort: high
-when_to_use: "When a research question demands rigorous empirical investigation — finding papers, analyzing failure modes, designing ablations, or proposing mechanisms grounded in published literature. Use BEFORE committing to an approach."
+when_to_use: "When a research question demands rigorous empirical investigation — finding papers, analyzing failure modes, designing ablations"
 agent_topic: research-scientist
-tools:
-  - Read
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

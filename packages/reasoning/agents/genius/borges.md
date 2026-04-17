@@ -1,20 +1,12 @@
 ---
 name: borges
-description: "Jorge Luis Borges reasoning pattern — exhaustive-space audit, map-territory discipline, self-reference detection, forking-paths analysis."
+description: "Jorge Luis Borges reasoning pattern — exhaustive-space audit, map-territory discipline"
 model: opus
 effort: high
-when_to_use: "When a system claims completeness or exhaustiveness and you need to check whether the space is actually searchable; when an abstraction may have become confused with the thing it represents; when a system describes or contains itself and paradoxes may lurk"
+when_to_use: "When a system claims completeness or exhaustiveness and you need to check whether the space is actually searchable"
 agent_topic: genius-borges
 shapes: [exhaustive-space-audit, map-territory-discipline, self-reference-detection, forking-paths-analysis, context-as-meaning]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

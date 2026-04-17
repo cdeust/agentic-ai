@@ -1,20 +1,12 @@
 ---
 name: pearl
-description: "Judea Pearl reasoning pattern — causal inference via do-calculus, the Ladder of Causation (association→intervention→counterfactual), confound detection via d-separation, structural causal models."
+description: "Judea Pearl reasoning pattern — causal inference via do-calculus"
 model: opus
 effort: medium
-when_to_use: "When someone claims X causes Y from observational data alone; when an A/B test result seems confounded; when \"what would have happened if we had done X instead?\" is the question; when correlation is being treated as causation"
+when_to_use: "When someone claims X causes Y from observational data alone; when an A/B test result seems confounded"
 agent_topic: genius-pearl
 shapes: [ladder-of-causation, intervention-vs-association, causal-graph-construction, confound-detection, counterfactual-reasoning]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

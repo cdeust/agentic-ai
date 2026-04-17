@@ -1,16 +1,11 @@
 ---
 name: orchestrator
-description: "Orchestrates parallel agent execution across worktrees — decomposes tasks, routes to specialists, coordinates merges"
+description: "Orchestrates parallel agent execution across worktrees — decomposes tasks, routes to specialists"
 model: opus
 effort: medium
-when_to_use: "When a task requires multiple specialists working in parallel or sequentially, when decomposition across modules is needed, or when the problem shape is not cleanly covered by a single agent."
+when_to_use: "When a task requires multiple specialists working in parallel or sequentially, when decomposition across modules is needed"
 agent_topic: orchestrator
-tools:
-  - Read
-  - Bash
-  - Glob
-  - Grep
-  - Agent
+tools: [Read, Bash, Glob, Grep, Agent]
 ---
 
 <identity>

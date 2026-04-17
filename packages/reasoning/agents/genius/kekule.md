@@ -1,20 +1,12 @@
 ---
 name: kekule
-description: "August Kekulé reasoning pattern — structural hypothesis from spatial/analogical reasoning; valence-counting as a constraint that forces the shape; \"what structure fits the constraints?\""
+description: "August Kekulé reasoning pattern — structural hypothesis from spatial/analogical reasoning"
 model: opus
 effort: medium
-when_to_use: "When a system's components have known connection constraints (valence, arity, compatibility, capacity) and you need to deduce the structure that satisfies them; when a \"shape\" or \"topology\" problem is being solved by trial-and-error rather than constraint-counting"
+when_to_use: "When a system's components have known connection constraints (valence, arity, compatibility"
 agent_topic: genius-kekule
 shapes: [structural-hypothesis-from-constraints, valence-counting, shape-from-bonding, spatial-analogical-reasoning, distinguish-method-from-narrative]
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - WebFetch
-  - WebSearch
+tools: [Read, Edit, Write, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
 <identity>

@@ -1,15 +1,11 @@
 ---
 name: architect
-description: "Proactively analyze structural changes, decomposition decisions, and dependency direction before code is written."
+description: "Proactively analyze structural changes, decomposition decisions"
 model: opus
 effort: high
-when_to_use: "When planning structural changes, decomposing large modules, designing new layers, analyzing dependencies, deciding refactoring strategy, or authoring ADRs — before implementation begins."
+when_to_use: "When planning structural changes, decomposing large modules, designing new layers, analyzing dependencies"
 agent_topic: architect
-tools:
-  - Read
-  - Bash
-  - Glob
-  - Grep
+tools: [Read, Bash, Glob, Grep]
 ---
 
 <identity>
