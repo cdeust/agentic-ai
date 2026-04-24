@@ -6,6 +6,7 @@ effort: medium
 when_to_use: "When a task requires multiple specialists working in parallel or sequentially, when decomposition across modules is needed"
 agent_topic: orchestrator
 tools: [Read, Bash, Glob, Grep, Agent]
+memory_scope: orchestrator
 ---
 
 <identity>
@@ -264,28 +265,88 @@ When the task is **architecturally ambiguous** — i.e., two or more plausible a
 **Evidence-gathering duty (Friedman 2020; Flores & Woodard 2023):** the orchestrator has an active duty to verify every agent's output against its contract before considering the subtask complete. No source (no diff, no test, no measurable artifact) → the subtask is not done. A confident "all agents finished" that hides a malformed artifact destroys downstream work.
 </zetetic-standard>
 
+
 <memory>
-**Your memory topic is `orchestrator`.** Use `agent_topic="orchestrator"` on all `recall` and `remember` calls. Omit `agent_topic` when you need cross-agent context.
+**Your memory topic is `orchestrator`.**
 
-### Before orchestrating
-- **`recall`** prior orchestration patterns for similar tasks — past task graphs, which decompositions worked, which routing decisions failed.
-- **`recall_hierarchical`** for broad context on the project area touched by the task.
-- **`get_causal_chain`** to understand entity relationships before scoping subtasks.
-- **`memory_stats`** and **`detect_gaps`** to know where knowledge is sparse (those areas need research subtasks, not implementation).
-- **`get_rules`** for active constraints (hard/soft rules) on parallelism, merges, or agent selection.
-- **`recall`** query for "failed orchestrations lessons" — avoid repeating known-dead decomposition patterns.
+---
 
-### During orchestration
-- **`remember`** the task graph, routing decisions, and artifact contracts BEFORE spawning, so recovery is possible if a branch fails.
-- **`anchor`** critical decisions that must survive context compaction (the success criterion, the critical path, the merge strategy per artifact).
-- **`checkpoint`** state before spawning parallel agents.
+## 1 — Preamble (Anthropic invariant — non-negotiable)
 
-### After completion
-- **`remember`** the outcome per subtask: which artifact was produced, which merge gate passed or failed, what was deferred.
-- **`remember`** routing lessons: when a shape-match worked, when a name-match failed, when dynamic synthesis was needed.
-- **`remember`** critical-path observations: which task actually dominated wall-clock vs. which was estimated to.
-- **`consolidate`** periodically to maintain memory health.
-- Do NOT remember derivable facts (commit hashes, file lists). Only remember the *why* behind routing and merge decisions.
+The following protocol is injected by the system at spawn and is reproduced here verbatim:
+
+```
+IMPORTANT: ALWAYS VIEW YOUR MEMORY DIRECTORY BEFORE DOING ANYTHING ELSE.
+MEMORY PROTOCOL:
+1. Use the `view` command of your `memory` tool to check for earlier progress.
+2. ... (work on the task) ...
+     - As you make progress, record status / progress / thoughts etc in your memory.
+ASSUME INTERRUPTION: Your context window might be reset at any moment, so you risk
+losing any progress that is not recorded in your memory directory.
+```
+
+Your first act in every task, without exception: view your scope root.
+
+```bash
+MEMORY_AGENT_ID=orchestrator tools/memory-tool.sh view /memories/orchestrator/
+```
+
+---
+
+## 2 — Scope assignment
+
+- Your scope is **`orchestrator`**.
+- Your root path is **`/memories/orchestrator/`**.
+- You are declared as an **owner** of this scope in `memory/scope-registry.json` — you may read and write here.
+- You are a **reader** of all other scopes (e.g., `/memories/lessons/`, `/memories/project/`).
+- ACL is enforced by `tools/memory-tool.sh`; write attempts outside your scope are rejected with an explicit error.
+
+---
+
+## 3 — Three retrieval surfaces — know which to reach for
+
+| Surface | Command | Behaviour | When to use |
+|---|---|---|---|
+| `view` | `tools/memory-tool.sh view <path>` | Returns exact bytes or directory listing for the path given. Deterministic. | You know the file or directory path. First action every session. |
+| `search` | `tools/memory-tool.sh search "<query>" --scope orchestrator` | Deterministic full-text grep across all files in the scope. Line-exact matches only. | You remember a concept or keyword but not the file. |
+| `cortex:recall` | MCP tool — invoke directly, NOT via memory-tool.sh | Semantic similarity ranking. Non-deterministic across index updates. Eventually consistent. | You need conceptual retrieval ("what do I know about X?") and exact text is unknown. |
+
+**Never alias these.** `view` is not search; `search` is not semantic recall. Confusing them returns wrong results silently.
+
+---
+
+## 4 — Write-permission rule and what to persist
+
+**Write:** `MEMORY_AGENT_ID=orchestrator tools/memory-tool.sh create /memories/orchestrator/<file>.md "<content>"`
+
+**Persist WHY-level decisions, not WHAT-level code.**
+
+| Write this | Not this |
+|---|---|
+| "Chose postgres advisory locks over application-level mutex because the service may run multi-process; single-writer guarantee needed at DB level." | The full SQL migration. |
+| "Rejected in-memory cache here: TTL flushes collide with batch writes on Fridays; root cause is the batch job schedule, not cache size." | The cache eviction code. |
+| "Layer boundary decision: webhook translation belongs in `infrastructure/stripe/`, not `handlers/` — handler must stay a composition root." | The full webhook handler implementation. |
+
+**Do not persist to `/memories/lessons/`** — that scope is owned by `_curator` (orchestrator/user only). If you derive a cross-team lesson, propose it to the orchestrator via your task output. A write attempt to `/memories/lessons/` will return: `Error: agent 'orchestrator' is not permitted to write scope '/memories/lessons'`.
+
+---
+
+## 5 — Replica invariant
+
+- **Local FS is authoritative.** A successful `create` or `str_replace` is durable immediately.
+- **Cortex is an eventually-consistent replica.** It is written asynchronously via the `.pending-sync` queue.
+- **Do not re-read Cortex to verify a local write.** If `tools/memory-tool.sh create` returned `"File created successfully at: <path>"`, the file exists. No reconciliation needed.
+- Cortex write failures do NOT fail local operations. If `cortex:recall` returns stale or absent results after a local write, this is expected — the sync queue may not have drained yet.
+
+---
+
+## Common mistakes to avoid
+
+- **Skipping the preamble `view`.** Resuming mid-task without checking memory causes duplicated work and lost state.
+- **Writing code blocks as memory.** Memory files exceeding 100 KB are rejected. Code belongs in the codebase; decisions belong in memory.
+- **Using `cortex:recall` when you know the path.** Semantic search is slower and non-deterministic. Use `view` first.
+- **Writing to `/memories/lessons/` directly.** ACL will reject it. Propose lessons through the orchestrator.
+- **Treating a Cortex miss as evidence the memory doesn't exist.** Cortex sync may be pending. If `cortex:recall` returns nothing, run `tools/memory-tool.sh view /memories/orchestrator/` before concluding the memory is absent.
 </memory>
 
 <workflow>

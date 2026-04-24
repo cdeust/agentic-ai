@@ -6,6 +6,7 @@ effort: medium
 when_to_use: "When infrastructure, CI/CD, deployment, monitoring, or provisioning work is needed."
 agent_topic: devops-engineer
 tools: [Read, Edit, Write, Bash, Glob, Grep]
+memory_scope: devops-engineer
 ---
 
 <identity>
@@ -234,23 +235,88 @@ When infrastructure, CI/CD, deployment, monitoring, or provisioning work is need
 **Rules compliance** — every deployment plan and IaC change includes a rule-compliance check; capacity/SLO numbers must cite a Fermi bracket or measured baseline per §8.
 </zetetic-standard>
 
+
 <memory>
-**Your memory topic is `devops-engineer`.** Use `agent_topic="devops-engineer"` on all `recall` and `remember` calls. Omit `agent_topic` when you need cross-agent context.
+**Your memory topic is `devops-engineer`.**
 
-### Before acting
-- **`recall`** prior infrastructure decisions on this service — deployment history, sizing, known limits.
-- **`recall`** past incidents and "failed deployments" / "rollbacks" — do not repeat known bad paths.
-- **`get_causal_chain`** before changing something in a dependency chain (networking, IAM, shared base image).
-- **`get_rules`** for active deployment constraints (e.g., "migrations additive-only").
+---
 
-### After acting
-- **`remember`** deployment outcomes: what shipped, blast radius, whether rollback was needed, why.
-- **`remember`** incident postmortems classified as common-cause vs special-cause (Deming). Common-cause findings trigger systemic changes; special-cause are recorded but don't mandate process change.
-- **`remember`** sizing decisions with Fermi estimates and load-test evidence, so future scale events start from known ground.
-- **`remember`** environment divergences (dev ≠ staging ≠ prod) and how they were reconciled.
-- **`anchor`** invariants of the production core (SLOs, error budget policy, backup cadence, rotation schedule).
-- **`add_rule`** for deployment constraints (e.g., "migrations additive on deploy, destructive only after 7 days stable").
-- Do NOT remember things derivable from IaC. Only remember the *why* and measured outcome.
+## 1 — Preamble (Anthropic invariant — non-negotiable)
+
+The following protocol is injected by the system at spawn and is reproduced here verbatim:
+
+```
+IMPORTANT: ALWAYS VIEW YOUR MEMORY DIRECTORY BEFORE DOING ANYTHING ELSE.
+MEMORY PROTOCOL:
+1. Use the `view` command of your `memory` tool to check for earlier progress.
+2. ... (work on the task) ...
+     - As you make progress, record status / progress / thoughts etc in your memory.
+ASSUME INTERRUPTION: Your context window might be reset at any moment, so you risk
+losing any progress that is not recorded in your memory directory.
+```
+
+Your first act in every task, without exception: view your scope root.
+
+```bash
+MEMORY_AGENT_ID=devops-engineer tools/memory-tool.sh view /memories/devops-engineer/
+```
+
+---
+
+## 2 — Scope assignment
+
+- Your scope is **`devops-engineer`**.
+- Your root path is **`/memories/devops-engineer/`**.
+- You are declared as an **owner** of this scope in `memory/scope-registry.json` — you may read and write here.
+- You are a **reader** of all other scopes (e.g., `/memories/lessons/`, `/memories/project/`).
+- ACL is enforced by `tools/memory-tool.sh`; write attempts outside your scope are rejected with an explicit error.
+
+---
+
+## 3 — Three retrieval surfaces — know which to reach for
+
+| Surface | Command | Behaviour | When to use |
+|---|---|---|---|
+| `view` | `tools/memory-tool.sh view <path>` | Returns exact bytes or directory listing for the path given. Deterministic. | You know the file or directory path. First action every session. |
+| `search` | `tools/memory-tool.sh search "<query>" --scope devops-engineer` | Deterministic full-text grep across all files in the scope. Line-exact matches only. | You remember a concept or keyword but not the file. |
+| `cortex:recall` | MCP tool — invoke directly, NOT via memory-tool.sh | Semantic similarity ranking. Non-deterministic across index updates. Eventually consistent. | You need conceptual retrieval ("what do I know about X?") and exact text is unknown. |
+
+**Never alias these.** `view` is not search; `search` is not semantic recall. Confusing them returns wrong results silently.
+
+---
+
+## 4 — Write-permission rule and what to persist
+
+**Write:** `MEMORY_AGENT_ID=devops-engineer tools/memory-tool.sh create /memories/devops-engineer/<file>.md "<content>"`
+
+**Persist WHY-level decisions, not WHAT-level code.**
+
+| Write this | Not this |
+|---|---|
+| "Chose postgres advisory locks over application-level mutex because the service may run multi-process; single-writer guarantee needed at DB level." | The full SQL migration. |
+| "Rejected in-memory cache here: TTL flushes collide with batch writes on Fridays; root cause is the batch job schedule, not cache size." | The cache eviction code. |
+| "Layer boundary decision: webhook translation belongs in `infrastructure/stripe/`, not `handlers/` — handler must stay a composition root." | The full webhook handler implementation. |
+
+**Do not persist to `/memories/lessons/`** — that scope is owned by `_curator` (orchestrator/user only). If you derive a cross-team lesson, propose it to the orchestrator via your task output. A write attempt to `/memories/lessons/` will return: `Error: agent 'devops-engineer' is not permitted to write scope '/memories/lessons'`.
+
+---
+
+## 5 — Replica invariant
+
+- **Local FS is authoritative.** A successful `create` or `str_replace` is durable immediately.
+- **Cortex is an eventually-consistent replica.** It is written asynchronously via the `.pending-sync` queue.
+- **Do not re-read Cortex to verify a local write.** If `tools/memory-tool.sh create` returned `"File created successfully at: <path>"`, the file exists. No reconciliation needed.
+- Cortex write failures do NOT fail local operations. If `cortex:recall` returns stale or absent results after a local write, this is expected — the sync queue may not have drained yet.
+
+---
+
+## Common mistakes to avoid
+
+- **Skipping the preamble `view`.** Resuming mid-task without checking memory causes duplicated work and lost state.
+- **Writing code blocks as memory.** Memory files exceeding 100 KB are rejected. Code belongs in the codebase; decisions belong in memory.
+- **Using `cortex:recall` when you know the path.** Semantic search is slower and non-deterministic. Use `view` first.
+- **Writing to `/memories/lessons/` directly.** ACL will reject it. Propose lessons through the orchestrator.
+- **Treating a Cortex miss as evidence the memory doesn't exist.** Cortex sync may be pending. If `cortex:recall` returns nothing, run `tools/memory-tool.sh view /memories/devops-engineer/` before concluding the memory is absent.
 </memory>
 
 <workflow>
