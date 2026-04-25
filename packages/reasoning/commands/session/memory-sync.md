@@ -29,6 +29,7 @@ See `memory/contract.md §5.3`. Local FS is authoritative; Cortex is an eventual
    - Call `mcp__plugin_cortex_cortex__remember` with:
      - `content`: the decoded contents (or a deletion marker `"__deleted__ <vpath>"` for deletes)
      - `tags`: `["memory-replica", "scope:<scope>", "agent:<agent_id>"]`
+     - `agent_topic`: `<scope>` — the job's `scope` field verbatim. This maps to `agent_context` in Cortex's DB (see `mcp_server/handlers/remember.py:351`), enabling `agent_briefing.py` to filter memories by agent at SubagentStart.
      - `source`: `"memory-tool:<op>"`
      - Include `vpath`, `content_sha256`, and `ts` in the metadata so Cortex can deduplicate.
    - On success: `tools/memory-tool.sh commit-sync <id>`
