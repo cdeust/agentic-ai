@@ -204,7 +204,8 @@ Full migration path: [`docs/MIGRATION.md`](docs/MIGRATION.md).
 | Project | Role |
 |---|---|
 | [Cortex](https://github.com/cdeust/Cortex) | Local persistent memory + cognitive profiling — pre-loads your reasoning patterns at session start |
-| [ai-automatised-pipeline](https://github.com/cdeust/ai-automatised-pipeline) | Codebase-intelligence MCP — agents query a property graph instead of `grep -r` |
+| [automatised-pipeline](https://github.com/cdeust/automatised-pipeline) | Codebase-intelligence MCP — agents query a property graph instead of `grep -r` |
+| [prd-spec-generator](https://github.com/cdeust/prd-spec-generator) | TypeScript MCP that turns a feature description into a 9-file PRD with multi-judge verification using these agents |
 
 ---
 
