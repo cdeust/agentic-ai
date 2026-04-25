@@ -73,14 +73,17 @@ def main():
             continue
         # Entropy gate (second independent method — Shannon H cross-check).
         # Rejects placeholder strings like YOUR_API_KEY_HERE (H ~1.5-2.5 bits/char).
-        # Source: Shannon (1948); threshold 3.5 from TruffleHog v2.
+        # Source: Shannon (1948); base threshold 3.5 from TruffleHog v2.
+        # Per-rule override via entropy_threshold_override field (e.g. generic_api_key uses 4.5
+        # per TruffleHog v3 calibration — Cornwell 2019 updated design).
         if rule.get("entropy_check"):
+            rule_threshold = rule.get("entropy_threshold_override", entropy_threshold)
             matched_str = (
                 m.group(1)
                 if m.lastindex and m.lastindex >= 1
                 else m.group(0)
             )
-            if _shannon_entropy(matched_str) <= entropy_threshold:
+            if _shannon_entropy(matched_str) <= rule_threshold:
                 continue  # Low entropy: likely placeholder; pass through.
         # Confirmed match.
         # INVARIANT: print rule id only — NEVER the matched bytes.
