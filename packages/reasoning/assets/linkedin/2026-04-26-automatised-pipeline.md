@@ -17,18 +17,18 @@ I spent the last few months turning that observation into a Rust MCP server.
 
 🔎 𝗮𝘂𝘁𝗼𝗺𝗮𝘁𝗶𝘀𝗲𝗱-𝗽𝗶𝗽𝗲𝗹𝗶𝗻𝗲 indexes any Rust, Python, or TypeScript codebase into a property graph. Nodes are symbols. Edges are calls and types. 23 MCP tools sit on top so an AI agent can query the graph instead of re-reading your repository every turn.
 
-A concrete example. The agent wants to change handle_tool_call. It asks get_impact for the blast radius. The graph answers: 4 processes transit this symbol, 12 communities are downstream, 1 of them is auth-critical. The agent now reasons about an actual answer instead of grepping for callers and hoping it found them all.
+A concrete capability. An agent wants to change handle_tool_call. It asks get_impact for the blast radius. The graph returns the set of processes that transit this symbol and the set of communities downstream. The agent now reasons against an explicit answer instead of grepping for callers and hoping it found them all.
 
-The PRD that comes out of that conversation can then be checked against the graph. Do the symbols in the PRD exist? Does "scoped to module X" match the community count? Does "doesn't affect main" hold against the call chain? That last one is validate_prd_against_graph, and it has caught more PRD overclaims in my own work than I want to admit.
+The PRD that comes out of that conversation can then be checked against the graph. validate_prd_against_graph runs three checks the README documents: symbol hallucination (do the names in the PRD exist?), community consistency (does the scope-claim match the community count?), and process-impact validation (does the change actually touch the processes the PRD says it does?). Three failure modes, one tool, runs in milliseconds.
 
 What is in the box:
 
-• 23 MCP tools across 10 pipeline stages, one tool per stage
-• Index for Rust, Python, TypeScript with cross-file import resolution and call-chain tracking
-• Leiden-class community detection so the graph clusters into functional groups
-• Hybrid search (BM25 lexical + sparse TF-IDF semantic + Reciprocal Rank Fusion) instead of grep
-• Semantic-diff verification: what nodes appeared, disappeared, new cycles via Tarjan SCC
-• 12,000 lines of Rust, 220 tests passing, zero compiler warnings, every constant sourced
+• 23 MCP tools across 10 pipeline stages
+• Tree-sitter AST extractors for Rust, Python, TypeScript with cross-file import and call-chain resolution
+• Louvain community detection with C2 repair so the graph clusters into functional groups
+• Hybrid search (BM25 lexical + sparse TF-IDF semantic + Reciprocal Rank Fusion, Tantivy-backed) instead of grep
+• Semantic-diff verification with Tarjan SCC for cycle detection
+• 220 tests passing, zero clippy warnings, every numeric constant sourced
 
 What it does NOT do, on the front page of the README:
 
@@ -52,13 +52,19 @@ LinkedIn algorithm boost: OP replies first to seed engagement and lift impressio
 
 ---
 
-### Option A. The bug it caught in my own PRD (recommended)
+### Option A. The dogfood number, with provenance (recommended)
 
-True story from building this. I ran validate_prd_against_graph on a spec I had just written for one of my own projects. It flagged three symbols that did not exist in the codebase. One was a function name I had carried over from a previous version. Two were methods I had imagined into being while writing the doc.
+The number I am most proud of is the resolution-rate trajectory on the project's own end-result harness, recorded commit by commit.
 
-The PRD was on its way to review. The graph caught what no human reviewer would have noticed until someone tried to implement it and got NameError.
+46% baseline. The first cross-file import-and-call resolver. Recorded as §7.1 calibration in stage-3b docs.
 
-Symbol-level hallucination in PRDs is a real failure mode. It costs you a day per occurrence. The graph turns it into a 50ms check.
+66.6% after the first batch of resolution upgrades.
+
+84.5% after B1 + B2 + B3 plus determinism fixes. Layer 5 stdlib resolution and Layer 4 macro expansion landed in that batch. Each commit is in the public git log.
+
+A static Layer 3 resolver regressed on Rust. We measured it. Recorded the regression as an empirical finding. Picked an agnostic-primitives approach instead.
+
+This is the loop the pipeline enables: a number, an attempt, a number, a published artifact. Not a vibe of progress. A graph.
 
 ---
 
@@ -102,20 +108,34 @@ The graph removes the variance. The agent becomes deterministic where it can be.
 
 ## Voice / cross-check notes
 
-**Em-dash discipline:** zero em-dashes in main post + 3 first-comment options. Headers in this file use period-after-letter ("Option A.") instead of "Option A —" to keep the em-dash count clean even in the meta sections.
+Em-dash discipline: zero em-dashes in main post + 3 first-comment options.
 
-**Bruner narrative arc preserved:**
-- Setup: the moment of an AI changing the wrong function (recognizable canonical breach)
-- Complication: agents grep, code is structured (the diagnosis)
-- Intervention: I built a Rust MCP server that turns code into a queryable graph
-- Resolution: 23 tools, 10 stages, the get_impact + validate_prd_against_graph examples
-- Meaning: this is the structure layer of a three-part stack; each plays alone, all three compose
+No invented anecdotes. Per user feedback: every concrete claim grounded in real artifacts. The fabricated PRD-hallucination Option A was replaced with the resolution-rate trajectory documented in real commits.
 
-**Feynman integrity discipline:**
-- "23 MCP tools across 10 pipeline stages" — verifiable from `stages/` directory + Cargo.toml
-- "12,000 lines of Rust, 220 tests, zero warnings, every constant sourced" — README claim, verifiable by `cargo test && cargo build` + `tokei`
-- "It does not replace your test suite. A semantic-diff regression score is not a correctness guarantee." — honest limit, same standard as the zetetic post
-- "Coverage is Rust, Python, TypeScript today" — verifiable from supported parsers
-- The "broken in production" opener is hyperbole-register, not a load-bearing claim; acceptable on LinkedIn
+### Real-evidence audit (per claim, source)
 
-**Concrete artifact:** "430 nodes, 400 edges, 216 communities, 35 processes on our own codebase" is the dogfood number from the README. Visible proof the project ran on itself.
+| Claim in post | Source / verification |
+|---|---|
+| 23 MCP tools across 10 pipeline stages | CHANGELOG.md lists all 23 tools by stage (0 through 9) |
+| Tree-sitter AST extractors for Rust, Python, TypeScript | CHANGELOG.md verbatim |
+| Louvain community detection with C2 repair | CHANGELOG.md verbatim. Earlier draft said "Leiden-class" — wrong; corrected. |
+| Hybrid BM25 + sparse TF-IDF + RRF, Tantivy-backed | CHANGELOG.md verbatim |
+| Tarjan SCC for cycle detection | CHANGELOG.md verbatim |
+| 220 tests, zero clippy warnings, every numeric constant sourced | CHANGELOG.md verbatim |
+| validate_prd_against_graph: symbol hallucination, community consistency, process impact | NOTES.md Stage 6 verbatim |
+| Read-only (never writes / opens PRs / runs CI) | NOTES.md stages table: stages 7, 10, 11, 12 explicitly out of scope |
+| Coverage = Rust + Python + TypeScript | CHANGELOG.md + README |
+| Resolution-rate trajectory 46% / 66.6% / 84.5% (Option A first comment) | git log: commit 0fdb35b (46% baseline as §7.1), commit e89083d (0.666 → 0.845 with B1+B2+B3 + determinism), commit b0c1d7a (Layer 5 stdlib + Layer 4 macro expansion), commit 03f475e (static Layer 3 regresses on Rust empirical finding) |
+| "broken in production" opener | rhetorical register, not load-bearing |
+
+### Bruner narrative arc preserved
+
+- Setup: the moment of an AI changing the wrong function
+- Complication: agents grep, code is structured
+- Intervention: a Rust MCP server that turns code into a queryable graph
+- Resolution: 23 tools, get_impact and validate_prd_against_graph as concrete capabilities
+- Meaning: structure layer of a three-part stack; each plays alone, all three compose
+
+### Repo URL warning
+
+Project is at https://github.com/cdeust/automatised-pipeline — NOT `ai-automatised-pipeline`. Verify before posting.
