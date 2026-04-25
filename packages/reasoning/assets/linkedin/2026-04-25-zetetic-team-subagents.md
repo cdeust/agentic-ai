@@ -19,15 +19,14 @@ Each genius agent is a reasoning procedure drawn from primary sources — Dijkst
 
 The differentiator: a pre-commit hook that BLOCKS commits with floating-point constants lacking source annotations. Not a warning. A gate. Exit 2.
 
-Combined output of `zetetic-checker.sh --staged` plus the pre-commit wrapper:
+What that looks like on a real two-line file (zetetic-checker output + pre-commit wrapper):
 
-```
-UNSOURCED   (error)    retry.py:1: # It always works
-MAGIC_NUMBER (error)    retry.py:2: DELAY = 2.741592
-Profile: strict
-FAILED: 2 blocking violation(s).
-BLOCKED: Zetetic violations in staged files.
-```
+→ UNSOURCED  retry.py:1: # It always works
+→ MAGIC_NUMBER  retry.py:2: DELAY = 2.741592
+→ FAILED: 2 blocking violation(s).
+→ BLOCKED: Zetetic violations in staged files.
+
+(Screenshot of the terminal attached for the full strict-profile output.)
 
 What's in the box:
 • 97 genius agents (reasoning patterns from primary sources)
@@ -74,5 +73,5 @@ MIT licensed. No telemetry. Built in the open.
 
 ### Posting checklist
 - [ ] Test the 𝗭𝗲𝘁𝗲𝘁𝗶𝗰 𝗧𝗲𝗮𝗺 𝗦𝘂𝗯𝗮𝗴𝗲𝗻𝘁𝘀 unicode bold on mobile (LinkedIn doesn't support markdown bold; unicode is the standard workaround)
-- [ ] Verify code block renders monospace on LinkedIn (most do; some mobile views collapse it)
-- [ ] Image: optionally attach a screenshot of the verbatim block — boosts engagement, but the text version stands on its own if not
+- [ ] **Attach a screenshot of the actual terminal output** — LinkedIn doesn't render code blocks. The text uses "→" prefix lines for visual scanning; the image carries the verbatim proof. Capture: `cd /tmp && mkdir t && cd t && git init -q && printf '# It always works\nDELAY = 2.741592\n' > retry.py && git add retry.py && ZETETIC_PROFILE=strict bash <repo>/tools/zetetic-checker.sh --staged` then screenshot the full output.
+- [ ] Image alt text: "Zetetic checker output blocking a commit with two violations: UNSOURCED comment and MAGIC_NUMBER float without source annotation"
