@@ -52,6 +52,23 @@ echo -e "${WHITE}${BOLD}  ◆ Difficulty Books${RESET}"
 "$TOOLS/difficulty-book-manager.sh" status 2>/dev/null || echo "  (none)"
 echo ""
 
+# ── Memory directory: scopes listing only. No content injection (Taleb: avoid
+# scope-wide auto-load; agents call `view` explicitly on names they need).
+if [[ -x "$TOOLS/memory-tool.sh" ]]; then
+  echo -e "${WHITE}${BOLD}  ◆ Memory Scopes${RESET}"
+  MEMORY_AGENT_ID="${MEMORY_AGENT_ID:-_user}" "$TOOLS/memory-tool.sh" scopes 2>/dev/null \
+    | sed 's/^/  /' || echo "  (memory-tool unavailable)"
+  # Show Cortex replica queue depth if non-empty — reminds agent to drain.
+  sync_line="$(MEMORY_AGENT_ID="${MEMORY_AGENT_ID:-_user}" "$TOOLS/memory-tool.sh" sync-status 2>/dev/null | head -1)"
+  if [[ "$sync_line" == *"pending"* && "$sync_line" != "queue: 0 pending,"* && "$sync_line" != "queue: empty"* ]]; then
+    echo ""
+    echo -e "${SUBTLE}  Cortex replica ${sync_line} — run /session:memory-sync to drain.${RESET}"
+  fi
+  echo ""
+  echo -e "${SUBTLE}  Memory protocol: call \`view /memories/<scope>/<file>\` to read; never rely on prior context.${RESET}"
+  echo ""
+fi
+
 echo -e "${WHITE}${BOLD}  ◆ Agent Worktrees${RESET}"
 "$TOOLS/worktree-manager.sh" list 2>/dev/null || echo "  (none)"
 echo ""

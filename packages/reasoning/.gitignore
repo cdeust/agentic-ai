@@ -1,1 +1,3 @@
 .DS_Store
+.claude/session-cache.json
+.claude/settings.local.json

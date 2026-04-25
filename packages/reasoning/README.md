@@ -74,6 +74,50 @@ cp -r zetetic-team-subagents/skills/ ~/.claude/skills/
 
 ---
 
+## Memory MCP server
+
+The repo ships `tools/memory-mcp-server.py` — a stdlib-only Python MCP server that exposes the `memory_20250818` schema as a native Claude tool named `memory`. Agents call `memory` directly; they do not need to know bash or the CLI exists.
+
+### Enable in Claude Code / Desktop
+
+The `.mcp.json` at the repo root registers the server automatically when Claude Code loads the project:
+
+```json
+{
+  "mcpServers": {
+    "memory": {
+      "command": "python3",
+      "args": ["tools/memory-mcp-server.py"],
+      "env": {
+        "MEMORY_AGENT_ID": "${MEMORY_AGENT_ID:-unknown}"
+      }
+    }
+  }
+}
+```
+
+If your MCP host does not auto-discover `.mcp.json`, add the server manually:
+
+```bash
+# Claude Code CLI
+claude mcp add memory -- python3 /path/to/zetetic-team-subagents/tools/memory-mcp-server.py
+```
+
+Set `MEMORY_AGENT_ID` in your shell or MCP host env to the agent's identifier — every write is attributed in the audit log under that ID.
+
+### Extended operations
+
+A second tool, `memory_extensions`, exposes `search`, `scopes`, `preamble`, `sync-status`, `drain-sync`, `commit-sync`, `release-sync`, `ttl-sweep`, and `audit` — the full CLI surface not covered by the Anthropic `memory_20250818` schema.
+
+### Smoke test
+
+```bash
+bash scripts/test-memory-mcp.sh
+# Expected: 13 passed, 0 failed
+```
+
+---
+
 ## Configuration & customization
 
 Three config files are yours to keep — plugin updates never overwrite them.

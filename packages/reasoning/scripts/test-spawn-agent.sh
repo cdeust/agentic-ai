@@ -43,7 +43,7 @@ echo "test: frontmatter stripping"
 BODY="$(awk 'BEGIN{f=0} /^---$/{f++; next} f>=2{print}' "$REPO/agents/engineer.md")"
 [[ -n "$BODY" ]]                                    || fail "body empty"
 grep -q "^name: engineer" <<<"$BODY"                && fail "body still contains YAML 'name:'"
-grep -q "senior software engineer" <<<"$BODY"       || fail "body missing identity text"
+grep -q "You are the procedure" <<<"$BODY"           || fail "body missing identity text"
 pass "frontmatter removed, identity preserved ($(wc -l <<<"$BODY" | tr -d ' ') lines)"
 
 # ---- Test 4: end-to-end with a claude shim -----------------------------------
@@ -53,13 +53,15 @@ mkdir -p "$TARGET"
 git -C "$TARGET" init -q -b main
 git -C "$TARGET" commit -q --allow-empty -m init
 
-# Shim claude: record argv, exit 0.
+# Shim claude: record argv AND MEMORY_AGENT_ID env var, then exit 0.
 SHIM_DIR="$TMP/bin"
 mkdir -p "$SHIM_DIR"
 RECORD="$TMP/claude-argv.txt"
+ENV_RECORD="$TMP/claude-env.txt"
 cat >"$SHIM_DIR/claude" <<EOF
 #!/usr/bin/env bash
 printf '%s\n' "\$@" > "$RECORD"
+echo "\${MEMORY_AGENT_ID:-}" > "$ENV_RECORD"
 exit 0
 EOF
 chmod +x "$SHIM_DIR/claude"
@@ -79,6 +81,12 @@ grep -qx -- "--append-system-prompt" "$RECORD" || fail "missing --append-system-
 grep -qx -- "-p"                   "$RECORD" || fail "missing -p"
 grep -qx -- "hello task"           "$RECORD" || fail "missing task string"
 pass "claude invoked with correct flags"
+
+# Verify MEMORY_AGENT_ID was exported into the shim environment.
+[[ -f "$ENV_RECORD" ]] || fail "MEMORY_AGENT_ID env record not written by shim"
+RECORDED_ID="$(cat "$ENV_RECORD")"
+[[ "$RECORDED_ID" == "engineer" ]] || fail "MEMORY_AGENT_ID expected 'engineer', got '$RECORDED_ID'"
+pass "MEMORY_AGENT_ID=engineer reached the spawned process"
 
 # Verify worktree + branch were created.
 WT="$(git -C "$TARGET" worktree list --porcelain | awk '/^worktree/ {print $2}' | grep -v "^$TARGET\$" | head -1)"
