@@ -66,6 +66,44 @@ MIT, no telemetry, public repo. If you try it and find a place where it lies to 
 
 ---
 
+## First comment (post immediately after the main post)
+
+LinkedIn algorithm boost: the author replies first to seed engagement. Three options below; **recommended: Option A (the backstory)** because it's a true story from this week, demonstrates the system's value with the founder as the cautionary tale instead of a hypothetical user, and is the kind of self-deprecating authenticity LinkedIn rewards.
+
+---
+
+### Option A — The backstory (recommended)
+
+True story from yesterday. I had a few test fixtures in this repo that contained real-shape API keys. Some were intentional placeholders. Some, it turned out, were leaks I had not noticed.
+
+When I went to push, GitHub's secret scanning blocked me. I spent the next ninety minutes rewriting eight commits with git-filter-repo, then rotating the keys at each provider, then writing a hook called pre-tool-secret-shield that blocks any agent in this system from even reading .env, .aws/credentials, .ssh/*, or any of the other usual suspects, so the keys cannot land in a fixture file in the first place.
+
+The thing that nearly burned me is now the thing the next person gets for free.
+
+---
+
+### Option B — The companion-projects nudge (best for the three-day series)
+
+Quick context for anyone curious about the wider stack:
+
+🧠 𝗖𝗼𝗿𝘁𝗲𝘅 (https://github.com/cdeust/Cortex) is the persistent memory layer underneath. Pre-loads your reasoning patterns and project context at session start. I'll post about it tomorrow.
+
+🔎 𝗮𝗶-𝗮𝘂𝘁𝗼𝗺𝗮𝘁𝗶𝘀𝗲𝗱-𝗽𝗶𝗽𝗲𝗹𝗶𝗻𝗲 (https://github.com/cdeust/ai-automatised-pipeline) is the codebase-intelligence MCP server the agents call instead of grep. That post is the day after.
+
+If you only have time for one, which would you want to hear about first?
+
+---
+
+### Option C — The contrarian question
+
+One thing I am genuinely curious about. Do you think "the agent should be able to refuse" is a feature or a bug?
+
+I have heard both. The responsible-AI crowd reads it as load-bearing. The Cursor / Aider crowd reads it as friction.
+
+My take is that it is the difference between a tool that helps you be careful and one that lets you be confident. But I would honestly like the pushback.
+
+---
+
 ## Posting checklist
 
 - [ ] Test the 𝗭𝗲𝘁𝗲𝘁𝗶𝗰 𝗧𝗲𝗮𝗺 𝗦𝘂𝗯𝗮𝗴𝗲𝗻𝘁𝘀 unicode bold on mobile (LinkedIn doesn't support markdown bold; unicode is the standard workaround)
@@ -78,3 +116,4 @@ MIT, no telemetry, public repo. If you try it and find a place where it lies to 
   ZETETIC_PROFILE=strict bash /Users/cdeust/Developments/zetetic-team-subagents/tools/zetetic-checker.sh --staged
   ```
 - [ ] Image alt text: "Zetetic checker output blocking a commit with two violations: UNSOURCED comment and MAGIC_NUMBER float without source annotation"
+- [ ] **Post the main post first, then within 60 seconds reply with the first comment.** LinkedIn weights early engagement; the OP-replies-first pattern is the standard growth move.
