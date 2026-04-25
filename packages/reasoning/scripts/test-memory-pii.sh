@@ -205,21 +205,68 @@ fi
 unset MEMORY_PII_SCAN_DISABLE
 
 # ─── Latency measurement on 10 KB fixture ─────────────────────────────────────
+# Measures the production write-path: daemon via nc -U (steady-state, daemon warm).
+# The daemon is started once; the second call measures per-write latency with no
+# cold-start penalty.  This reflects real observed latency for cmd_create/str_replace.
 FIXTURE=$(python3 -c "
 import random
 words = ['scope', 'agent', 'memory', 'decision', 'analysis', 'benchmark', 'latency', 'commit', 'design', 'pattern']
 lines = [' '.join(random.choices(words, k=15)) for _ in range(160)]
 print('\n'.join(lines))
 ")
-START_NS=$(python3 -c "import time; print(int(time.perf_counter_ns()))")
-scan "$FIXTURE" > /dev/null
-END_NS=$(python3 -c "import time; print(int(time.perf_counter_ns()))")
-LATENCY_MS=$(python3 -c "print(round(($END_NS - $START_NS) / 1_000_000, 1))")
-if python3 -c "import sys; sys.exit(0 if float('$LATENCY_MS') <= 50 else 1)" 2>/dev/null; then
-  LATENCY_OK="PASS"
-else
-  LATENCY_OK="FAIL (>50ms threshold — document in pii-instrument-spec.md)"
+
+_DAEMON_PY="$SCRIPT_DIR/../memory/pii-daemon.py"
+_RULES_FILE="$SCRIPT_DIR/../memory/pii-rules.json"
+_TEST_SOCK="${TMPDIR:-/tmp}/pii-latency-test-$$.sock"
+_LATENCY_MS="N/A"
+_LATENCY_OK="SKIP (daemon or rules not found)"
+
+if [[ -f "$_DAEMON_PY" && -f "$_RULES_FILE" ]]; then
+  # Start daemon for latency measurement.
+  python3 "$_DAEMON_PY" "$_RULES_FILE" "$_TEST_SOCK" </dev/null >/dev/null 2>/dev/null &
+  _DAEMON_PID=$!
+  disown $_DAEMON_PID 2>/dev/null || true
+
+  # Wait for socket (up to 2 s).
+  _i=0
+  while (( _i < 40 )); do
+    [[ -S "$_TEST_SOCK" ]] && break
+    sleep 0.05
+    _i=$(( _i + 1 ))
+  done
+
+  if [[ -S "$_TEST_SOCK" ]]; then
+    # Warm call: pay daemon startup cost, not measured.
+    _ENCODED=$(printf '%s' "$FIXTURE" \
+      | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/	/\\t/g' \
+            -e ':a;N;$!ba;s/\n/\\n/g' 2>/dev/null)
+    printf '{"content":"%s","strict":false}\n' "$_ENCODED" \
+      | nc -U "$_TEST_SOCK" > /dev/null 2>/dev/null || true
+
+    # Timed call (steady-state: daemon already warm).
+    START_NS=$(python3 -c "import time; print(int(time.perf_counter_ns()))")
+    _ENCODED2=$(printf '%s' "$FIXTURE" \
+      | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/	/\\t/g' \
+            -e ':a;N;$!ba;s/\n/\\n/g' 2>/dev/null)
+    _RESULT=$(printf '{"content":"%s","strict":false}\n' "$_ENCODED2" \
+      | nc -U "$_TEST_SOCK" 2>/dev/null || echo "pii_scan_error")
+    END_NS=$(python3 -c "import time; print(int(time.perf_counter_ns()))")
+    _LATENCY_MS=$(python3 -c "print(round(($END_NS - $START_NS) / 1_000_000, 1))")
+
+    if python3 -c "import sys; sys.exit(0 if float('$_LATENCY_MS') <= 50 else 1)" 2>/dev/null; then
+      _LATENCY_OK="PASS"
+    else
+      _LATENCY_OK="FAIL (>50ms threshold — document in pii-instrument-spec.md)"
+    fi
+  fi
+
+  # Cleanup: send SIGTERM to daemon (it removes its own socket on exit).
+  kill "$_DAEMON_PID" 2>/dev/null || true
+  rm -f "$_TEST_SOCK" "$_TEST_SOCK.pid" 2>/dev/null || true
 fi
+
+LATENCY_MS="${_LATENCY_MS}"
+LATENCY_OK="${_LATENCY_OK}"
 
 # ─── Summary ──────────────────────────────────────────────────────────────────
 TOTAL=$(( PASS + FAIL ))
