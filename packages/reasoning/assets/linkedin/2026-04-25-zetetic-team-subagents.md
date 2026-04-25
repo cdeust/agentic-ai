@@ -72,7 +72,7 @@ LinkedIn algorithm boost: the author replies first to seed engagement. Three opt
 
 ---
 
-### Option A — The backstory (recommended)
+### Option A. The backstory (recommended)
 
 True story from yesterday. I had a few test fixtures in this repo that contained real-shape API keys. Some were intentional placeholders. Some, it turned out, were leaks I had not noticed.
 
@@ -82,7 +82,7 @@ The thing that nearly burned me is now the thing the next person gets for free.
 
 ---
 
-### Option B — The companion-projects nudge (best for the three-day series)
+### Option B. The companion-projects nudge (best for the three-day series)
 
 Quick context for anyone curious about the wider stack:
 
@@ -94,7 +94,7 @@ If you only have time for one, which would you want to hear about first?
 
 ---
 
-### Option C — The contrarian question
+### Option C. The contrarian question
 
 One thing I am genuinely curious about. Do you think "the agent should be able to refuse" is a feature or a bug?
 
