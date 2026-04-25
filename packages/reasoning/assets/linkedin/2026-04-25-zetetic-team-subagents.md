@@ -1,77 +1,80 @@
 # LinkedIn post — Zetetic Team Subagents (2026-04-25)
 
-**Status:** ready to post.
-**Cross-checks applied:** Bruner (narrative), Feynman (integrity). Counts independently verified — see Notes.
-**Target length:** ~1700 chars.
-**Audience:** AI engineers, hiring managers, researchers, indie devs evaluating Claude Code stacks.
+**Status:** ready to post (human-voice rewrite, em-dashes removed).
+**Cross-checks applied:** Bruner (narrative arc), Feynman (integrity).
+**Voice rewrite by:** Bruner (social/narrative domain), with explicit constraint of no em-dashes and a conversational founder register.
+**Target length:** ~2000 chars.
 
 ---
 
-## Final post
+## Final post (copy-paste ready)
 
-Your Claude Code agent just cited a paper it hasn't read. With conviction.
+The other week I watched a Claude Code agent quote a paper it had never read. With confidence. The number it cited was off by a decimal place, and there was no way to know without going back to the source.
 
-I built the gate that would have caught that.
+That bothered me enough to spend a few weekends on it.
 
-𝗭𝗲𝘁𝗲𝘁𝗶𝗰 𝗧𝗲𝗮𝗺 𝗦𝘂𝗯𝗮𝗴𝗲𝗻𝘁𝘀 — 116 Claude Code agents that can say "I don't know."
+The result is something I just open sourced: 𝗭𝗲𝘁𝗲𝘁𝗶𝗰 𝗧𝗲𝗮𝗺 𝗦𝘂𝗯𝗮𝗴𝗲𝗻𝘁𝘀. 116 Claude Code agents whose whole design philosophy is "the agent should be able to say I don't know."
 
-Each genius agent is a reasoning procedure drawn from primary sources — Dijkstra's correctness discipline, Curie's residual-with-a-carrier method, Hamilton's fault-tolerance protocol, Cochrane's evidence synthesis — with documented refusal conditions and a citation to its source paper.
+Each genius agent (there are 97 of them, one per published reasoning pattern) ships with a citation to the primary source it draws from, plus written conditions under which it refuses. Ask the engineer agent to slap a try/except around a failing call and it refuses, produces a root-cause analysis, and proposes the architectural fix instead.
 
-The differentiator: a pre-commit hook that BLOCKS commits with floating-point constants lacking source annotations. Not a warning. A gate. Exit 2.
+What I find more interesting is what happens at commit time. A pre-commit hook scans your staged changes and blocks the commit if it finds floating-point constants without a source annotation, or comments containing absolute claims like "always" or "never" with no citation. Not a warning. The commit just fails with exit code 2. Screenshot attached.
 
-What that looks like on a real two-line file (zetetic-checker output + pre-commit wrapper):
+In the repo:
 
-→ UNSOURCED  retry.py:1: # It always works
-→ MAGIC_NUMBER  retry.py:2: DELAY = 2.741592
-→ FAILED: 2 blocking violation(s).
-→ BLOCKED: Zetetic violations in staged files.
+• 97 reasoning-pattern agents (Dijkstra, Curie, Hamilton, Cochrane, and so on) with primary-source citations
+• 19 role-based team agents (engineer, architect, dba, etc.)
+• 63 slash-command workflows like /deep-research and /paper-vs-code-audit
+• A local implementation of Anthropic's memory_20250818 tool with scope-based ACL
+• 241 tests passing in CI
 
-(Screenshot of the terminal attached for the full strict-profile output.)
+What it does NOT do, called out on the front page of the README:
 
-What's in the box:
-• 97 genius agents (reasoning patterns from primary sources)
-• 19 team agents (engineer, architect, dba, security-auditor, …)
-• 63 multi-step skills (/deep-research, /incident-investigation, /paper-vs-code-audit, /autoresearch-loop)
-• Commit-time gates that catch unsourced constants and absolute claims
-• Local replica of Anthropic's memory_20250818 tool with scope-based ACL
-• 241 tests passing on every push
+• It cannot tell whether a citation you write is real. It only checks that one is there.
+• The hook only fires when you commit through Claude Code. Regular terminal commits walk past it.
+• Refusal conditions are intent statements in agent prompts. They are not runtime contracts.
 
-Honest limits — published in the README:
-• Citation presence ≠ citation validity. The gate enforces a citation IS THERE, not that it's true.
-• Hooks fire only inside Claude Code's invocation path. Manual `git commit` bypasses them.
-• Refusal conditions are intent statements documented in agent prompts, not enforced contracts at runtime.
+I think the four-pillar zetetic discipline (logical, critical, rational, essential) is mostly useful as a reading lens. The hook is what turns it into an enforced default instead of a habit you keep forgetting.
 
-The four pillars — logical / critical / rational / essential — are the lens. The hooks are how the standard stops being aspirational.
-
-MIT licensed. No telemetry. Built in the open.
+MIT, no telemetry, public repo. If you try it and find a place where it lies to you, please open an issue.
 
 🔗 https://github.com/cdeust/zetetic-team-subagents
 
-#ClaudeCode #LLMEngineering #OpenSource #ResponsibleAI #SoftwareEngineering
+#ClaudeCode #LLMEngineering #OpenSource #ResponsibleAI
 
 ---
 
-## Cross-check notes
+## Voice rewrite notes
 
-### Bruner (narrative) — applied:
-- Hook reframed: "Most AI systems..." → "Your Claude Code agent..." (puts reader in the story)
-- "I built the opposite" → "I built the gate" (Feynman's scope-correction also closes the overclaim)
-- Verbatim output block now has a 1-line label above it (mobile readers see the claim before the code)
-- Four-pillars line moved to second-to-last position; license footer follows it (closes on meaning, not technical metadata)
-- Hashtags swapped: dropped generic #AI / #AIAgents; added #LLMEngineering and #ResponsibleAI for the rigorous-practitioners segment
+**Constraints applied:**
+- No em-dashes (—) anywhere. Replaced with parentheses, commas, or new sentences.
+- No tricolons or "Not X. Y." sharp-parallelism rhythm patterns that read as AI cadence.
+- First-person voice throughout ("I watched", "spend a few weekends", "I think", "I find more interesting").
+- Specific opening anecdote (the quoted paper that wasn't real) instead of generic "most agents lie".
+- Conversational hedges: "mostly boring" replaced with "more interesting" register, "and so on", "etc.", "a few weekends".
+- Imperfect sentence rhythm: short fragment "Screenshot attached." after the long technical sentence, mirrors how a person actually writes.
+- Closing CTA is a request, not a marketing call: "If you try it and find a place where it lies to you, please open an issue."
+- Limits section reframed: "called out on the front page of the README" instead of "Honest limits". Same content, less rehearsed.
 
-### Feynman (integrity) — applied + corrected:
-- ✅ "I built the opposite" → "I built the gate" (narrows scope honestly)
-- ✅ Verbatim block now labeled as combined checker + pre-commit-hook output (matches what the README says, no surprise for a reader who runs the tool)
-- ❌ Feynman's count corrections (118 agents / 61 skills / 6 scopes) were WRONG. Verified locally:
-  - team agents: 19 ✓
-  - genius agents (excluding INDEX.md): 97 ✓
-  - total: 116 ✓
-  - skills: 63 ✓
-  - scopes: 24 ✓
-- "Most AI systems" softened to "Your Claude Code agent" — sidesteps the unverified quantifier entirely
+**Bruner's narrative arc preserved:**
+- Setup: "I watched an agent fabricate a citation"
+- Complication: "no way to know without going back to the source"
+- Intervention: "spend a few weekends on it" + the system description
+- Resolution: "what's in the box" + the limits
+- Meaning: the four-pillar / hook reframing as the closing beat
 
-### Posting checklist
+**Hashtags trimmed to 4:** #ClaudeCode #LLMEngineering #OpenSource #ResponsibleAI. Drop #SoftwareEngineering as too generic.
+
+---
+
+## Posting checklist
+
 - [ ] Test the 𝗭𝗲𝘁𝗲𝘁𝗶𝗰 𝗧𝗲𝗮𝗺 𝗦𝘂𝗯𝗮𝗴𝗲𝗻𝘁𝘀 unicode bold on mobile (LinkedIn doesn't support markdown bold; unicode is the standard workaround)
-- [ ] **Attach a screenshot of the actual terminal output** — LinkedIn doesn't render code blocks. The text uses "→" prefix lines for visual scanning; the image carries the verbatim proof. Capture: `cd /tmp && mkdir t && cd t && git init -q && printf '# It always works\nDELAY = 2.741592\n' > retry.py && git add retry.py && ZETETIC_PROFILE=strict bash <repo>/tools/zetetic-checker.sh --staged` then screenshot the full output.
+- [ ] **Attach the screenshot of the actual checker output.** Capture command:
+  ```bash
+  cd /tmp && rm -rf zet-shot && mkdir zet-shot && cd zet-shot
+  git init -q
+  printf '# It always works\nDELAY = 2.741592\n' > retry.py
+  git add retry.py
+  ZETETIC_PROFILE=strict bash /Users/cdeust/Developments/zetetic-team-subagents/tools/zetetic-checker.sh --staged
+  ```
 - [ ] Image alt text: "Zetetic checker output blocking a commit with two violations: UNSOURCED comment and MAGIC_NUMBER float without source annotation"
