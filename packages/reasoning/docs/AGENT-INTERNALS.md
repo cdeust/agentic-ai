@@ -111,3 +111,29 @@ awk 'BEGIN{f=0} /^---$/{f++; next} f>=2{print}' agents/genius/feynman.md
 # verify YAML
 python3 -c 'import yaml,sys; yaml.safe_load(open(sys.argv[1]).read().split("---")[1])' agents/genius/feynman.md
 ```
+
+## Counting INDEX.md problem-shape rows
+
+The README claims a count of problem-shape triggers. To re-verify:
+
+```bash
+python3 - <<'PY'
+data, sep, hdr = 0, 0, 0
+with open("agents/genius/INDEX.md") as f:
+    for line in f:
+        line = line.rstrip("\n")
+        if not line.startswith("|"):
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if all(set(c) <= set("- ") and c for c in cells if c):
+            sep += 1
+        elif any(h in cells for h in ("Shape", "Pattern", "Trigger", "Agent")):
+            hdr += 1
+        else:
+            data += 1
+print(f"data rows: {data}")
+print(f"separators: {sep}")
+print(f"headers: {hdr}")
+PY
+# Last verified count: 654 data rows on 2026-04-25.
+```

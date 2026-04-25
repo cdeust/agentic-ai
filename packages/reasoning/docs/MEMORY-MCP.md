@@ -73,7 +73,7 @@ Plus local-extension errors for path-traversal rejection and ACL denials. Full t
 
 ## PII scrubbing
 
-Every `create` / `str_replace` / `insert` runs through `pii-scanner.py` (or the persistent `pii-daemon.py` for ~8 ms median latency) before disk write. Matches against 14 calibrated regex classes (FPR=0%, FNR=0% on a 172-fixture corpus) plus a Shannon-entropy threshold (H > 4.5 bits/char) for high-confidence classes. Blocked writes emit a `pii_blocked` audit entry naming the matched class (never the matched bytes).
+Every `create` / `str_replace` / `insert` runs through `pii-scanner.py` (or the persistent `pii-daemon.py` to amortize Python interpreter cold-start) before disk write. Matches against 14 calibrated regex classes (FPR=0%, FNR=0% on a 172-fixture corpus — verifiable via `bash scripts/test-memory-pii-expanded.sh`) plus a Shannon-entropy threshold (H > 4.5 bits/char) for high-confidence classes. Blocked writes emit a `pii_blocked` audit entry naming the matched class (never the matched bytes). Latency: scanner is sub-50ms on a ~10 KB payload in dev measurements; no committed benchmark has been published yet — `scripts/test-memory-pii.sh` reports the wall-clock per run when `MEMORY_PII_BENCHMARK=1` is set.
 
 ## Cortex replica queue
 

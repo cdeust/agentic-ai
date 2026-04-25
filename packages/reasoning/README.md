@@ -33,7 +33,9 @@ FAILED: 2 blocking violation(s).
 BLOCKED: Zetetic violations in staged files.
 ```
 
-Verbatim output from `tools/zetetic-checker.sh --staged` on a real two-line file. **The commit aborts with exit 2.** It re-runs once each line carries a `# source:` comment, a benchmark reference, or a measured-on note.
+Composite output: lines 1–2 are verbatim from `tools/zetetic-checker.sh --staged`; the closing `BLOCKED:` line is the wrapper from `hooks/pre-commit-zetetic.sh` that returns exit 2 to git. Reproduce on your machine: `echo "DELAY = 2.741592" > /tmp/x.py && cd /tmp && git init -q && git add x.py && ZETETIC_PROFILE=strict bash <repo>/tools/zetetic-checker.sh --staged`.
+
+The commit re-runs once each flagged line carries a `# source:` comment, a benchmark reference, or a measured-on note.
 
 ---
 
@@ -79,8 +81,6 @@ claude plugin install zetetic-team-subagents
 
 That's the whole install. The plugin's installer copies agents, skills, hooks, and tools into `~/.claude/`. Manual install + advanced config: [`docs/INSTALL.md`](docs/INSTALL.md).
 
-**Try without installing:** [![Open in Codespaces](https://img.shields.io/badge/Open_in-Codespaces-181717?logo=github)](https://codespaces.new/cdeust/zetetic-team-subagents) (1-click sandbox).
-
 ---
 
 ## What you actually get
@@ -89,8 +89,8 @@ That's the whole install. The plugin's installer copies agents, skills, hooks, a
 |---|---|
 | **97 documented refusals** | Each genius agent's body documents conditions under which it refuses (when to stop, what to cite, when to hand off). Refusal conditions are intent statements, not enforced contracts. |
 | **63 multi-step workflows** | Type one slash command, get a sourced research brief / debugging trace / ADR. Each agent in the chain produces output and declares what it could not verify. |
-| **Commit-time gates** | `pre-commit-zetetic.sh` blocks commits with `UNSOURCED` keywords (always/never/obviously) and `MAGIC_NUMBER` floats (3+ decimals without `source:`). Active only when `git commit` is invoked through Claude Code's hook system. |
-| **730+ problem-shape triggers** | [`agents/genius/INDEX.md`](agents/genius/INDEX.md) maps natural-language problem descriptions to reasoning methods. Verified count: 731 table rows. |
+| **Commit-time gates** | `pre-commit-zetetic.sh` blocks commits with `UNSOURCED` keywords (always/never/obviously) at any profile. `MAGIC_NUMBER` floats (3+ decimals without `source:`) and `TODO_NO_REF` warn at default profile, block under `ZETETIC_PROFILE=strict`. Active only when `git commit` is invoked through Claude Code's hook system. |
+| **650+ problem-shape triggers** | [`agents/genius/INDEX.md`](agents/genius/INDEX.md) maps natural-language problem descriptions to reasoning methods. <!-- source: 654 data rows counted by python3 -c "from re import sub; ..." (see docs/AGENT-INTERNALS.md) on 2026-04-25. --> |
 
 ---
 

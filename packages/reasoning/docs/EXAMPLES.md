@@ -1,8 +1,6 @@
 # Examples — Five Sessions, Five Recognitions
 
-Five short narratives. Each opens with the human context (one sentence), shows the actual interaction (terminal transcript), and closes with what the session meant.
-
-These are illustrative reconstructions assembled from real session patterns — they are not verbatim transcripts of any single session. The system behaviors shown (the hook that blocks, the agent that refuses, the chain that surfaces a finding) are real and reproducible; the specific filenames and constants are simplified for readability.
+These are illustrative reconstructions, not verbatim transcripts. The system behaviors shown — the hook that blocks, the agent that refuses, the chain that surfaces a finding — are real and reproducible (see the table at the end).
 
 ---
 
@@ -111,7 +109,7 @@ A login bug needed to ship before a demo. The dev asked the engineer agent to ad
 $ /implement "wrap the auth.verify() call in try/except, log to sentry,
               return False on any exception"
 
-[engineer]  Refusing: this matches refusal-condition #3 (band-aid without RCA).
+[engineer]  Refusing: this matches refusal-condition #1 (band-aid without RCA).
             Producing the RCA artifact instead.
 
 ROOT CAUSE ANALYSIS (Move 4)
@@ -205,8 +203,8 @@ Each scenario corresponds to a real skill or agent invocation:
 
 | Example | Invocation | Source |
 |---|---|---|
-| #1 Unsourced constant | `tools/zetetic-checker.sh --staged` + `/verify-claim` | [`tools/zetetic-checker.sh`](../tools/zetetic-checker.sh) + [`commands/zetetic/verify-claim.md`](../commands/zetetic/verify-claim.md) |
+| #1 Unsourced constant | `tools/zetetic-checker.sh --staged` + `/verify-claim` | [`tools/zetetic-checker.sh`](../tools/zetetic-checker.sh) + [`skills/zetetic/verify-claim.md`](../skills/zetetic/verify-claim.md) |
 | #2 Latency bug | `/genius route "<problem>"` | [`agents/genius/curie.md`](../agents/genius/curie.md) + [`agents/genius/knuth.md`](../agents/genius/knuth.md) |
-| #3 Literature search | `/deep-research "<topic>"` | [`commands/research/deep-research.md`](../commands/research/deep-research.md) |
-| #4 Architecture refusal | `/implement` (engineer agent) | [`agents/engineer.md`](../agents/engineer.md) — refusal-conditions section |
-| #5 Incident postmortem | `/incident-investigation` | [`commands/skills/incident-investigation.md`](../commands/skills/incident-investigation.md) |
+| #3 Literature search | `/deep-research "<topic>"` | [`skills/research/deep-research.md`](../skills/research/deep-research.md) |
+| #4 Architecture refusal | `/implement` (engineer agent) | [`agents/engineer.md`](../agents/engineer.md) — refusal-conditions section, bullet #1 |
+| #5 Incident postmortem | `/incident-investigation` | [`skills/engineering/incident-investigation.md`](../skills/engineering/incident-investigation.md) |

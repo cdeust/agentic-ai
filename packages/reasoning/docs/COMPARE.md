@@ -101,10 +101,10 @@ These tools are not mutually exclusive. The realistic stack often combines:
 |---|---|
 | Cursor + zetetic hooks | Inline completion in the editor; commits gated by zetetic-checker |
 | Aider + zetetic agents | Aider applies diffs; before commit, zetetic agents verify the change matches a refusal-condition policy |
-| Claude Code + zetetic | Vanilla Claude Code provides subagent orchestration; zetetic provides the 116 reasoning-procedure agents and the epistemic enforcement layer |
+| Claude Code + zetetic | Vanilla Claude Code provides subagent orchestration; zetetic provides 116 agent definitions (in zetetic's "agent-as-reasoning-pattern" sense — see disambiguation card above) plus the commit-time gate layer |
 | Continue + zetetic | Continue does codebase Q&A; zetetic agents handle the reasoning when an answer requires multi-step methodology |
 
-Zetetic is built ON TOP OF Claude Code, not as an alternative. If you don't use Claude Code, zetetic doesn't run for you (the [`zetetic-checker`](../tools/zetetic-checker.sh) is the one piece that runs anywhere — install it as a standalone pre-commit hook regardless of which AI you use).
+Zetetic is built ON TOP OF Claude Code, not as an alternative. If you don't use Claude Code, zetetic doesn't run for you. The [`zetetic-checker`](../tools/zetetic-checker.sh) is one piece that runs anywhere as a standalone bash script — installable as a git pre-commit hook regardless of which AI assistant you use, but it only checks the source-citation rules (UNSOURCED keywords, MAGIC_NUMBER floats, TODO_NO_REF), not the agent reasoning layer.
 
 ---
 
@@ -135,4 +135,4 @@ If your situation matches any of these, use the tool whose question matches your
 
 **Read your row in the question table at the top.** Pick the tool that answers your actual question. If you also need claim-to-source traceability and commit-time epistemic enforcement, add zetetic to whatever else you use.
 
-The four pillars (logical / critical / rational / essential) are the **lens** zetetic adds, not a competitor's product spec. You can apply them to any AI workflow — you just have to enforce them yourself if you're not using zetetic. That's the difference: zetetic enforces them as a default; everything else makes you remember.
+The four pillars (logical / critical / rational / essential) are the **lens** zetetic adds within its specific game (epistemic enforcement on reasoning-procedure agents in Claude Code), not a competitor's product spec. You can apply them as a discipline to any AI workflow without zetetic — zetetic's distinction is that it ships them as a commit-time gate within its game, not that other tools fail to support them within theirs.
