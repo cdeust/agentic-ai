@@ -12,9 +12,11 @@ REGISTRY="$REPO_ROOT/memory/scope-registry.json"
 
 PASS=0
 FAIL=0
+SKIPS=0
 
 pass() { echo "PASS  C${1}: ${2}"; PASS=$((PASS + 1)); }
 fail() { echo "FAIL  C${1}: ${2}"; echo "      detail: ${3:-}"; FAIL=$((FAIL + 1)); }
+skip() { echo "SKIP  C${1}: ${2}"; SKIPS=$((SKIPS + 1)); }
 
 # ── C1: mutex correctness under 10-way parallel create ───────────────────────
 # Invariant: exactly one create succeeds; N-1 return "already exists".
@@ -90,6 +92,11 @@ test_c3_without_fix() {
   echo '{"id":"job1-already"}' > "$TMP/job1.json.claimed"   # dst pre-exists
 
   # OLD (broken) check: mv -n src dst && [[ -f $dst ]]
+  # Hazard exists ONLY on BSD `mv` (macOS): `mv -n` silently succeeds when dst
+  # pre-exists, leaving src in place. GNU `mv` (Linux/CI) returns non-zero, so
+  # the broken check correctly drops to false there. The hazard is platform-
+  # specific; on Linux we SKIP rather than fail because the absence of the
+  # hazard means the BSD-specific fix is moot on this platform.
   local claimed_by_broken=0
   if mv -n "$TMP/job1.json" "$TMP/job1.json.claimed" 2>/dev/null \
      && [[ -f "$TMP/job1.json.claimed" ]]; then
@@ -97,10 +104,9 @@ test_c3_without_fix() {
   fi
 
   if [[ $claimed_by_broken -eq 1 ]]; then
-    # Hazard confirmed: broken check enters success branch even though src still exists
     pass 3a "WITHOUT fix: broken mv -n guard enters success branch when dst pre-exists (hazard confirmed)"
   else
-    fail 3a "could not reproduce broken-guard hazard" ""
+    skip 3a "BSD-mv-specific hazard not reproducible on this platform (GNU mv); fix still applied"
   fi
 }
 
@@ -136,15 +142,22 @@ test_c3_concurrent_drain() {
   mkdir -p "$SYNC_DIR"
   echo '{"id":"job-abc","op":"create"}' > "$SYNC_DIR/20240101T000000Z-0000.json"
 
-  local OUT1 OUT2
-  OUT1=$(MEMORY_ROOT="$ROOT" MEMORY_NO_AUDIT=1 MEMORY_NO_SYNC=1 MEMORY_NO_ACL=1 \
-         "$TOOL" drain-sync --limit 1 2>&1) &
-  PID1=$!
-  OUT2=$(MEMORY_ROOT="$ROOT" MEMORY_NO_AUDIT=1 MEMORY_NO_SYNC=1 MEMORY_NO_ACL=1 \
-         "$TOOL" drain-sync --limit 1 2>&1) &
-  PID2=$!
+  # Capture parallel output via tmp files — `var=$(cmd) &` runs the assignment
+  # in a subshell that the parent never sees, so OUT1/OUT2 stayed unset under
+  # `set -u`. Use files so each parallel process writes its captured stdout
+  # into a known location the parent can read after wait.
+  local F1="$ROOT/.drain-out-1" F2="$ROOT/.drain-out-2"
+  ( MEMORY_ROOT="$ROOT" MEMORY_NO_AUDIT=1 MEMORY_NO_SYNC=1 MEMORY_NO_ACL=1 \
+    "$TOOL" drain-sync --limit 1 > "$F1" 2>&1 ) &
+  local PID1=$!
+  ( MEMORY_ROOT="$ROOT" MEMORY_NO_AUDIT=1 MEMORY_NO_SYNC=1 MEMORY_NO_ACL=1 \
+    "$TOOL" drain-sync --limit 1 > "$F2" 2>&1 ) &
+  local PID2=$!
   wait $PID1 || true
   wait $PID2 || true
+  local OUT1 OUT2
+  OUT1=$(cat "$F1" 2>/dev/null || echo "")
+  OUT2=$(cat "$F2" 2>/dev/null || echo "")
 
   local claims=0
   [[ -n "$(echo "$OUT1" | tr -d '[:space:]')" ]] && claims=$((claims+1)) || true
@@ -166,8 +179,11 @@ test_c4() {
   local ROOT; ROOT=$(mktemp -d)
   trap 'rm -rf "$ROOT"' RETURN
 
-  # Create file, immediately run sweep with a 0-day TTL via a synthetic registry
-  local REG; REG=$(mktemp -t concurrency_reg).json
+  # Create file, immediately run sweep with a 0-day TTL via a synthetic registry.
+  # GNU mktemp requires X's in the template; BSD mktemp accepts a prefix.
+  # `mktemp -d` then writing the .json in that dir is portable across both.
+  local REG_DIR; REG_DIR=$(mktemp -d)
+  local REG="$REG_DIR/concurrency_reg.json"
   cat > "$REG" <<REGEOF
 {
   "version": 1,
@@ -216,5 +232,5 @@ test_c3_concurrent_drain
 test_c4
 
 echo ""
-echo "=== Results: $PASS passed, $FAIL failed ==="
+echo "=== Results: $PASS passed, $FAIL failed, $SKIPS skipped ==="
 exit "$FAIL"
