@@ -210,3 +210,49 @@ export * from "./consolidation/index.js";
 export * from "./graph/index.js";
  * Memory package root — re-exports methodology subsystem.
 export * from "./methodology/index.js";
+ * @agentic/memory — public API.
+ * Narrative subsystem: session extraction + narrative arc construction.
+// Types
+export type {
+  MemorableItem,
+  MemoryRecord,
+  NarrativeArc,
+  NarrativeFunction,
+  NarrativeFunctionType,
+  NarrativeRequest,
+  NarrativeResponse,
+  SessionEvent,
+  SessionRecord,
+  SessionSummary,
+} from "./narrative/types.js";
+  MemorableItemSchema,
+  MemoryRecordSchema,
+  NarrativeArcSchema,
+  NarrativeFunctionSchema,
+  NarrativeFunctionTypeSchema,
+  NarrativeRequestSchema,
+  NarrativeResponseSchema,
+  SessionEventSchema,
+  SessionRecordSchema,
+  SessionSummarySchema,
+// Session extractor
+  classifyMessage,
+  extractMemorableItems,
+  extractSessionSummary,
+  extractText,
+  extractUserMessages,
+  scoreImportance,
+} from "./narrative/session-extractor.js";
+// Narrative builder
+  arcFunctionSequence,
+  detectArc,
+  extractDecisions,
+  extractEvents,
+  extractHotTopics,
+  extractTopEntities,
+  generateBriefSummary,
+  generateNarrative,
+} from "./narrative/narrative-builder.js";
+// Handler
+export type { MemoryPort } from "./narrative/handlers/narrative.js";
+export { narrativeHandler } from "./narrative/handlers/narrative.js";
