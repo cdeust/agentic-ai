@@ -143,6 +143,25 @@ write to which schema tables, which modules read from which others' outputs):
 
 After each merge: full parity-oracle suite must pass. Any regression blocks the next merge.
 
+### Phase 4 → 5 cleanup (post-merge type drift)
+
+After all 13 cortex-* worktrees were merged into main on 2026-04-26 (commits
+`abb4bbc` through `1d61dab` + cleanup `5ede263`), CI surfaced known type
+drift between sub-packages. The following is the EXPLICIT cleanup list
+that Phase 5 must close before `pnpm build` and `pnpm test` are restored
+to hard CI gates (currently `|| echo "::warning::"` per `.github/workflows/ci.yml`):
+
+1. **`remember/handlers/remember.ts:146`** — return type `{ stored: false; reason; novelty: Record<string, number>; importance }` does not satisfy the declared `Memory.novelty` shape `{ embedding_novelty; entity_novelty; temporal_novelty; structural_novelty; combined_novelty }`. Fix: produce the structured `novelty` object in the rejection path, or relax the type.
+2. **`remember/handlers/remember.ts:152` + `remember/memory-ingest.ts:236`** — `Memory` shape passed to `pg-store.insertMemory` is missing `confidence`, `directory_context`, `emotional_valence`, `is_protected`, and ~10 other required fields. Either: (a) add defaults at the call site, (b) make those fields optional in `MemoryInsertData`, (c) refactor a `MemoryInsertDataPartial` type for the call sites that genuinely don't set them.
+3. **`pnpm-lock.yaml`** — current main has cortex-hooks's pre-merge lockfile. CI runs `pnpm install --no-frozen-lockfile`; once Phase 5 cleanup completes, regenerate the lockfile against the merged dependency graph and revert the CI install step to `--frozen-lockfile`.
+4. **Wiki internal duplicate-export** (`STALE_THRESHOLD` in both `staleness.ts` and `symbol-verify.ts`) — fixed in cleanup commit by renaming the symbol-verify constant to `SYMBOL_STALE_THRESHOLD`. (resolved 2026-04-26)
+5. **`pg` `verbatimModuleSyntax` `PoolClient` type-only import** — fixed in cleanup commit (`import { Pool, type PoolClient } from "pg"`). (resolved 2026-04-26)
+6. **Top-level `src/index.ts` namespace re-exports** — fixed in cleanup commit by switching to `export * as <module>` form. Eliminated 50+ TS2308 collisions. (resolved 2026-04-26)
+
+The remaining items (1) and (2) are port-pending in the `cortex-remember`
+worktree — the cleanest fix is a follow-up worktree `port/cortex-remember-types-cleanup`
+that takes a single small audit of the `Memory` shape end-to-end.
+
 ### Open follow-up: `port/cortex-server` decision (ADR-0011)
 
 The HTTP server / 3D graph visualisation dashboard (15 files, 3 668 LOC under

@@ -35,7 +35,7 @@
  * source: infrastructure/pg_store.py
  */
 
-import { Pool, PoolClient } from "pg";
+import { Pool, type PoolClient } from "pg";
 import type { MemoryInsertData, MemoryItem } from "../types.js";
 import type {
   EntityRecord,

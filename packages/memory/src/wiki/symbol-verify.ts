@@ -20,10 +20,10 @@
 export const MIN_SYMBOL_REFS = 3;
 
 // A page is symbol-stale when this fraction of its references cannot be
-// resolved. 0.5 matches STALE_THRESHOLD so the two signals fire at the
+// resolved. 0.5 matches SYMBOL_STALE_THRESHOLD so the two signals fire at the
 // same evidence level.
-// source: empirical threshold parity with staleness.STALE_THRESHOLD
-export const STALE_THRESHOLD = 0.5;
+// source: empirical threshold parity with staleness.SYMBOL_STALE_THRESHOLD
+export const SYMBOL_STALE_THRESHOLD = 0.5;
 
 export interface SymbolStalenessDecision {
   readonly page_id: number | string;
@@ -47,7 +47,7 @@ export interface EvaluateSymbolStalenessArgs {
  *
  * A page is stale iff:
  *   - len(symbol_refs) >= MIN_SYMBOL_REFS, AND
- *   - missing / total >= STALE_THRESHOLD.
+ *   - missing / total >= SYMBOL_STALE_THRESHOLD.
  *
  * The verdict is deterministic — given the same inputs it always
  * returns the same output.
@@ -71,7 +71,7 @@ export function evaluateSymbolStaleness(
 
   const missing = symbol_refs.filter((q) => !existence[q]);
   const fraction = missing.length / symbol_refs.length;
-  const isNow = fraction >= STALE_THRESHOLD;
+  const isNow = fraction >= SYMBOL_STALE_THRESHOLD;
 
   return {
     page_id,
@@ -82,6 +82,6 @@ export function evaluateSymbolStaleness(
     transitioned: isNow !== is_symbol_stale_was,
     rationale:
       `${missing.length}/${symbol_refs.length} symbols missing ` +
-      `(${Math.round(fraction * 100)}% — threshold ${Math.round(STALE_THRESHOLD * 100)}%)`,
+      `(${Math.round(fraction * 100)}% — threshold ${Math.round(SYMBOL_STALE_THRESHOLD * 100)}%)`,
   };
 }
