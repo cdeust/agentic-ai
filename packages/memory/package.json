@@ -7,9 +7,10 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./dist/index.js",
-    "./hooks": "./dist/hooks/index.js",
-    "./hooks/*": "./dist/hooks/*.js"
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
   },
   "scripts": {
     "build": "tsc --project tsconfig.json",
@@ -17,7 +18,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "zod": "^3.23.0"
+    "zod": "^3.23.0",
+    "yaml": "^2.4.0"
   },
   "optionalDependencies": {
     "pg": "^8.13.0"
