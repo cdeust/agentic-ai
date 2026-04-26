@@ -4,16 +4,20 @@
   "private": true,
   "description": "Cortex memory subsystem: recall, remember, consolidation, hooks",
   "type": "module",
-  "main": "./dist/codebase-analysis/index.js",
-  "types": "./dist/codebase-analysis/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    "./codebase-analysis": {
-      "import": "./dist/codebase-analysis/index.js",
-      "types": "./dist/codebase-analysis/index.d.ts"
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./graph": {
+      "import": "./dist/graph/index.js",
+      "types": "./dist/graph/index.d.ts"
     }
   },
   "scripts": {
-    "build": "tsc --project tsconfig.json",
+    "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },

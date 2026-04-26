@@ -206,3 +206,5 @@ export * from "./remember/index.js";
  * @agentic/memory — Cortex memory subsystem
  * Consolidation subsystem public API.
 export * from "./consolidation/index.js";
+ * @agentic/memory — memory package public surface.
+export * from "./graph/index.js";
