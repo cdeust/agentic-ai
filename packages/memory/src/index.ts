@@ -199,3 +199,7 @@ export { safeHandler, type HandlerFn } from "./shared/error-handler.js";
 } from "./shared/observability/metrics.js";
 // ── Validation schemas ────────────────────────────────────────────────────────
 export { validateToolArgs } from "./shared/validation/schemas.js";
+ * @agentic/memory — root package export.
+ * Re-exports the remember module. Other modules (recall, consolidation)
+ * will be added as their worktrees merge.
+export * from "./remember/index.js";
