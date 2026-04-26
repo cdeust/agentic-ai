@@ -19,7 +19,7 @@ I spent the last few months turning that observation into a Rust MCP server.
 
 A concrete capability. An agent wants to change handle_tool_call. It asks get_impact for the blast radius. The graph returns the set of processes that transit this symbol and the set of communities downstream. The agent now reasons against an explicit answer instead of grepping for callers and hoping it found them all.
 
-The PRD that comes out of that conversation can then be checked against the graph. validate_prd_against_graph runs three checks the README documents: symbol hallucination (do the names in the PRD exist?), community consistency (does the scope-claim match the community count?), and process-impact validation (does the change actually touch the processes the PRD says it does?). Three failure modes, one tool, runs in milliseconds.
+The PRD that comes out of that conversation can then be checked against the graph. validate_prd_against_graph runs three checks the README documents: symbol hallucination (do the names in the PRD exist?), community consistency (does the scope-claim match the community count?), and process-impact validation (does the change actually touch the processes the PRD says it does?).
 
 What is in the box:
 
