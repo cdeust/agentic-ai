@@ -203,3 +203,6 @@ export { validateToolArgs } from "./shared/validation/schemas.js";
  * Re-exports the remember module. Other modules (recall, consolidation)
  * will be added as their worktrees merge.
 export * from "./remember/index.js";
+ * @agentic/memory — Cortex memory subsystem
+ * Consolidation subsystem public API.
+export * from "./consolidation/index.js";
