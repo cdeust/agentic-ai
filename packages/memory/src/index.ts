@@ -256,3 +256,5 @@ export type {
 // Handler
 export type { MemoryPort } from "./narrative/handlers/narrative.js";
 export { narrativeHandler } from "./narrative/handlers/narrative.js";
+ * @agentic/memory — package barrel.
+export * from "./workflow-graph/index.js";
