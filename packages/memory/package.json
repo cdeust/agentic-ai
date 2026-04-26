@@ -11,13 +11,13 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
-    "./graph": {
-      "import": "./dist/graph/index.js",
-      "types": "./dist/graph/index.d.ts"
+    "./methodology": {
+      "import": "./dist/methodology/index.js",
+      "types": "./dist/methodology/index.d.ts"
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --project tsconfig.json",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },

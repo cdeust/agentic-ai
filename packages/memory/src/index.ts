@@ -208,3 +208,5 @@ export * from "./remember/index.js";
 export * from "./consolidation/index.js";
  * @agentic/memory — memory package public surface.
 export * from "./graph/index.js";
+ * Memory package root — re-exports methodology subsystem.
+export * from "./methodology/index.js";
