@@ -1,0 +1,11 @@
+{
+  "_status": "TS-CAPTURED-NEEDS-PYTHON-VERIFICATION",
+  "_captured_at": "2026-04-26T11:40:25.861Z",
+  "output": {
+    "results": [],
+    "total": 0,
+    "query_intent": "general",
+    "dispatch_tier": "ts",
+    "signals": {}
+  }
+}
