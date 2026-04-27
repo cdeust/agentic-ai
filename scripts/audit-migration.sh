@@ -120,13 +120,30 @@ check "every port-pending marker in TS has a tracking note"
 set +e
 pp_count=$(grep -rE 'port-pending' packages/*/src 2>/dev/null | wc -l | tr -d ' ')
 set -e
-note "  port-pending markers in packages/*/src: $pp_count"
+note "  port-pending markers (grep) in packages/*/src: $pp_count"
 # Per FINAL_CROSS_AUDIT §F-LOW-003, 34 of these markers had no tracking
 # issues at audit time. The follow-up created docs/PHASE_7_TRACKING.md
-# (this commit) which absorbs them into 4 named tracking groups. We
-# verify that file exists.
+# which absorbs them into 7 named tracking groups (A–G). We verify that
+# file exists AND that its claimed count is within tolerance of the
+# grep count (some Phase-4 files have multiple port-pending lines that
+# the tracking doc collapses into a single conceptual marker).
 if [[ ! -f docs/PHASE_7_TRACKING.md ]]; then
   err "docs/PHASE_7_TRACKING.md is missing. Per FINAL_CROSS_AUDIT §F-LOW-003 every port-pending marker requires a tracking entry before cutover."
+else
+  set +e
+  claimed=$(grep -E '^\| \*\*Total\*\* \| \*\*[0-9]+\*\*' docs/PHASE_7_TRACKING.md | grep -oE '\*\*[0-9]+\*\*' | head -1 | grep -oE '[0-9]+')
+  set -e
+  claimed=${claimed:-0}
+  note "  port-pending markers (PHASE_7_TRACKING.md claimed total): $claimed"
+  # Tolerance: grep can over-count when a single Group entry collapses
+  # several lines (e.g. wiki-stubs.ts has 3 grep hits for 1 conceptual
+  # marker). We accept up to 10 grep over-count vs claimed; anything
+  # larger means the tracking doc has fallen out of date.
+  diff=$(( pp_count - claimed ))
+  if [[ "$diff" -lt 0 ]]; then diff=$(( -diff )); fi
+  if [[ "$diff" -gt 10 ]]; then
+    err "port-pending count drift: grep=$pp_count, PHASE_7_TRACKING claims $claimed (tolerance ±10). Update PHASE_7_TRACKING.md groups."
+  fi
 fi
 
 # ── Final summary ─────────────────────────────────────────────────────────
