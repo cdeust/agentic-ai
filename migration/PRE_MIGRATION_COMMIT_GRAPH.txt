@@ -1,0 +1,48 @@
+# Pre-migration commit graph snapshot
+# Source: /Users/cdeust/Developments/prd-spec-generator
+# Captured: 2026-04-26
+# Command: git log --all --oneline --graph
+# Purpose: post-migration verification reference (Lamport happens-before anchor)
+#
+# The rewritten commits in the monorepo will have different SHAs but must
+# preserve this exact topological order (oldest → newest, bottom → top).
+# Subjects must be byte-identical after filter-repo rewrite.
+#
+# Total commits: 17 (linear, single branch main)
+
+* 342f15f Add preflight step that probes Cortex (and ai-architect) at startup
+* 0203eb3 Add hasExplicitOptOut helper for service-shaped hard-output rules
+* 6f1fe80 Fix no_self_referencing_deps regex walking across markdown table rows
+* 5ea93d8 Bump plugin version to 0.2.1 (license-removal release)
+* 2c3d83b Remove license-tier system + Cowork-mode (Swift-port leftovers)
+* 7e953e8 Address genius cross-audit findings (CRIT-2 / HIGH-1 / popper Claims 3-4)
+* 4a7ab44 Cortex memory hooks + integration-testing docs + session-transcript example
+* 6c41cb7 Marketplace plugin distribution + bundle reproducibility + docs reorg
+* e4a1c16 Add CHANGELOG + GitHub templates + release workflow
+* 0c83427 Add LICENSE + CONTRIBUTING + CODE_OF_CONDUCT + SECURITY
+* 6ad0343 Banner subtitle: add xml:space="preserve" + middot separator between SPEC and GENERATOR
+* b46bc80 Banner: widen gap between PRD and GEN (ASCII) + SPEC and GENERATOR (subtitle)
+* 44d856c Add ANSI Shadow banner SVG matching zetetic + automatised-pipeline style
+* f62255d Rename start_pipeline_v2 -> start_pipeline, get_pipeline_state_v2 -> get_pipeline_state
+* f971257 Phase 3 + 4: deterministic pipeline reducer + multi-judge verification + strategy wiring
+* c664c95 Bundle MCP server for marketplace distribution
+* a766082 Initial release: PRD Spec Generator v2.0.0
+
+# Full SHA reference (for landmark verification):
+# a7660827c6ee5dac64731ca39e6e456e8ba0ad3d  Initial release: PRD Spec Generator v2.0.0
+# c664c95eb7ba712e04c826ac5df7708569e94b7d  Bundle MCP server for marketplace distribution
+# f9712570720ad72f5d6daf9260e035e24caec2d6  Phase 3 + 4: deterministic pipeline reducer + multi-judge verification + strategy wiring
+# f62255db9a1d3fa3e539eece9c754f0135587578  Rename start_pipeline_v2 -> start_pipeline, get_pipeline_state_v2 -> get_pipeline_state
+# 44d856c620ef282fe2a4df6cf8e76462a7a07226  Add ANSI Shadow banner SVG matching zetetic + automatised-pipeline style
+# b46bc80a47756f9304289d1501692e9d910ac17c  Banner: widen gap between PRD and GEN (ASCII) + SPEC and GENERATOR (subtitle)
+# 6ad0343cc4618a6869e995290ed8efaedf7d8cc1  Banner subtitle: add xml:space="preserve" + middot separator between SPEC and GENERATOR
+# 0c8342778de6c978e57a1cbc04dfd4b900739c51  Add LICENSE + CONTRIBUTING + CODE_OF_CONDUCT + SECURITY
+# e4a1c1602858f1c198e6fa0de1898fb4dce0ae74  Add CHANGELOG + GitHub templates + release workflow
+# 6c41cb72368f67353c85739cada4ba136e6c7199  Marketplace plugin distribution + bundle reproducibility + docs reorg
+# 4a7ab44f38331aef7f6755e031db97342ceab416  Cortex memory hooks + integration-testing docs + session-transcript example
+# 7e953e8e79bc21e758660890a9a7698022e4a06a  Address genius cross-audit findings (CRIT-2 / HIGH-1 / popper Claims 3-4)
+# 2c3d83b2868533b3e05f7534b2741e0addbfaf5c  Remove license-tier system + Cowork-mode (Swift-port leftovers)
+# 5ea93d88e7f75dbddf442133b9c5b3e92debafb5  Bump plugin version to 0.2.1 (license-removal release)
+# 6f1fe8037a6a59aa16a45cd7474e2b7de2be28df  Fix no_self_referencing_deps regex walking across markdown table rows
+# 0203eb32e76a391e8ce13c68452fdac5ad4c7ae2  Add hasExplicitOptOut helper for service-shaped hard-output rules
+# 342f15fa8e544b377ad41a6921ab5ab20f7dc056  Add preflight step that probes Cortex (and ai-architect) at startup
