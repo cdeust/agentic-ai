@@ -30,10 +30,14 @@ TARGET_PREFIX="packages/prd-pipeline"
 FEATURE_BRANCH="feat/prd-spec-migration"
 REMOTE_NAME="prd-spec-migration"
 
-PRE_MIGRATION_COMMIT_COUNT=17
-SOURCE_HEAD_SUBJECT="Add preflight step that probes Cortex (and ai-architect) at startup"
+PRE_MIGRATION_COMMIT_COUNT=57
+SOURCE_HEAD_SUBJECT="fix(calibration): close Popper AP-5 residual — Zod-validate heldout lock file"
 SOURCE_TAIL_SUBJECT="Initial release: PRD Spec Generator v2.0.0"
-EXPECTED_MIN_TESTS=267
+EXPECTED_MIN_TESTS=343
+# source: re-baselined 2026-04-27 against prd-spec-generator HEAD 6e9adbd
+# (was 17 commits / 267 tests at original SCRIPT.sh authoring 2026-04-26;
+# Phase-4.1 calibration work added 40 commits and 76 tests). Update again
+# before re-running if the source repo advances further.
 
 # Namespace rename pairs: "OLD:NEW" — longer names MUST come before shorter names
 # that share a prefix (mcp-server-bundle before mcp-server)
