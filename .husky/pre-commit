@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# .husky/pre-commit — Husky pre-commit hook for the agentic-ai monorepo.
+#
+# Gates (in order — fail-fast at first violation):
+#   1. Source-citation check (blocks on unsourced numeric constants in staged .ts files)
+#   2. pnpm lint (ESLint flat config — layer-import rule + TypeScript strict)
+#   3. pnpm typecheck (tsc --noEmit across all packages)
+#
+# Design principle (Deming Move 5 — build quality in, don't inspect it afterward):
+#   These hooks prevent defects from entering the repo. They are fast (lint ~5s,
+#   typecheck ~10s) and run only on staged files where possible.
+#
+# source: MISSION.md §3 — "pnpm lint passes with zero warnings; tsc --strict passes"
+# source: QUALITY_GATES.md — pre-commit is the fastest feedback loop (seconds, not minutes)
+
+set -euo pipefail
+
+# ── Resolve repo root ──────────────────────────────────────────────────────────
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+
+# ── Gate 1: Source-citation check ─────────────────────────────────────────────
+# Scans staged .ts files for numeric literals ≥3 sig-digits without // source:.
+# source: scripts/check-source-citations.sh
+echo "pre-commit: [1/3] source-citation check..." >&2
+"$REPO_ROOT/scripts/check-source-citations.sh"
+
+# ── Gate 2: Lint staged files ──────────────────────────────────────────────────
+# Run ESLint on staged .ts files only for speed.
+# Falls back to `pnpm lint` if lint-staged is not configured.
+#
+# source: coding-standards.md §2.2 — layer-import rule is enforced here.
+# source: eslint.config.js — flat config, no-restricted-imports for layer boundaries.
+echo "pre-commit: [2/3] lint (staged files)..." >&2
+
+STAGED_TS=$(git diff --cached --name-only --diff-filter=ACM | grep '\.ts$' | grep -v '\.d\.ts$' || true)
+
+if [[ -n "$STAGED_TS" ]]; then
+  # shellcheck disable=SC2086
+  # word-splitting is intentional: each file is a separate argument.
+  cd "$REPO_ROOT" && pnpm exec eslint --max-warnings=0 $STAGED_TS
+else
+  echo "pre-commit: no staged .ts files — skipping lint." >&2
+fi
+
+# ── Gate 3: Type-check ─────────────────────────────────────────────────────────
+# tsc --noEmit across all packages.
+# This catches type errors that ESLint may not surface.
+# source: tsconfig.base.json — strict mode enabled.
+echo "pre-commit: [3/3] typecheck..." >&2
+cd "$REPO_ROOT" && pnpm typecheck
+
+echo "pre-commit: all gates passed." >&2
