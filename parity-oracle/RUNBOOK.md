@@ -436,3 +436,75 @@ find parity-oracle/prd/inputs -name "*.json" | wc -l
 git add parity-oracle/
 git commit -m "parity oracle: lock expected/ baseline after Phase 0 Day 1 capture"
 ```
+
+---
+
+## 7. Phase 6 — Dual-run harness (parity-runner)
+
+Added in Phase 6 (`port/phase6-dual-run-harness`).
+
+### 7.1 Environment variables
+
+| Variable | Purpose | Example |
+|---|---|---|
+| `CORTEX_PYTHON_BIN` | Path to Python interpreter with Cortex installed | `/path/to/Cortex/.venv/bin/python` |
+| `AI_ARCH_BIN` | Path to the compiled `ai-architect-mcp` Rust binary | `$PIPELINE/target/release/ai-architect-mcp` |
+| `PRD_GEN_BIN` | Path to the prd-spec-generator CLI entry point (Node.js) | `$PRD/packages/mcp-server/dist/cli.js` |
+| `AGENTIC_REPO_ROOT` | Root of the agentic-ai monorepo | `/path/to/agentic-ai` |
+| `PARITY_STRICT` | Set to `1` to enable strictExtraKeys mode | `0` |
+| `PARITY_ADVERSARIAL` | Set to `1` to run 5 adversarial probes per fixture | `0` |
+
+When an env var is not set, the corresponding runner falls back to stub-runner
+mode (validates fixture well-formedness only) and emits a "skipped" entry.
+
+### 7.2 Running the harness
+
+```bash
+# Full dual-run with all live binaries:
+CORTEX_PYTHON_BIN=/path/to/Cortex/.venv/bin/python \
+AI_ARCH_BIN=/path/to/ai-architect-mcp \
+PRD_GEN_BIN=/path/to/prd-spec-generator/packages/mcp-server/dist/cli.js \
+  ./scripts/parity-dual-run.sh > reports/parity-$(date +%Y%m%dT%H%M%S).json
+
+# Stub-runner mode only (no live binaries — validates fixture well-formedness):
+./scripts/parity-dual-run.sh
+
+# With adversarial probes:
+PARITY_ADVERSARIAL=1 ./scripts/parity-dual-run.sh
+```
+
+### 7.3 Expected output paths
+
+| Run mode | What is produced |
+|---|---|
+| Full dual-run | `reports/parity-<timestamp>.json` — master ParityReport |
+| Stub-runner | Same file; all entries have `status: "skipped"` |
+| Self-test | `pnpm -F @agentic/parity-runner test` — 23 self-tests |
+
+### 7.4 The 48-hour cutover gate
+
+The cutover claim is: "the TS port produces the same outputs as the live
+source repos across ALL fixtures over 48 hours."
+
+Falsification condition (Popper): `exit_code === 1` in ANY run of the
+harness over the 48-hour window falsifies the claim. The harness must be
+run at least twice per day (cron `0 6 * * *` + `0 18 * * *`) with all
+three live binaries available.
+
+When `exit_code === 0` holds for 48 consecutive hours, the cutover gate is met.
+
+### 7.5 Adversarial probes
+
+The harness generates 5 adversarial probes per fixture (total 170 probes
+across all 34 fixtures). Each probe mutates one field:
+
+| Probe | Mutation |
+|---|---|
+| P1 | Empty string in primary text field |
+| P2 | Unicode stress string (multi-script, RTL, emoji) |
+| P3 | null for an optional field |
+| P4 | Deeply nested object replacing primary text field |
+| P5 | 64 KiB payload in primary text field (2^16 bytes) |
+
+A divergence found by a probe is a first-class finding, not a secondary concern.
+source: Popper (1963). Conjectures and Refutations, Ch. 1.

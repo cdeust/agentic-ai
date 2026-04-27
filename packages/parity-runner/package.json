@@ -1,0 +1,33 @@
+{
+  "name": "@agentic/parity-runner",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Phase 6 dual-run parity harness: proves the TS port produces the same outputs as the live source repos. Adversarial-first: the harness SEEKS falsifications.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "bin": {
+    "parity-runner": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "typecheck": "tsc --noEmit --project tsconfig.json",
+    "test": "vitest run",
+    "test:self": "vitest run --reporter=verbose src/__tests__/self-test.test.ts"
+  },
+  "dependencies": {
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "typescript": "^5.6.0",
+    "vitest": "^4.1.0"
+  },
+  "license": "UNLICENSED"
+}
