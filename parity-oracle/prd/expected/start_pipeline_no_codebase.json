@@ -1,0 +1,26 @@
+{
+  "_capture_status": "SHAPE-KNOWN-FROM-SOURCE",
+  "_shape_source": "packages/mcp-server/src/pipeline-tools.ts:envelope() function + packages/orchestration/src/runner.ts. The reducer is deterministic: newPipelineState({skip_preflight:false}) → step() produces banner action as first output.",
+  "_schema_shape": {
+    "run_id": "string (starts with 'run_')",
+    "current_step": "string == 'banner'",
+    "messages": "array (empty on first call)",
+    "action": {
+      "type": "string == 'emit_message' or next-substantive-step action"
+    },
+    "state_summary": {
+      "sections": "array (empty initially)"
+    }
+  },
+  "_critical_invariants": [
+    "run_id starts with 'run_' prefix",
+    "current_step == 'banner' on initial call",
+    "messages is an array",
+    "action is an object with a 'type' field",
+    "state_summary.sections is an array"
+  ],
+  "_masked_fields": {
+    "run_id": "<MASKED:nondeterministic>",
+    "action": "<MASKED:nondeterministic>"
+  }
+}

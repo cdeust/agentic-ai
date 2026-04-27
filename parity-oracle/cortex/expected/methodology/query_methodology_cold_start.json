@@ -1,0 +1,28 @@
+{
+  "_capture_status": "SHAPE-KNOWN-FROM-SOURCE",
+  "_shape_source": "mcp_server/handlers/query_methodology.py:_empty_response() — cold_start=True path always returns this fixed shape.",
+  "domain": null,
+  "confidence": 0,
+  "coldStart": true,
+  "context": "<MASKED:nondeterministic>",
+  "style": null,
+  "entryPoints": [],
+  "recurringPatterns": [],
+  "toolPreferences": {},
+  "blindSpots": [],
+  "connectionBridges": [],
+  "sessionCount": 0,
+  "lastActive": null,
+  "hotMemories": [],
+  "firedTriggers": [],
+  "_critical_invariants": [
+    "coldStart == true",
+    "style == null",
+    "entryPoints is empty array",
+    "recurringPatterns is empty array",
+    "sessionCount == 0",
+    "lastActive == null",
+    "hotMemories is array (empty when no DB or no hot memories)",
+    "firedTriggers is array (empty when no DB)"
+  ]
+}

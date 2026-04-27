@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/automatised-pipeline",
+    "source_tool": "search_codebase (Rust MCP binary)",
+    "source_file": "src/ (Rust AST analysis binary)",
+    "purpose_one_liner": "BM25 keyword search for 'decay'; verifies search results shape and that Cypher fallback NOT triggered on non-empty BM25 results.",
+    "failure_modes_caught": [
+      "CHANGELOG 3.14.8 regression guard: BM25 returning 2 hits gating out Cypher fallback — must return all matching symbols, not just top-2",
+      "results array absent from search response",
+      "each result missing qualified_name, score, or file_path",
+      "search with no matches returning null instead of empty array"
+    ]
+  },
+  "query": "decay",
+  "max_results": 20
+}

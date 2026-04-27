@@ -1,0 +1,16 @@
+{
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_blocked_reason": "Requires seeded DB. The SHAPE invariants are the critical check for this fixture — that the response is well-formed even with non-ASCII query.",
+  "_capture_command": "cd /Users/cdeust/Developments/Cortex && python -m mcp_server.capture_fixture recall recall_unicode 2>/dev/null | python scripts/strip_nondeterministic.py > parity-oracle/cortex/expected/recall/recall_unicode.json",
+  "_critical_invariants": [
+    "response is valid JSON (no encoding error propagated)",
+    "results is an array (not null, not missing)",
+    "total is an integer >= 0",
+    "query_intent is a non-empty string"
+  ],
+  "_masked_fields": {
+    "results[*].id": "<MASKED:nondeterministic>",
+    "results[*].created_at": "<MASKED:nondeterministic>",
+    "results[*].content": "<MASKED:nondeterministic>"
+  }
+}

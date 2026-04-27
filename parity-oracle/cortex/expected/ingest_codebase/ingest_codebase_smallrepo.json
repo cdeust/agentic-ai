@@ -1,0 +1,20 @@
+{
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_blocked_reason": "Requires live DB + automatised-pipeline Rust binary built and reachable from Cortex MCP server.",
+  "_capture_command": "cd $CORTEX && python scripts/capture_fixture.py ingest_codebase ingest_codebase_smallrepo | python scripts/strip_nondeterministic.py > parity-oracle/cortex/expected/ingest_codebase/ingest_codebase_smallrepo.json",
+  "_critical_invariants": [
+    "status == 'ok'",
+    "symbols_stored >= 20 (CHANGELOG 3.14.8: not 2)",
+    "edges_stored >= 5",
+    "files_processed >= 10"
+  ],
+  "_changelog_regression_guards": [
+    "symbols_stored must NOT be 2 (CHANGELOG 3.14.8 BM25 tip-of-iceberg regression)",
+    "diagnostics array must be present (CHANGELOG 3.14.8: errors surfaced here not swallowed)"
+  ],
+  "_masked_fields": {
+    "symbols_stored": "<MASKED:nondeterministic-but-bounded: assert(result.symbols_stored >= 20)>",
+    "edges_stored": "<MASKED:nondeterministic-but-bounded: assert(result.edges_stored >= 5)>",
+    "files_processed": "<MASKED:nondeterministic-but-bounded: assert(result.files_processed >= 10)>"
+  }
+}

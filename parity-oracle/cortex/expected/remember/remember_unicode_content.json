@@ -1,0 +1,14 @@
+{
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_blocked_reason": "Requires live DB. Key assertion is that bidi override stripped and NFC applied before storing.",
+  "_capture_command": "cd /Users/cdeust/Developments/Cortex && python -m mcp_server.capture_fixture remember remember_unicode_content 2>/dev/null | python scripts/strip_nondeterministic.py > parity-oracle/cortex/expected/remember/remember_unicode_content.json",
+  "_critical_invariants": [
+    "stored == true (force=true bypasses gate)",
+    "content stored does NOT contain U+202E (RIGHT-TO-LEFT OVERRIDE stripped by content_hardening)",
+    "content stored uses NFC form (café normalized)"
+  ],
+  "_masked_fields": {
+    "memory_id": "<MASKED:nondeterministic>",
+    "heat": "<MASKED:nondeterministic>"
+  }
+}

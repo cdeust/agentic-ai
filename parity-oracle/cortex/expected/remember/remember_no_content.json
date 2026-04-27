@@ -1,0 +1,12 @@
+{
+  "_capture_status": "SHAPE-KNOWN-FROM-SOURCE",
+  "_shape_source": "mcp_server/handlers/remember.py:handler() line: 'if not args or not args.get(content): return {stored: False, reason: no_content}'",
+  "stored": false,
+  "reason": "no_content",
+  "_critical_invariants": [
+    "stored == false",
+    "reason == 'no_content'",
+    "memory_id must NOT be present",
+    "action must NOT be present"
+  ]
+}

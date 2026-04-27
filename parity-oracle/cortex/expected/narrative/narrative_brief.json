@@ -1,0 +1,18 @@
+{
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_blocked_reason": "Requires seeded DB. Brief path shape differs from full narrative path.",
+  "_capture_command": "cd /Users/cdeust/Developments/Cortex && python -m mcp_server.capture_fixture narrative narrative_brief 2>/dev/null | python scripts/strip_nondeterministic.py > parity-oracle/cortex/expected/narrative/narrative_brief.json",
+  "_schema_shape": {
+    "summary": "string",
+    "memory_count": "integer >= 0"
+  },
+  "_critical_invariants": [
+    "summary key present (not 'narrative')",
+    "narrative key NOT present on brief path",
+    "themes key NOT present on brief path",
+    "memory_count is a non-negative integer"
+  ],
+  "_masked_fields": {
+    "summary": "<MASKED:nondeterministic>"
+  }
+}

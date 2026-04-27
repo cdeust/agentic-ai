@@ -1,0 +1,14 @@
+{
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_blocked_reason": "Requires seeded DB with domain='cortex' memories.",
+  "_capture_command": "cd /Users/cdeust/Developments/Cortex && python -m mcp_server.capture_fixture recall recall_with_domain 2>/dev/null | python scripts/strip_nondeterministic.py > parity-oracle/cortex/expected/recall/recall_with_domain.json",
+  "_critical_invariants": [
+    "all results have domain == 'cortex'",
+    "no results from other domains present",
+    "len(results) <= 5 (max_results=5 cap enforced)"
+  ],
+  "_masked_fields": {
+    "results[*].id": "<MASKED:nondeterministic>",
+    "results[*].created_at": "<MASKED:nondeterministic>"
+  }
+}

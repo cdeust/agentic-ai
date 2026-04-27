@@ -1,0 +1,12 @@
+{
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_blocked_reason": "Requires live DB with at least one domain seeded.",
+  "_capture_command": "cd $CORTEX && python scripts/capture_fixture.py list_domains list_domains | python scripts/strip_nondeterministic.py > parity-oracle/cortex/expected/misc/list_domains.json",
+  "_critical_invariants": [
+    "domains is an array (not null)",
+    "each domain object has a 'name' string field"
+  ],
+  "_masked_fields": {
+    "domains": "<MASKED:nondeterministic>"
+  }
+}

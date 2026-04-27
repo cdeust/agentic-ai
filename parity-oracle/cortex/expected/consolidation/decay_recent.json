@@ -1,0 +1,26 @@
+{
+  "_capture_status": "SHAPE-KNOWN-FROM-SOURCE",
+  "_shape_source": "mcp_server/handlers/consolidation/decay.py:run_decay_cycle() — always returns memories_decayed=0 and reason_for_zero='lazy_decay_via_effective_heat' (A3 design).",
+  "_schema_shape": {
+    "status": "string (one of: ok|partial)",
+    "failed_stages": "array<string>",
+    "duration_ms": "object (stage_name -> number)",
+    "decay": {
+      "memories_decayed": "integer == 0",
+      "entities_decayed": "integer >= 0",
+      "total_memories": "integer >= 0",
+      "reason_for_zero": "string == 'lazy_decay_via_effective_heat'"
+    }
+  },
+  "_critical_invariants": [
+    "decay.memories_decayed == 0 (A3 lazy-heat — eager decay was removed)",
+    "decay.reason_for_zero == 'lazy_decay_via_effective_heat'",
+    "status is one of 'ok' or 'partial'",
+    "failed_stages is an array (empty if status=ok)"
+  ],
+  "_masked_fields": {
+    "duration_ms": "<MASKED:nondeterministic>",
+    "decay.total_memories": "<MASKED:nondeterministic>",
+    "decay.entities_decayed": "<MASKED:nondeterministic>"
+  }
+}

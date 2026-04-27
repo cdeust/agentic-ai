@@ -1,0 +1,14 @@
+{
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_blocked_reason": "Requires live DB. Key assertion is that heat is near 0.35 (not 1.0) — verifies issue #14 P1 fix preserved.",
+  "_capture_command": "cd /Users/cdeust/Developments/Cortex && python -m mcp_server.capture_fixture remember remember_with_initial_heat 2>/dev/null | python scripts/strip_nondeterministic.py > parity-oracle/cortex/expected/remember/remember_with_initial_heat.json",
+  "_critical_invariants": [
+    "stored == true",
+    "heat < 0.8 (initial_heat=0.35 baseline must be honoured; surprise boost may add, but result must not be 1.0)",
+    "heat > 0.0"
+  ],
+  "_masked_fields": {
+    "memory_id": "<MASKED:nondeterministic>",
+    "heat": "<MASKED:nondeterministic-but-bounded: assertHeat(result.heat < 0.8 && result.heat > 0.0)>"
+  }
+}

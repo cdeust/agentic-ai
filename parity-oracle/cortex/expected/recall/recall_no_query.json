@@ -1,0 +1,11 @@
+{
+  "_capture_status": "SHAPE-KNOWN-FROM-SOURCE",
+  "_shape_source": "mcp_server/handlers/recall.py:handler() line: 'if not args or not args.get(query): return {results: [], total: 0}'",
+  "results": [],
+  "total": 0,
+  "_critical_invariants": [
+    "total == 0",
+    "results is empty array []",
+    "no exception thrown"
+  ]
+}

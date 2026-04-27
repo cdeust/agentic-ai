@@ -1,0 +1,18 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/Cortex",
+    "source_tool": "recall",
+    "source_file": "mcp_server/handlers/recall.py",
+    "purpose_one_liner": "Domain-scoped recall: verifies domain filter is applied server-side and cross-domain memories are excluded.",
+    "failure_modes_caught": [
+      "domain filter ignored: memories from other domains returned",
+      "domain parameter passed as None crashes pg_recall call",
+      "agent_topic isolation broken: memories from other agent contexts leak through",
+      "directory restriction not propagated to pg_recall when both domain and directory supplied"
+    ]
+  },
+  "query": "consolidation decay cycle performance",
+  "domain": "cortex",
+  "agent_topic": "engineer",
+  "max_results": 5
+}

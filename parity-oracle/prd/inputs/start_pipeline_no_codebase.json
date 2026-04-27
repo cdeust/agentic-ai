@@ -1,0 +1,18 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/prd-spec-generator",
+    "source_tool": "start_pipeline",
+    "source_file": "packages/mcp-server/src/pipeline-tools.ts",
+    "purpose_one_liner": "Initialize a pipeline run with no codebase_path; verifies run_id, current_step=banner, and NextAction shape.",
+    "failure_modes_caught": [
+      "run_id field absent from response",
+      "current_step field absent or wrong value on initial step",
+      "action field absent (NextAction not returned)",
+      "CHANGELOG 0.2.0 CRIT: start_pipeline not draining strategy_executions after initial step",
+      "messages array absent from response",
+      "state_summary.sections absent from envelope"
+    ]
+  },
+  "feature_description": "Add a dark mode toggle to the user settings page with system preference detection and persistence to localStorage.",
+  "skip_preflight": false
+}

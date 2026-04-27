@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/Cortex",
+    "source_tool": "recall",
+    "source_file": "mcp_server/handlers/recall.py",
+    "purpose_one_liner": "Happy-path: minimal query, default params; verifies basic response shape and required fields.",
+    "failure_modes_caught": [
+      "missing 'results' array key in response",
+      "missing 'total' integer key in response",
+      "missing 'query_intent' classification field",
+      "missing 'dispatch_tier' field",
+      "handler returning None instead of dict on no-results path"
+    ]
+  },
+  "query": "why did we choose pgvector over Pinecone?"
+}

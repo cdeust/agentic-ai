@@ -1,0 +1,18 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/Cortex",
+    "source_tool": "narrative",
+    "source_file": "mcp_server/handlers/narrative.py",
+    "purpose_one_liner": "Happy-path: domain-scoped narrative; verifies narrative string, memory_count integer, themes array all present.",
+    "failure_modes_caught": [
+      "narrative field absent from response (TS returns 'story' or 'text' instead)",
+      "memory_count field absent or wrong type",
+      "themes array absent from response",
+      "brief=false path returns summary key instead of narrative key",
+      "empty memory store produces crash instead of empty narrative",
+      "domain parameter ignored: global memories used instead of domain-scoped"
+    ]
+  },
+  "domain": "cortex",
+  "brief": false
+}

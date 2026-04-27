@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/automatised-pipeline",
+    "source_tool": "query_graph (Rust MCP binary)",
+    "source_file": "src/ (Rust AST analysis binary)",
+    "purpose_one_liner": "Query the call graph for a known symbol; verifies callers/callees shape and edge count from Rust binary.",
+    "failure_modes_caught": [
+      "TS adapter returning empty callers/callees when Rust returns non-zero edge count",
+      "CHANGELOG 3.14.8: Function→Process / Function→Community noise edges leaking through label-OR filter",
+      "qualified_name in response missing or truncated",
+      "TS subprocess framing race: response JSON split across two reads → parse error"
+    ]
+  },
+  "qualified_name": "src.retrieval.recall",
+  "depth": 1
+}

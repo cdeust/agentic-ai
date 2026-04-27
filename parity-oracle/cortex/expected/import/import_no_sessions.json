@@ -1,0 +1,13 @@
+{
+  "_capture_status": "SHAPE-KNOWN-FROM-SOURCE",
+  "_shape_source": "mcp_server/handlers/import_sessions.py:handler() — _discover_jsonl_files returns [] for nonexistent project, handler returns early with error key.",
+  "imported": 0,
+  "sessions_scanned": 0,
+  "error": "no_sessions_found",
+  "_critical_invariants": [
+    "imported == 0",
+    "sessions_scanned == 0",
+    "error == 'no_sessions_found'",
+    "no exception thrown"
+  ]
+}

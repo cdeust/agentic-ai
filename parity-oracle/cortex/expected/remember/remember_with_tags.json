@@ -1,0 +1,14 @@
+{
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_blocked_reason": "Requires live DB. important tag bypass + decision-shaped content are the critical assertion paths.",
+  "_capture_command": "cd /Users/cdeust/Developments/Cortex && python -m mcp_server.capture_fixture remember remember_with_tags 2>/dev/null | python scripts/strip_nondeterministic.py > parity-oracle/cortex/expected/remember/remember_with_tags.json",
+  "_critical_invariants": [
+    "stored == true (important tag or bypass_decision triggered)",
+    "reason is one of: bypass_important_tag | bypass_decision | forced",
+    "memory_id is non-null"
+  ],
+  "_masked_fields": {
+    "memory_id": "<MASKED:nondeterministic>",
+    "heat": "<MASKED:nondeterministic>"
+  }
+}

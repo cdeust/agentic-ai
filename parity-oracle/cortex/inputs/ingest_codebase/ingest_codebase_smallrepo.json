@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/Cortex",
+    "source_tool": "ingest_codebase",
+    "source_file": "mcp_server/handlers/ingest_codebase.py (split into 6 modules in 3.14.8)",
+    "purpose_one_liner": "Index fixture Python repo via Cortex's ingest_codebase handler; verifies CHANGELOG 3.14.8 full-chain extraction fix.",
+    "failure_modes_caught": [
+      "CHANGELOG 3.14.8: BM25 2-symbol extraction on 10-file project (Cypher projection must be used)",
+      "CHANGELOG 3.14.8: cache poisoning — ensure_graph memoising error path",
+      "CHANGELOG 3.14.8: qualified_name overload collision dropping call edges",
+      "status=error returned instead of status=ok after successful index"
+    ]
+  },
+  "path": "<WORKTREE_ROOT>/parity-oracle/codebase/fixture-repos/small-python",
+  "language": "python"
+}

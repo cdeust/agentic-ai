@@ -1,0 +1,17 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/Cortex",
+    "source_tool": "recall",
+    "source_file": "mcp_server/handlers/recall.py",
+    "purpose_one_liner": "UTF-8 round-trip: query contains non-ASCII characters; catches character class mishandling in TS port string handling.",
+    "failure_modes_caught": [
+      "TS port mishandles multi-byte UTF-8 sequences in query string (truncation, mojibake)",
+      "embedding engine crashes on non-ASCII input in TS port",
+      "Arabic bidirectional text causes content_hardening NFC normalization divergence",
+      "emoji in query breaks FTS trigram indexing path",
+      "Japanese CJK characters produce different tokenization in TS vs Python embedding path"
+    ]
+  },
+  "query": "パフォーマンス最適化: pgvector HNSW インデックス設定 — m=16, ef_construction=64",
+  "max_results": 5
+}

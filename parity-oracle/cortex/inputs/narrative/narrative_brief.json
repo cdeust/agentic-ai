@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/Cortex",
+    "source_tool": "narrative",
+    "source_file": "mcp_server/handlers/narrative.py",
+    "purpose_one_liner": "Brief=true path: returns {summary, memory_count} not the full narrative shape; TS must branch correctly.",
+    "failure_modes_caught": [
+      "brief=true path returns narrative key instead of summary key",
+      "themes field absent: should NOT be present on brief path (response shape differs)",
+      "summary is empty string instead of prose when memories exist",
+      "memory_count wrong on brief path vs full path for same domain"
+    ]
+  },
+  "domain": "cortex",
+  "brief": true
+}

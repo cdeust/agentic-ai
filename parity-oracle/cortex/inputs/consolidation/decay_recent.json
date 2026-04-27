@@ -1,0 +1,21 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/Cortex",
+    "source_tool": "consolidate",
+    "source_file": "mcp_server/handlers/consolidate.py + mcp_server/handlers/consolidation/decay.py",
+    "purpose_one_liner": "Decay-only cycle: verifies A3 lazy-heat design: memories_decayed=0, reason_for_zero='lazy_decay_via_effective_heat'.",
+    "failure_modes_caught": [
+      "TS port executes eager per-row heat UPDATE (reverts A3 lazy-heat design, performance regression)",
+      "memories_decayed field absent from decay stage result",
+      "reason_for_zero field absent when memories_decayed=0",
+      "entities_decayed field missing from response",
+      "duration_ms per stage not tracked in response",
+      "failed_stages list absent from response when all stages pass"
+    ]
+  },
+  "decay": true,
+  "compress": false,
+  "cls": false,
+  "memify": false,
+  "deep": false
+}

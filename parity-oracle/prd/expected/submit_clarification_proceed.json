@@ -1,0 +1,26 @@
+{
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_blocked_reason": "Requires a live run_id from a prior start_pipeline call, which requires advancing the pipeline to the clarification step. See RUNBOOK.md §4.2 for the multi-step capture sequence.",
+  "_capture_command": "node scripts/capture_prd_fixture.js submit_clarification_proceed | node scripts/strip_nondeterministic.js > parity-oracle/prd/expected/submit_clarification_proceed.json",
+  "_schema_shape": {
+    "run_id": "string",
+    "current_step": "string (advanced past clarification)",
+    "messages": "array",
+    "action": "object with type field",
+    "state_summary": {
+      "sections": "array"
+    }
+  },
+  "_critical_invariants": [
+    "run_id matches the input run_id (state identity preserved)",
+    "current_step advanced past 'clarification'",
+    "action.type is a substantive action type",
+    "errors array and error_kinds array in state_summary are in lockstep (CHANGELOG 0.2.0 CRIT regression guard)"
+  ],
+  "_masked_fields": {
+    "run_id": "<MASKED:nondeterministic>",
+    "current_step": "<MASKED:nondeterministic>",
+    "action": "<MASKED:nondeterministic>",
+    "messages": "<MASKED:nondeterministic>"
+  }
+}

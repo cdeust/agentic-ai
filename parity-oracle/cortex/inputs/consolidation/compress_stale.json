@@ -1,0 +1,20 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/Cortex",
+    "source_tool": "consolidate",
+    "source_file": "mcp_server/handlers/consolidate.py + mcp_server/handlers/consolidation/compression.py",
+    "purpose_one_liner": "Compress-only cycle: verifies full-text→gist→tag pipeline runs without decay or CLS; checks partial-failure reporting.",
+    "failure_modes_caught": [
+      "compress stage missing from TS port entirely",
+      "status field not one of 'ok' or 'partial'",
+      "failed_stages array absent when status='partial'",
+      "cls reason_for_inaction field absent when cls stage runs but produces no mutations",
+      "memify reason_for_zero field absent (distinguishing empty-store from early-return — issue #14 P2)"
+    ]
+  },
+  "decay": false,
+  "compress": true,
+  "cls": false,
+  "memify": false,
+  "deep": false
+}

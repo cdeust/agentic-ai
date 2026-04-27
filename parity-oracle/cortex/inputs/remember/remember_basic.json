@@ -1,0 +1,19 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/Cortex",
+    "source_tool": "remember",
+    "source_file": "mcp_server/handlers/remember.py",
+    "purpose_one_liner": "Happy-path store: error content bypasses gate (bypass_error), returns stored=true with required fields.",
+    "failure_modes_caught": [
+      "stored field missing from response",
+      "memory_id field absent when stored=true",
+      "action enum not one of stored|merged|rejected",
+      "heat field absent on successful store",
+      "bypass_error gate not triggered on content containing 'RuntimeError'",
+      "wiki_sync failure swallowed without 'warnings' array surfaced"
+    ]
+  },
+  "content": "RuntimeError: connection refused on port 5432. The server crashed with a full traceback during consolidate handler test.",
+  "tags": ["bug-fix", "recall", "postgres"],
+  "source": "session"
+}

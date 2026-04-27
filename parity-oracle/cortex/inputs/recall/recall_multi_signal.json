@@ -1,0 +1,18 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/Cortex",
+    "source_tool": "recall",
+    "source_file": "mcp_server/handlers/recall.py",
+    "purpose_one_liner": "Tests high-heat + recency + high-score filtering; exercises WRRF signal fusion path with non-default parameters.",
+    "failure_modes_caught": [
+      "min_heat filter not applied: cold memories returned when min_heat=0.5",
+      "max_results cap ignored: more than 3 results returned",
+      "WRRF multi-signal fusion broken: single-signal results returned when multiple signals active",
+      "strategic ordering (Liu et al. 2023) not applied when results >= 5",
+      "co-activation Hebbian update crashing on short result sets"
+    ]
+  },
+  "query": "recall regression root cause FlashRank ONNX cache",
+  "max_results": 3,
+  "min_heat": 0.5
+}

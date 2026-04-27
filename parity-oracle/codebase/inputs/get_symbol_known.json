@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/automatised-pipeline",
+    "source_tool": "get_symbol (Rust MCP binary)",
+    "source_file": "src/ (Rust AST analysis binary)",
+    "purpose_one_liner": "Fetch a known symbol by qualified name; verifies symbol schema: name, qualified_name, kind, file_path, line_start, line_end.",
+    "failure_modes_caught": [
+      "file_path field absent (CHANGELOG 3.14.8: file attribution via containment edges, not qn.split heuristic)",
+      "kind field wrong type or absent",
+      "line_start/line_end absent from symbol response",
+      "TS adapter returning null instead of 404-style error for unknown symbol",
+      "qualified_name overload collision: wrong symbol returned when multiple methods share name"
+    ]
+  },
+  "qualified_name": "src.store.MemoryStore"
+}

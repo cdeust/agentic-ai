@@ -1,0 +1,19 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/Cortex",
+    "source_tool": "remember",
+    "source_file": "mcp_server/handlers/remember.py",
+    "purpose_one_liner": "is_global=true path: memory must be visible cross-domain; verifies global_reason field surfaced in response.",
+    "failure_modes_caught": [
+      "is_global flag not stored on memory row",
+      "global_reason field absent from response when is_global=true",
+      "detect_global auto-classification override not applied when is_global=false but content qualifies",
+      "cross-domain visibility broken: global memory not retrievable from different domain"
+    ]
+  },
+  "content": "User identity: Clement Deust. Primary email: clement.deust@gmail.com. All projects are under /Users/cdeust/Developments/.",
+  "tags": ["user-identity", "global"],
+  "is_global": true,
+  "force": true,
+  "source": "user"
+}

@@ -1,0 +1,18 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/Cortex",
+    "source_tool": "recall",
+    "source_file": "mcp_server/handlers/recall.py",
+    "purpose_one_liner": "Edge case: recall against empty or cold store; verifies graceful empty-result response, no crash.",
+    "failure_modes_caught": [
+      "handler crashes with AttributeError when results list is empty and strategic_ordering runs",
+      "co-activation code crashes on len(results) < 2 guard absent",
+      "total field missing when results is empty list",
+      "query_intent field absent on zero-result path",
+      "TS port throws on empty array instead of returning {results: [], total: 0}"
+    ]
+  },
+  "query": "obscure topic that will never match any stored memory xyzzy-nonce-42",
+  "min_heat": 0.99,
+  "max_results": 10
+}

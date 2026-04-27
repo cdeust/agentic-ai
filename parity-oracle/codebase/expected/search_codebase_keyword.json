@@ -1,0 +1,20 @@
+{
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_blocked_reason": "Requires compiled Rust binary and fixture repo indexed.",
+  "_capture_command": "AIPRD_PIPELINE_BIN=<path/to/binary> node scripts/capture_codebase_fixture.js search_codebase_keyword | node scripts/strip_nondeterministic.js > parity-oracle/codebase/expected/search_codebase_keyword.json",
+  "_schema_shape": {
+    "results": "array<object>",
+    "total": "integer >= 0"
+  },
+  "_critical_invariants": [
+    "results is an array",
+    "results contains at least src.consolidation.run_decay (contains 'decay')",
+    "results contains at least src.thermodynamics.effective_heat (Ebbinghaus decay reference)",
+    "each result has qualified_name, score, and file_path fields",
+    "REGRESSION GUARD: total != 2 (CHANGELOG 3.14.8: BM25 cap of 2 results was the bug)"
+  ],
+  "_masked_fields": {
+    "results[*].score": "<MASKED:nondeterministic>",
+    "results[*].line_start": "<MASKED:nondeterministic>"
+  }
+}

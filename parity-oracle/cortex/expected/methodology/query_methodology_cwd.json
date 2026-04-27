@@ -1,0 +1,35 @@
+{
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_blocked_reason": "Requires profiles.json to be populated (run rebuild_profiles first). Without profiles, coldStart=true is returned instead.",
+  "_capture_command": "cd /Users/cdeust/Developments/Cortex && python -m mcp_server.capture_fixture query_methodology query_methodology_cwd 2>/dev/null | python scripts/strip_nondeterministic.py > parity-oracle/cortex/expected/methodology/query_methodology_cwd.json",
+  "_schema_shape": {
+    "domain": "string",
+    "confidence": "number in [0, 1]",
+    "coldStart": "boolean == false",
+    "context": "string (non-empty)",
+    "style": "object | null",
+    "entryPoints": "array<string>",
+    "recurringPatterns": "array<string>",
+    "toolPreferences": "object",
+    "blindSpots": "array<string>",
+    "connectionBridges": "array<string>",
+    "sessionCount": "integer >= 0",
+    "lastActive": "string | null",
+    "alternativeDomains": "array",
+    "hotMemories": "array<object>",
+    "firedTriggers": "array<object>"
+  },
+  "_critical_invariants": [
+    "coldStart == false",
+    "domain is a non-empty string",
+    "hotMemories is an array",
+    "firedTriggers is an array",
+    "context contains domain name"
+  ],
+  "_masked_fields": {
+    "context": "<MASKED:nondeterministic>",
+    "hotMemories[*].content": "<MASKED:nondeterministic>",
+    "hotMemories[*].created_at": "<MASKED:nondeterministic>",
+    "lastActive": "<MASKED:nondeterministic>"
+  }
+}

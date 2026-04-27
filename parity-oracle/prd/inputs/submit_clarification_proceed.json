@@ -1,0 +1,26 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/prd-spec-generator",
+    "source_tool": "submit_action_result",
+    "source_file": "packages/mcp-server/src/pipeline-tools.ts + packages/orchestration/src/handlers/clarification.ts",
+    "purpose_one_liner": "Submit a clarification 'proceed' result; verifies pipeline advances from clarification step and errors/error_kinds invariant preserved.",
+    "failure_modes_caught": [
+      "CHANGELOG 0.2.0 CRIT: runner.ts coalesce-cap path bypassing appendError, breaking errors/error_kinds lockstep invariant",
+      "CHANGELOG 0.2.0 CRIT: parseVerdicts return-empty mutation surviving Phase B degradation tests",
+      "concurrent submission for same run_id not rejected (inFlight Set not implemented in TS port)",
+      "state_summary.sections not reflecting updated statuses after submit",
+      "action field absent from submit response"
+    ]
+  },
+  "_input_protocol": "This fixture requires a run_id from a prior start_pipeline call. The test harness must: (1) call start_pipeline_no_codebase, (2) advance to clarification step via submit_action_result calls, (3) then call this fixture with the run_id.",
+  "run_id": "<DYNAMIC:from-prior-start_pipeline-call>",
+  "result": {
+    "type": "clarification_response",
+    "proceed": true,
+    "clarifications": {
+      "target_users": "All users with account settings access, primarily power users.",
+      "persistence_scope": "localStorage per-browser, not synced across devices.",
+      "system_preference_fallback": "Default to light mode if no system preference detectable."
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/prd-spec-generator",
+    "source_tool": "start_pipeline",
+    "source_file": "packages/mcp-server/src/pipeline-tools.ts",
+    "purpose_one_liner": "Initialize pipeline with codebase_path set; verifies codebase_path stored in state and context_detection step triggered.",
+    "failure_modes_caught": [
+      "codebase_path not preserved in PipelineState when provided",
+      "index_codebase tool call not appearing in NextAction when codebase_path set",
+      "skip_preflight=false not triggering Cortex preflight step",
+      "strategy selection not invoked at first pending→retrieving section transition"
+    ]
+  },
+  "feature_description": "Implement rate limiting for the public API using a token bucket algorithm with per-user quotas stored in Redis.",
+  "codebase_path": "/Users/cdeust/Developments/Cortex",
+  "skip_preflight": false
+}

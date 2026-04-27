@@ -1,0 +1,27 @@
+{
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_blocked_reason": "Requires seeded PostgreSQL + pgvector instance with representative memories. Run Phase 0 Day 1 DB setup first, then execute the capture command in RUNBOOK.md §2.1.",
+  "_capture_command": "cd /Users/cdeust/Developments/Cortex && python -m mcp_server.capture_fixture recall recall_simple_query 2>/dev/null | python scripts/strip_nondeterministic.py > parity-oracle/cortex/expected/recall/recall_simple_query.json",
+  "_schema_shape": {
+    "results": "array<object>",
+    "total": "integer >= 0",
+    "query_intent": "string (one of: temporal|causal|semantic|entity|knowledge_update|multi_hop)",
+    "dispatch_tier": "string (one of: pg|hybrid|fallback)",
+    "signals": "object",
+    "enhancements": "object"
+  },
+  "_required_keys": ["results", "total", "query_intent", "dispatch_tier", "signals", "enhancements"],
+  "_result_item_required_keys": ["content", "score", "heat", "domain", "tags", "created_at", "source"],
+  "_masked_fields": {
+    "results[*].id": "<MASKED:nondeterministic>",
+    "results[*].created_at": "<MASKED:nondeterministic>",
+    "enhancements.generated_at_utc": "<MASKED:nondeterministic>"
+  },
+  "_critical_invariants": [
+    "total == len(results)",
+    "results is sorted descending by score (results[0].score >= results[1].score for all i)",
+    "all results have score in [0.0, 1.0]",
+    "all results have heat in [0.0, 1.0]",
+    "query_intent is a non-empty string"
+  ]
+}

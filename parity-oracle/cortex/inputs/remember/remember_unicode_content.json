@@ -1,0 +1,17 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/Cortex",
+    "source_tool": "remember",
+    "source_file": "mcp_server/handlers/remember.py",
+    "purpose_one_liner": "Content hardening: bidirectional override characters stripped by content_hardening NFC path; TS port must match Python behavior exactly.",
+    "failure_modes_caught": [
+      "bidi override characters (U+202E) not stripped by TS content_hardening",
+      "NFC normalization not applied in TS: composed vs decomposed forms stored differently",
+      "multi-byte UTF-8 content truncated at embedding engine boundary in TS port",
+      "control character stripping diverges between Python and TS implementations"
+    ]
+  },
+  "content": "Performance result: latency p99 = 47ms ‮(OVERRIDE)‬ on the embedding endpoint. NFC: café vs café.",
+  "tags": ["benchmark", "performance"],
+  "force": true
+}

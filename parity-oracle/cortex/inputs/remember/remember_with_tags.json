@@ -1,0 +1,20 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/Cortex",
+    "source_tool": "remember",
+    "source_file": "mcp_server/handlers/remember.py",
+    "purpose_one_liner": "Tags + important bypass: 'important' tag forces gate bypass; decision-shaped content triggers bypass_decision.",
+    "failure_modes_caught": [
+      "important tag not recognized as gate bypass (bypass_important_tag reason absent)",
+      "tags array not preserved on stored memory",
+      "domain auto-detection from directory not applied when domain param absent",
+      "agent_topic isolation tag not stored on memory row",
+      "triggers_created array absent when TODO-shaped content stored"
+    ]
+  },
+  "content": "We decided to migrate from MySQL to PostgreSQL for pgvector support. This is the authoritative record of that architecture decision.",
+  "tags": ["important", "decision", "architecture", "database"],
+  "directory": "/Users/dev/Developments/cortex",
+  "agent_topic": "architect",
+  "source": "session"
+}

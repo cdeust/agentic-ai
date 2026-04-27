@@ -1,0 +1,15 @@
+{
+  "_capture_status": "SHAPE-KNOWN-FROM-SOURCE",
+  "_shape_source": "mcp_server/handlers/recall.py:handler() — guard 'if not args or not args.get(query)' returns {results: [], total: 0}. On min_heat=0.99 with no hot memories, pg_recall returns [], enrichments are no-ops, handler returns empty results.",
+  "results": [],
+  "total": 0,
+  "query_intent": "<MASKED:nondeterministic>",
+  "dispatch_tier": "pg",
+  "signals": {},
+  "enhancements": "<MASKED:nondeterministic>",
+  "_critical_invariants": [
+    "total == 0",
+    "results is empty array []",
+    "dispatch_tier must be present (not null)"
+  ]
+}

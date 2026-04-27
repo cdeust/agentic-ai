@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/Cortex",
+    "source_tool": "import_sessions",
+    "source_file": "mcp_server/handlers/import_sessions.py",
+    "purpose_one_liner": "Error path: no JSONL files found; returns {imported:0, sessions_scanned:0, error:'no_sessions_found'}.",
+    "failure_modes_caught": [
+      "error field absent when no sessions found",
+      "handler crashes instead of returning error dict",
+      "imported field missing from error response",
+      "sessions_scanned field missing from error response"
+    ]
+  },
+  "project": "nonexistent-project-slug-xyz-42",
+  "dry_run": true
+}

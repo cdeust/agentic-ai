@@ -1,0 +1,16 @@
+{
+  "_capture_status": "SHAPE-KNOWN-FROM-SOURCE",
+  "_shape_source": "packages/orchestration/src/runner.ts — skip_preflight=true causes the runner to coalesce past the preflight handler. The first substantive action after banner+preflight coalescing is context_detection or input_analysis.",
+  "_critical_invariants": [
+    "run_id starts with 'run_'",
+    "current_step is NOT 'banner' or 'preflight' (those were coalesced)",
+    "messages array contains at least one entry from the coalesced steps",
+    "action.type is a substantive action type (not 'emit_message')"
+  ],
+  "_masked_fields": {
+    "run_id": "<MASKED:nondeterministic>",
+    "current_step": "<MASKED:nondeterministic>",
+    "action": "<MASKED:nondeterministic>",
+    "messages": "<MASKED:nondeterministic>"
+  }
+}

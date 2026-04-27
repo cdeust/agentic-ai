@@ -1,0 +1,15 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/prd-spec-generator",
+    "source_tool": "start_pipeline",
+    "source_file": "packages/mcp-server/src/pipeline-tools.ts",
+    "purpose_one_liner": "skip_preflight=true path: pipeline advances past preflight without Cortex recall; tests step coalescing.",
+    "failure_modes_caught": [
+      "skip_preflight=true not respected: pipeline still pauses on preflight step",
+      "emit_message coalescing broken: multiple messages in 'messages' array when only one expected",
+      "current_step wrong after skip: should advance past preflight to context_detection or further"
+    ]
+  },
+  "feature_description": "Add OAuth 2.0 PKCE flow support to the authentication service.",
+  "skip_preflight": true
+}

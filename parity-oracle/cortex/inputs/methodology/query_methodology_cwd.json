@@ -1,0 +1,21 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/Cortex",
+    "source_tool": "query_methodology",
+    "source_file": "mcp_server/handlers/query_methodology.py",
+    "purpose_one_liner": "Happy-path with known cwd: returns full profile dict including hotMemories + firedTriggers + all profile fields.",
+    "failure_modes_caught": [
+      "coldStart=true returned incorrectly when profiles.json exists",
+      "hotMemories field absent from response",
+      "firedTriggers field absent from response",
+      "style field not mapped from metacognitive profile key",
+      "entryPoints array absent or wrong type",
+      "recurringPatterns array absent",
+      "blindSpots array absent",
+      "connectionBridges array absent",
+      "context string missing memory enrichment section when hot memories exist"
+    ]
+  },
+  "cwd": "/Users/cdeust/Developments/Cortex",
+  "first_message": "debug the recall regression in pg_recall.py"
+}

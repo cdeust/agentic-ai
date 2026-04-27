@@ -1,0 +1,20 @@
+{
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_blocked_reason": "Requires compiled Rust binary and fixture repo already indexed.",
+  "_capture_command": "AIPRD_PIPELINE_BIN=<path/to/binary> node scripts/capture_codebase_fixture.js query_graph_simple | node scripts/strip_nondeterministic.js > parity-oracle/codebase/expected/query_graph_simple.json",
+  "_schema_shape": {
+    "symbol": "object",
+    "callers": "array<object>",
+    "callees": "array<object>"
+  },
+  "_critical_invariants": [
+    "symbol.qualified_name == 'src.retrieval.recall'",
+    "callers is an array",
+    "callees is an array",
+    "callees contains at least src.store.MemoryStore (recall calls store.get_hot)"
+  ],
+  "_masked_fields": {
+    "symbol.line_start": "<MASKED:nondeterministic>",
+    "symbol.line_end": "<MASKED:nondeterministic>"
+  }
+}

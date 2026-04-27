@@ -1,0 +1,23 @@
+{
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_blocked_reason": "Requires profiles.json to exist for full domain resolution. Basic shape always returned.",
+  "_capture_command": "cd /Users/cdeust/Developments/Cortex && python -m mcp_server.capture_fixture detect_domain detect_domain_cwd 2>/dev/null | python scripts/strip_nondeterministic.py > parity-oracle/cortex/expected/methodology/detect_domain_cwd.json",
+  "_schema_shape": {
+    "domain": "string | null",
+    "confidence": "number in [0, 1]",
+    "alternativeDomains": "array",
+    "signals": "object"
+  },
+  "_critical_invariants": [
+    "domain is a string (not null for a known path)",
+    "confidence is a number in [0.0, 1.0]",
+    "alternativeDomains is an array",
+    "signals is an object"
+  ],
+  "_masked_fields": {
+    "domain": "<MASKED:nondeterministic>",
+    "confidence": "<MASKED:nondeterministic>",
+    "alternativeDomains": "<MASKED:nondeterministic>",
+    "signals": "<MASKED:nondeterministic>"
+  }
+}

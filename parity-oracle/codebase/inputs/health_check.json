@@ -1,0 +1,15 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/automatised-pipeline",
+    "source_tool": "health_check (Rust MCP binary)",
+    "source_file": "src/ (Rust MCP interface)",
+    "purpose_one_liner": "Health probe; verifies the Rust binary responds with status=ok and version string. Tests subprocess lifecycle.",
+    "failure_modes_caught": [
+      "Rust binary not started / process not alive when TS adapter calls health_check",
+      "status field absent from health response",
+      "version field absent from health response",
+      "TS subprocess adapter deadlocks on stdin/stdout pipe under concurrent calls (Lamport ordering failure)",
+      "health_check hangs when binary crashes during startup"
+    ]
+  }
+}

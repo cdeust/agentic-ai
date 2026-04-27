@@ -1,0 +1,17 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/Cortex",
+    "source_tool": "query_methodology",
+    "source_file": "mcp_server/handlers/query_methodology.py",
+    "purpose_one_liner": "Cold-start path: unknown cwd returns coldStart=true with empty profile and hint to call rebuild_profiles.",
+    "failure_modes_caught": [
+      "coldStart field absent from response",
+      "coldStart=false returned incorrectly for unknown project (hides need to rebuild)",
+      "context field absent on cold-start path",
+      "hotMemories/firedTriggers arrays absent even on cold-start (must be [] not missing)",
+      "handler crashes on empty profiles.json"
+    ]
+  },
+  "cwd": "/tmp/unknown-project-xyz-does-not-exist",
+  "first_message": "start working on this brand new project"
+}

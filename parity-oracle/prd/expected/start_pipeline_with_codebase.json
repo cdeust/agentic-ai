@@ -1,0 +1,14 @@
+{
+  "_capture_status": "SHAPE-KNOWN-FROM-SOURCE",
+  "_shape_source": "packages/mcp-server/src/pipeline-tools.ts — codebase_path stored in initial state. First action will be banner, then eventually a call_codebase_tool or call_cortex_tool action for preflight.",
+  "_critical_invariants": [
+    "run_id starts with 'run_'",
+    "current_step == 'banner' on initial call",
+    "state_summary contains codebase_path == '/Users/cdeust/Developments/Cortex' OR codebase_path preserved in pipeline state"
+  ],
+  "_masked_fields": {
+    "run_id": "<MASKED:nondeterministic>",
+    "action": "<MASKED:nondeterministic>",
+    "messages": "<MASKED:nondeterministic>"
+  }
+}

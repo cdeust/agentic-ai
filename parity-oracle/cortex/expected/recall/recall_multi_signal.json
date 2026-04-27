@@ -1,0 +1,22 @@
+{
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_blocked_reason": "Requires seeded DB with memories having heat >= 0.5 for the recall regression topic.",
+  "_capture_command": "cd /Users/cdeust/Developments/Cortex && python -m mcp_server.capture_fixture recall recall_multi_signal 2>/dev/null | python scripts/strip_nondeterministic.py > parity-oracle/cortex/expected/recall/recall_multi_signal.json",
+  "_schema_shape": {
+    "results": "array<object> with length <= 3",
+    "total": "integer >= 0 and <= 3",
+    "query_intent": "string",
+    "dispatch_tier": "string",
+    "signals": "object",
+    "enhancements": "object"
+  },
+  "_critical_invariants": [
+    "len(results) <= 3 (max_results=3 cap enforced)",
+    "all results have heat >= 0.5 (min_heat=0.5 filter enforced)",
+    "results sorted descending by score"
+  ],
+  "_masked_fields": {
+    "results[*].id": "<MASKED:nondeterministic>",
+    "results[*].created_at": "<MASKED:nondeterministic>"
+  }
+}

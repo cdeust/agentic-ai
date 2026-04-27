@@ -1,0 +1,27 @@
+{
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_blocked_reason": "Requires ~/.claude/projects/ JSONL files to exist. dry_run=true so no DB writes, but session files must be present.",
+  "_capture_command": "cd /Users/cdeust/Developments/Cortex && python -m mcp_server.capture_fixture import_sessions claude_mem_smallset 2>/dev/null | python scripts/strip_nondeterministic.py > parity-oracle/cortex/expected/import/claude_mem_smallset.json",
+  "_schema_shape": {
+    "imported": "integer >= 0",
+    "gated": "integer >= 0",
+    "skipped": "integer >= 0",
+    "sessions_scanned": "integer >= 0",
+    "total_files": "integer >= 0",
+    "dry_run": "boolean == true",
+    "preview": "array<object> (when dry_run=true and items found)"
+  },
+  "_critical_invariants": [
+    "dry_run == true",
+    "sessions_scanned <= 5 (max_sessions=5 cap)",
+    "preview array present when imported > 0",
+    "each preview item has: content, tags, importance, project, domain",
+    "no subagent JSONL files included in sessions_scanned count"
+  ],
+  "_masked_fields": {
+    "imported": "<MASKED:nondeterministic>",
+    "sessions_scanned": "<MASKED:nondeterministic>",
+    "preview[*].content": "<MASKED:nondeterministic>",
+    "total_files": "<MASKED:nondeterministic>"
+  }
+}

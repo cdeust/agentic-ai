@@ -1,0 +1,26 @@
+{
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_blocked_reason": "Requires compiled Rust binary and fixture repo indexed. Run Phase 3 setup first.",
+  "_capture_command": "AIPRD_PIPELINE_BIN=<path/to/binary> node scripts/capture_codebase_fixture.js index_codebase_smallrepo | node scripts/strip_nondeterministic.js > parity-oracle/codebase/expected/index_codebase_smallrepo.json",
+  "_schema_shape": {
+    "status": "string == 'ok' | 'error'",
+    "symbols": "integer",
+    "files": "integer",
+    "edges": "integer"
+  },
+  "_critical_invariants": [
+    "status == 'ok'",
+    "files >= 10 (fixture has 10 Python files including __init__.py)",
+    "symbols >= 20 (fixture has ~20 functions + 2 classes)",
+    "edges >= 5 (at minimum: recall->store.get_hot, run_full_cycle->run_decay, run_full_cycle->run_compression, etc.)"
+  ],
+  "_masked_fields": {
+    "symbols": "<MASKED:nondeterministic-but-bounded: assert(result.symbols >= 20)>",
+    "files": "<MASKED:nondeterministic-but-bounded: assert(result.files >= 10)>",
+    "edges": "<MASKED:nondeterministic-but-bounded: assert(result.edges >= 5)>"
+  },
+  "_changelog_regression_guards": [
+    "symbols must NOT be 2 (CHANGELOG 3.14.8: BM25 tip-of-iceberg regression — full Cypher projection required)",
+    "edges must NOT be 0 (CHANGELOG 3.14.8: missing edge extraction regression)"
+  ]
+}

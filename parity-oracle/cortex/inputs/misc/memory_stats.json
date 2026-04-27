@@ -1,0 +1,14 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/Cortex",
+    "source_tool": "memory_stats",
+    "source_file": "mcp_server/handlers/memory_stats.py",
+    "purpose_one_liner": "Memory statistics snapshot; verifies total, hot_count, cold_count, domain_breakdown fields.",
+    "failure_modes_caught": [
+      "total field absent or wrong type",
+      "hot_count + cold_count != total (arithmetic invariant broken in TS port)",
+      "domain_breakdown absent",
+      "handler crashes on empty store"
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_blocked_reason": "Requires live DB. The stored=true + bypass_error path is knowable from source code but memory_id and heat values are non-deterministic.",
+  "_capture_command": "cd /Users/cdeust/Developments/Cortex && python -m mcp_server.capture_fixture remember remember_basic 2>/dev/null | python scripts/strip_nondeterministic.py > parity-oracle/cortex/expected/remember/remember_basic.json",
+  "_schema_shape": {
+    "stored": "boolean",
+    "memory_id": "string (UUID or integer string)",
+    "action": "string (one of: stored|merged|rejected)",
+    "reason": "string",
+    "heat": "number in [0.0, 1.0]"
+  },
+  "_critical_invariants": [
+    "stored == true (bypass_error gate triggered by RuntimeError content)",
+    "action == 'stored' (novel error content, first store)",
+    "reason == 'bypass_error'",
+    "heat is a number in (0.0, 1.0]",
+    "memory_id is a non-null string"
+  ],
+  "_masked_fields": {
+    "memory_id": "<MASKED:nondeterministic>",
+    "heat": "<MASKED:nondeterministic>"
+  }
+}

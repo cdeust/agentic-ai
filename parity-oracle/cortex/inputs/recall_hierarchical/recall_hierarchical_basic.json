@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/Cortex",
+    "source_tool": "recall_hierarchical",
+    "source_file": "mcp_server/handlers/recall_hierarchical.py",
+    "purpose_one_liner": "L0/L1/L2 cluster topology recall; verifies shape is cluster topology not flat list (distinct from recall handler).",
+    "failure_modes_caught": [
+      "TS port returns flat list instead of cluster topology (conflates recall and recall_hierarchical)",
+      "clusters key absent from response",
+      "L0/L1/L2 level keys missing from cluster topology",
+      "total_clusters field absent"
+    ]
+  },
+  "query": "recall and memory retrieval",
+  "max_clusters": 5
+}

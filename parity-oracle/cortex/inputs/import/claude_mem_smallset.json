@@ -1,0 +1,21 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/Cortex",
+    "source_tool": "import_sessions",
+    "source_file": "mcp_server/handlers/import_sessions.py",
+    "purpose_one_liner": "Dry-run import of a small JSONL set; verifies streaming head+tail path (ADR-0045 R2), no full-file read.",
+    "failure_modes_caught": [
+      "TS port materialises full JSONL file in memory (reverts ADR-0045 R2 OOM fix)",
+      "dry_run=true stores memories instead of only previewing",
+      "sessions_scanned field absent from response",
+      "imported count wrong when dry_run=true (should count extracted items not stored)",
+      "domain detection broken: all sessions classified as 'unknown'",
+      "subagent JSONL files included despite filter (paths with 'subagent' in name)",
+      "errors array absent when error occurs",
+      "preview array absent when dry_run=true and items found"
+    ]
+  },
+  "dry_run": true,
+  "min_importance": 0.4,
+  "max_sessions": 5
+}

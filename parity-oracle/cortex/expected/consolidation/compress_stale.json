@@ -1,0 +1,15 @@
+{
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_blocked_reason": "Requires live DB with cold memories eligible for compression.",
+  "_capture_command": "cd /Users/cdeust/Developments/Cortex && python -m mcp_server.capture_fixture consolidate compress_stale 2>/dev/null | python scripts/strip_nondeterministic.py > parity-oracle/cortex/expected/consolidation/compress_stale.json",
+  "_critical_invariants": [
+    "status is one of 'ok' or 'partial'",
+    "failed_stages is an array",
+    "compress stage key present in response",
+    "duration_ms is an object with per-stage keys"
+  ],
+  "_masked_fields": {
+    "duration_ms": "<MASKED:nondeterministic>",
+    "compress.memories_compressed": "<MASKED:nondeterministic>"
+  }
+}

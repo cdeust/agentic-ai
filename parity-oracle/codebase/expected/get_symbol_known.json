@@ -1,0 +1,24 @@
+{
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_blocked_reason": "Requires compiled Rust binary and fixture repo indexed.",
+  "_capture_command": "AIPRD_PIPELINE_BIN=<path/to/binary> node scripts/capture_codebase_fixture.js get_symbol_known | node scripts/strip_nondeterministic.js > parity-oracle/codebase/expected/get_symbol_known.json",
+  "_schema_shape": {
+    "qualified_name": "string",
+    "name": "string",
+    "kind": "string (one of: Class|Function|Method|Struct)",
+    "file_path": "string",
+    "line_start": "integer",
+    "line_end": "integer"
+  },
+  "_critical_invariants": [
+    "qualified_name == 'src.store.MemoryStore'",
+    "kind == 'Class'",
+    "file_path ends with 'store.py' (file attribution from containment edges, not qn.split heuristic)",
+    "line_start is a positive integer",
+    "line_end > line_start"
+  ],
+  "_masked_fields": {
+    "line_start": "<MASKED:nondeterministic>",
+    "line_end": "<MASKED:nondeterministic>"
+  }
+}

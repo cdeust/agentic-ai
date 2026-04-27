@@ -1,0 +1,14 @@
+{
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_blocked_reason": "Requires live DB. force=true ensures stored=true; is_global=true and global_reason fields are the critical assertions.",
+  "_capture_command": "cd /Users/cdeust/Developments/Cortex && python -m mcp_server.capture_fixture remember remember_global 2>/dev/null | python scripts/strip_nondeterministic.py > parity-oracle/cortex/expected/remember/remember_global.json",
+  "_critical_invariants": [
+    "stored == true (force=true bypasses gate)",
+    "is_global == true",
+    "global_reason is a non-empty string (one of: 'explicit' or auto-detected reason)"
+  ],
+  "_masked_fields": {
+    "memory_id": "<MASKED:nondeterministic>",
+    "heat": "<MASKED:nondeterministic>"
+  }
+}

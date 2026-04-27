@@ -1,0 +1,13 @@
+{
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_blocked_reason": "Requires seeded DB. Cluster topology depends on embedded memory distribution.",
+  "_capture_command": "cd $CORTEX && python scripts/capture_fixture.py recall_hierarchical recall_hierarchical_basic | python scripts/strip_nondeterministic.py > parity-oracle/cortex/expected/recall_hierarchical/recall_hierarchical_basic.json",
+  "_critical_invariants": [
+    "response is NOT the flat recall shape (no 'results' key at top level)",
+    "clusters key present at top level",
+    "total_clusters is a non-negative integer"
+  ],
+  "_masked_fields": {
+    "clusters": "<MASKED:nondeterministic>"
+  }
+}

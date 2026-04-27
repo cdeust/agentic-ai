@@ -1,0 +1,20 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/automatised-pipeline",
+    "source_tool": "index_codebase (Rust MCP binary)",
+    "source_file": "src/ (Rust AST analysis binary)",
+    "purpose_one_liner": "Index the 10-file fixture Python repo; verifies node count, edge count, and file attribution schema from Rust binary.",
+    "failure_modes_caught": [
+      "CHANGELOG 3.14.8 bug: BM25 tip-of-iceberg extraction returning 2 symbols from 10-file project (now fixed; TS adapter must preserve full Cypher-driven projection)",
+      "CHANGELOG 3.14.8 bug: cache poisoning — ensure_graph memoising error path as success",
+      "file attribution using qn.split('::')[0] heuristic producing fake file paths for Python modules",
+      "qualified_name overload collision silently dropping cross-overload call edges",
+      "hardcoded top_symbols=50 cap truncating small-project output",
+      "TS adapter broad except swallowing transport errors as empty results"
+    ]
+  },
+  "path": "<WORKTREE_ROOT>/parity-oracle/codebase/fixture-repos/small-python",
+  "language": "python",
+  "top_symbols": null,
+  "top_processes": null
+}

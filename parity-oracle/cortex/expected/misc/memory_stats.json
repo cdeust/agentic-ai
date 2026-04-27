@@ -1,0 +1,17 @@
+{
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_blocked_reason": "Requires live DB.",
+  "_capture_command": "cd $CORTEX && python scripts/capture_fixture.py memory_stats memory_stats | python scripts/strip_nondeterministic.py > parity-oracle/cortex/expected/misc/memory_stats.json",
+  "_critical_invariants": [
+    "total is a non-negative integer",
+    "hot_count is a non-negative integer",
+    "cold_count is a non-negative integer",
+    "domain_breakdown is an object"
+  ],
+  "_masked_fields": {
+    "total": "<MASKED:nondeterministic>",
+    "hot_count": "<MASKED:nondeterministic>",
+    "cold_count": "<MASKED:nondeterministic>",
+    "domain_breakdown": "<MASKED:nondeterministic>"
+  }
+}

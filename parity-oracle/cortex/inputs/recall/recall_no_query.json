@@ -1,0 +1,13 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/Cortex",
+    "source_tool": "recall",
+    "source_file": "mcp_server/handlers/recall.py",
+    "purpose_one_liner": "Error path: null args; handler must return {results: [], total: 0} not throw.",
+    "failure_modes_caught": [
+      "TS port throws TypeError on null input instead of graceful empty return",
+      "Python handler guard 'if not args or not args.get(query)' not reproduced in TS",
+      "response shape differs between null-args path and empty-results path"
+    ]
+  }
+}

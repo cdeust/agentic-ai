@@ -1,0 +1,19 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/Cortex",
+    "source_tool": "detect_domain",
+    "source_file": "mcp_server/handlers/detect_domain.py",
+    "purpose_one_liner": "Domain classification via cwd + first_message; verifies domain, confidence, alternativeDomains, signals fields.",
+    "failure_modes_caught": [
+      "domain field absent from response",
+      "confidence field absent or wrong type (not number)",
+      "alternativeDomains array absent from response",
+      "signals dict absent from response",
+      "path token extraction using wrong segment count (not last 3)",
+      "cwd=null not handled gracefully (crash instead of empty domain)",
+      "first_message keyword signals not merged with path signals"
+    ]
+  },
+  "cwd": "/Users/cdeust/Developments/Cortex",
+  "first_message": "fix the recall pipeline regression"
+}

@@ -1,0 +1,14 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/Cortex",
+    "source_tool": "remember",
+    "source_file": "mcp_server/handlers/remember.py",
+    "purpose_one_liner": "Error path: null content; must return {stored: false, reason: 'no_content'} not throw.",
+    "failure_modes_caught": [
+      "TS port throws instead of returning {stored: false, reason: 'no_content'}",
+      "stored field missing from error response",
+      "reason field missing from error response",
+      "content_hardening returning empty string not handled as no_content"
+    ]
+  }
+}

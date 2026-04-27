@@ -1,0 +1,13 @@
+{
+  "_meta": {
+    "source_repo": "github.com/cdeust/Cortex",
+    "source_tool": "list_domains",
+    "source_file": "mcp_server/handlers/list_domains.py",
+    "purpose_one_liner": "List all known cognitive domains; verifies domains array shape and that cortex domain is present after seeding.",
+    "failure_modes_caught": [
+      "domains field absent from response (TS uses 'results' key instead)",
+      "domain objects missing memory_count field",
+      "domain objects missing name or description fields"
+    ]
+  }
+}
