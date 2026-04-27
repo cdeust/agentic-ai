@@ -36,27 +36,38 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: pnpm
 
-      - name: Install
-        # `--no-frozen-lockfile` for the Phase-4 transitional period: the
-        # 12 cortex-* worktree merges introduced new dependencies (zod,
-        # better-sqlite3, pg, yaml, minimatch, tree-sitter, …) but each
-        # branch had its own pnpm-lock.yaml; the lockfile that landed on
-        # main is from cortex-hooks's pre-merge state and predates these
-        # additions. Once a single canonical lockfile is regenerated and
-        # committed, this step reverts to `--frozen-lockfile`.
-        run: pnpm install --no-frozen-lockfile
+      - name: Install (lockfile sync assertion — hard gate)
+        # HARD GATE (restored 2026-04-27, branch port/ci-restore-hard-gates).
+        # --frozen-lockfile serves a dual purpose:
+        #   1. Installs dependencies exactly as committed (reproducible builds).
+        #   2. Asserts lockfile is in sync with package.json manifests — exits
+        #      non-zero if any package.json was updated without regenerating
+        #      pnpm-lock.yaml, catching drift immediately.
+        # The canonical lockfile was regenerated after the Phase-4 cortex-*
+        # merges unified the dependency graph (zod, better-sqlite3, pg, yaml,
+        # minimatch, tree-sitter, …). Any future PR that adds/removes deps must
+        # run `pnpm install` locally and commit the updated pnpm-lock.yaml.
+        # Tracking: docs/PHASE_PLAN.md §Phase-4-to-5-cleanup item (3) resolved.
+        run: pnpm install --frozen-lockfile
 
       - name: Build (sequential, advisory)
-        # Phase-4 transitional: 12 cortex-* worktrees were ported in parallel
-        # by independent agents. The post-merge tree has known type drift
-        # tracked in docs/PHASE_PLAN.md §"Phase 4 → 5 cleanup":
-        #   - remember/handlers/remember.ts + memory-ingest.ts: Memory shape
-        #     diverges between the sub-package's types.ts and pg-store's
-        #     MemoryInsertData (cortex-remember's port-pending finding).
-        # Build is informational until that cleanup lands; `pnpm test` (next
-        # step) is the harder gate because vitest compiles with esbuild
-        # independently of `tsc`.
-        run: pnpm build || echo "::warning::Build failed — Phase-4 type drift, see PHASE_PLAN.md §Phase-4-to-5-cleanup"
+        # Soft-fail: tracking items 7–11 in docs/PHASE_PLAN.md §Phase-4-to-5-cleanup.
+        # Specific errors (all in packages/memory/src/):
+        #   item 7:  wiki/handlers/wiki-verify.ts:19 — imports STALE_THRESHOLD
+        #            but export was renamed to SYMBOL_STALE_THRESHOLD (item 4 fix
+        #            did not update the import at wiki-verify.ts).
+        #   item 8:  codebase-analysis/codebase-graph.ts:279 — Map iteration
+        #            yields [string, Set<string>]; second element is not string.
+        #   item 9:  codebase-analysis/handlers/codebase-analyze-helpers.ts:48,53,54
+        #            — readdirSync Dirent<string> vs Dirent<NonSharedBuffer> at
+        #            @types/node@25 / TypeScript 5.9 boundary.
+        #   item 10: codebase-analysis/index.ts:29 — TS2308 duplicate nodeText
+        #            export via barrel export* chains.
+        #   item 11: codebase-analysis/scanner.ts:259 — ConversationRecord not
+        #            assignable to Record<string,unknown> (missing index signature).
+        # This gate is hardened once all five items above are resolved in a
+        # follow-up worktree (port/cortex-codebase-analysis-types-cleanup).
+        run: pnpm build || echo "::warning::Build failed — see PHASE_PLAN.md §Phase-4-to-5-cleanup items 7-11 for per-file root causes"
 
       - name: Lint
         # No ESLint config has been wired into the monorepo yet (port/tooling-ci
@@ -64,11 +75,19 @@ jobs:
         # tooling-ci merges; treat any failure as warning, not error.
         run: pnpm lint || true
 
-      - name: Test (advisory during Phase-4 transition)
-        # Same caveat as Build: tests reference types that still drift across
-        # sub-packages. Vitest compiles via esbuild and may pass even when
-        # tsc fails, but is also informational until Phase-5 cleanup.
-        run: pnpm test || echo "::warning::Tests failed — Phase-4 type drift, see PHASE_PLAN.md §Phase-4-to-5-cleanup"
+      - name: Test (advisory)
+        # Soft-fail: tracking items 12–14 in docs/PHASE_PLAN.md §Phase-4-to-5-cleanup.
+        # Specific failures:
+        #   item 12: vitest.config.ts root — defineWorkspace removed in vitest v4;
+        #            root-level `pnpm test` crashes at config load before any test
+        #            file runs (TypeError: defineWorkspace is not a function).
+        #   item 13: packages/core — no test files; vitest exits 1 ("No test files
+        #            found"). Fix: set passWithNoTests:true in core's vitest config.
+        #   item 14: wiki/page-classifier.test.ts — 2 of 742 tests fail
+        #            (740 passing); classifyMemory pattern regressions.
+        # Actual test signal: 740/742 passing in packages/memory (per local run
+        # 2026-04-27). This gate is hardened once items 12–14 are resolved.
+        run: pnpm test || echo "::warning::Tests failed — see PHASE_PLAN.md §Phase-4-to-5-cleanup items 12-14 for per-package root causes"
 
       - name: Parity oracle
         # Parity tests run only when the harness exists. The port-parity-baseline
