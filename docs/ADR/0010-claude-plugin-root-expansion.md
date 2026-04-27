@@ -92,10 +92,13 @@ in the agentic-ai monorepo:
 ## Verification
 
 - Manifest-level lint: a CI step in `.github/workflows/ci.yml` greps every
-  `plugin.json` and `.mcp.json` for `\$\{[A-Z_]+:-` (the parameter-expansion
-  fallback pattern) and fails the build if any matches are found. The
-  rule is named `no-shell-fallback-in-claude-plugin-template` and
-  documented in `docs/ADR/0010-claude-plugin-root-expansion.md`.
+  `plugin.json` and `.mcp.json` under `plugins/` for `\$\{[A-Z_]+:-` (the
+  parameter-expansion fallback pattern) and fails the build if any matches are
+  found. The rule is named `no-shell-fallback-in-claude-plugin-template`.
+  - Path note (2026-04-27): the lint scans `plugins/`, not a top-level
+    `.claude-plugin/`. An earlier version of this section pointed at the
+    wrong directory which made the gate vacuously pass on every run. Source:
+    docs/audits/FINAL_CROSS_AUDIT.md §F-HIGH-001 (Borges, 2026-04-27).
 - Install smoke-test: a Phase-5 deliverable script that performs a fresh
   install of the unified plugin against a clean Claude Code session and
   asserts the `reasoning` setup script's side-effects (hooks present in

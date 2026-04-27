@@ -58,8 +58,12 @@ Rationale:
 
 ## Verification
 
-- Phase 5 deliverable check: `find .claude-plugin -name plugin.json | wc -l`
+- Phase 5 deliverable check: `find plugins -name plugin.json | wc -l`
   returns `4` (one per plugin).
+  - Path note (2026-04-27): the canonical layout settled on `plugins/<plugin-name>/plugin.json`
+    with each plugin's `.claude-plugin/` subdirectory holding additional
+    artefacts. Earlier drafts of this ADR referenced a top-level `.claude-plugin/`
+    directory; that location was never used in the monorepo. Source: docs/audits/FINAL_CROSS_AUDIT.md §F-MED-003 (Borges, 2026-04-27).
 - Marketplace install verification: on a fresh Claude Code session,
   `/plugin marketplace add cdeust/agentic-ai` followed by
   `/plugin install <plugin>@agentic-ai` registers the right MCP servers

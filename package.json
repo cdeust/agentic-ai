@@ -18,6 +18,7 @@
     "layer-check": "tsx scripts/check-layer-imports.ts",
     "layer-check:self-test": "tsx scripts/check-layer-imports.ts --self-test",
     "source-citation-check": "bash scripts/check-source-citations.sh",
+    "audit-migration": "bash scripts/audit-migration.sh",
     "prepare": "husky",
     "verify": "pnpm install --frozen-lockfile && pnpm build && pnpm lint && pnpm typecheck && pnpm layer-check && pnpm test && pnpm parity",
     "spawn": "./scripts/spawn-worktree.sh",

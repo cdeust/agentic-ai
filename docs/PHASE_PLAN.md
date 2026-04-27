@@ -40,13 +40,13 @@ Authoritative plan for the four-repo unification. Updated as phases complete.
 **Mission:** Make the empty monorepo build, test, and lint cleanly. Single CI matrix; one tsconfig.
 
 ### Deliverables
-- [ ] Each `packages/<x>/` has its own `package.json` + `tsconfig.json` extending the base
-- [ ] ESLint config (flat config, single root)
-- [ ] Vitest config (workspace mode)
-- [ ] Layer-import lint (matches `prd-spec-generator/rules/coding-standards.md §2.2`)
-- [ ] `// source:` annotation pre-commit hook (lifted from zetetic-team-subagents)
-- [ ] CI matrix: Node 20, 22; pnpm 10
-- [ ] Smoke test: `pnpm install && pnpm build && pnpm test` green on a fresh clone
+- [x] Each `packages/<x>/` has its own `package.json` + `tsconfig.json` extending the base (5 of 8 expected packages exist; `prd-pipeline`, `reasoning`, `codebase` blocked on Phase 2/3 — see audits/FINAL_CROSS_AUDIT.md §1)
+- [x] ESLint config (flat config, single root) — `eslint.config.js` at repo root
+- [x] Vitest config (workspace mode) — `vitest.config.ts`, v4-compliant
+- [x] Layer-import lint — `scripts/check-layer-imports.ts` (full transitive tracing, hard CI gate as of 2026-04-27)
+- [x] `// source:` annotation pre-commit hook — `scripts/check-source-citations.sh` (hard CI gate as of 2026-04-27)
+- [x] CI matrix: Node 20, 22; pnpm 10 — `.github/workflows/ci.yml`
+- [x] Smoke test: `pnpm install && pnpm build && pnpm test` green on a fresh clone (build hard-gated 2026-04-27 per F-CRIT-001)
 
 ### Genius gate
 - `liskov` — port interfaces in `packages/core/src/ports/`

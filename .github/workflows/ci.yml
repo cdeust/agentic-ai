@@ -50,30 +50,51 @@ jobs:
         # Tracking: docs/PHASE_PLAN.md §Phase-4-to-5-cleanup item (3) resolved.
         run: pnpm install --frozen-lockfile
 
-      - name: Build (sequential, advisory)
-        # Soft-fail: tracking items 7–11 in docs/PHASE_PLAN.md §Phase-4-to-5-cleanup.
-        # Specific errors (all in packages/memory/src/):
-        #   item 7:  wiki/handlers/wiki-verify.ts:19 — imports STALE_THRESHOLD
-        #            but export was renamed to SYMBOL_STALE_THRESHOLD (item 4 fix
-        #            did not update the import at wiki-verify.ts).
-        #   item 8:  codebase-analysis/codebase-graph.ts:279 — Map iteration
-        #            yields [string, Set<string>]; second element is not string.
-        #   item 9:  codebase-analysis/handlers/codebase-analyze-helpers.ts:48,53,54
-        #            — readdirSync Dirent<string> vs Dirent<NonSharedBuffer> at
-        #            @types/node@25 / TypeScript 5.9 boundary.
-        #   item 10: codebase-analysis/index.ts:29 — TS2308 duplicate nodeText
-        #            export via barrel export* chains.
-        #   item 11: codebase-analysis/scanner.ts:259 — ConversationRecord not
-        #            assignable to Record<string,unknown> (missing index signature).
-        # This gate is hardened once all five items above are resolved in a
-        # follow-up worktree (port/cortex-codebase-analysis-types-cleanup).
-        run: pnpm build || echo "::warning::Build failed — see PHASE_PLAN.md §Phase-4-to-5-cleanup items 7-11 for per-file root causes"
+      - name: Build (sequential)
+        # HARD GATE (restored 2026-04-27, audit F-CRIT-001).
+        # Items 7–11 from docs/PHASE_PLAN.md §Phase-4-to-5-cleanup were resolved
+        # by `port/codebase-analysis-types-cleanup` but ci.yml continued to
+        # soft-fail. Verified locally: `pnpm build` exits 0 with all 8 packages
+        # green on Node 24.x; CI matrix runs Node 20.x and 22.x.
+        # source: docs/audits/FINAL_CROSS_AUDIT.md §F-CRIT-001 (Borges, 2026-04-27).
+        run: pnpm build
 
-      - name: Lint
-        # No ESLint config has been wired into the monorepo yet (port/tooling-ci
-        # branch holds the design but is not merged). Lint is advisory until
-        # tooling-ci merges; treat any failure as warning, not error.
-        run: pnpm lint || true
+      - name: Layer-import check (hard gate)
+        # source: coding-standards.md §2.2 — Dependency Rule (absolute).
+        # `scripts/check-layer-imports.ts` is the canonical Clean Architecture
+        # gate (full transitive tracing of barrel re-exports, which the ESLint
+        # rule cannot do). Hard-fail any layer violation.
+        # source: docs/audits/FINAL_CROSS_AUDIT.md §F-HIGH-002 (Borges, 2026-04-27).
+        run: pnpm layer-check
+
+      - name: Source-citation check (hard gate)
+        # source: coding-standards.md §8 — every hardcoded number must trace
+        # to a paper, benchmark, or measurement. `scripts/check-source-citations.sh`
+        # enforces the rule at CI time (the same script also runs as a husky
+        # pre-commit hook).
+        # source: docs/audits/FINAL_CROSS_AUDIT.md §F-HIGH-002 (Borges, 2026-04-27).
+        run: pnpm source-citation-check
+
+      - name: Migration audit (hard gate, pre-cutover)
+        # source: docs/MIGRATION_MANIFEST.md §"Validation gate (Phase 6 exit)"
+        # and docs/audits/FINAL_CROSS_AUDIT.md §7 (Borges, 2026-04-27).
+        # `scripts/audit-migration.sh` mechanically checks the 6 manifest gate
+        # rules (manifest coverage, source-citation parity, papers, test
+        # count, hook count, port-pending tracking). Required to pass before
+        # the 48-hour parity dual-run can be declared complete.
+        run: pnpm audit-migration
+
+      - name: Lint (advisory until heap-OOM resolved)
+        # ESLint flat config exists at root (eslint.config.js). It uses
+        # @typescript-eslint with `projectService: true` for type-aware rules,
+        # which currently OOMs the default 4GB Node heap when scanning the
+        # monorepo. Bumped to 8GB; if it still OOMs we keep advisory until the
+        # config is split per-package or projectService is replaced with
+        # cheaper non-type-aware parsing.
+        # The CANONICAL layer-import gate is the standalone `pnpm layer-check`
+        # step above (full transitive tracing, no type-checker dependency).
+        # source: docs/audits/FINAL_CROSS_AUDIT.md §F-HIGH-002 (Borges, 2026-04-27).
+        run: NODE_OPTIONS=--max-old-space-size=8192 pnpm lint || echo "::warning::ESLint failed (likely heap-OOM); layer-check above is the authoritative gate"
 
       - name: Test
         # HARD GATE (restored 2026-04-27, branch port/test-config-cleanup).
@@ -99,10 +120,16 @@ jobs:
         # does NOT support compound parameter expansion like ${VAR:-fallback}.
         # We discovered the hard way (2026-04-25) that the fallback form is
         # passed unsubstituted to the spawned binary, which then fails to
-        # resolve paths. Forbid the pattern in every .claude-plugin/ JSON.
+        # resolve paths. Forbid the pattern in every plugin manifest.
+        #
+        # IMPORTANT: manifests live under `plugins/<plugin-name>/.claude-plugin/`
+        # (the canonical Claude Code directory layout). The previous version of
+        # this step scanned a top-level `.claude-plugin/` directory which has
+        # never existed in this repo, so the check was vacuously passing.
+        # source: docs/audits/FINAL_CROSS_AUDIT.md §F-HIGH-001 (Borges, 2026-04-27).
         run: |
           set -euo pipefail
-          if grep -rEn '\$\{[A-Z_]+:-' .claude-plugin/ 2>/dev/null; then
+          if grep -rEn '\$\{[A-Z_]+:-' plugins/ 2>/dev/null; then
             echo "::error::Found shell parameter-expansion fallback pattern in a Claude plugin manifest." >&2
             echo "::error::Claude Code does NOT support \${VAR:-fallback}. Use bare \${CLAUDE_PLUGIN_ROOT}, wrap shell logic in 'bash -c'." >&2
             echo "::error::See docs/ADR/0010-claude-plugin-root-expansion.md for the canonical pattern." >&2
