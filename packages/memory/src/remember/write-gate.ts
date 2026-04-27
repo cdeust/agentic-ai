@@ -33,6 +33,23 @@ import type { WriteGateScore } from "./types.js";
 // ── Success-keyword regex (write_gate.py:_SUCCESS_KW) ──────────────────────
 const SUCCESS_KW = /\b(fixed|resolved|succeeded|passed|completed|done)\b/i;
 
+// ── Importance heuristic constants ──────────────────────────────────────────
+// source: write_gate.py:estimate_importance — heuristic deltas ported verbatim
+const IMPORTANCE_BASELINE = 0.5;     // source: write_gate.py — neutral prior
+const IMPORTANCE_DELTA_ERROR = 0.2;  // source: write_gate.py — error content boost
+const IMPORTANCE_DELTA_DECISION = 0.15; // source: write_gate.py — decision content boost
+const IMPORTANCE_DELTA_SUCCESS = 0.1;   // source: write_gate.py — success keyword boost
+const IMPORTANCE_DELTA_TAG = 0.2;    // source: write_gate.py — important/critical tag boost
+const IMPORTANCE_DELTA_BUG = 0.1;    // source: write_gate.py — bug-fix/decision tag boost
+
+// ── Rounding constant ────────────────────────────────────────────────────────
+// source: write_gate.py:build_rejection_response — 4 decimal places = 10^4
+const ROUND_4DP = 10000;
+
+// ── Milliseconds per hour ────────────────────────────────────────────────────
+// source: SI unit definition — 1 hour = 3600 s × 1000 ms/s
+const MS_PER_HOUR = 3_600_000;
+
 // ── Bypass detection ────────────────────────────────────────────────────────
 
 /** Heuristic: does the content look like an error report? */
@@ -85,16 +102,16 @@ export function determineBypass(
  * (neuromodulation, emotional tagging) runs in the remember handler.
  */
 export function estimateImportance(content: string, tags: string[]): number {
-  let score = 0.5;
-  if (isErrorContent(content)) score = Math.min(1.0, score + 0.2);
-  if (isDecisionContent(content)) score = Math.min(1.0, score + 0.15);
-  if (SUCCESS_KW.test(content)) score = Math.min(1.0, score + 0.1);
+  let score = IMPORTANCE_BASELINE;
+  if (isErrorContent(content)) score = Math.min(1.0, score + IMPORTANCE_DELTA_ERROR);
+  if (isDecisionContent(content)) score = Math.min(1.0, score + IMPORTANCE_DELTA_DECISION);
+  if (SUCCESS_KW.test(content)) score = Math.min(1.0, score + IMPORTANCE_DELTA_SUCCESS);
   const tagSet = new Set(tags.map((t) => t.toLowerCase()));
   if (tagSet.has("important") || tagSet.has("critical")) {
-    score = Math.min(1.0, score + 0.2);
+    score = Math.min(1.0, score + IMPORTANCE_DELTA_TAG);
   }
   if (tagSet.has("bug-fix") || tagSet.has("decision")) {
-    score = Math.min(1.0, score + 0.1);
+    score = Math.min(1.0, score + IMPORTANCE_DELTA_BUG);
   }
   return score;
 }
@@ -111,7 +128,7 @@ export function parseHoursSince(isoStr: string): number | null {
   try {
     const dt = new Date(isoStr);
     if (isNaN(dt.getTime())) return null;
-    const hours = (Date.now() - dt.getTime()) / 3_600_000;
+    const hours = (Date.now() - dt.getTime()) / MS_PER_HOUR;
     return hours < 0 ? null : hours;
   } catch {
     return null;
@@ -209,25 +226,48 @@ export function scoreCandidate(input: WriteGateInput): WriteGateScore {
  *
  * source: core/write_gate.py:build_rejection_response
  */
+// source: phase 4-to-5 cleanup, 2026-04-26
+// Return type narrows novelty from Record<string,number> to the exact shape
+// declared in RememberResponseSchema so that buildRejectionResponse() satisfies
+// the RememberResponse contract at the call site in remember.ts.
+// describeSignals() always returns exactly these five keys — the narrower type
+// is a stronger postcondition (LSP: postconditions may be strengthened).
 export function buildRejectionResponse(
   score: WriteGateScore,
   importance: number,
 ): {
   stored: false;
   reason: string;
-  novelty: Record<string, number>;
+  novelty: {
+    embedding_novelty: number;
+    entity_novelty: number;
+    temporal_novelty: number;
+    structural_novelty: number;
+    combined_novelty: number;
+  };
   importance: number;
 } {
   return {
     stored: false,
     reason: score.gateReason,
+    // source: phase 4-to-5 cleanup, 2026-04-26
+    // describeSignals returns Record<string,number> but always emits exactly
+    // these five keys. Cast to the specific shape so RememberResponse.novelty
+    // is satisfied without modifying predictive-coding.ts (which has
+    // pre-existing source-citation obligations on its numeric constants).
     novelty: describeSignals(
       score.embeddingNovelty,
       score.entityNovelty,
       score.temporalNovelty,
       score.structuralNovelty,
       score.combinedNovelty,
-    ),
-    importance: Math.round(importance * 10000) / 10000,
+    ) as {
+      embedding_novelty: number;
+      entity_novelty: number;
+      temporal_novelty: number;
+      structural_novelty: number;
+      combined_novelty: number;
+    },
+    importance: Math.round(importance * ROUND_4DP) / ROUND_4DP,
   };
 }
