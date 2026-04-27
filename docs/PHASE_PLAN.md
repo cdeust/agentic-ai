@@ -188,38 +188,40 @@ to hard CI gates (currently `|| echo "::warning::"` per `.github/workflows/ci.ym
     `groupByProject` to use `ConversationRecord` instead of `Record<string, unknown>`.
     (resolved 2026-04-27)
 
-**Remaining — blocks test hard-gate restoration:**
+**Resolved (2026-04-27 `port/test-config-cleanup`, commit `2821cbf`):**
 
-12. **`vitest.config.ts` root — `defineWorkspace` removed in vitest v4**. The root
-    `vitest.config.ts` uses `import { defineWorkspace } from "vitest/config"` which was
-    removed in vitest v4.x (it exported only `defineConfig` and `defineProject`). The root
-    `pnpm test` command therefore crashes at config load, before any test file runs. Fix:
-    rewrite `vitest.config.ts` to use vitest v4's workspace file convention
-    (`vitest.workspace.ts` with `defineProject` array) or use per-package test invocation
-    in CI instead of the root aggregator.
-    File: `vitest.config.ts` (root).
+12. **`vitest.config.ts` root — `defineWorkspace` removed in vitest v4**. Ported root
+    `vitest.config.ts` from `defineWorkspace([...])` to `defineConfig({ test: { projects:
+    [...] } })` per vitest v4 migration guide (vitest.dev/guide/projects). The
+    `defineWorkspace` export was removed from `vitest/config` entirely; v4 exports only
+    `defineConfig` and `defineProject`. (resolved 2026-04-27)
 
 13. **`packages/core` — no test files** exits vitest with code 1 ("No test files found").
-    The CI `pnpm -r test` step fails on every branch until core has at least one test, or
-    the vitest config for core is adjusted to exit 0 on empty. Fix: add a placeholder test
-    or set `passWithNoTests: true` in `packages/core/vitest.config.ts`.
-    File: `packages/core/vitest.config.ts`.
+    Added `passWithNoTests: true` to `packages/core/vitest.config.ts`. The core package
+    is a placeholder pending `port/core-types` merge; no tests expected yet. (resolved
+    2026-04-27)
 
-14. **`wiki/page-classifier.test.ts` — 2 test failures** (740 passing, 2 failing):
-    `classifyMemory > admits ADR content by pattern` and
-    `classifyMemory > admits convention via pattern`. These are pure logic regressions in the
-    classifier — the patterns do not match the test fixtures. Fix: update the regex patterns
-    in `packages/memory/src/wiki/page-classifier.ts` to match the expected inputs, or
-    update the fixtures to match the current classifier logic.
-    File: `packages/memory/src/wiki/page-classifier.ts` or the test file.
+14. **`wiki/page-classifier.test.ts` — 2 test failures** (740 passing, 2 failing).
+    Root cause: both failing fixtures relied on user rules (Gate 0, loaded from
+    `~/.claude/methodology/wiki/_rules/*.md`) being present in the test environment.
+    Without a `wikiRoot`, Gate 0 is skipped and the fixtures failed Gate 2 and Gate 3:
+    - `admits ADR content by pattern`: title `# Use PostgreSQL for primary storage` is
+      imperative (verb `use`); hard-negative gate rejected it before ADR_PATTERNS fired.
+      Fix: changed title to `# PostgreSQL as primary storage` (non-imperative). Verified
+      against `wiki_classifier.py` — both produce `"adr"`.
+    - `admits convention via pattern`: 6-line fixture scored 3/8 positive signals (one
+      below threshold 4). Fix: added a file-reference line (`mcp_server/__init__.py`,
+      `wiki_classifier.py`) to trigger signal 8 (_FILE_OR_ENTITY_REF), raising score to
+      5. Verified against `wiki_classifier.py` — both produce `"convention"`.
+    Final: 742/742 tests pass. (resolved 2026-04-27)
 
-**CI gate status after this branch (2026-04-27):**
+**CI gate status after `port/test-config-cleanup` (2026-04-27):**
 
 | Gate | Status | Justification |
 |---|---|---|
 | `pnpm install --frozen-lockfile` | **HARD** (restored) | Lockfile regenerated; no unresolved deps |
 | `pnpm build` | **HARD** (restorable — items 7–11 resolved in `5c8566e`) | Zero tsc errors confirmed 2026-04-27 |
-| `pnpm test` | soft (`\|\| echo "::warning::"`) | Items 12–14 above block clean vitest run |
+| `pnpm test` | **HARD** (restored) | Items 12–14 resolved in `2821cbf` |
 | `pnpm lint` | soft (`\|\| true`) | No ESLint config wired (port/tooling-ci pending) |
 | `pnpm parity` | soft (no-op echo) | port/parity-baseline pending |
 | Plugin manifest lint | **HARD** (always was) | ADR-0010 |
