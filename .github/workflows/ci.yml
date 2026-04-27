@@ -75,19 +75,17 @@ jobs:
         # tooling-ci merges; treat any failure as warning, not error.
         run: pnpm lint || true
 
-      - name: Test (advisory)
-        # Soft-fail: tracking items 12–14 in docs/PHASE_PLAN.md §Phase-4-to-5-cleanup.
-        # Specific failures:
-        #   item 12: vitest.config.ts root — defineWorkspace removed in vitest v4;
-        #            root-level `pnpm test` crashes at config load before any test
-        #            file runs (TypeError: defineWorkspace is not a function).
-        #   item 13: packages/core — no test files; vitest exits 1 ("No test files
-        #            found"). Fix: set passWithNoTests:true in core's vitest config.
-        #   item 14: wiki/page-classifier.test.ts — 2 of 742 tests fail
-        #            (740 passing); classifyMemory pattern regressions.
-        # Actual test signal: 740/742 passing in packages/memory (per local run
-        # 2026-04-27). This gate is hardened once items 12–14 are resolved.
-        run: pnpm test || echo "::warning::Tests failed — see PHASE_PLAN.md §Phase-4-to-5-cleanup items 12-14 for per-package root causes"
+      - name: Test
+        # HARD GATE (restored 2026-04-27, branch port/test-config-cleanup).
+        # Items 12–14 from docs/PHASE_PLAN.md §Phase-4-to-5-cleanup resolved:
+        #   item 12: root vitest.config.ts ported to vitest v4 defineConfig +
+        #            test.projects (defineWorkspace removed in v4).
+        #   item 13: packages/core vitest config sets passWithNoTests:true
+        #            (no test files yet — placeholder package pending port/core-types).
+        #   item 14: wiki/page-classifier.test.ts fixture fixes — imperative title
+        #            in ADR fixture and insufficient positive score in convention
+        #            fixture corrected to match Python source parity.
+        run: pnpm test
 
       - name: Parity oracle
         # Parity tests run only when the harness exists. The port-parity-baseline

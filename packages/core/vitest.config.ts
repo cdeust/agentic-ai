@@ -16,6 +16,9 @@ export default defineConfig({
       "__tests__/**/*.test.ts",
     ],
     exclude: ["dist/**", "node_modules/**"],
+    // packages/core is a placeholder pending port/core-types merge.
+    // No test files exist yet; exit 0 rather than fail with "No test files found".
+    passWithNoTests: true,
     // Coverage is opt-in at the workspace level; per-package configs opt in.
     coverage: {
       provider: "v8",
