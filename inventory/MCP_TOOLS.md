@@ -1,793 +1,1207 @@
-# Cortex MCP Tools — Exhaustive Registry
+# MCP Tools Inventory — `ai-architect-mcp`
 
-**Source files**:
-- `/Users/cdeust/Developments/Cortex/mcp_server/tool_registry_core.py` (229 LOC, 9 tools)
-- `/Users/cdeust/Developments/Cortex/mcp_server/tool_registry_memory.py` (240 LOC, 8 tools)
-- `/Users/cdeust/Developments/Cortex/mcp_server/tool_registry_manage.py` (201 LOC, 7 tools)
-- `/Users/cdeust/Developments/Cortex/mcp_server/tool_registry_advanced.py` (173 LOC, 6 tools)
-- `/Users/cdeust/Developments/Cortex/mcp_server/tool_registry_nav.py` (152 LOC, 5 tools)
-- `/Users/cdeust/Developments/Cortex/mcp_server/tool_registry_wiki.py` (143 LOC, 8 tools)
-- `/Users/cdeust/Developments/Cortex/mcp_server/tool_registry_ingest.py` (101 LOC, 3 tools)
+Source of truth: `src/tool_schemas.rs` (schema definitions) + `src/main.rs` (dispatch + response shapes).
 
-**Extracted**: 2026-04-26
-**Total tools**: 46
+Total tools registered: **23** (verified by `handle_tool_call` match arms at `src/main.rs:3261-3314`
+and `tools_list()` array at `src/tool_schemas.rs:12-37`).
 
-The TS port must register the SAME set of tools with the SAME parameter names, types, and defaults.
-Any deviation in tool name, parameter name, or parameter type causes parity-oracle failure.
+The deferred-tools list from the mission brief (`index_codebase, query_graph, get_symbol, get_context,
+get_impact, search_codebase, analyze_codebase, cluster_graph, detect_changes, verify_semantic_diff,
+validate_prd_against_graph, prepare_prd_input, append_clarification, extract_finding, refine_finding,
+start_verification, finalize_verification, abort_verification, check_security_gates, get_processes,
+lsp_resolve, resolve_graph, health_check`) — all 23 are present and dispatched.
 
 ---
 
-## Tier 1 Core Profiling Tools — `tool_registry_core.py`
+## Common Response Envelope
 
-### `query_methodology`
+Every `tools/call` response wraps the payload in a content envelope:
+```json
+{
+  "content": [{
+    "type": "text",
+    "text": "<JSON string of the actual payload>"
+  }]
+}
+```
+The `text` field is pretty-printed JSON of the stage-specific payload.
 
-**Handler**: `mcp_server.handlers.query_methodology.handler`
-**Purpose**: Returns cognitive profile for the current domain (thinking style, entry patterns, blind spots, cross-domain bridges).
+Unknown tool names return:
+```json
+{ "isError": true, "content": [{ "type": "text", "text": "Unknown tool: <name>" }] }
+```
 
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `cwd` | `str \| None` | No | `None` |
-| `project` | `str \| None` | No | `None` |
-| `first_message` | `str \| None` | No | `None` |
-
-**Return shape**: `str` (JSON-encoded profile with fields: `context`, `coldStart: bool`, `domain`, `thinkingStyle`, `entryPatterns`, `blindSpots`, `connectionBridges`, `recurringPatterns`)
-
----
-
-### `detect_domain`
-
-**Handler**: `mcp_server.handlers.detect_domain.handler`
-**Purpose**: Lightweight domain classification from cwd/project without full profile assembly.
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `cwd` | `str \| None` | No | `None` |
-| `project` | `str \| None` | No | `None` |
-| `first_message` | `str \| None` | No | `None` |
-
-**Return shape**: `str` (JSON: `domain`, `confidence`, `candidates[]`)
+Error payloads (all tools): `{ "stage": N, "status": "error", "reason": "<code>", "message": "..." }`
+Reason codes are documented per-tool below. The adapter MUST preserve reason codes exactly —
+callers branch on them (source: `src/main.rs` lsp_resolve dispatch at line 2638).
 
 ---
 
-### `rebuild_profiles`
+## Tool 1: `health_check`
 
-**Handler**: `mcp_server.handlers.rebuild_profiles.handler`
-**Purpose**: Full rescan of all session data to rebuild methodology profiles from scratch.
+**Stage**: 0
+**Source**: `src/main.rs:3261-3282`, `src/tool_schemas.rs:40-50`
+**Description**: Handshake. Returns server identity, protocol version, tool count.
 
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `domain` | `str \| None` | No | `None` |
-| `force` | `bool` | No | `False` |
+### Input Schema
+```json
+{ "type": "object", "properties": {}, "additionalProperties": false }
+```
+No required fields; empty object `{}` is the canonical call.
 
-**Return shape**: `str` (JSON: `rebuilt[]`, `duration_ms`)
+### Output Schema (success)
+```json
+{
+  "stage": 0,
+  "name": "health_check",
+  "status": "ok",
+  "server": "ai-architect",
+  "version": "<semver>",
+  "protocol": "2024-11-05",
+  "stages_registered": "<integer>",
+  "tools_count": "<integer>"
+}
+```
+`stages_registered` and `tools_count` are both derived from `tools_list().tools.length` at call time.
+They are equal. Currently 23.
 
----
-
-### `list_domains`
-
-**Handler**: `mcp_server.handlers.list_domains.handler`
-**Purpose**: Overview of all detected cognitive domains with session counts and last-seen dates.
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| (none) | — | — | — |
-
-**Return shape**: `str` (JSON: `domains[]` each with `name`, `session_count`, `last_seen`)
-
----
-
-### `record_session_end`
-
-**Handler**: `mcp_server.handlers.record_session_end.handler`
-**Purpose**: Incremental EMA profile update after a session ends.
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `session_id` | `str` | **Yes** | — |
-| `domain` | `str \| None` | No | `None` |
-| `tools_used` | `list[str] \| None` | No | `None` |
-| `duration` | `float \| None` | No | `None` |
-| `turn_count` | `int \| None` | No | `None` |
-| `keywords` | `list[str] \| None` | No | `None` |
-| `cwd` | `str \| None` | No | `None` |
-| `project` | `str \| None` | No | `None` |
-
-**Return shape**: `str` (JSON: `updated: bool`, `domain`, `session_id`)
+### Error Modes
+None — this call cannot fail under normal operation.
 
 ---
 
-### `get_methodology_graph`
+## Tool 2: `extract_finding`
 
-**Handler**: `mcp_server.handlers.get_methodology_graph.handler`
-**Purpose**: Returns methodology map as graph data for 3D visualisation.
+**Stage**: 1a
+**Source**: `src/main.rs:766-895`, `src/tool_schemas.rs:52-80`
+**Description**: Normalizes one incoming finding to canonical schema. Writes
+`stage-1.source.json` + `stage-1.extracted.json` atomically. Does NOT call an LLM.
 
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `domain` | `str \| None` | No | `None` |
+### Input Schema
+```json
+{
+  "type": "object",
+  "required": ["finding", "output_dir"],
+  "additionalProperties": false,
+  "properties": {
+    "finding": {
+      "oneOf": [
+        { "type": "object" },
+        { "type": "string", "pattern": "^/.+\\.json$" }
+      ]
+    },
+    "output_dir": { "type": "string", "pattern": "^/.+" },
+    "run_id": { "type": "string" }
+  }
+}
+```
+`finding` is either an inline object matching spec §3.2 or an absolute path to a `.json` file.
+`.md` paths are rejected with a clear error.
+`run_id` is optional — auto-generated as `YYYYMMDD-HHMMSS-<6 alphanumeric>` (UTC) when absent.
 
-**Return shape**: `str` (JSON: `nodes[]`, `edges[]` for D3/Three.js)
+Finding object MUST have: `id` (non-empty), `title` (non-empty), `relevance_category` (non-empty).
+Optional: `description`, `source_url`, `relevance_score`, `raw_data`, plus any additional fields
+(preserved in `extras`).
 
----
+### Output Schema (success)
+```json
+{
+  "stage": 1,
+  "status": "ok",
+  "finding_id": "<string>",
+  "artifact_path": "<absolute path to stage-1.extracted.json>",
+  "run_id": "<string>",
+  "bytes_written": "<integer>",
+  "extractor_version": "1.0.0"
+}
+```
 
-### `query_workflow_graph`
+### Error Modes
+```json
+{ "stage": 1, "status": "error", "reason": "<code>" }
+```
+Reason codes (no `message` field on this tool — only `reason`):
+- `"<validation message>"` — inline error string (this tool uses a simpler error format than others)
 
-**Handler**: `mcp_server.handlers.query_workflow_graph.handler`
-**Purpose**: Return a typed subgraph of the unified workflow graph.
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `node_kind` | `str \| list[str] \| None` | No | `None` |
-| `edge_kind` | `str \| list[str] \| None` | No | `None` |
-| `neighbour_of` | `str \| None` | No | `None` |
-| `depth` | `int \| None` | No | `None` |
-| `domain` | `str \| None` | No | `None` |
-| `limit_nodes` | `int \| None` | No | `None` |
-
-**Return shape**: `str` (JSON: `nodes[]`, `edges[]`, `stats`)
-
----
-
-### `open_visualization`
-
-**Handler**: `mcp_server.handlers.open_visualization.handler`
-**Purpose**: Launch the 3D methodology constellation map in the browser.
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `domain` | `str \| None` | No | `None` |
-
-**Return shape**: `str` (JSON: `url`, `port`)
-
----
-
-### `explore_features`
-
-**Handler**: `mcp_server.handlers.explore_features.handler`
-**Purpose**: Explore interpretability features: persona vector, attribution trace, crosscoder patterns.
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `mode` | `str` | **Yes** | — |
-| `domain` | `str \| None` | No | `None` |
-| `compare_domain` | `str \| None` | No | `None` |
-
-**Valid `mode` values**: `"features"`, `"persona"`, `"attribution"`, `"crosscoder"`
-
-**Return shape**: `str` (JSON — shape varies by mode)
+Common error triggers: missing required `finding` fields, unsafe `finding_id` (fails
+`[A-Za-z0-9._-]+` pattern or starts with `.`), non-absolute `output_dir`, `.md` input path.
 
 ---
 
-## Tier 1 Memory Read/Write Tools — `tool_registry_memory.py`
+## Tool 3: `refine_finding`
 
-### `remember`
+**Stage**: 1b
+**Source**: `src/main.rs:923-1090`, `src/tool_schemas.rs:82-136`
+**Description**: Reads existing `stage-1.extracted.json`, writes `stage-1.refined.json`
+with orchestrator-provided `refined_prompt` + `refinement`. No LLM call.
 
-**Handler**: `mcp_server.handlers.remember.handler`
-**Purpose**: Store a memory through the predictive coding write gate.
+### Input Schema
+```json
+{
+  "type": "object",
+  "required": ["run_id", "finding_id", "output_dir", "refined_prompt", "refinement"],
+  "additionalProperties": false,
+  "properties": {
+    "run_id": { "type": "string" },
+    "finding_id": { "type": "string" },
+    "output_dir": { "type": "string", "pattern": "^/.+" },
+    "refined_prompt": {
+      "type": "object",
+      "required": ["text", "role_hint"],
+      "additionalProperties": false,
+      "properties": {
+        "text": { "type": "string", "minLength": 1 },
+        "role_hint": { "type": "string" },
+        "token_estimate": { "type": ["integer", "null"] }
+      }
+    },
+    "refinement": {
+      "type": "object",
+      "required": ["added_context", "orchestrator_version"],
+      "additionalProperties": false,
+      "properties": {
+        "added_context": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["kind", "content"],
+            "additionalProperties": false,
+            "properties": {
+              "kind": { "type": "string" },
+              "content": { "type": "string" },
+              "provenance": { "type": "string" }
+            }
+          }
+        },
+        "orchestrator_version": { "type": "string" }
+      }
+    }
+  }
+}
+```
+`refined_at` in `refinement` is IGNORED if sent — the server fills it server-side.
 
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `content` | `str` | **Yes** | — |
-| `tags` | `list[str] \| None` | No | `[]` |
-| `directory` | `str \| None` | No | `""` |
-| `domain` | `str \| None` | No | `""` |
-| `source` | `str \| None` | No | `"user"` |
-| `force` | `bool` | No | `False` |
-| `agent_topic` | `str \| None` | No | `""` |
+### Output Schema (success)
+```json
+{
+  "stage": 1,
+  "status": "ok",
+  "finding_id": "<string>",
+  "artifact_path": "<absolute path to stage-1.refined.json>",
+  "run_id": "<string>",
+  "bytes_written": "<integer>",
+  "extractor_version": "1.0.0",
+  "orchestrator_version": "<string>",
+  "orchestrator_contract_version": "1.0.0"
+}
+```
 
-**Return shape**: `str` (JSON: `memory_id: int`, `stored: bool`, `heat: float`, `duplicate_of: int | null`)
-
----
-
-### `recall`
-
-**Handler**: `mcp_server.handlers.recall.handler`
-**Purpose**: Retrieve memories using multi-signal fusion (vector + BM25 + heat + spreading activation).
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `query` | `str` | **Yes** | — |
-| `domain` | `str \| None` | No | `None` |
-| `directory` | `str \| None` | No | `None` |
-| `max_results` | `int` | No | `10` |
-| `min_heat` | `float` | No | `0.05` |
-| `agent_topic` | `str \| None` | No | `None` |
-
-**Return shape**: `str` (JSON: `memories[]` each with `id`, `content`, `heat`, `tags`, `domain`, `created_at`, `score`)
-
----
-
-### `memory_stats`
-
-**Handler**: `mcp_server.handlers.memory_stats.handler`
-**Purpose**: Memory system diagnostics — counts, heat distribution, store sizes.
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| (none) | — | — | — |
-
-**Return shape**: `str` (JSON: `total_memories`, `domains[]`, `heat_histogram`, `store_type_counts`)
-
----
-
-### `checkpoint`
-
-**Handler**: `mcp_server.handlers.checkpoint.handler`
-**Purpose**: Save or restore working state for hippocampal replay.
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `action` | `str` | **Yes** | — |
-| `directory` | `str \| None` | No | `""` |
-| `current_task` | `str \| None` | No | `""` |
-| `files_being_edited` | `list[str] \| None` | No | `[]` |
-| `key_decisions` | `list[str] \| None` | No | `[]` |
-| `open_questions` | `list[str] \| None` | No | `[]` |
-| `next_steps` | `list[str] \| None` | No | `[]` |
-| `active_errors` | `list[str] \| None` | No | `[]` |
-| `custom_context` | `str \| None` | No | `""` |
-| `session_id` | `str \| None` | No | `"default"` |
-
-**Valid `action` values**: `"save"`, `"restore"`, `"list"`
-
-**Return shape**: `str` (JSON — varies by action; `"save"` returns `checkpoint_id`; `"restore"` returns full checkpoint fields)
-
----
-
-### `narrative`
-
-**Handler**: `mcp_server.handlers.narrative.handler`
-**Purpose**: Generate project narrative from stored memories (structured summary).
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `directory` | `str \| None` | No | `None` |
-| `domain` | `str \| None` | No | `None` |
-| `brief` | `bool` | No | `False` |
-
-**Return shape**: `str` (Markdown narrative text)
+### Error Modes
+```json
+{ "stage": 1, "status": "error", "reason": "<code>", "message": "<string>" }
+```
+Reason codes:
+- `"bad_request"` — missing field, wrong type, invalid argument
+- `"no_extraction"` — `stage-1.extracted.json` does not exist (call `extract_finding` first)
+- `"corrupt_extraction"` — existing `stage-1.extracted.json` fails to parse
+- `"empty_prompt"` — `refined_prompt.text` is empty
+- `"unsafe_id"` — run_id or finding_id fails safe-ID validation
+- `"io_error"` — disk write failure
 
 ---
 
-### `consolidate`
+## Tool 4: `start_verification`
 
-**Handler**: `mcp_server.handlers.consolidate.handler`
-**Purpose**: Run memory maintenance pipeline: decay, compression, CLS transfer, memify, pruning.
+**Stage**: 2a
+**Source**: `src/main.rs` (stage-2 section), `src/tool_schemas.rs:138-153`
+**Description**: Creates a clarification session. Verifies `stage-1.refined.json` exists
+and parses (`schema_ok`). Writes `stage-2.session.json` with state `open`.
 
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `decay` | `bool` | No | `True` |
-| `compress` | `bool` | No | `True` |
-| `cls` | `bool` | No | `True` |
-| `memify` | `bool` | No | `True` |
-| `deep` | `bool` | No | `False` |
+### Input Schema
+```json
+{
+  "type": "object",
+  "required": ["run_id", "finding_id", "output_dir"],
+  "additionalProperties": false,
+  "properties": {
+    "run_id": { "type": "string" },
+    "finding_id": { "type": "string" },
+    "output_dir": { "type": "string", "pattern": "^/.+" }
+  }
+}
+```
 
-**Return shape**: `str` (JSON: `decayed`, `compressed`, `transferred`, `memified`, `pruned`, `duration_ms`)
+### Output Schema (success)
+```json
+{
+  "stage": 2,
+  "status": "ok",
+  "state": "open",
+  "run_id": "<string>",
+  "finding_id": "<string>",
+  "schema_ok": "<boolean>"
+}
+```
 
----
-
-### `import_sessions`
-
-**Handler**: `mcp_server.handlers.import_sessions.handler`
-**Purpose**: Import Claude Code JSONL conversation history into the memory store (streams via head+tail, per ADR-0045 R2).
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `project` | `str \| None` | No | `""` |
-| `domain` | `str \| None` | No | `""` |
-| `min_importance` | `float` | No | `0.4` |
-| `max_sessions` | `int` | No | `0` (= all) |
-| `dry_run` | `bool` | No | `False` |
-
-**Return shape**: `str` (JSON: `imported`, `skipped`, `sessions_processed`, `preview[]` if dry_run)
-
----
-
-### `unified_search`
-
-**Handler**: `mcp_server.handlers.unified_search.handler`
-**Purpose**: RRF-fuse Cortex memory recall with AP code search (ADR-0046 P3).
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `query` | `str` | **Yes** | — |
-| `domain` | `str \| None` | No | `None` |
-| `max_results` | `int` | No | `10` |
-| `k` | `int` | No | `60` |
-
-**Return shape**: `str` (JSON: `results[]` with `source: "cortex" | "ap"`, `score`, `content`)
+### Error Modes
+```json
+{ "stage": 2, "status": "error", "reason": "<code>", "message": "<string>" }
+```
+Reason codes: `"bad_request"`, `"no_refinement"` (stage-1.refined.json missing), `"already_finalized"`, `"unsafe_id"`, `"io_error"`
 
 ---
 
-## Tier 1 Memory Management Tools — `tool_registry_manage.py`
+## Tool 5: `append_clarification`
 
-### `forget`
+**Stage**: 2b
+**Source**: `src/main.rs` (stage-2 section), `src/tool_schemas.rs:155-173`
+**Description**: Appends one turn to `stage-2.session.json`. Enforces alternation
+invariant (two consecutive same-kind turns rejected). Whole-file atomic rewrite.
 
-**Handler**: `mcp_server.handlers.forget.handler`
-**Purpose**: Delete or soft-delete a memory by integer ID.
+### Input Schema
+```json
+{
+  "type": "object",
+  "required": ["run_id", "finding_id", "output_dir", "kind", "content"],
+  "additionalProperties": false,
+  "properties": {
+    "run_id": { "type": "string" },
+    "finding_id": { "type": "string" },
+    "output_dir": { "type": "string", "pattern": "^/.+" },
+    "kind": { "enum": ["agent_question", "user_answer"] },
+    "content": { "type": "string", "minLength": 1 },
+    "meta": { "type": "object" }
+  }
+}
+```
 
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `memory_id` | `int` | **Yes** | — |
-| `soft` | `bool` | No | `False` |
-| `force` | `bool` | No | `False` |
+### Output Schema (success)
+```json
+{
+  "stage": 2,
+  "status": "ok",
+  "state": "<open|waiting_for_user|waiting_for_agent>",
+  "seq": "<integer>",
+  "turn_count": "<integer>"
+}
+```
 
-**Return shape**: `str` (JSON: `deleted: bool`, `archived: bool`)
-
----
-
-### `validate_memory`
-
-**Handler**: `mcp_server.handlers.validate_memory.handler`
-**Purpose**: Validate memories against current filesystem state (mark stale if referenced files no longer exist).
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `memory_id` | `int \| None` | No | `None` |
-| `domain` | `str \| None` | No | `None` |
-| `directory` | `str \| None` | No | `None` |
-| `base_dir` | `str \| None` | No | `""` |
-| `staleness_threshold` | `float` | No | `0.5` |
-| `dry_run` | `bool` | No | `False` |
-
-**Return shape**: `str` (JSON: `validated`, `stale_marked`, `errors[]`)
-
----
-
-### `rate_memory`
-
-**Handler**: `mcp_server.handlers.rate_memory.handler`
-**Purpose**: Rate a memory as useful or not to update metamemory confidence and `useful_count`.
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `memory_id` | `int` | **Yes** | — |
-| `useful` | `bool` | **Yes** | — |
-
-**Return shape**: `str` (JSON: `memory_id`, `useful_count`, `confidence`)
+### Error Modes
+```json
+{ "stage": 2, "status": "error", "reason": "<code>", "message": "<string>" }
+```
+Reason codes: `"bad_request"`, `"no_session"`, `"invalid_transition"` (state machine rejection — e.g. two agent questions in a row), `"unsafe_id"`, `"io_error"`
 
 ---
 
-### `seed_project`
+## Tool 6: `finalize_verification`
 
-**Handler**: `mcp_server.handlers.seed_project.handler`
-**Purpose**: Bootstrap memory from an existing codebase by scanning files and creating structured memories.
+**Stage**: 2c
+**Source**: `src/main.rs:1690-1722`, `src/tool_schemas.rs:175-190`
+**Description**: Consumes the user-ready signal. Computes SHA-256 over the canonical
+transcript bytes. Writes `stage-2.verified.json`. Flips session to `finalized`.
 
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `directory` | `str \| None` | No | `""` |
-| `domain` | `str \| None` | No | `""` |
-| `max_file_size_kb` | `int` | No | `64` |
-| `dry_run` | `bool` | No | `False` |
+### Input Schema
+```json
+{
+  "type": "object",
+  "required": ["run_id", "finding_id", "output_dir"],
+  "additionalProperties": false,
+  "properties": {
+    "run_id": { "type": "string" },
+    "finding_id": { "type": "string" },
+    "output_dir": { "type": "string", "pattern": "^/.+" }
+  }
+}
+```
 
-**Return shape**: `str` (JSON: `seeded`, `skipped`, `errors[]`)
+### Output Schema (success)
+```json
+{
+  "stage": 2,
+  "status": "ok",
+  "state": "finalized",
+  "verified": "<boolean>",
+  "verified_kind": {
+    "schema_ok": "<boolean>",
+    "completeness_ok": "<boolean>",
+    "user_acknowledged": "<boolean>"
+  },
+  "verified_path": "<absolute path to stage-2.verified.json>",
+  "turn_count": "<integer>",
+  "transcript_digest": "<hex string>",
+  "digest_algorithm": "sha256",
+  "transcript_bytes_at_finalize": "<integer>",
+  "bytes_written": "<integer>",
+  "verifier_version": "1.0.0"
+}
+```
 
----
-
-### `anchor`
-
-**Handler**: `mcp_server.handlers.anchor.handler`
-**Purpose**: Mark a memory as compaction-resistant (`heat_base=1.0`, `no_decay=True`, `is_protected=True`).
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `memory_id` | `int` | **Yes** | — |
-| `reason` | `str \| None` | No | `""` |
-
-**Return shape**: `str` (JSON: `memory_id`, `anchored: bool`)
-
----
-
-### `backfill_memories`
-
-**Handler**: `mcp_server.handlers.backfill_memories.handler`
-**Purpose**: Auto-import prior Claude Code conversation JSONL files, applying Ebbinghaus-decay initial heat.
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `project` | `str \| None` | No | `""` |
-| `max_files` | `int` | No | `20` |
-| `min_importance` | `float` | No | `0.35` |
-| `dry_run` | `bool` | No | `False` |
-| `force_reprocess` | `bool` | No | `False` |
-
-**Return shape**: `str` (JSON: `backfilled`, `skipped`, `files_processed`)
-
----
-
-### `codebase_analyze`
-
-**Handler**: `mcp_server.handlers.codebase_analyze.handler`
-**Purpose**: Analyze codebase and store structural memories (functions, classes, imports, relationships).
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `directory` | `str \| None` | No | `""` |
-| `languages` | `list[str] \| None` | No | `None` |
-| `max_files` | `int` | No | `500` |
-| `max_file_size_kb` | `int` | No | `100` |
-| `incremental` | `bool` | No | `True` |
-| `dry_run` | `bool` | No | `False` |
-| `domain` | `str \| None` | No | `""` |
-
-**Return shape**: `str` (JSON: `analyzed`, `memories_created`, `entities_created`)
+### Error Modes
+Reason codes: `"bad_request"`, `"no_session"`, `"schema_not_ok"`, `"no_clarification_round"` (state `open`), `"unanswered_question"` (state `waiting_for_user`), `"unsafe_id"`, `"io_error"`
 
 ---
 
-## Tier 2 Navigation Tools — `tool_registry_nav.py`
+## Tool 7: `abort_verification`
 
-### `recall_hierarchical`
+**Stage**: 2d
+**Source**: `src/main.rs:1765-1789`, `src/tool_schemas.rs:192-208`
+**Description**: Kills a non-terminal session. Atomically rewrites `stage-2.session.json`
+with state `aborted`. Does NOT touch `index.json`.
 
-**Handler**: `mcp_server.handlers.recall_hierarchical.handler`
-**Purpose**: Retrieve memories using fractal hierarchy — groups semantically similar results into clusters.
+### Input Schema
+```json
+{
+  "type": "object",
+  "required": ["run_id", "finding_id", "output_dir"],
+  "additionalProperties": false,
+  "properties": {
+    "run_id": { "type": "string" },
+    "finding_id": { "type": "string" },
+    "output_dir": { "type": "string", "pattern": "^/.+" },
+    "reason": { "type": "string" }
+  }
+}
+```
 
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `query` | `str` | **Yes** | — |
-| `domain` | `str \| None` | No | `None` |
-| `max_results` | `int` | No | `10` |
-| `min_heat` | `float` | No | `0.05` |
-| `cluster_threshold` | `float` | No | `0.6` |
+### Output Schema (success)
+```json
+{
+  "stage": 2,
+  "status": "ok",
+  "state": "aborted",
+  "run_id": "<string>",
+  "finding_id": "<string>",
+  "turn_count": "<integer>",
+  "aborted_at": "<ISO 8601 UTC timestamp>"
+}
+```
 
-**Return shape**: `str` (JSON: `clusters[]` each with `cluster_id`, `centroid_label`, `memories[]`)
-
----
-
-### `drill_down`
-
-**Handler**: `mcp_server.handlers.drill_down.handler`
-**Purpose**: Navigate into a fractal memory cluster by cluster_id.
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `cluster_id` | `str` | **Yes** | — |
-| `domain` | `str \| None` | No | `None` |
-| `min_heat` | `float` | No | `0.05` |
-
-**Return shape**: `str` (JSON: `cluster_id`, `memories[]`, `sub_clusters[]`)
-
----
-
-### `navigate_memory`
-
-**Handler**: `mcp_server.handlers.navigate_memory.handler`
-**Purpose**: Navigate memory space using Successor Representation — returns temporally and semantically adjacent memories.
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `memory_id` | `int` | **Yes** | — |
-| `max_depth` | `int` | No | `2` |
-| `include_2d_map` | `bool` | No | `False` |
-| `window_hours` | `float` | No | `2.0` |
-
-**Return shape**: `str` (JSON: `memory`, `adjacent[]`, `predecessors[]`, `successors[]`, `map_data` if `include_2d_map`)
+### Error Modes
+Reason codes: `"bad_request"`, `"no_session"`, `"invalid_transition"` (already finalized), `"unsafe_id"`, `"io_error"`
 
 ---
 
-### `get_causal_chain`
+## Tool 8: `index_codebase`
 
-**Handler**: `mcp_server.handlers.get_causal_chain.handler`
-**Purpose**: Trace entity relationships through the knowledge graph.
+**Stage**: 3a
+**Source**: `src/main.rs:1795-1841`, `src/tool_schemas.rs:210-236`
+**Description**: Walks the codebase directory, parses source files with tree-sitter,
+persists the code-intelligence graph to LadybugDB at `<output_dir>/graph/`.
 
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `entity_name` | `str \| None` | No | `None` |
-| `memory_id` | `int \| None` | No | `None` |
-| `relationship_types` | `list[str] \| None` | No | `None` |
-| `max_depth` | `int` | No | `3` |
-| `direction` | `str` | No | `"both"` |
+### Input Schema
+```json
+{
+  "type": "object",
+  "required": ["path", "output_dir"],
+  "additionalProperties": false,
+  "properties": {
+    "path": { "type": "string" },
+    "language": { "type": "string", "enum": ["auto", "rust", "python", "typescript"], "default": "auto" },
+    "output_dir": { "type": "string" }
+  }
+}
+```
+Both `path` and `output_dir` must be absolute. `path` must exist. `output_dir` is created if absent.
 
-**Valid `direction` values**: `"incoming"`, `"outgoing"`, `"both"`
+### Output Schema (success)
+```json
+{
+  "stage": 3,
+  "status": "ok",
+  "tool": "index_codebase",
+  "graph_path": "<absolute path ending in /graph>",
+  "node_count": "<integer>",
+  "edge_count": "<integer>",
+  "files_indexed": "<integer>",
+  "elapsed_ms": "<integer>"
+}
+```
+**Invariant**: stale `<output_dir>/graph/` is removed before re-indexing.
 
-**Return shape**: `str` (JSON: `chain[]` nodes, `relationships[]` edges, `root_entity`)
-
----
-
-### `detect_gaps`
-
-**Handler**: `mcp_server.handlers.detect_gaps.handler`
-**Purpose**: Identify knowledge gaps in the memory store (entity gaps, domain gaps, temporal gaps).
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `domain` | `str \| None` | No | `None` |
-| `include_entity_gaps` | `bool` | No | `True` |
-| `include_domain_gaps` | `bool` | No | `True` |
-| `include_temporal_gaps` | `bool` | No | `True` |
-| `stale_threshold_days` | `int` | No | `30` |
-
-**Return shape**: `str` (JSON: `entity_gaps[]`, `domain_gaps[]`, `temporal_gaps[]`, `recommendations[]`)
-
----
-
-## Tier 3 Advanced Tools — `tool_registry_advanced.py`
-
-### `sync_instructions`
-
-**Handler**: `mcp_server.handlers.sync_instructions.handler`
-**Purpose**: Push top memory insights into `CLAUDE.md` (or similar instruction file).
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `directory` | `str \| None` | No | `""` |
-| `max_insights` | `int` | No | `10` |
-| `min_heat` | `float` | No | `0.3` |
-| `dry_run` | `bool` | No | `False` |
-
-**Return shape**: `str` (JSON: `synced`, `file_path`, `preview[]` if dry_run)
+### Error Modes
+Reason code: `"index_failed"` with `message` field.
 
 ---
 
-### `create_trigger`
+## Tool 9: `query_graph`
 
-**Handler**: `mcp_server.handlers.create_trigger.handler`
-**Purpose**: Create a prospective memory trigger (stored in `prospective_memories` table).
+**Stage**: 3a
+**Source**: `src/main.rs:1847-2010`, `src/tool_schemas.rs:238-258`
+**Description**: Executes a read-only Cypher query against an indexed code graph.
+Mutation keywords (`CREATE`, `DELETE`, `MERGE`, `SET`, `REMOVE`, `DROP`, `ALTER`, `CALL`, `LOAD`)
+are rejected with `read_only_query_required` before reaching the engine.
 
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `content` | `str` | **Yes** | — |
-| `trigger_condition` | `str` | **Yes** | — |
-| `trigger_type` | `str` | No | `"keyword"` |
-| `target_directory` | `str \| None` | No | `None` |
+### Input Schema
+```json
+{
+  "type": "object",
+  "required": ["graph_path", "query"],
+  "additionalProperties": false,
+  "properties": {
+    "graph_path": { "type": "string" },
+    "query": { "type": "string" }
+  }
+}
+```
 
-**Return shape**: `str` (JSON: `trigger_id`, `created: bool`)
+### Output Schema (success)
+```json
+{
+  "stage": 3,
+  "status": "ok",
+  "tool": "query_graph",
+  "columns": ["<string>", "..."],
+  "rows": [["<string>", "..."], "..."],
+  "result": "<pipe-delimited text string>",
+  "elapsed_ms": "<integer>"
+}
+```
+`columns` is an array of column name strings.
+`rows` is an array of row arrays (each row is an array of string values).
+`result` is a pre-formatted pipe-delimited summary string (for display).
+**IMPORTANT for adapter (Finding F-002)**: all three must be surfaced.
 
----
-
-### `add_rule`
-
-**Handler**: `mcp_server.handlers.add_rule.handler`
-**Purpose**: Add a neuro-symbolic rule to the memory store.
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `condition` | `str` | **Yes** | — |
-| `action` | `str` | **Yes** | — |
-| `rule_type` | `str` | No | `"soft"` |
-| `scope` | `str` | No | `"global"` |
-| `scope_value` | `str \| None` | No | `None` |
-| `priority` | `int` | No | `0` |
-
-**Valid `rule_type` values**: `"soft"`, `"hard"`
-**Valid `scope` values**: `"global"`, `"domain"`, `"directory"`
-
-**Return shape**: `str` (JSON: `rule_id`, `created: bool`)
-
----
-
-### `get_rules`
-
-**Handler**: `mcp_server.handlers.get_rules.handler`
-**Purpose**: List active neuro-symbolic rules.
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `scope` | `str \| None` | No | `None` |
-| `rule_type` | `str \| None` | No | `None` |
-| `include_inactive` | `bool` | No | `False` |
-
-**Return shape**: `str` (JSON: `rules[]` each with `id`, `condition`, `action`, `rule_type`, `scope`, `priority`, `is_active`)
+### Error Modes
+Reason codes: `"read_only_query_required"` (mutation keyword detected — must be distinct), `"query_failed"`
 
 ---
 
-### `get_project_story`
+## Tool 10: `get_symbol`
 
-**Handler**: `mcp_server.handlers.get_project_story.handler`
-**Purpose**: Generate a period-based autobiographical narrative (week/month/all).
+**Stage**: 3a
+**Source**: `src/main.rs:2025-2080`, `src/tool_schemas.rs:260-280`
+**Description**: Looks up a symbol by qualified name. Three-layer lookup: exact →
+strip-path prefix → fuzzy match. Returns node properties + all incoming and outgoing edges.
 
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `directory` | `str \| None` | No | `None` |
-| `domain` | `str \| None` | No | `None` |
-| `period` | `str` | No | `"week"` |
-| `max_chapters` | `int` | No | `5` |
+### Input Schema
+```json
+{
+  "type": "object",
+  "required": ["graph_path", "qualified_name"],
+  "additionalProperties": false,
+  "properties": {
+    "graph_path": { "type": "string" },
+    "qualified_name": { "type": "string" }
+  }
+}
+```
 
-**Valid `period` values**: `"day"`, `"week"`, `"month"`, `"all"`
+### Output Schema (success — symbol found)
+```json
+{
+  "stage": 3,
+  "status": "ok",
+  "tool": "get_symbol",
+  "node": { "label": "<NodeLabel>", "data": "<string>" },
+  "edges_out": [{ "rel": "<string>", "id": "<string>" }, "..."],
+  "edges_in": [{ "rel": "<string>", "id": "<string>" }, "..."]
+}
+```
 
-**Return shape**: `str` (Markdown narrative with chapters)
+### Output Schema (symbol not found — NOT an error status)
+```json
+{
+  "stage": 3,
+  "status": "error",
+  "reason": "symbol_not_found",
+  "message": "not found: <qualified_name>",
+  "did_you_mean": ["<string>", "..."]
+}
+```
+**IMPORTANT for adapter (Finding F-004)**: `node` is `null` when symbol is not found,
+but the response still has `status: "ok"` and `node: null` in the non-error path.
+The `status: "error"` path returns `did_you_mean` suggestions.
 
----
-
-### `assess_coverage`
-
-**Handler**: `mcp_server.handlers.assess_coverage.handler`
-**Purpose**: Evaluate knowledge coverage completeness for the current domain/directory.
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `directory` | `str \| None` | No | `""` |
-| `domain` | `str \| None` | No | `""` |
-| `stale_days` | `int` | No | `14` |
-
-**Return shape**: `str` (JSON: `coverage_score: float`, `gaps[]`, `stale_count`, `recommendations[]`)
-
----
-
-## Wiki Tools — `tool_registry_wiki.py`
-
-### `wiki_write`
-
-**Handler**: `mcp_server.handlers.wiki_write.handler`
-**Purpose**: Author a wiki page (create/append/replace) with provided Markdown.
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `path` | `str` | **Yes** | — |
-| `content` | `str` | **Yes** | — |
-| `mode` | `str` | No | `"create"` |
-| `tags` | `list[str] \| None` | No | `[]` |
-
-**Valid `mode` values**: `"create"`, `"append"`, `"replace"`
-
-**Return shape**: `str` (JSON: `path`, `page_id`, `created: bool`)
+### Error Modes
+Reason codes: `"symbol_not_found"` (with `did_you_mean`), `"symbol_lookup_failed"`
 
 ---
 
-### `wiki_read`
+## Tool 11: `resolve_graph`
 
-**Handler**: `mcp_server.handlers.wiki_read.handler`
-**Purpose**: Read the raw Markdown of a wiki page by relative path.
+**Stage**: 3b
+**Source**: `src/main.rs:2162-2204`, `src/tool_schemas.rs:282-298`
+**Description**: Resolves cross-file edges after `index_codebase`. Adds Imports, Calls,
+Implements, Extends, Uses edges.
 
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `path` | `str` | **Yes** | — |
+### Input Schema
+```json
+{
+  "type": "object",
+  "required": ["graph_path"],
+  "additionalProperties": false,
+  "properties": {
+    "graph_path": { "type": "string" }
+  }
+}
+```
 
-**Return shape**: `str` (raw Markdown content)
+### Output Schema (success)
+```json
+{
+  "stage": 3,
+  "status": "ok",
+  "tool": "resolve_graph",
+  "imports_resolved": "<integer>",
+  "calls_resolved": "<integer>",
+  "implements_resolved": "<integer>",
+  "extends_resolved": "<integer>",
+  "uses_resolved": "<integer>",
+  "total_edges": "<integer>",
+  "total_refs": "<integer>",
+  "resolution_rate": "<float string, 2dp>",
+  "unresolved_count": "<integer>",
+  "elapsed_ms": "<integer>"
+}
+```
 
----
-
-### `wiki_list`
-
-**Handler**: `mcp_server.handlers.wiki_list.handler`
-**Purpose**: List authored wiki pages, optionally filtered by kind.
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `kind` | `str \| None` | No | `None` |
-
-**Return shape**: `str` (JSON: `pages[]` each with `path`, `title`, `kind`, `status`, `heat`)
-
----
-
-### `wiki_link`
-
-**Handler**: `mcp_server.handlers.wiki_link.handler`
-**Purpose**: Add a bidirectional link between two wiki pages (creates Related section entry).
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `from_path` | `str` | **Yes** | — |
-| `to_path` | `str` | **Yes** | — |
-| `relation` | `str` | **Yes** | — |
-
-**Return shape**: `str` (JSON: `linked: bool`, `from_page_id`, `to_page_id`)
-
----
-
-### `wiki_adr`
-
-**Handler**: `mcp_server.handlers.wiki_adr.handler`
-**Purpose**: Create a numbered ADR (Architecture Decision Record) with auto-incremented sequence.
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `title` | `str` | **Yes** | — |
-| `context` | `str` | **Yes** | — |
-| `decision` | `str` | **Yes** | — |
-| `consequences` | `str` | **Yes** | — |
-| `status` | `str` | No | `"accepted"` |
-| `tags` | `list[str] \| None` | No | `[]` |
-
-**Valid `status` values**: `"proposed"`, `"accepted"`, `"deprecated"`, `"superseded"`
-
-**Return shape**: `str` (JSON: `path`, `adr_number`, `page_id`)
+### Error Modes
+Reason code: `"resolve_failed"`
 
 ---
 
-### `wiki_reindex`
+## Tool 12: `cluster_graph`
 
-**Handler**: `mcp_server.handlers.wiki_reindex.handler`
-**Purpose**: Regenerate the wiki table of contents at `.generated/INDEX.md`.
+**Stage**: 3c
+**Source**: `src/main.rs:2210-2264`, `src/tool_schemas.rs:300-321`
+**Description**: Community detection (Louvain + C2 repair) + process tracing (BFS
+from entry points). Requires `resolve_graph` first.
 
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| (none) | — | — | — |
+### Input Schema
+```json
+{
+  "type": "object",
+  "required": ["graph_path"],
+  "additionalProperties": false,
+  "properties": {
+    "graph_path": { "type": "string" },
+    "resolution_param": { "type": "number", "default": 1.0 }
+  }
+}
+```
 
-**Return shape**: `str` (JSON: `pages_indexed`, `index_path`)
+### Output Schema (success)
+```json
+{
+  "stage": 3,
+  "status": "ok",
+  "tool": "cluster_graph",
+  "community_count": "<integer>",
+  "modularity": "<float string, 6dp>",
+  "process_count": "<integer>",
+  "elapsed_ms": "<integer>",
+  "clusters": [
+    {
+      "qualified_name": "<string>",
+      "community_id": "<string>",
+      "qn": "<string>",
+      "cluster_id": "<integer>"
+    }
+  ],
+  "total_memberships": "<integer>",
+  "clusters_truncated_at": "<integer | absent>"
+}
+```
+`clusters_truncated_at` is present ONLY when the memberships list was truncated
+(Finding F-005 — adapter output type must be `number | undefined`).
 
----
-
-### `wiki_purge`
-
-**Handler**: `mcp_server.handlers.wiki_purge.handler`
-**Purpose**: Re-evaluate and purge wiki pages that fail the current classifier.
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `apply` | `bool` | No | `False` |
-| `kind` | `str \| None` | No | `None` |
-
-**Return shape**: `str` (JSON: `candidates[]`, `purged` if apply=True)
-
----
-
-### `wiki_verify`
-
-**Handler**: `mcp_server.handlers.wiki_verify.handler`
-**Purpose**: Verify wiki-page symbol citations against AP's code graph (ADR-0046 Phase 2).
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `path` | `str \| None` | No | `None` (= all pages) |
-
-**Return shape**: `str` (JSON: `verified`, `broken_citations[]`, `missing_symbols[]`)
-
----
-
-## Upstream Ingest Tools — `tool_registry_ingest.py`
-
-### `ingest_codebase`
-
-**Handler**: `mcp_server.handlers.ingest_codebase.handler`
-**Purpose**: Ingest upstream codebase analysis from ai-automatised-pipeline into Cortex.
-
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `project_path` | `str` | **Yes** | — |
-| `output_dir` | `str \| None` | No | `None` |
-| `language` | `str` | No | `"auto"` |
-| `force_reindex` | `bool` | No | `False` |
-| `top_symbols` | `int` | No | `50` |
-| `top_processes` | `int` | No | `10` |
-
-**Return shape**: `str` (JSON: `ingested`, `symbols_stored`, `processes_stored`)
+### Error Modes
+Reason code: `"cluster_failed"`
 
 ---
 
-### `ingest_prd`
+## Tool 13: `get_processes`
 
-**Handler**: `mcp_server.handlers.ingest_prd.handler`
-**Purpose**: Ingest a PRD document into Cortex (from path or content string).
+**Stage**: 3c
+**Source**: `src/main.rs:2270-2307`, `src/tool_schemas.rs:322-339`
+**Description**: Lists all detected processes (BFS execution flows from entry points).
+Requires `cluster_graph` first.
 
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `path` | `str \| None` | No | `None` |
-| `content` | `str \| None` | No | `None` |
-| `pipeline_id` | `str \| None` | No | `None` |
-| `title` | `str \| None` | No | `None` |
-| `validate` | `bool` | No | `False` |
-| `domain` | `str \| None` | No | `None` |
+### Input Schema
+```json
+{
+  "type": "object",
+  "required": ["graph_path"],
+  "additionalProperties": false,
+  "properties": {
+    "graph_path": { "type": "string" }
+  }
+}
+```
 
-**Return shape**: `str` (JSON: `memory_id`, `stored: bool`, `sections_found`)
+### Output Schema (success)
+```json
+{
+  "stage": 3,
+  "status": "ok",
+  "tool": "get_processes",
+  "process_count": "<integer>",
+  "processes": [
+    {
+      "name": "<string>",
+      "entry_point": "<string>",
+      "entry_kind": "<main|test|handler|lib_entry>",
+      "depth": "<integer>",
+      "node_count": "<integer>"
+    }
+  ]
+}
+```
+
+### Error Modes
+Reason code: `"processes_failed"`
 
 ---
 
-### `change_impact`
+## Tool 14: `get_impact`
 
-**Handler**: `mcp_server.handlers.change_impact.handler`
-**Purpose**: Report memories affected by a commit's code changes (ADR-0046 P4).
+**Stage**: 3c
+**Source**: `src/main.rs:2313-2347`, `src/tool_schemas.rs:341-361`
+**Description**: Blast-radius analysis. Returns which communities and processes a
+symbol participates in. Requires `cluster_graph` first.
 
-| Parameter | Type | Required | Default |
-|---|---|---|---|
-| `base` | `str` | No | `"HEAD~1"` |
-| `head` | `str` | No | `"HEAD"` |
-| `expand_impact` | `bool` | No | `False` |
-| `apply_heat_bump` | `bool` | No | `False` |
+### Input Schema
+```json
+{
+  "type": "object",
+  "required": ["graph_path", "qualified_name"],
+  "additionalProperties": false,
+  "properties": {
+    "graph_path": { "type": "string" },
+    "qualified_name": { "type": "string" }
+  }
+}
+```
 
-**Return shape**: `str` (JSON: `affected_memories[]`, `impacted_symbols[]`, `heat_bumped` if apply_heat_bump)
+### Output Schema (success)
+```json
+{
+  "stage": 3,
+  "status": "ok",
+  "tool": "get_impact",
+  "qualified_name": "<string>",
+  "communities": ["<string>", "..."],
+  "communities_affected": "<integer>",
+  "processes": ["<string>", "..."],
+  "processes_affected": "<integer>"
+}
+```
+
+### Error Modes
+Reason code: `"impact_failed"`
 
 ---
 
-## Tool Count Verification
+## Tool 15: `search_codebase`
 
-| Registry file | Declared tool count | Actual tools registered | Match |
-|---|---|---|---|
-| `tool_registry_core.py` | "8 tools" (docstring) | 9 (`query_methodology` through `explore_features`) | NOTE: docstring says 8, actual is 9 |
-| `tool_registry_memory.py` | "8 tools" | 8 | OK |
-| `tool_registry_manage.py` | "6 tools" (docstring) | 7 (includes `codebase_analyze`) | NOTE: docstring says 6, actual is 7 |
-| `tool_registry_advanced.py` | "6 tools" | 6 | OK |
-| `tool_registry_nav.py` | "5 tools" | 5 | OK |
-| `tool_registry_wiki.py` | "7 tools" | 8 (includes `wiki_verify`) | NOTE: docstring says 7, actual is 8 |
-| `tool_registry_ingest.py` | "2 tools" (docstring) | 3 (includes `change_impact`) | NOTE: docstring says 2, actual is 3 |
-| **TOTAL** | 42 (sum of docstrings) | **46** | Counting discrepancy: 4 extra tools |
+**Stage**: 3d
+**Source**: `src/main.rs:2353-2416`, `src/tool_schemas.rs:363-393`
+**Description**: Hybrid BM25 + vector keyword search over the code graph. Returns
+ranked symbols. Requires `analyze_codebase` or all three of `index_codebase` + `resolve_graph` + `cluster_graph`.
 
-**Counting disproof applied**: The docstrings undercount by 4 tools. The actual registration code (the `register()` function calls) is authoritative. The TS port must implement all **46 tools**.
+### Input Schema
+```json
+{
+  "type": "object",
+  "required": ["graph_path", "query"],
+  "additionalProperties": false,
+  "properties": {
+    "graph_path": { "type": "string" },
+    "query": { "type": "string" },
+    "limit": { "type": "integer", "default": 20 },
+    "label_filter": {
+      "type": "string",
+      "enum": ["Function", "Method", "Struct", "Enum", "Trait", "Module", "Constant", "TypeAlias"]
+    }
+  }
+}
+```
+
+### Output Schema (success)
+```json
+{
+  "stage": 3,
+  "status": "ok",
+  "tool": "search_codebase",
+  "query": "<string>",
+  "result_count": "<integer>",
+  "results": [
+    {
+      "qualified_name": "<string>",
+      "name": "<string>",
+      "kind": "<NodeLabel>",
+      "file_path": "<string>",
+      "score": "<float string, 4dp>",
+      "community_id": "<string | null>",
+      "processes": ["<string>", "..."],
+      "start_line": "<integer | null>",
+      "end_line": "<integer | null>"
+    }
+  ],
+  "elapsed_ms": "<integer>"
+}
+```
+
+**Note (Finding F-003)**: The Rust binary calls `std::env::set_var("AA_SEARCH_INDEX_DIR", ...)` to
+locate the BM25 index (sibling of `graph/` under the same `output_dir`). The search index is only
+built by `analyze_codebase`. Callers using `index_codebase` + `resolve_graph` + `cluster_graph`
+individually will not have a search index and must call `search_codebase` with awareness of degraded mode.
+
+### Error Modes
+Reason code: `"search_failed"`
+
+---
+
+## Tool 16: `get_context`
+
+**Stage**: 3d
+**Source**: `src/main.rs:2422-2507`, `src/tool_schemas.rs:395-415`
+**Description**: 360° symbol view. Returns symbol + ALL relationships grouped by kind:
+imports, imported_by, calls, called_by, implements, implemented_by, uses, used_by,
+community membership, process participation.
+
+### Input Schema
+```json
+{
+  "type": "object",
+  "required": ["graph_path", "qualified_name"],
+  "additionalProperties": false,
+  "properties": {
+    "graph_path": { "type": "string" },
+    "qualified_name": { "type": "string" }
+  }
+}
+```
+
+### Output Schema (success)
+```json
+{
+  "stage": 3,
+  "status": "ok",
+  "tool": "get_context",
+  "symbol": {
+    "qualified_name": "<string>",
+    "name": "<string>",
+    "kind": "<NodeLabel>",
+    "file_path": "<string>",
+    "start_line": "<integer | null>",
+    "end_line": "<integer | null>",
+    "visibility": "<string | null>"
+  },
+  "relationships": {
+    "imports": [{ "name": "<string>", "qualified_name": "<string>", "kind": "<string>" }],
+    "imported_by": ["..."],
+    "calls": ["..."],
+    "called_by": ["..."],
+    "implements": ["..."],
+    "implemented_by": ["..."],
+    "uses": ["..."],
+    "used_by": ["..."]
+  },
+  "community": { "id": "<string>", "name": "<string>", "member_count": "<integer>" } | null,
+  "processes": [{ "name": "<string>", "role": "<string>" }]
+}
+```
+
+### Output Schema (symbol not found)
+```json
+{
+  "stage": 3,
+  "status": "error",
+  "reason": "symbol_not_found",
+  "message": "not found: <qualified_name>",
+  "did_you_mean": ["<string>", "..."]
+}
+```
+
+### Error Modes
+Reason codes: `"symbol_not_found"` (with `did_you_mean`), `"context_failed"`
+
+---
+
+## Tool 17: `analyze_codebase`
+
+**Stage**: 3 (all-in-one)
+**Source**: `src/main.rs:2513-2624`, `src/tool_schemas.rs:417-453`
+**Description**: Runs `index_codebase` + `resolve_graph` + `cluster_graph` + search index build
+in sequence. Optionally runs LSP-enhanced resolution if `lsp: true`.
+
+### Input Schema
+```json
+{
+  "type": "object",
+  "required": ["path", "output_dir"],
+  "additionalProperties": false,
+  "properties": {
+    "path": { "type": "string" },
+    "language": { "type": "string", "enum": ["auto", "rust", "python", "typescript"], "default": "auto" },
+    "output_dir": { "type": "string" },
+    "resolution_param": { "type": "number", "default": 1.0 },
+    "lsp": { "type": "boolean", "default": false }
+  }
+}
+```
+
+### Output Schema (success)
+```json
+{
+  "stage": 3,
+  "status": "ok",
+  "tool": "analyze_codebase",
+  "graph_path": "<absolute path ending in /graph>",
+  "index": {
+    "node_count": "<integer>",
+    "edge_count": "<integer>",
+    "files_indexed": "<integer>"
+  },
+  "resolve": {
+    "total_edges": "<integer>",
+    "resolution_rate": "<float string, 2dp>"
+  },
+  "cluster": {
+    "community_count": "<integer>",
+    "modularity": "<float string, 6dp>",
+    "process_count": "<integer>"
+  },
+  "search_index": {
+    "bm25_doc_count": "<integer>",
+    "vector_doc_count": "<integer>",
+    "elapsed_ms": "<integer>"
+  },
+  "lsp_resolve": {
+    "resolved_count": "<integer>",
+    "failed_count": "<integer>",
+    "skipped_count": "<integer>",
+    "elapsed_ms": "<integer>"
+  } | null,
+  "total_elapsed_ms": "<integer>"
+}
+```
+`lsp_resolve` is `null` when `lsp: false` (the default).
+
+### Error Modes
+Reason code: `"analyze_failed"`
+
+---
+
+## Tool 18: `detect_changes`
+
+**Stage**: 3e
+**Source**: `src/main.rs:2753-2805`, `src/tool_schemas.rs:566-601`
+**Description**: Git diff impact analysis. Maps changed lines to affected symbols,
+communities, processes. Accepts raw unified diff text OR git refs.
+
+### Input Schema
+```json
+{
+  "type": "object",
+  "required": ["graph_path"],
+  "additionalProperties": false,
+  "properties": {
+    "graph_path": { "type": "string" },
+    "diff_text": { "type": "string" },
+    "codebase_path": { "type": "string" },
+    "base_ref": { "type": "string", "default": "HEAD~1" },
+    "head_ref": { "type": "string", "default": "HEAD" }
+  }
+}
+```
+Either `diff_text` OR `codebase_path` must be provided (mutually exclusive for the diff source).
+When using `base_ref`/`head_ref`, `codebase_path` is required.
+
+### Output Schema (success)
+```json
+{
+  "stage": 3,
+  "status": "ok",
+  "tool": "detect_changes",
+  "files_changed": "<integer>",
+  "symbols_affected": [
+    {
+      "qualified_name": "<string>",
+      "change_type": "<string>",
+      "community": "<string | null>",
+      "processes": ["<string>", "..."]
+    }
+  ],
+  "symbols_affected_count": "<integer>",
+  "communities_affected": ["<string>", "..."],
+  "communities_affected_count": "<integer>",
+  "processes_affected": ["<string>", "..."],
+  "processes_affected_count": "<integer>",
+  "risk_score": "<float string, 4dp>"
+}
+```
+
+### Error Modes
+Reason code: `"detect_changes_failed"`; also triggers when neither `diff_text` nor `codebase_path` provided.
+
+---
+
+## Tool 19: `lsp_resolve`
+
+**Stage**: 3b-v2
+**Source**: `src/main.rs:2634-2724`, `src/tool_schemas.rs:455-490`
+**Description**: LSP-enhanced resolution. Queries a Language Server Protocol server
+to resolve method calls on inferred types. Runs after `resolve_graph`. Gracefully
+degrades if the LSP server is not installed.
+
+### Input Schema
+```json
+{
+  "type": "object",
+  "required": ["graph_path", "codebase_path"],
+  "additionalProperties": false,
+  "properties": {
+    "graph_path": { "type": "string" },
+    "codebase_path": { "type": "string" },
+    "language": { "type": "string", "enum": ["rust", "python", "typescript", "auto"], "default": "auto" },
+    "lsp_command": { "type": "string" },
+    "timeout_ms": { "type": "integer", "default": 30000 }
+  }
+}
+```
+`lsp_command` overrides auto-detection. Only commands in `LSP_COMMAND_ALLOWLIST`
+(source: `src/lsp_client.rs`) are accepted.
+
+### Output Schema (success)
+```json
+{
+  "stage": 3,
+  "status": "ok",
+  "tool": "lsp_resolve",
+  "resolved_count": "<integer>",
+  "failed_count": "<integer>",
+  "skipped_count": "<integer>",
+  "elapsed_ms": "<integer>"
+}
+```
+
+### Error Modes
+**CRITICAL (Finding F-001)**: Four distinct reason codes; callers branch on them.
+Must be preserved exactly through the adapter.
+```json
+{ "stage": 3, "status": "error", "reason": "lsp_command_not_allowed", "message": "...", "allowed": ["..."] }
+{ "stage": 3, "status": "error", "reason": "lsp_not_found", "message": "..." }
+{ "stage": 3, "status": "error", "reason": "lsp_probe_failed", "message": "..." }
+{ "stage": 3, "status": "error", "reason": "lsp_resolve_failed", "message": "..." }
+```
+`allowed` field is only present on `lsp_command_not_allowed`.
+
+---
+
+## Tool 20: `prepare_prd_input`
+
+**Stage**: 4
+**Source**: `src/main.rs:2811-2889`, `src/tool_schemas.rs:492-508`
+**Description**: Bundles verified stage-2 finding + graph intel into `stage-4.prd_input.json`.
+Read-only against the graph. Updates `index.json` with stage4 markers.
+
+### Input Schema
+```json
+{
+  "type": "object",
+  "required": ["run_id", "finding_id", "output_dir", "graph_path"],
+  "additionalProperties": false,
+  "properties": {
+    "run_id": { "type": "string" },
+    "finding_id": { "type": "string" },
+    "output_dir": { "type": "string", "pattern": "^/.+" },
+    "graph_path": { "type": "string", "pattern": "^/.+" }
+  }
+}
+```
+
+### Output Schema (success)
+```json
+{
+  "stage": 4,
+  "status": "ok",
+  "tool": "prepare_prd_input",
+  "run_id": "<string>",
+  "finding_id": "<string>",
+  "artifact_path": "<absolute path to stage-4.prd_input.json>",
+  "prepared_at": "<ISO 8601 UTC>",
+  "matched_symbol_count": "<integer>",
+  "impacted_community_count": "<integer>",
+  "impacted_process_count": "<integer>",
+  "preparer_version": "<string>"
+}
+```
+
+### Error Modes
+```json
+{ "stage": 4, "status": "error", "reason": "<code>", "message": "<string>" }
+```
+Reason codes: `"stage_2_not_verified"`, `"stage_1_refined_missing"`, `"prepare_prd_input_failed"`
+
+---
+
+## Tool 21: `validate_prd_against_graph`
+
+**Stage**: 6
+**Source**: `src/main.rs:2976-3037`, `src/tool_schemas.rs:510-528`
+**Description**: Validates a PRD against the resolved+clustered graph. Three axes:
+symbol hallucination (critical), community-consistency (warning/critical),
+process-impact contradiction (critical). LLM-free. Read-only.
+
+### Input Schema
+```json
+{
+  "type": "object",
+  "required": ["prd_path", "graph_path"],
+  "additionalProperties": false,
+  "properties": {
+    "prd_path": { "type": "string", "pattern": "^/.+" },
+    "graph_path": { "type": "string", "pattern": "^/.+" },
+    "affected_symbols_path": { "type": "string", "pattern": "^/.+" },
+    "output_dir": { "type": "string", "pattern": "^/.+" },
+    "run_id": { "type": "string" },
+    "finding_id": { "type": "string" }
+  }
+}
+```
+`output_dir`, `run_id`, `finding_id` are all-or-nothing (stage-6.validation.json
+written only when all three are provided — ADR-004 analog).
+
+### Output Schema (success)
+```json
+{
+  "stage": 6,
+  "status": "ok",
+  "tool": "validate_prd_against_graph",
+  "validated_at": "<ISO 8601 UTC>",
+  "validation_status": "<string>",
+  "extraction_mode": "<string>",
+  "contract_missing": "<boolean>",
+  "summary": {
+    "claimed_symbols": "<integer>",
+    "resolved_symbols": "<integer>",
+    "hallucinated_symbols": "<integer>",
+    "communities_spanned": "<integer>",
+    "processes_impacted": "<integer>"
+  },
+  "artifact_path": "<string | null>",
+  "report": { "...": "..." }
+}
+```
+
+### Error Modes
+Reason code: `"validate_prd_against_graph_failed"`
+
+---
+
+## Tool 22: `check_security_gates`
+
+**Stage**: 8
+**Source**: `src/main.rs:3075-3152`, `src/tool_schemas.rs:530-547`
+**Description**: Five security gate checks on changed symbols. Returns `gates_passed`
+boolean. Optional artifact write when `run_id + finding_id + output_dir` all provided (ADR-004).
+
+### Input Schema
+```json
+{
+  "type": "object",
+  "required": ["graph_path", "changed_symbols"],
+  "additionalProperties": false,
+  "properties": {
+    "graph_path": { "type": "string", "pattern": "^/.+" },
+    "changed_symbols": { "type": "array", "items": { "type": "string" }, "minItems": 0 },
+    "output_dir": { "type": "string", "pattern": "^/.+" },
+    "run_id": { "type": "string" },
+    "finding_id": { "type": "string" }
+  }
+}
+```
+
+### Output Schema (success)
+```json
+{
+  "stage": 8,
+  "status": "ok",
+  "tool": "check_security_gates",
+  "checked_at": "<ISO 8601 UTC>",
+  "gates_passed": "<boolean>",
+  "summary": {
+    "changed_symbols": "<integer>",
+    "critical_count": "<integer>",
+    "warning_count": "<integer>",
+    "info_count": "<integer>"
+  },
+  "artifact_path": "<string | null>",
+  "report": { "...": "..." }
+}
+```
+
+### Error Modes
+Reason code: `"check_security_gates_failed"`
+
+---
+
+## Tool 23: `verify_semantic_diff`
+
+**Stage**: 9
+**Source**: `src/main.rs:2895-2970`, `src/tool_schemas.rs:549-564`
+**Description**: Compares post-implementation graph vs pre-implementation graph.
+Returns `regression_score` (0.0–10.0, thresholds: <1 clean, <5 concerning, ≥5 regression).
+Read-only against both graphs.
+
+### Input Schema
+```json
+{
+  "type": "object",
+  "required": ["before_graph_path", "after_graph_path"],
+  "additionalProperties": false,
+  "properties": {
+    "before_graph_path": { "type": "string", "pattern": "^/.+" },
+    "after_graph_path": { "type": "string", "pattern": "^/.+" },
+    "report_path": { "type": "string", "pattern": "^/.+" }
+  }
+}
+```
+
+### Output Schema (success)
+```json
+{
+  "stage": 9,
+  "status": "ok",
+  "tool": "verify_semantic_diff",
+  "verified_at": "<ISO 8601 UTC>",
+  "summary": {
+    "nodes_added": "<integer>",
+    "nodes_removed": "<integer>",
+    "edges_added": "<integer>",
+    "edges_removed": "<integer>",
+    "dangling_references": "<integer>",
+    "new_unresolved_delta": "<integer>",
+    "new_cycles": "<integer>"
+  },
+  "regression_score": "<float>",
+  "verdict": "<string>",
+  "report": { "...": "..." },
+  "report_path": "<string | null>"
+}
+```
+
+### Error Modes
+```json
+{ "stage": 9, "status": "error", "reason": "<code>", "message": "<string>" }
+```
+Reason codes: `"before_graph_path_missing"`, `"after_graph_path_missing"`, `"verify_semantic_diff_failed"`
+
+---
+
+## Wire Protocol Summary
+
+The Rust binary speaks MCP over stdio using hand-rolled JSON-RPC 2.0
+(source: `src/main.rs` lines 1–17 comment block).
+
+- **Framing**: newline-delimited JSON. One JSON object per line on stdout and stdin.
+- **Methods handled**: `initialize`, `notifications/initialized` (no-op), `tools/list`, `tools/call`
+- **Request shape**: `{ "jsonrpc": "2.0", "id": <any>, "method": "<string>", "params": <object> }`
+- **Response shape**: `{ "jsonrpc": "2.0", "id": <id>, "result": <value> }` or
+  `{ "jsonrpc": "2.0", "id": <id>, "error": { "code": <int>, "message": "<string>" } }`
+- **`initialize` response** includes `protocolVersion: "2024-11-05"`, `capabilities: { tools: {} }`,
+  `serverInfo: { name: "ai-architect", version: "<semver>" }`
+- **Unknown method** → JSON-RPC error code `-32601` ("Method not found")
