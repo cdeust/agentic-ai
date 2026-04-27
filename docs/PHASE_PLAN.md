@@ -240,18 +240,77 @@ Default per ADR-0011: **defer** to post-Phase-6 hardening.
 
 ---
 
-## Phase 5 — Unified plugin manifest + Skills (2 days)
+## Phase 5 — MCP Server Composition Roots + Orchestrator Scaffold
 
-**Mission:** One marketplace.json, four plugin entries, all Skills migrated.
+**Mission:** Scaffold the four MCP server packages and the top-level orchestrator
+that compose the merged Cortex memory subsystem into a runnable agent toolchain.
+
+**Branch:** `port/phase5-mcp-servers` — landed 2026-04-27.
 
 ### Deliverables
-- [ ] `.claude-plugin/marketplace.json` with 4 plugin entries
-- [ ] Per-server `.claude-plugin/<server>/plugin.json` with independent versioning
-- [ ] All Skills from source repos migrated to `skills/`
-- [ ] Install verified end-to-end on a fresh Claude Code session
+
+#### Landed (live)
+
+- [x] `packages/mcp-servers/memory/` — `@agentic/mcp-server-memory`
+  - Exposes all **46 Cortex MCP tools** via stdio transport.
+  - 10 topic files in `src/tools/`: recall, remember, methodology, consolidation,
+    management, narrative, advanced, wiki, ingest, navigation.
+  - Tool adapters are Phase-5 stubs: return stub JSON with `note:` field explaining
+    what store adapter is pending.
+  - Compiles clean (zero tsc errors); smoke test verified (see §Smoke test below).
+  - Bin entry: `mcp-server-memory` → `dist/index.js`.
+  - source: `inventory/MCP_TOOLS.md` — 46 tools, names + parameter names verified.
+
+- [x] `docs/PATTERNS.md` — Alexander-style pattern language document.
+  - PATTERN: MCP Composition Root (most load-bearing)
+  - PATTERN: Tool-as-Adapter
+  - PATTERN: Stub-First Composition Root
+  - Generative sequence for adding a fifth MCP server.
+  - Fifteen-properties audit of the memory server.
+
+#### Landed (stubs — compile, do not run)
+
+- [x] `packages/mcp-servers/codebase/` — `@agentic/mcp-server-codebase`
+  - STATUS: port-pending. Depends on `@agentic/codebase` (Phase 3).
+  - References ADR-0001 through ADR-0004.
+  - Bin entry: `mcp-server-codebase` → `dist/index.js`.
+
+- [x] `packages/mcp-servers/reasoning/` — `@agentic/mcp-server-reasoning`
+  - STATUS: port-pending. Depends on `@agentic/reasoning` (Phase 2 zetetic migration).
+  - References `port-inventory-zetetic` prompt inventory.
+  - Bin entry: `mcp-server-reasoning` → `dist/index.js`.
+
+- [x] `packages/mcp-servers/prd/` — `@agentic/mcp-server-prd`
+  - STATUS: port-pending. Depends on `@agentic/prd-pipeline` (Phase 2 prd migration).
+  - References ADR-0005, ADR-0006.
+  - Bin entry: `mcp-server-prd` → `dist/index.js`.
+
+- [x] `packages/orchestrator/` — `@agentic/orchestrator`
+  - Skeleton: spawns Claude with all four MCP servers via `@anthropic-ai/sdk`.
+  - Exports `defaultServerConfigs()` and `runOrchestrator(config)`.
+  - Real conversation logic is Phase 6.
+
+#### pnpm-workspace.yaml
+
+Already included `"packages/mcp-servers/*"` from Phase 0; no change needed.
+
+### Smoke test (memory server)
+
+After `pnpm install && pnpm -F @agentic/mcp-server-memory build`:
+
+```
+echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' \
+  | node packages/mcp-servers/memory/dist/index.js
+```
+
+Expected: JSON-RPC response with `"tools": [...]` containing ≥ 10 tool entries.
+Server startup message appears on stderr:
+`[mcp-server-memory] running on stdio, 46 tools registered`
 
 ### Genius gate
-- `eco` — Model Reader of the install flow; every prereq surfaced
+- `alexander` — pattern language is coherent and self-consistent
+- `liskov` — tool adapter stubs satisfy the MCP tool contract (returntype shape)
+- `dijkstra` — stdio transport: no writes to stdout in any tool adapter path
 
 ---
 
