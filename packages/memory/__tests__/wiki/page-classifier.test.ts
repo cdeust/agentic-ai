@@ -58,8 +58,12 @@ describe("classifyMemory", () => {
   // ── Admissions ───────────────────────────────────────────────────────
 
   it("admits ADR content by pattern", () => {
+    // Title must be non-imperative to pass the hard-negative gate.
+    // "Use PostgreSQL" starts with the imperative verb "use" and would be
+    // rejected by the gate before ADR_PATTERNS can fire.
+    // source: wiki_classifier.py _fails_hard_negatives / _IMPERATIVE_TITLE_PATTERNS
     const content = [
-      "# Use PostgreSQL for primary storage",
+      "# PostgreSQL as primary storage",
       "",
       "We decided to use PostgreSQL over MongoDB because of ACID compliance.",
       "The decision is to adopt PostgreSQL as the primary datastore.",
@@ -88,6 +92,10 @@ describe("classifyMemory", () => {
   });
 
   it("admits convention via pattern", () => {
+    // Original 6-line fixture scored 3/8 positive signals (struct, declarative,
+    // atomic length) — one below the threshold of 4. Adding a file reference
+    // (signal 8) raises the score to 4 and satisfies Gate 3 without tags.
+    // source: wiki_classifier.py _positive_score signal 8 (_FILE_OR_ENTITY_REF)
     const content = [
       "# Snake case for module names",
       "",
@@ -95,6 +103,7 @@ describe("classifyMemory", () => {
       "This naming convention improves import clarity.",
       "The convention applies to mcp_server and all submodules.",
       "Never use camelCase for module files.",
+      "See mcp_server/__init__.py and wiki_classifier.py for examples.",
     ].join("\n");
     expect(classifyMemory(content)).toBe("convention");
   });
