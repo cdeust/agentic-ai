@@ -16,7 +16,7 @@
  */
 
 import { harvestPageSymbols } from "../symbol-extract.js";
-import { evaluateSymbolStaleness, MIN_SYMBOL_REFS, STALE_THRESHOLD } from "../symbol-verify.js";
+import { evaluateSymbolStaleness, MIN_SYMBOL_REFS, SYMBOL_STALE_THRESHOLD } from "../symbol-verify.js";
 
 interface PageStruct {
   lead: string;
@@ -132,7 +132,7 @@ export async function handler(
     return {
       status: "ok",
       results: [result],
-      threshold: STALE_THRESHOLD,
+      threshold: SYMBOL_STALE_THRESHOLD,
       min_refs: MIN_SYMBOL_REFS,
     };
   }
@@ -146,7 +146,7 @@ export async function handler(
     summary: {
       total: results.length,
       stale: stale.length,
-      threshold: STALE_THRESHOLD,
+      threshold: SYMBOL_STALE_THRESHOLD,
       min_refs: MIN_SYMBOL_REFS,
     },
   };

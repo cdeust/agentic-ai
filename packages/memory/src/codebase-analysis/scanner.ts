@@ -13,6 +13,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   buildConversationRecord,
+  type ConversationRecord,
   extractMessageStats,
   extractMetadataFields,
 } from "./scanner-parse.js";
@@ -247,7 +248,7 @@ function _parseConversationFile(
   filePath: string,
   projectName: string,
   fallbackId: string,
-): Record<string, unknown> | null {
+): ConversationRecord | null {
   const rawRecords = readHeadTail(filePath);
   if (rawRecords.length === 0) return null;
 
@@ -267,12 +268,12 @@ function _parseConversationFile(
 
 export function discoverConversations(
   claudeDir: string,
-): Record<string, unknown>[] {
+): ConversationRecord[] {
   /**
    * Discover all conversation JSONL files across Claude project directories.
    */
   const projectsDir = join(claudeDir, "projects");
-  const conversations: Record<string, unknown>[] = [];
+  const conversations: ConversationRecord[] = [];
 
   let projectEntries: string[];
   try {
@@ -321,11 +322,11 @@ export function discoverConversations(
 }
 
 export function groupByProject(
-  conversations: Record<string, unknown>[],
-): Record<string, Record<string, unknown>[]> {
-  const groups: Record<string, Record<string, unknown>[]> = {};
+  conversations: ConversationRecord[],
+): Record<string, ConversationRecord[]> {
+  const groups: Record<string, ConversationRecord[]> = {};
   for (const conv of conversations) {
-    const proj = (conv["project"] as string) ?? "";
+    const proj = conv.project ?? "";
     if (!groups[proj]) groups[proj] = [];
     groups[proj]!.push(conv);
   }
