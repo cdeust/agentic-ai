@@ -164,13 +164,22 @@ export function computeNoveltyScore(
  *
  * postcondition: all values are rounded to 4 decimal places.
  */
+// source: phase 4-to-5 cleanup, 2026-04-26
+// Return type narrowed from Record<string,number> to the exact shape so that
+// buildRejectionResponse and RememberResponse.novelty are mutually substitutable.
 export function describeSignals(
   embedding: number,
   entity: number,
   temporal: number,
   structural: number,
   combined: number,
-): Record<string, number> {
+): {
+  embedding_novelty: number;
+  entity_novelty: number;
+  temporal_novelty: number;
+  structural_novelty: number;
+  combined_novelty: number;
+} {
   return {
     embedding_novelty: Math.round(embedding * 10000) / 10000,
     entity_novelty: Math.round(entity * 10000) / 10000,

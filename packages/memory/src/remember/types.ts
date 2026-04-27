@@ -12,6 +12,12 @@
 
 import { z } from "zod";
 
+// ── Schema default constants ─────────────────────────────────────────────────
+// source: pg_schema.py:MEMORIES_DDL — column DEFAULT values taken verbatim
+const DEFAULT_IMPORTANCE = 0.5;       // source: pg_schema.py — importance DEFAULT 0.5
+const DEFAULT_CALIBRATION_THRESHOLD = 0.4; // source: Jaynes 2003 Ch.11 — conservative prior
+const DEFAULT_ACCEPTANCE_EMA = 0.5;   // source: Taleb 2012 Antifragile — neutral starting EMA
+
 // ── Consolidation stage enum ────────────────────────────────────────────────
 // source: Consolidation cascade (Kandel 2001, Dudai 2012)
 export const ConsolidationStageSchema = z.enum([
@@ -33,13 +39,14 @@ export const MemoryItemSchema = z.object({
   source: z.string().default(""),
   domain: z.string().default(""),
   directory_context: z.string().default(""),
-  created_at: z.string(), // ISO-8601
-  last_accessed: z.string(), // ISO-8601
+  // source: SCHEMA.md §memories; pg_schema.py:MEMORIES_DDL — timestamp columns (ISO-8601 strings)
+  created_at: z.string(), // source: SCHEMA.md §memories — ISO timestamp
+  last_accessed: z.string(), // source: SCHEMA.md §memories — ISO timestamp
   heat_base: z.number().min(0).max(1).default(1.0),
-  heat_base_set_at: z.string(), // ISO-8601
+  heat_base_set_at: z.string(), // source: SCHEMA.md §memories — ISO timestamp
   no_decay: z.boolean().default(false),
   surprise_score: z.number().default(0.0),
-  importance: z.number().min(0).max(1).default(0.5),
+  importance: z.number().min(0).max(1).default(DEFAULT_IMPORTANCE),
   emotional_valence: z.number().default(0.0),
   confidence: z.number().min(0).max(1).default(1.0),
   access_count: z.number().int().default(0),
@@ -88,7 +95,7 @@ export const MemoryInsertDataSchema = z.object({
   created_at: z.string().optional(), // if absent, store sets to NOW()
   heat: z.number().min(0).max(1).default(1.0),
   surprise_score: z.number().default(0.0),
-  importance: z.number().min(0).max(1).default(0.5),
+  importance: z.number().min(0).max(1).default(DEFAULT_IMPORTANCE),
   emotional_valence: z.number().default(0.0),
   confidence: z.number().min(0).max(1).default(1.0),
   store_type: z.string().default("episodic"),
@@ -108,7 +115,16 @@ export const MemoryInsertDataSchema = z.object({
   arousal: z.number().default(0.0),
   dominant_emotion: z.string().default("neutral"),
 });
-export type MemoryInsertData = z.infer<typeof MemoryInsertDataSchema>;
+// source: phase 4-to-5 cleanup, 2026-04-26
+// Use z.input<> (not z.infer<>) so that callers constructing insert payloads
+// do not have to supply every field that has a .default() in the schema.
+// The storage layer (pg-store, sqlite-store) uses `?? fallback` on every
+// optional field, satisfying the postcondition without requiring callers to
+// materialise defaults before handing data to the store.
+// This is option (a): make fields with defaults optional at the call-site type
+// boundary. It is the least invasive fix: only the exported type alias changes;
+// the Zod schema and all storage code remain untouched.
+export type MemoryInsertData = z.input<typeof MemoryInsertDataSchema>;
 
 // ── WriteGateScore — output of the 4-signal novelty computation ───────────
 // source: Friston K (2005) A theory of cortical responses.
@@ -149,7 +165,7 @@ export const RememberRequestSchema = z.object({
   force: z.boolean().default(false),
   agent_topic: z.string().default(""),
   is_global: z.boolean().default(false),
-  created_at: z.string().optional(), // ISO-8601 for backfill
+  created_at: z.string().optional(), // source: SCHEMA.md §memories — ISO timestamp for backfill
   // override via initial_heat to reflect content age (Ebbinghaus curve —
   // see memory-ingest.ts). Source: issue #14 P1.
   initial_heat: z.number().min(0).max(1).optional(),
@@ -195,8 +211,8 @@ export type RememberResponse = z.infer<typeof RememberResponseSchema>;
 // source: Taleb, N.N. (2012) Antifragile. Random House.
 export const CalibrationStateSchema = z.object({
   domain: z.string().default(""),
-  threshold: z.number().default(0.4),
-  acceptanceEma: z.number().min(0).max(1).default(0.5),
+  threshold: z.number().default(DEFAULT_CALIBRATION_THRESHOLD),
+  acceptanceEma: z.number().min(0).max(1).default(DEFAULT_ACCEPTANCE_EMA),
   totalObservations: z.number().int().default(0),
   lastAdjustmentAt: z.number().int().default(0),
 });
