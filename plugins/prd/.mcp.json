@@ -1,0 +1,16 @@
+{
+  "_note": "Bash-wrapper pattern is mandatory here because the source repo used ${CLAUDE_PLUGIN_ROOT} directly in the 'args' array (not inside a bash -c string). It is unclear whether Claude Code expands ${CLAUDE_PLUGIN_ROOT} in plain args[] vs inside bash -c strings — the safe, tested approach is to always use bash -c so expansion happens at shell invocation time. See cf85cfc. The env values use ${CLAUDE_PLUGIN_ROOT} only — no fallback syntax.",
+  "mcpServers": {
+    "prd-gen": {
+      "command": "bash",
+      "args": [
+        "-c",
+        "exec node \"${CLAUDE_PLUGIN_ROOT}/mcp-server/index.js\""
+      ],
+      "env": {
+        "PRD_GEN_SKILL_CONFIG": "${CLAUDE_PLUGIN_ROOT}/packages/skill/skill-config.json",
+        "PRD_GEN_EVIDENCE_DB": "${CLAUDE_PLUGIN_ROOT}/.prd-gen/evidence.db"
+      }
+    }
+  }
+}

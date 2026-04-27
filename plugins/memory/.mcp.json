@@ -1,0 +1,17 @@
+{
+  "_note": "CLAUDE_PLUGIN_ROOT substitution: Claude Code expands ONLY the plain ${CLAUDE_PLUGIN_ROOT} pattern. Do NOT use ${CLAUDE_PLUGIN_ROOT:-fallback} or any compound parameter expansion — the fallback is passed literally to bash, which then evaluates it with CLAUDE_PLUGIN_ROOT unset, producing the wrong path. See commit cf85cfc in cdeust/automatised-pipeline (2026-04-25) for root-cause analysis. Use a bash -c wrapper so the shell handles ${CLAUDE_PLUGIN_ROOT} at invocation time.",
+  "mcpServers": {
+    "cortex": {
+      "command": "bash",
+      "args": [
+        "-c",
+        "PY=$(command -v python3 || command -v python) && exec \"$PY\" \"${CLAUDE_PLUGIN_ROOT}/scripts/launcher.py\" mcp_server"
+      ],
+      "env": {
+        "DATABASE_URL": "postgresql://localhost:5432/cortex",
+        "CORTEX_RUNTIME": "",
+        "CORTEX_MEMORY_AP_ENABLED": "1"
+      }
+    }
+  }
+}

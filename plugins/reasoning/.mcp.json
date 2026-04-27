@@ -1,0 +1,15 @@
+{
+  "_note": "The zetetic memory MCP server is a lightweight tool, not a primary service. Two bugs were found in the source repo's .mcp.json and are fixed here: (1) args used relative path 'tools/memory-mcp-server.py' with no ${CLAUDE_PLUGIN_ROOT} anchor — fixed with bash -c wrapper; (2) env used ${MEMORY_AGENT_ID:-unknown} which is broken syntax per cf85cfc — Claude Code only expands ${CLAUDE_PLUGIN_ROOT}, so arbitrary env-var fallback expressions are passed literally. Fixed by removing the fallback and using a plain string default.",
+  "mcpServers": {
+    "memory": {
+      "command": "bash",
+      "args": [
+        "-c",
+        "exec python3 \"${CLAUDE_PLUGIN_ROOT}/tools/memory-mcp-server.py\""
+      ],
+      "env": {
+        "MEMORY_AGENT_ID": "unknown"
+      }
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "codebase",
+  "description": "Rust MCP server that indexes Rust, Python, and TypeScript codebases into a LadybugDB property graph. Resolves imports and call chains, detects communities via the Leiden algorithm, traces execution flows from entry points. 23 MCP tools: index_codebase, query_graph, get_symbol, impact_analysis, semantic_diff, and more. BM25+TF-IDF+RRF hybrid search. 220 tests.",
+  "version": "0.0.4",
+  "author": {
+    "name": "Clement Deust",
+    "email": "admin@ai-architect.tools"
+  },
+  "homepage": "https://github.com/cdeust/automatised-pipeline",
+  "repository": "https://github.com/cdeust/automatised-pipeline",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "claude-code",
+    "rust",
+    "codebase-intelligence",
+    "property-graph",
+    "call-graph",
+    "community-detection",
+    "leiden",
+    "ladybugdb",
+    "ai-architect"
+  ],
+  "mcpServers": "./.mcp.json"
+}
