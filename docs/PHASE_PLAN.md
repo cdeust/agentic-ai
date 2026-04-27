@@ -319,7 +319,30 @@ Server startup message appears on stderr:
 **Mission:** Switch to the unified install path; archive the four source repos.
 
 ### Deliverables
+
+#### Landed (2026-04-27, `port/phase6-dual-run-harness`)
+
+- [x] `packages/parity-runner/` — dual-run parity harness package
+  - `src/index.ts` — public API: `runParityCorpus({ source, repoRoot, ... }): ParityReport`
+  - `src/types.ts` — shared types: `ParityReport`, `SourceReport`, `Divergence`, `FixtureResult`
+  - `src/diff.ts` — JSON-diff with MASKING.md sentinel support (nondeterministic + bounded)
+  - `src/report.ts` — `buildParityReport` / `buildSourceReport` / `printReport`
+  - `src/adversarial.ts` — 5 adversarial probes per fixture (P1–P5 mutation catalogue)
+  - `src/runners/cortex.ts` — Cortex Python vs TS diff; CORTEX_PYTHON_BIN optional
+  - `src/runners/codebase.ts` — Rust binary vs TS diff; AI_ARCH_BIN optional (stub-runner fallback)
+  - `src/runners/prd.ts` — prd-spec-generator vs TS diff; PRD_GEN_BIN optional (stub-runner fallback)
+  - `src/cli.ts` — CLI entry point for shell invocation
+  - `src/__tests__/self-test.test.ts` — 23 self-tests targeting specific falsification conditions
+- [x] `scripts/parity-dual-run.sh` — orchestrator script; discovers env vars; exits 0 on all-match
+- [x] `.github/workflows/parity-dual-run.yml` — CI workflow (self-test job + live-dual-run job)
+- [x] `parity-oracle/RUNBOOK.md` §7 — env vars, invocation, 48-hour gate, adversarial probe docs
+- [x] `docs/PHASE_PLAN.md` Phase 6 deliverables updated
+
+#### Pending (pre-cutover)
+
 - [ ] 48-hour dual-run with zero divergence between source-repo MCPs and monorepo MCPs
+  - **Falsification condition:** `exit_code === 1` in ANY run over 48 hours falsifies the claim.
+  - **Gate:** `exit_code === 0` for 48 consecutive hours with all three live binaries available.
 - [ ] `MIGRATED.md` redirect README in each of the four source repos
 - [ ] Old repos archived (not deleted) on GitHub
 - [ ] Final genius cross-audit: `feynman + dijkstra + popper + cochrane + liskov + ginzburg + curie`

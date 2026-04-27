@@ -1,0 +1,142 @@
+name: parity-dual-run
+
+# Phase 6 dual-run parity harness.
+#
+# Trigger strategy and trade-off analysis:
+#
+# OPTION A — nightly cron on a self-hosted runner WITH live binaries:
+#   Trigger: schedule: cron "0 6 * * *"
+#   Requires: self-hosted runner that has:
+#     - Cortex Python repo checked out + uv-synced (for CORTEX_PYTHON_BIN)
+#     - automatised-pipeline Rust repo built (for AI_ARCH_BIN)
+#     - prd-spec-generator TS repo built (for PRD_GEN_BIN)
+#   Pro: full dual-run with live binaries; proves semantic equivalence daily.
+#   Con: requires maintaining a self-hosted runner; binaries are ~200 MB + deps.
+#
+# OPTION B — workflow_dispatch only (current default):
+#   Trigger: workflow_dispatch (manual trigger)
+#   Requires: operator sets env vars or uses repository secrets.
+#   Pro: no infrastructure cost; can be triggered before cutover.
+#   Con: not automatic; requires human intent.
+#
+# OPTION C — nightly cron, live binaries committed as fixtures (future):
+#   Trigger: schedule: cron "0 6 * * *" on github-hosted runner
+#   Requires: binary artifacts committed to the repo (not ideal for binaries).
+#   Con: binary bloat in git history.
+#
+# DECISION (2026-04-27): Default to OPTION B (workflow_dispatch) because:
+#   1. No self-hosted runner is provisioned yet.
+#   2. Committing binaries violates zetetic source discipline (§8: no binary
+#      blobs without documented provenance).
+#   3. The harness code is fully validated by the self-test suite on every PR
+#      (see step "Run self-tests" below); OPTION B is sufficient until cutover.
+#
+# To enable OPTION A: uncomment the schedule block below and add a self-hosted
+# runner with the required binaries. The env-vars section documents the mapping.
+#
+# source: mission brief §3 — "Document the trade-off; if no self-hosted runner,
+#         the workflow is workflow_dispatch only."
+
+on:
+  # Manual trigger (OPTION B — see above).
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "Which source to test (cortex | codebase | prd | all)"
+        required: false
+        default: "all"
+      strict_extra_keys:
+        description: "Enable strict extra-key checking (true/false)"
+        required: false
+        default: "false"
+      adversarial_probes:
+        description: "Run adversarial probes (true/false)"
+        required: false
+        default: "false"
+
+  # Nightly cron — OPTION A.
+  # Requires a self-hosted runner labelled 'parity-binaries' with all three
+  # source-repo binaries available. Uncomment when the runner is provisioned.
+  #
+  # schedule:
+  #   - cron: "0 6 * * *"   # source: mission brief §3 — "cron 0 6 * * * UTC"
+
+jobs:
+  # ── Self-test: always runs on github-hosted runner ─────────────────────────
+  # Validates the harness diff-and-report logic WITHOUT live binaries.
+  # This job runs on every push and PR as well (via the main ci.yml matrix).
+  self-test:
+    name: "parity-runner self-test (mock fixtures)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: "10"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build parity-runner
+        run: pnpm -F @agentic/parity-runner build
+
+      - name: Run self-tests (23 tests — no live binaries required)
+        run: pnpm -F @agentic/parity-runner test
+
+  # ── Live dual-run: workflow_dispatch only ──────────────────────────────────
+  # Runs when triggered manually with source-repo binaries provided via secrets
+  # or by a self-hosted runner that has the binaries on PATH.
+  live-dual-run:
+    name: "parity dual-run (live binaries)"
+    runs-on: ubuntu-latest
+    # Only runs on manual trigger; not on push/PR.
+    if: github.event_name == 'workflow_dispatch'
+    needs: self-test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: "10"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build parity-runner
+        run: pnpm -F @agentic/parity-runner build
+
+      - name: Run dual-run parity harness
+        # CORTEX_PYTHON_BIN, AI_ARCH_BIN, PRD_GEN_BIN are set as repository
+        # secrets (Settings → Secrets → Actions). If not set, runners fall
+        # back to stub-runner mode automatically.
+        #
+        # source: RUNBOOK.md §0 — env var naming conventions.
+        env:
+          CORTEX_PYTHON_BIN: ${{ secrets.CORTEX_PYTHON_BIN }}
+          AI_ARCH_BIN: ${{ secrets.AI_ARCH_BIN }}
+          PRD_GEN_BIN: ${{ secrets.PRD_GEN_BIN }}
+          PARITY_STRICT: ${{ github.event.inputs.strict_extra_keys == 'true' && '1' || '0' }}
+          PARITY_ADVERSARIAL: ${{ github.event.inputs.adversarial_probes == 'true' && '1' || '0' }}
+        run: |
+          mkdir -p reports
+          ./scripts/parity-dual-run.sh > reports/parity-$(date +%Y%m%dT%H%M%S).json
+          echo "Parity report written to reports/"
+
+      - name: Upload parity report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: parity-report-${{ github.run_number }}
+          path: reports/parity-*.json
+          retention-days: 30 # source: 30 days — sufficient window for 48-hour cutover audit
