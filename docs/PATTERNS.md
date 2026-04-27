@@ -42,7 +42,7 @@ packages/mcp-servers/<name>/
   package.json          # name, bin, deps: @modelcontextprotocol/sdk + domain workspace dep
   tsconfig.json         # extends ../../../tsconfig.base.json
   src/
-    index.ts            # < 60 lines: instantiate McpServer, call register*, connect transport
+    index.ts            # < 60 logic lines (docblock excluded): instantiate McpServer, call register*, connect transport
     tools/
       <topic>.ts        # one file per topic: exports register<Topic>Tools(server)
 ```
@@ -205,7 +205,7 @@ packages/mcp-servers/<name>/
 ```
 
 The stub `src/index.ts`:
-- Contains a `// STATUS: port-pending` header.
+- Contains a `STATUS: port-pending` line in the file's leading docblock (`/** ... */`); a JSDoc form is also accepted as long as the literal substring `STATUS: port-pending` is present.
 - References the design ADRs by path.
 - Exports one constant (`PORT_STATUS`) to give TypeScript a non-empty module.
 - Does NOT import `@modelcontextprotocol/sdk` (no real server logic; the import
