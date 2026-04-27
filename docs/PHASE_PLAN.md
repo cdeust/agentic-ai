@@ -338,15 +338,32 @@ Server startup message appears on stderr:
 - [x] `parity-oracle/RUNBOOK.md` §7 — env vars, invocation, 48-hour gate, adversarial probe docs
 - [x] `docs/PHASE_PLAN.md` Phase 6 deliverables updated
 
+#### Landed (2026-04-27, `port/phase6-source-redirects`)
+
+- [x] `cutover-staging/Cortex/MIGRATED.md` — staged; addresses MCP-over-stdio users, HTTP
+  dashboard users (stay until v0.4.x per ADR-0011), and hook users. Three explicit paths.
+- [x] `cutover-staging/automatised-pipeline/MIGRATED.md` — staged; addresses Rust binary
+  users. Breaking change for partial `(run_id, finding_id, output_dir)` triples per ADR-0004.
+  Cites ADR-0001, ADR-0002, ADR-0003, ADR-0004.
+- [x] `cutover-staging/zetetic-team-subagents/MIGRATED.md` — staged; 97 genius patterns +
+  19 team agents migrated as `.md` files, no behaviour change.
+- [x] `cutover-staging/prd-spec-generator/MIGRATED.md` — staged; 17 tools preserved,
+  zero breaking changes for MCP users. Cites ADR-0005, ADR-0006.
+- [x] `cutover-staging/cdeust.github.io/announcement.md` — public release announcement
+  staged; three Model Reader sections (curious user, existing user, contributor).
+- [x] `docs/CUTOVER_RUNBOOK.md` — operator runbook: pre-flight checks, four-repo commit
+  sequence, npm publish sequence, GitHub archive commands, rollback procedure.
+
 #### Pending (pre-cutover)
 
 - [ ] 48-hour dual-run with zero divergence between source-repo MCPs and monorepo MCPs
   - **Falsification condition:** `exit_code === 1` in ANY run over 48 hours falsifies the claim.
   - **Gate:** `exit_code === 0` for 48 consecutive hours with all three live binaries available.
-- [ ] `MIGRATED.md` redirect README in each of the four source repos
-- [ ] Old repos archived (not deleted) on GitHub
+- [ ] TODO: commit MIGRATED.md to each source repo (cdeust/Cortex, cdeust/automatised-pipeline,
+  cdeust/zetetic-team-subagents, cdeust/prd-spec-generator) per runbook §2.1–§2.4
+- [ ] Old repos archived (not deleted) on GitHub per runbook §3
 - [ ] Final genius cross-audit: `feynman + dijkstra + popper + cochrane + liskov + ginzburg + curie`
-- [ ] `agentic-ai` flipped from private to public, relicensed MIT
+- [ ] `agentic-ai` flipped from private to public, relicensed MIT per runbook §2.6
 
 ### Genius gate
 - `popper` — severity tests (could the new system fail in a way the old one wouldn't?)
