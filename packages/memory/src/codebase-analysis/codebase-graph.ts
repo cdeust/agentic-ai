@@ -274,9 +274,9 @@ export function detectCommunities(
    */
   const adj = _buildAdjacency(fileEdges, callEdges);
   const nodes = new Set<string>();
-  for (const [a, b] of adj) {
+  for (const [a, neighbors] of adj) {
     nodes.add(a);
-    nodes.add(b);
+    for (const b of neighbors) nodes.add(b);
   }
   if (nodes.size < 2) {
     const result = new Map<string, number>();

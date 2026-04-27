@@ -26,6 +26,8 @@ export * from "./schema-extraction.js";
 export * from "./schema-engine.js";
 export * from "./ast-extractors.js";
 export * from "./ast-extractors-extra.js";
-export * from "./ast-parser.js";
+// Named re-export: excludes `nodeText` which is already exported via ast-extractors.js
+// to prevent TS2308 duplicate-export ambiguity in barrel re-export chains.
+export { isAvailable, parseFileAst } from "./ast-parser.js";
 export * from "./scanner-parse.js";
 export * from "./scanner.js";

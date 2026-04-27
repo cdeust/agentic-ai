@@ -5,6 +5,7 @@
  */
 
 import { readdirSync, statSync } from "node:fs";
+import type { Dirent } from "node:fs";
 import { join, relative } from "node:path";
 import { EXT_TO_LANG } from "../codebase-parser.js";
 import type { FileAnalysis } from "../types.js";
@@ -43,7 +44,7 @@ const IGNORE_DIRS = new Set([
 // ── File walking ──────────────────────────────────────────────────────────
 
 function* _walkDir(root: string): Generator<string> {
-  let entries: ReturnType<typeof readdirSync>;
+  let entries: Dirent<string>[];
   try {
     entries = readdirSync(root, { withFileTypes: true });
   } catch {

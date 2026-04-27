@@ -167,48 +167,26 @@ to hard CI gates (currently `|| echo "::warning::"` per `.github/workflows/ci.ym
 
 3. **`pnpm-lock.yaml`** — regenerated against the unified dependency graph in commit on branch `port/ci-restore-hard-gates`. CI install step reverted to `--frozen-lockfile`. (resolved 2026-04-27)
 
-**Remaining — blocks build hard-gate restoration:**
+**Resolved (2026-04-27 `port/codebase-analysis-types-cleanup`, commit `5c8566e`):**
 
-These errors were surfaced when `port/ci-restore-hard-gates` ran `pnpm build` after
-items (1)+(2) were resolved. They were NOT in the original cleanup list and represent
-additional port-drift in `cortex-codebase-analysis` and `cortex-wiki` worktrees.
+7. **`wiki/handlers/wiki-verify.ts:19`** — updated import `STALE_THRESHOLD` →
+   `SYMBOL_STALE_THRESHOLD` and both usage sites in the handler. (resolved 2026-04-27)
 
-7. **`wiki/handlers/wiki-verify.ts:19`** — imports `STALE_THRESHOLD` from `../symbol-verify.js`,
-   but the symbol was renamed to `SYMBOL_STALE_THRESHOLD` in item (4)'s fix. The import was
-   not updated. Fix: change `import { ..., STALE_THRESHOLD }` to `import { ..., SYMBOL_STALE_THRESHOLD }`
-   and update the single usage site. File: `packages/memory/src/wiki/handlers/wiki-verify.ts`.
+8. **`codebase-analysis/codebase-graph.ts:276-280`** — fixed Map iteration: `for (const [a, neighbors] of adj)`,
+   adding `a` and iterating `neighbors` to populate the nodes set. (resolved 2026-04-27)
 
-8. **`codebase-analysis/codebase-graph.ts:276-280`** — `for (const [a, b] of adj)` where
-   `adj: Map<string, Set<string>>` — destructuring a `Map` yields `[key, value]` so `b` is
-   `Set<string>`, not `string`. `nodes.add(b)` fails TS2345. Fix: `for (const [a, neighbors]
-   of adj) { nodes.add(a); for (const b of neighbors) nodes.add(b); }`.
-   File: `packages/memory/src/codebase-analysis/codebase-graph.ts`.
+9. **`codebase-analysis/handlers/codebase-analyze-helpers.ts:48,53,54`** — added
+   `import type { Dirent } from "node:fs"` and typed `entries` as `Dirent<string>[]`
+   to unambiguously fix the `@types/node@25` `Dirent<NonSharedBuffer>` resolution. (resolved 2026-04-27)
 
-9. **`codebase-analysis/handlers/codebase-analyze-helpers.ts:48,53,54`** — `readdirSync` with
-   `{ withFileTypes: true }` returns `Dirent<string>[]` in Node 20's `@types/node`, but
-   TypeScript 5.9 with `@types/node@25` resolves it as `Dirent<NonSharedBuffer>[]`. The
-   variable typed as `ReturnType<typeof readdirSync>` then produces `NonSharedBuffer` where
-   `string` is expected in `join(root, entry.name)`. Fix: type `entries` as `Dirent<string>[]`
-   explicitly (requires `import type { Dirent } from "node:fs"`).
-   File: `packages/memory/src/codebase-analysis/handlers/codebase-analyze-helpers.ts`.
+10. **`codebase-analysis/index.ts:29`** — replaced `export * from "./ast-parser.js"` with
+    `export { isAvailable, parseFileAst } from "./ast-parser.js"` to exclude the duplicate
+    `nodeText` (already exported by `ast-extractors.js`). (resolved 2026-04-27)
 
-10. **`codebase-analysis/index.ts:29`** — TS2308 duplicate export of `nodeText`. The barrel
-    does `export * from "./ast-extractors.js"` (which exports `nodeText`) and also
-    `export * from "./ast-extractors-extra.js"`. Even though `ast-extractors-extra.ts` does
-    not define `nodeText`, TypeScript sees a re-export ambiguity because the file
-    re-exports from `ast-extractors.js` internally. Fix: use named re-exports in index.ts
-    to avoid `export *` collisions, or add `export { nodeText } from "./ast-extractors.js"`
-    and exclude it from the `export *` chain.
-    File: `packages/memory/src/codebase-analysis/index.ts`.
-
-11. **`codebase-analysis/scanner.ts:259`** — `buildConversationRecord` returns
-    `ConversationRecord` which lacks an index signature `[key: string]: unknown`, making it
-    not assignable to `Record<string, unknown>` (the return type of `discoverConversations`
-    and related functions). Fix: either add `[key: string]: unknown` to `ConversationRecord`
-    (breaks individual property types) or change the return types of `discoverConversations`,
-    `discoverAllMemories`, `readHeadTail`, and `iterToolUses` to use `ConversationRecord`
-    directly instead of `Record<string, unknown>`.
-    Files: `packages/memory/src/codebase-analysis/scanner.ts` and `scanner-parse.ts`.
+11. **`codebase-analysis/scanner.ts:259`** — imported `ConversationRecord` type from
+    `scanner-parse.js`; changed `_parseConversationFile`, `discoverConversations`, and
+    `groupByProject` to use `ConversationRecord` instead of `Record<string, unknown>`.
+    (resolved 2026-04-27)
 
 **Remaining — blocks test hard-gate restoration:**
 
@@ -240,7 +218,7 @@ additional port-drift in `cortex-codebase-analysis` and `cortex-wiki` worktrees.
 | Gate | Status | Justification |
 |---|---|---|
 | `pnpm install --frozen-lockfile` | **HARD** (restored) | Lockfile regenerated; no unresolved deps |
-| `pnpm build` | soft (`\|\| echo "::warning::"`) | Items 7–11 above block zero-error tsc |
+| `pnpm build` | **HARD** (restorable — items 7–11 resolved in `5c8566e`) | Zero tsc errors confirmed 2026-04-27 |
 | `pnpm test` | soft (`\|\| echo "::warning::"`) | Items 12–14 above block clean vitest run |
 | `pnpm lint` | soft (`\|\| true`) | No ESLint config wired (port/tooling-ci pending) |
 | `pnpm parity` | soft (no-op echo) | port/parity-baseline pending |
