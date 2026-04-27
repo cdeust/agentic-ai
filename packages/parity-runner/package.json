@@ -29,5 +29,5 @@
     "typescript": "^5.6.0",
     "vitest": "^4.1.0"
   },
-  "license": "UNLICENSED"
+  "license": "MIT"
 }

@@ -45,5 +45,5 @@
       "better-sqlite3"
     ]
   },
-  "license": "UNLICENSED"
+  "license": "MIT"
 }

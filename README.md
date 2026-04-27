@@ -82,4 +82,9 @@ Each worktree has its own genius panel + engineering review running per `docs/WO
 
 ## License
 
-Proprietary — private repo. To be relicensed MIT once cutover is complete and the four source repos are archived.
+[MIT](./LICENSE) — Copyright (c) 2026 Clement Deust.
+
+The four source repos this monorepo unifies (Cortex, automatised-pipeline,
+zetetic-team-subagents, prd-spec-generator) are each individually MIT-licensed.
+This unified repo carries the same license. See each `cutover-staging/*/MIGRATED.md`
+for per-repo attribution notes.

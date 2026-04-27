@@ -332,7 +332,8 @@ Server startup message appears on stderr:
   - `src/runners/codebase.ts` — Rust binary vs TS diff; AI_ARCH_BIN optional (stub-runner fallback)
   - `src/runners/prd.ts` — prd-spec-generator vs TS diff; PRD_GEN_BIN optional (stub-runner fallback)
   - `src/cli.ts` — CLI entry point for shell invocation
-  - `src/__tests__/self-test.test.ts` — 23 self-tests targeting specific falsification conditions
+  - `src/__tests__/self-test.test.ts` — 29 self-tests targeting specific falsification conditions
+    (NOTE: PHASE_PLAN said 23 — actual count is 29; corrected 2026-04-27 per cross-audit)
 - [x] `scripts/parity-dual-run.sh` — orchestrator script; discovers env vars; exits 0 on all-match
 - [x] `.github/workflows/parity-dual-run.yml` — CI workflow (self-test job + live-dual-run job)
 - [x] `parity-oracle/RUNBOOK.md` §7 — env vars, invocation, 48-hour gate, adversarial probe docs
@@ -354,6 +355,18 @@ Server startup message appears on stderr:
 - [x] `docs/CUTOVER_RUNBOOK.md` — operator runbook: pre-flight checks, four-repo commit
   sequence, npm publish sequence, GitHub archive commands, rollback procedure.
 
+#### Landed (2026-04-27, `port/phase6-license-release`)
+
+- [x] Root `LICENSE` — MIT, Copyright (c) 2026 Clement Deust
+- [x] Root `package.json` `license` field: `UNLICENSED` → `MIT`
+- [x] All `packages/*/package.json` and `packages/mcp-servers/*/package.json` license fields: MIT
+- [x] `README.md` license section updated from "Proprietary" to MIT
+- [x] `.github/workflows/release.yml` — on `v*` tag push: build, test, pack, GitHub Release
+- [x] `CHANGELOG.md` — Keep-a-Changelog format; `[Unreleased]` entry covering all 71 commits
+- [x] `docs/RELEASE_CHECKLIST.md` — operator-facing cutover day checklist
+- [x] `docs/audits/FINAL_CROSS_AUDIT.md` — exhaustive cross-audit Phases 0–6
+- [x] `docs/PHASE_PLAN.md` Phase 6 deliverables updated (this edit)
+
 #### Pending (pre-cutover)
 
 - [ ] 48-hour dual-run with zero divergence between source-repo MCPs and monorepo MCPs
@@ -362,8 +375,11 @@ Server startup message appears on stderr:
 - [ ] TODO: commit MIGRATED.md to each source repo (cdeust/Cortex, cdeust/automatised-pipeline,
   cdeust/zetetic-team-subagents, cdeust/prd-spec-generator) per runbook §2.1–§2.4
 - [ ] Old repos archived (not deleted) on GitHub per runbook §3
-- [ ] Final genius cross-audit: `feynman + dijkstra + popper + cochrane + liskov + ginzburg + curie`
-- [ ] `agentic-ai` flipped from private to public, relicensed MIT per runbook §2.6
+- [ ] CI build gate hardened: remove `|| echo "::warning::"` from `.github/workflows/ci.yml`
+  Build step (PHASE_PLAN says HARD but ci.yml is still soft — F-CRIT-001 in cross-audit)
+- [ ] CI lint gate hardened: remove `|| true` from Lint step; eslint.config.js already exists
+  (ci.yml comment is stale — F-HIGH-002 in cross-audit)
+- [ ] `agentic-ai` flipped from private to public per runbook §2.6
 
 ### Genius gate
 - `popper` — severity tests (could the new system fail in a way the old one wouldn't?)
