@@ -151,16 +151,104 @@ drift between sub-packages. The following is the EXPLICIT cleanup list
 that Phase 5 must close before `pnpm build` and `pnpm test` are restored
 to hard CI gates (currently `|| echo "::warning::"` per `.github/workflows/ci.yml`):
 
-1. **`remember/handlers/remember.ts:146`** — return type `{ stored: false; reason; novelty: Record<string, number>; importance }` does not satisfy the declared `Memory.novelty` shape `{ embedding_novelty; entity_novelty; temporal_novelty; structural_novelty; combined_novelty }`. Fix: produce the structured `novelty` object in the rejection path, or relax the type.
-2. **`remember/handlers/remember.ts:152` + `remember/memory-ingest.ts:236`** — `Memory` shape passed to `pg-store.insertMemory` is missing `confidence`, `directory_context`, `emotional_valence`, `is_protected`, and ~10 other required fields. Either: (a) add defaults at the call site, (b) make those fields optional in `MemoryInsertData`, (c) refactor a `MemoryInsertDataPartial` type for the call sites that genuinely don't set them.
-3. **`pnpm-lock.yaml`** — current main has cortex-hooks's pre-merge lockfile. CI runs `pnpm install --no-frozen-lockfile`; once Phase 5 cleanup completes, regenerate the lockfile against the merged dependency graph and revert the CI install step to `--frozen-lockfile`.
+**Resolved (2026-04-26 cleanup commit):**
+
 4. **Wiki internal duplicate-export** (`STALE_THRESHOLD` in both `staleness.ts` and `symbol-verify.ts`) — fixed in cleanup commit by renaming the symbol-verify constant to `SYMBOL_STALE_THRESHOLD`. (resolved 2026-04-26)
+   - NOTE: `wiki/handlers/wiki-verify.ts:19` still imports the OLD name `STALE_THRESHOLD` — the import was not updated when the export was renamed. Opened as item (7) below.
 5. **`pg` `verbatimModuleSyntax` `PoolClient` type-only import** — fixed in cleanup commit (`import { Pool, type PoolClient } from "pg"`). (resolved 2026-04-26)
 6. **Top-level `src/index.ts` namespace re-exports** — fixed in cleanup commit by switching to `export * as <module>` form. Eliminated 50+ TS2308 collisions. (resolved 2026-04-26)
 
-The remaining items (1) and (2) are port-pending in the `cortex-remember`
-worktree — the cleanest fix is a follow-up worktree `port/cortex-remember-types-cleanup`
-that takes a single small audit of the `Memory` shape end-to-end.
+**Resolved (2026-04-27 `port/cortex-remember-types-cleanup`):**
+
+1. **`remember/handlers/remember.ts:146`** — return type `{ stored: false; reason; novelty: Record<string, number>; importance }` does not satisfy the declared `Memory.novelty` shape. Fixed in commit `3084a98`. (resolved 2026-04-27)
+2. **`remember/handlers/remember.ts:152` + `remember/memory-ingest.ts:236`** — `Memory` shape passed to `pg-store.insertMemory` missing required fields. Fixed in commit `3084a98`. (resolved 2026-04-27)
+
+**Resolved (2026-04-27 `port/ci-restore-hard-gates`):**
+
+3. **`pnpm-lock.yaml`** — regenerated against the unified dependency graph in commit on branch `port/ci-restore-hard-gates`. CI install step reverted to `--frozen-lockfile`. (resolved 2026-04-27)
+
+**Remaining — blocks build hard-gate restoration:**
+
+These errors were surfaced when `port/ci-restore-hard-gates` ran `pnpm build` after
+items (1)+(2) were resolved. They were NOT in the original cleanup list and represent
+additional port-drift in `cortex-codebase-analysis` and `cortex-wiki` worktrees.
+
+7. **`wiki/handlers/wiki-verify.ts:19`** — imports `STALE_THRESHOLD` from `../symbol-verify.js`,
+   but the symbol was renamed to `SYMBOL_STALE_THRESHOLD` in item (4)'s fix. The import was
+   not updated. Fix: change `import { ..., STALE_THRESHOLD }` to `import { ..., SYMBOL_STALE_THRESHOLD }`
+   and update the single usage site. File: `packages/memory/src/wiki/handlers/wiki-verify.ts`.
+
+8. **`codebase-analysis/codebase-graph.ts:276-280`** — `for (const [a, b] of adj)` where
+   `adj: Map<string, Set<string>>` — destructuring a `Map` yields `[key, value]` so `b` is
+   `Set<string>`, not `string`. `nodes.add(b)` fails TS2345. Fix: `for (const [a, neighbors]
+   of adj) { nodes.add(a); for (const b of neighbors) nodes.add(b); }`.
+   File: `packages/memory/src/codebase-analysis/codebase-graph.ts`.
+
+9. **`codebase-analysis/handlers/codebase-analyze-helpers.ts:48,53,54`** — `readdirSync` with
+   `{ withFileTypes: true }` returns `Dirent<string>[]` in Node 20's `@types/node`, but
+   TypeScript 5.9 with `@types/node@25` resolves it as `Dirent<NonSharedBuffer>[]`. The
+   variable typed as `ReturnType<typeof readdirSync>` then produces `NonSharedBuffer` where
+   `string` is expected in `join(root, entry.name)`. Fix: type `entries` as `Dirent<string>[]`
+   explicitly (requires `import type { Dirent } from "node:fs"`).
+   File: `packages/memory/src/codebase-analysis/handlers/codebase-analyze-helpers.ts`.
+
+10. **`codebase-analysis/index.ts:29`** — TS2308 duplicate export of `nodeText`. The barrel
+    does `export * from "./ast-extractors.js"` (which exports `nodeText`) and also
+    `export * from "./ast-extractors-extra.js"`. Even though `ast-extractors-extra.ts` does
+    not define `nodeText`, TypeScript sees a re-export ambiguity because the file
+    re-exports from `ast-extractors.js` internally. Fix: use named re-exports in index.ts
+    to avoid `export *` collisions, or add `export { nodeText } from "./ast-extractors.js"`
+    and exclude it from the `export *` chain.
+    File: `packages/memory/src/codebase-analysis/index.ts`.
+
+11. **`codebase-analysis/scanner.ts:259`** — `buildConversationRecord` returns
+    `ConversationRecord` which lacks an index signature `[key: string]: unknown`, making it
+    not assignable to `Record<string, unknown>` (the return type of `discoverConversations`
+    and related functions). Fix: either add `[key: string]: unknown` to `ConversationRecord`
+    (breaks individual property types) or change the return types of `discoverConversations`,
+    `discoverAllMemories`, `readHeadTail`, and `iterToolUses` to use `ConversationRecord`
+    directly instead of `Record<string, unknown>`.
+    Files: `packages/memory/src/codebase-analysis/scanner.ts` and `scanner-parse.ts`.
+
+**Remaining — blocks test hard-gate restoration:**
+
+12. **`vitest.config.ts` root — `defineWorkspace` removed in vitest v4**. The root
+    `vitest.config.ts` uses `import { defineWorkspace } from "vitest/config"` which was
+    removed in vitest v4.x (it exported only `defineConfig` and `defineProject`). The root
+    `pnpm test` command therefore crashes at config load, before any test file runs. Fix:
+    rewrite `vitest.config.ts` to use vitest v4's workspace file convention
+    (`vitest.workspace.ts` with `defineProject` array) or use per-package test invocation
+    in CI instead of the root aggregator.
+    File: `vitest.config.ts` (root).
+
+13. **`packages/core` — no test files** exits vitest with code 1 ("No test files found").
+    The CI `pnpm -r test` step fails on every branch until core has at least one test, or
+    the vitest config for core is adjusted to exit 0 on empty. Fix: add a placeholder test
+    or set `passWithNoTests: true` in `packages/core/vitest.config.ts`.
+    File: `packages/core/vitest.config.ts`.
+
+14. **`wiki/page-classifier.test.ts` — 2 test failures** (740 passing, 2 failing):
+    `classifyMemory > admits ADR content by pattern` and
+    `classifyMemory > admits convention via pattern`. These are pure logic regressions in the
+    classifier — the patterns do not match the test fixtures. Fix: update the regex patterns
+    in `packages/memory/src/wiki/page-classifier.ts` to match the expected inputs, or
+    update the fixtures to match the current classifier logic.
+    File: `packages/memory/src/wiki/page-classifier.ts` or the test file.
+
+**CI gate status after this branch (2026-04-27):**
+
+| Gate | Status | Justification |
+|---|---|---|
+| `pnpm install --frozen-lockfile` | **HARD** (restored) | Lockfile regenerated; no unresolved deps |
+| `pnpm build` | soft (`\|\| echo "::warning::"`) | Items 7–11 above block zero-error tsc |
+| `pnpm test` | soft (`\|\| echo "::warning::"`) | Items 12–14 above block clean vitest run |
+| `pnpm lint` | soft (`\|\| true`) | No ESLint config wired (port/tooling-ci pending) |
+| `pnpm parity` | soft (no-op echo) | port/parity-baseline pending |
+| Plugin manifest lint | **HARD** (always was) | ADR-0010 |
+
+Gates will be hardened individually as each blocking item is resolved. The blanket
+"Phase-4 type drift" rationale has been retired; each remaining soft-fail now has a
+specific tracking item number above.
 
 ### Open follow-up: `port/cortex-server` decision (ADR-0011)
 
