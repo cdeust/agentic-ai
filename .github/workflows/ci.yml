@@ -33,13 +33,23 @@ jobs:
 
       - name: Setup Rust toolchain
         # source: docs/PHASE_3_PLAN.md §7.2 — pin to 1.94.0 for reproducible
-        # builds per coding-standards.md §8. rust-toolchain.toml in
-        # packages/codebase-rust/ specifies the channel; this action reads it.
-        # Using actions-rust-lang/setup-rust-toolchain@v1 which natively reads
-        # rust-toolchain.toml and also handles sccache / Cargo registry caching.
-        # source: https://github.com/actions-rust-lang/setup-rust-toolchain
+        # builds per coding-standards.md §8.
+        #
+        # Toolchain is specified explicitly here rather than relying on
+        # rust-toolchain.toml auto-detection: the action by default scans the
+        # REPO ROOT for that file, but the file lives at
+        # packages/codebase-rust/rust-toolchain.toml. With auto-detection
+        # missing, the action installs `stable`, breaking decision 7.2 and
+        # also breaking `rustup component add rust-analyzer` (the action of
+        # decision 7.4 requires a non-stable channel for rust-analyzer to
+        # resolve as an installable component on x86_64-unknown-linux-gnu).
+        #
+        # source: actions-rust-lang/setup-rust-toolchain@v1 README §toolchain
+        # input; CI failure on PR #18 run 25053733202 confirmed the bug.
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
+          toolchain: "1.94.0"
+          components: "rustfmt,clippy,rust-analyzer"
           # rustflags: "" disables the default -D warnings injection that would
           # break the upstream Rust source (which may have non-fatal warnings).
           # source: docs/PHASE_3_PLAN.md §5.4#1 — verbatim copy rule.
@@ -59,20 +69,12 @@ jobs:
           restore-keys: |
             ${{ matrix.os }}-cargo-registry-
 
-      - name: Setup rust-analyzer
+      - name: Verify rust-analyzer
         # source: docs/PHASE_3_PLAN.md §7.4 — decision to install rust-analyzer
-        # in CI (closed 2026-04-28). Success path is the load-bearing case;
-        # testing only error paths leaves the happy path uncovered.
-        # rust-analyzer is installed only when the binary is absent (cache hit
-        # skips this). Version channel matches Rust 1.94.0 stable.
-        # source: https://github.com/rust-lang/rust-analyzer/releases
-        run: |
-          if ! command -v rust-analyzer &>/dev/null; then
-            echo "Installing rust-analyzer..."
-            rustup component add rust-analyzer
-          else
-            echo "rust-analyzer already available: $(rust-analyzer --version)"
-          fi
+        # in CI (closed 2026-04-28). The component is installed by the
+        # actions-rust-lang/setup-rust-toolchain step above (components input).
+        # This step verifies the install succeeded and prints the version.
+        run: rust-analyzer --version
 
       - name: Setup pnpm
         # No `version:` arg — pnpm version is sourced from package.json's
