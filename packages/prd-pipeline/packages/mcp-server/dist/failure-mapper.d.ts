@@ -1,4 +1,4 @@
-import type { HardOutputRule, HardOutputRuleViolation } from "@prd-gen/core";
+import type { HardOutputRule, HardOutputRuleViolation } from "@agentic/prd-core";
 /**
  * Validation failure → corrective retrieval mapper.
  * Meadows leverage point #2: closes the validation→retrieval feedback loop.

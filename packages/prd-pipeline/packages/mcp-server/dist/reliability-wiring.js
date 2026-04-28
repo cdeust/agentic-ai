@@ -10,7 +10,7 @@
  *
  * Layer contract (§2.2):
  *   mcp-server (composition root) → benchmark (adapter) → core (port)
- *   This is the ONLY file in mcp-server that imports @prd-gen/benchmark.
+ *   This is the ONLY file in mcp-server that imports /prd-benchmark.
  *
  * DIP (§1.5): core declares the interface; benchmark implements it; this
  * composition-root module wires them at startup.
@@ -20,8 +20,8 @@
  */
 import { join } from "node:path";
 import { homedir } from "node:os";
-import { tryCreateReliabilityRepository, RELIABILITY_SCHEMA_VERSION, } from "@prd-gen/core";
-import { BenchmarkConsensusReliabilityProvider } from "@prd-gen/benchmark";
+import { tryCreateReliabilityRepository, RELIABILITY_SCHEMA_VERSION, } from "@agentic/prd-core";
+import { BenchmarkConsensusReliabilityProvider } from "@agentic/prd-benchmark";
 // ─── Constants ───────────────────────────────────────────────────────────────
 /**
  * Default path for the reliability SQLite DB.

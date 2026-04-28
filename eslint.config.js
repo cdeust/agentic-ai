@@ -60,6 +60,7 @@ const config = [
             "packages/*/__tests__/*.ts",
             "packages/*/__tests__/*/*.ts",
             "packages/*/__tests__/*/*/*.ts",
+            "packages/*/vitest.config.ts",
           ],
         },
         tsconfigRootDir: import.meta.dirname,
@@ -214,6 +215,18 @@ const config = [
     rules: {
       "@typescript-eslint/no-magic-numbers": "off",
       "no-console": "off",
+    },
+  },
+
+  // ── Composition roots — allowed to import from adapters/ ─────────────────
+  // Factory files (index.ts at the package root) are the composition root;
+  // they wire adapters to the port. The no-restricted-imports rule is relaxed
+  // here intentionally: these files are not core/ domain code.
+  // source: coding-standards.md §5.2 — factory / composition root pattern
+  {
+    files: ["packages/*/src/index.ts"],
+    rules: {
+      "no-restricted-imports": "off",
     },
   },
 ];

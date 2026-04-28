@@ -5,7 +5,7 @@
  * 500-line cap (rules/coding-standards.md §4.1).
  */
 import { z } from "zod";
-import { HardOutputRuleViolationSchema, } from "@prd-gen/core";
+import { HardOutputRuleViolationSchema, } from "@agentic/prd-core";
 import { calculateContextBudget, SECTION_RECALL_TEMPLATES, } from "./context-budget.js";
 import { mapFailuresToRetrievals } from "./failure-mapper.js";
 export function registerBudgetTools(server) {

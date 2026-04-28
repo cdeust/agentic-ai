@@ -15,8 +15,8 @@
  *
  * source: Wave D code-reviewer extraction; coding-standards.md §4.1.
  */
-import { appendObservationLog, JUDGE_OBSERVATION_LOG_PATH, } from "@prd-gen/benchmark";
-import { invokeOracle, OracleUnavailableError, } from "@prd-gen/benchmark/calibration";
+import { appendObservationLog, JUDGE_OBSERVATION_LOG_PATH, } from "@agentic/prd-benchmark";
+import { invokeOracle, OracleUnavailableError, } from "@agentic/prd-benchmark/calibration";
 import { getReliabilityRepo, getConsensusReliabilityProvider, } from "./reliability-wiring.js";
 // B3 / B1: one-shot per-process warn flag so we don't flood logs when an
 // oracle is unavailable. Set to the oracle type that triggered the first warn.

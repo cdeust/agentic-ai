@@ -10,7 +10,7 @@
  *
  * Layer contract (§2.2):
  *   mcp-server (composition root) → benchmark (adapter) → core (port)
- *   This is the ONLY file in mcp-server that imports @prd-gen/benchmark.
+ *   This is the ONLY file in mcp-server that imports /prd-benchmark.
  *
  * DIP (§1.5): core declares the interface; benchmark implements it; this
  * composition-root module wires them at startup.
@@ -18,8 +18,8 @@
  * source: docs/PHASE_4_PLAN.md §4.1; Wave D2 deliverable D2.4 / D2.6.
  * source: coding-standards §2.3 (composition roots wire adapters).
  */
-import { type ConsensusReliabilityProvider } from "@prd-gen/core";
-import type { ReliabilityRepository } from "@prd-gen/core";
+import { type ConsensusReliabilityProvider } from "@agentic/prd-core";
+import type { ReliabilityRepository } from "@agentic/prd-core";
 /**
  * Lazy-init the SqliteReliabilityRepository.
  *

@@ -15,8 +15,8 @@
  *
  * source: Wave D code-reviewer extraction; coding-standards.md §4.1.
  */
-import type { Claim } from "@prd-gen/core";
-import { type ConcludeOptions } from "@prd-gen/verification";
+import type { Claim } from "@agentic/prd-core";
+import { type ConcludeOptions } from "@agentic/prd-verification";
 export interface BuildConcludeOptsInput {
     readonly consensus_strategy: ConcludeOptions["strategy"];
     readonly run_id?: string;
