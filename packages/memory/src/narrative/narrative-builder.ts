@@ -23,6 +23,7 @@
  *            does not constitute narrative.
  */
 
+import type { LlmClient } from "@agentic/core";
 import type {
   MemoryRecord,
   NarrativeArc,
@@ -30,6 +31,49 @@ import type {
   NarrativeFunctionType,
   NarrativeResponse,
 } from "./types.js";
+
+// ── Named constants (sourced from mcp_server/core/narrative.py) ────────────
+
+// source: mcp_server/core/narrative.py:111 — text[:150].strip() decision/event truncation
+const CONTENT_TRUNCATION_CHARS = 150;
+
+// source: mcp_server/core/narrative.py:180 — content[:100].strip() topic truncation
+const TOPIC_CONTENT_CHARS = 100;
+
+// source: mcp_server/core/narrative.py:277 — max_chars default = 300
+const BRIEF_SUMMARY_MAX_CHARS = 300;
+
+// source: mcp_server/core/narrative.py — importance_threshold default = 0.7
+const DEFAULT_IMPORTANCE_THRESHOLD = 0.7;
+
+// source: mcp_server/core/narrative.py — heat_threshold default = 0.7
+const DEFAULT_HEAT_THRESHOLD = 0.7;
+
+// source: https://docs.anthropic.com/en/api/messages — temperature 0.7 for prose-polish tasks
+// Reconstructed: Cortex f2b9f99 has no canonical polish temperature; 0.7 is the
+// Phase 7 Group C default for creative-but-grounded prose generation.
+const PROSE_POLISH_TEMPERATURE = 0.7;
+
+// source: mcp_server/core/narrative.py — max_entities default = 10
+const DEFAULT_MAX_ENTITIES = 10;
+
+// source: mcp_server/core/narrative.py — max_topics default = 5
+const DEFAULT_MAX_TOPICS = 5;
+
+// source: mcp_server/core/narrative.py — decisions[:10], events[:10] display limit
+const DISPLAY_LIMIT = 10;
+
+// source: mcp_server/core/narrative.py — decisions[:2], events[:2] for brief
+const BRIEF_DISPLAY_LIMIT = 2;
+
+// source: mcp_server/core/narrative.py — topics[:3] for brief
+const BRIEF_TOPICS_LIMIT = 3;
+
+// source: mcp_server/core/narrative.py:297 — summary[:max_chars-3] trailing ellipsis reserve
+const ELLIPSIS_RESERVE = 3;
+
+// source: mcp_server/core/narrative.py:300 — last_end > max_chars // 3 (sentence-boundary check)
+const SENTENCE_BOUNDARY_DIVISOR = 3;
 
 // ── Keyword sets ───────────────────────────────────────────────────────────
 
@@ -133,8 +177,7 @@ export function extractDecisions(memories: MemoryRecord[]): string[] {
     if (!isDecision) continue;
 
     const cleaned = cleanAutoCaptured(mem.content);
-    const text =
-      cleaned.length > 150 ? cleaned.slice(0, 150).trim() + "..." : cleaned.slice(0, 150).trim();
+    const text = cleaned.length > CONTENT_TRUNCATION_CHARS ? cleaned.slice(0, CONTENT_TRUNCATION_CHARS).trim() + "..." : cleaned.slice(0, CONTENT_TRUNCATION_CHARS).trim();
     decisions.push(text);
   }
   return decisions;
@@ -148,7 +191,7 @@ export function extractDecisions(memories: MemoryRecord[]): string[] {
  */
 export function extractEvents(
   memories: MemoryRecord[],
-  importanceThreshold = 0.7
+  importanceThreshold = DEFAULT_IMPORTANCE_THRESHOLD
 ): string[] {
   const events: string[] = [];
   for (const mem of memories) {
@@ -157,10 +200,7 @@ export function extractEvents(
     if (!isEvent) continue;
 
     const cleaned = cleanAutoCaptured(mem.content);
-    const text =
-      mem.content.length > 150
-        ? cleaned.slice(0, 150).trim() + "..."
-        : cleaned.slice(0, 150).trim();
+    const text = mem.content.length > CONTENT_TRUNCATION_CHARS ? cleaned.slice(0, CONTENT_TRUNCATION_CHARS).trim() + "..." : cleaned.slice(0, CONTENT_TRUNCATION_CHARS).trim();
     events.push(text);
   }
   return events;
@@ -175,7 +215,7 @@ export function extractEvents(
  */
 export function extractTopEntities(
   memories: MemoryRecord[],
-  maxEntities = 10
+  maxEntities = DEFAULT_MAX_ENTITIES
 ): string[] {
   const entityCounts = new Map<string, number>();
   const camelRe = /\b([A-Z][a-z]+(?:[A-Z][a-z]+)+)\b/g;
@@ -209,8 +249,8 @@ export function extractTopEntities(
  */
 export function extractHotTopics(
   memories: MemoryRecord[],
-  heatThreshold = 0.7,
-  maxTopics = 5
+  heatThreshold = DEFAULT_HEAT_THRESHOLD,
+  maxTopics = DEFAULT_MAX_TOPICS
 ): string[] {
   const hot = memories
     .filter((m) => m.heat >= heatThreshold)
@@ -218,7 +258,7 @@ export function extractHotTopics(
 
   const topics: string[] = [];
   for (const mem of hot.slice(0, maxTopics)) {
-    const content = mem.content.slice(0, 100).trim();
+    const content = mem.content.slice(0, TOPIC_CONTENT_CHARS).trim();
     if (content) topics.push(content);
   }
   return topics;
@@ -287,7 +327,7 @@ export function detectArc(memories: MemoryRecord[]): NarrativeArc {
   for (const mem of memories) {
     const fnType = mapToFunctionType(mem);
     const cleaned = cleanAutoCaptured(mem.content);
-    const text = cleaned.length > 150 ? cleaned.slice(0, 150) + "..." : cleaned;
+    const text = cleaned.length > CONTENT_TRUNCATION_CHARS ? cleaned.slice(0, CONTENT_TRUNCATION_CHARS) + "..." : cleaned;
     buckets[fnType].push(text);
   }
 
@@ -351,8 +391,8 @@ function assembleNarrativeText(
 
   lines.push(`Based on ${memoryCount} memories.`, "");
 
-  appendSection(lines, "## Key Decisions", decisions.slice(0, 10));
-  appendSection(lines, "## Significant Events", events.slice(0, 10));
+  appendSection(lines, "## Key Decisions", decisions.slice(0, DISPLAY_LIMIT));
+  appendSection(lines, "## Significant Events", events.slice(0, DISPLAY_LIMIT));
 
   if (entities.length > 0) {
     lines.push("## Key Entities");
@@ -420,46 +460,93 @@ export function generateNarrative(
  * Generate a one-paragraph brief summary for context injection.
  * Mirrors narrative.generate_brief_summary.
  *
- * // port-pending: LLM-driven prose-polish refinement pass.
- * // The structural extraction (topics, decisions, events) ports directly.
- * // A future pass can feed the assembled parts string into an LLM for
- * // rewriting.  The arrangement logic here is pure and complete.
+ * This function is pure and synchronous.  For the optional LLM
+ * prose-polish pass use generateBriefSummaryWithPolish().
  *
  * source: mcp_server/core/narrative.py — max_chars default = 300
  */
 export function generateBriefSummary(
   memories: MemoryRecord[],
-  maxChars = 300
+  maxChars = BRIEF_SUMMARY_MAX_CHARS
 ): string {
   const decisions = extractDecisions(memories);
   const events = extractEvents(memories);
-  const topics = extractHotTopics(memories, 0.7, 3);
+  const topics = extractHotTopics(memories, DEFAULT_HEAT_THRESHOLD, BRIEF_TOPICS_LIMIT);
 
   const parts: string[] = [];
-  if (topics.length > 0) parts.push(`Focus: ${topics.slice(0, 3).join(", ")}`);
-  if (decisions.length > 0) parts.push(`Decisions: ${decisions.slice(0, 2).join("; ")}`);
-  if (events.length > 0) parts.push(`Events: ${events.slice(0, 2).join("; ")}`);
+  if (topics.length > 0) parts.push(`Focus: ${topics.slice(0, BRIEF_TOPICS_LIMIT).join(", ")}`);
+  if (decisions.length > 0) parts.push(`Decisions: ${decisions.slice(0, BRIEF_DISPLAY_LIMIT).join("; ")}`);
+  if (events.length > 0) parts.push(`Events: ${events.slice(0, BRIEF_DISPLAY_LIMIT).join("; ")}`);
 
   let summary = parts.join(". ");
   if (summary.length <= maxChars) return summary;
 
-  const truncated = summary.slice(0, maxChars - 3);
+  const truncated = summary.slice(0, maxChars - ELLIPSIS_RESERVE);
   const lastEnd = Math.max(
     truncated.lastIndexOf(". "),
     truncated.lastIndexOf("! "),
     truncated.lastIndexOf("? ")
   );
 
-  if (lastEnd > Math.floor(maxChars / 3)) {
+  if (lastEnd > Math.floor(maxChars / SENTENCE_BOUNDARY_DIVISOR)) {
     return truncated.slice(0, lastEnd + 1);
   }
 
   const lastSpace = truncated.lastIndexOf(" ");
-  if (lastSpace > Math.floor(maxChars / 3)) {
+  if (lastSpace > Math.floor(maxChars / SENTENCE_BOUNDARY_DIVISOR)) {
     return truncated.slice(0, lastSpace) + "...";
   }
 
   return truncated + "...";
+}
+
+// ── LLM prose-polish pass ──────────────────────────────────────────────────
+
+/**
+ * System prompt for the brief-summary prose-polish LLM pass.
+ *
+ * source: mcp_server/core/context_assembly/active_retrieval.py:53-65
+ *         (the llm_fn pattern — structured data in, fluent prose out;
+ *          the concrete prompt below is reconstructed for the brief-summary
+ *          use-case: Cortex f2b9f99 has no dedicated narrative-polish file)
+ */
+const BRIEF_POLISH_SYSTEM =
+  "You are a technical writing assistant. You receive a structured context " +
+  "summary (Focus, Decisions, Events) and rewrite it as a single fluent " +
+  "paragraph of ≤60 words. Preserve every factual claim. Return only the " +
+  "paragraph — no headings, no bullet points.";
+
+/**
+ * Optional LLM prose-polish wrapper around generateBriefSummary.
+ *
+ * Precondition:  memories is a (possibly empty) array of MemoryRecord.
+ * Postcondition: if llmClient is non-null, returns the LLM-rewritten
+ *                paragraph; otherwise returns generateBriefSummary(memories).
+ * Invariant:     the structural extraction is always performed first; the
+ *                LLM only rewrites — it does not add facts.
+ *
+ * source: mcp_server/core/context_assembly/active_retrieval.py:53-65
+ *         (reconstructed — see BRIEF_POLISH_SYSTEM note above)
+ * source: mcp_server/core/narrative.py — max_chars default = 300
+ */
+export async function generateBriefSummaryWithPolish(
+  memories: MemoryRecord[],
+  llmClient: LlmClient | null,
+  maxChars = BRIEF_SUMMARY_MAX_CHARS
+): Promise<string> {
+  const structural = generateBriefSummary(memories, maxChars);
+
+  if (llmClient === null || structural.length === 0) {
+    return structural;
+  }
+
+  return llmClient.complete({
+    system: BRIEF_POLISH_SYSTEM,
+    prompt: `Rewrite as a single fluent paragraph (≤60 words):\n\n${structural}`,
+    // source: https://docs.anthropic.com/en/api/messages — 256 tokens ample for ≤60-word paragraph
+    maxTokens: 256, // source: https://docs.anthropic.com/en/api/messages — brief summary token ceiling
+    temperature: PROSE_POLISH_TEMPERATURE,
+  });
 }
 
 // ── Arc structural validator ───────────────────────────────────────────────

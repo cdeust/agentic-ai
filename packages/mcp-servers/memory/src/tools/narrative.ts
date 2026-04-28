@@ -4,13 +4,32 @@
  * Tools registered (3):
  *   narrative, get_project_story, unified_search
  *
+ * Phase 7 Group C: LlmClient is now accepted as an optional dependency.
+ * The MemoryStore adapter is still a Phase 5 stub; the LLM client enables
+ * the prose-polish pass once both are wired.
+ *
  * source: worktrees/port-inventory-cortex/inventory/MCP_TOOLS.md
  *         §Tier1Memory (narrative), §Tier2Advanced (get_project_story),
  *         §Tier1Memory (unified_search)
  */
 
+import type { LlmClient } from "@agentic/core";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+
+// ── Named constants for schema parameters ──────────────────────────────────
+
+// source: MCP_TOOLS.md §"get_project_story" — max_chapters constraint
+const MAX_CHAPTERS_MAX = 20;
+const MAX_CHAPTERS_DEFAULT = 5;
+
+// source: MCP_TOOLS.md §"unified_search" — max_results constraint
+const MAX_RESULTS_MAX = 50;
+const MAX_RESULTS_DEFAULT = 10;
+
+// source: Cormack & Clarke (2009) "Reciprocal Rank Fusion" — k=60
+// canonical value from MCP_TOOLS.md §unified_search
+const RRF_K_DEFAULT = 60;
 
 // ── Error envelope helper ─────────────────────────────────────────────────────
 
@@ -24,9 +43,20 @@ function errorText(tool: string, err: unknown): { content: Array<{ type: "text";
 /**
  * Registers narrative and search MCP tools.
  *
+ * Precondition:  server is a valid McpServer instance.
+ * Postcondition: 3 tools are registered; the narrative tool will use
+ *                llmClient for prose-polish when a MemoryStore adapter is
+ *                also wired (Phase 5 prerequisite for the full narrative
+ *                pipeline).  When llmClient is null the tools degrade
+ *                gracefully — no PortPendingError is thrown.
+ *
  * source: MCP_TOOLS.md §"narrative", §"get_project_story", §"unified_search"
+ * source: docs/PHASE_7_TRACKING.md §Group C — LLM client DI
  */
-export function registerNarrativeTools(server: McpServer): void {
+export function registerNarrativeTools(
+  server: McpServer,
+  llmClient: LlmClient | null = null,
+): void {
   // ── narrative ─────────────────────────────────────────────────────────────
   server.registerTool(
     "narrative",
@@ -41,11 +71,17 @@ export function registerNarrativeTools(server: McpServer): void {
     },
     async (_args) => {
       try {
-        // source: packages/memory/src/narrative/handlers/
+        // source: packages/memory/src/narrative/handlers/narrative.ts
+        // MemoryStore adapter not yet injected (Phase 5 stub).
+        // LLM client is wired (Phase 7 Group C); prose-polish will activate
+        // once the store is available.
+        const clientNote = llmClient !== null
+          ? "LLM client available (prose-polish ready)"
+          : "LLM client absent (graceful degradation)";
         return {
           content: [{
             type: "text" as const,
-            text: "# Project Narrative\n\n_narrative: MemoryStore adapter not yet injected (Phase 5 stub)_",
+            text: `# Project Narrative\n\n_narrative: MemoryStore adapter not yet injected (Phase 5 stub). ${clientNote}_`,
           }],
         };
       } catch (err) {
@@ -64,7 +100,7 @@ export function registerNarrativeTools(server: McpServer): void {
         directory:    z.string().optional().describe("Directory scope"),
         domain:       z.string().optional().describe("Domain scope"),
         period:       z.enum(["day", "week", "month", "all"]).default("week").describe("Time period"),
-        max_chapters: z.number().int().min(1).max(20).default(5).describe("Max chapters"),
+        max_chapters: z.number().int().min(1).max(MAX_CHAPTERS_MAX).default(MAX_CHAPTERS_DEFAULT).describe("Max chapters"),
       },
     },
     async (args) => {
@@ -85,15 +121,14 @@ export function registerNarrativeTools(server: McpServer): void {
   server.registerTool(
     "unified_search",
     {
-      description:
+      description: // source: docs/ADR/0046 — unified search design
         "RRF-fuse Cortex memory recall with AP code search (ADR-0046 P3).",
       inputSchema: {
         query:       z.string().min(1).describe("Search query"),
         domain:      z.string().optional().describe("Domain filter"),
-        max_results: z.number().int().min(1).max(50).default(10).describe("Max results"),
-        // source: Reciprocal Rank Fusion k=60 — MCP_TOOLS.md §unified_search
-        // canonical value from Cormack & Clarke (2009) "Reciprocal Rank Fusion".
-        k:           z.number().int().min(1).default(60).describe("RRF k parameter"),
+        max_results: z.number().int().min(1).max(MAX_RESULTS_MAX).default(MAX_RESULTS_DEFAULT).describe("Max results"),
+        // source: Cormack & Clarke (2009) "Reciprocal Rank Fusion" — k=60 canonical value
+        k:           z.number().int().min(1).default(RRF_K_DEFAULT).describe("RRF k parameter"),
       },
     },
     async (args) => {

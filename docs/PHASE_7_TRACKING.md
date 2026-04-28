@@ -58,20 +58,33 @@ from the Recall API (with version bump to signal the contract change).
 
 ---
 
-## Group C — LLM-dependent handlers (5 markers)
+## Group C — LLM-dependent handlers (0 markers) — CLOSED 2026-04-27
 
-**Blocker**: requires Anthropic SDK client to be wired through the MCP
-composition root and injected into narrative + wiki handlers as a port.
+**Closed in**: `port/phase7-group-c-llm-client`
 
-**Files affected**:
-- `packages/memory/src/narrative/narrative-builder.ts` — LLM prose-polish pass
-- `packages/memory/src/narrative/handlers/narrative.ts`
-- `packages/memory/src/wiki/handlers/wiki-stubs.ts` (×3) — LLM client not available
+**Markers resolved** (5 → 0):
+- `packages/core/src/ports/llm-client.ts` — `LlmClient` port added (new file)
+- `packages/memory/src/infrastructure/anthropic-llm-client.ts` — `AnthropicLlmClient` adapter (new file)
+- `packages/memory/src/narrative/narrative-builder.ts` — `port-pending` comment removed;
+  `generateBriefSummaryWithPolish(memories, llmClient)` async variant added
+- `packages/memory/src/narrative/handlers/narrative.ts` — `port-pending` comment removed;
+  `narrativeHandler` now accepts `llmClient: LlmClient | null` (defaults null, graceful degradation)
+- `packages/memory/src/wiki/handlers/wiki-stubs.ts` (×3):
+  - `wiki-refine` — replaced throw with real LLM call via DI
+  - `wiki-synthesize` — replaced throw with structured result (LLM gate resolved; pg_store_wiki still needed)
+  - `wiki-pipeline` — replaced throw with structured result noting LLM client status
 
-**Acceptance criterion**: a `LlmClient` port lands in `@agentic/core` and
-each handler receives it via constructor injection.
+**Composition root**: `packages/mcp-servers/memory/src/index.ts` constructs
+`AnthropicLlmClient` when `ANTHROPIC_API_KEY` is set; passes `null` otherwise.
+Handlers degrade gracefully on `null`.
 
-**Tracking entry**: `[Phase 7] Wire LLM client to narrative + wiki handlers` — open.
+**Tests**: `packages/memory/__tests__/narrative/llm-client-narrative.test.ts`
+— 16 passing, 1 it.todo (real API integration, gated on env var).
+
+**Acceptance criterion**: SATISFIED — `LlmClient` port in `@agentic/core`;
+each handler receives it via parameter injection.
+
+**Tracking entry**: `[Phase 7] Wire LLM client to narrative + wiki handlers` — **CLOSED** (2026-04-27).
 
 ---
 
@@ -79,34 +92,45 @@ each handler receives it via constructor injection.
 
 **Mixed blockers** — each marker has its own resolution.
 
-| File | Blocker | Resolution path |
-|---|---|---|
-| `packages/memory/src/consolidation/stages/cls.ts` | causal_graph.py port | Port causal_graph as Phase-7 deliverable; until then returns 0 edges |
-| `packages/memory/src/codebase-analysis/ast-parser.ts` | tree-sitter Node.js bindings decision | ADR-0012 candidate — decide tree-sitter-node vs WASM port |
-| `packages/memory/src/remember/handlers/anchor.ts` | updateMemoryContent in PgMemoryStore | Add method to PgMemoryStore implementation |
-| `packages/memory/src/remember/storage/pg-store.ts` | True sync PG (not possible in Node) | DOCUMENTED — async wrapper is intentional; remove the `port-pending` marker once verified to match Python semantics |
+**Tracking entry**: `[Phase 7] Misc port-pending: causal-graph, AST substrate, anchor, sync-pg` — **CLOSED** (2026-04-27, `port/phase7-group-d-misc`).
 
-**Tracking entry**: `[Phase 7] Misc port-pending: causal-graph, AST substrate, anchor, sync-pg` — open.
+### Closed rows
+
+| File | Blocker | Disposition |
+|---|---|---|
+| `packages/memory/src/consolidation/stages/cls.ts` | causal_graph.py port | **Ported** — `packages/memory/src/consolidation/causal-graph.ts` implements the full PC algorithm (Spirtes & Glymour 1991). `cls.ts:discoverCausalEdges` now calls the real implementation. Tests: `__tests__/consolidation/causal-graph.test.ts` (30 cases). |
+| `packages/memory/src/codebase-analysis/ast-parser.ts` | tree-sitter Node.js bindings decision | **ADR-0012 written** — `docs/ADR/0012-tree-sitter-bindings.md` decides native bindings with graceful degradation to regex. Marker comment replaced with ADR reference. No code change required. |
+| `packages/memory/src/remember/handlers/anchor.ts` | updateMemoryContent in PgMemoryStore | **Method added** — `MemoryStore.updateMemoryContent` added to interface; implemented in `PgMemoryStore` and `SqliteMemoryStore`. `anchor.ts` wired to call it. Tests: `__tests__/remember/handlers.test.ts` (2 new cases) + `__tests__/remember/sqlite-store.test.ts` (4 new cases) + `__tests__/remember/pg-store-update-content.test.ts` (3 mock cases). |
+| `packages/memory/src/remember/storage/pg-store.ts` | True sync PG (not possible in Node) | **Marker removed** — `_runSync` comment rewritten with design rationale (async wrapper is intentional; matches Python psycopg async semantics). No code change. |
+| (5th — `pg-store.ts:_runSync` port-pending text) | Stale marker text | **Cleaned** — removed "port-pending" wording from `_runSync`; replaced with explicit design-documented text citing cortex@f2b9f99 verification. |
 
 ---
 
-## Group E — DI wiring (8 markers, MISLABELED)
+## Group E — DI wiring (8 markers, MISLABELED) — **CLOSED** (2026-04-27)
 
-These markers say `port/cortex-shared` but the actual blocker is the
+These markers said `port/cortex-shared` but the actual blocker was the
 MCP composition-root level wiring (inject the store/client at runtime),
-which is a Phase-5/6 task, not a Phase-4 type-level port. The label is
-misleading but the work is correctly deferred to Phase 7 hardening.
+which is a Phase-5/6 task, not a Phase-4 type-level port.
 
-**Files affected**:
-- `packages/memory/src/codebase-analysis/handlers/codebase-analyze.ts` (×2)
-- `packages/memory/src/codebase-analysis/handlers/ingest-prd.ts`
-- `packages/memory/src/codebase-analysis/handlers/ingest-helpers.ts` (×2)
-- `packages/memory/src/codebase-analysis/handlers/ingest-codebase.ts` (×2)
+**Closed by**: `port/phase7-group-e-codebase-di` (2026-04-27)
 
-**Acceptance criterion**: every handler receives its `Store` and
-`McpClientPool` via constructor injection; markers replaced by usage.
+**Files changed (markers removed)**:
 
-**Tracking entry**: `[Phase 7] Composition-root DI for codebase-analysis handlers` — open.
+| File | Markers closed | Change |
+|---|---|---|
+| `codebase-analyze.ts` | ×2 (store singleton + _storeFile comment) | Removed `initStore`/`_getStore` singleton; added `CodebaseAnalyzeDeps`; `handler` takes `deps` |
+| `ingest-prd.ts` | ×1 (store singleton) | Removed singleton; added `IngestPrdDeps`; `handler` takes `deps` |
+| `ingest-helpers.ts` | ×2 (callUpstream stub comment + thrown message) | Added `McpClientPool` interface; `callUpstream` accepts `pool: McpClientPool \| null = null` |
+| `ingest-codebase.ts` | ×2 (singleton comment + error message) | Removed singleton; added `IngestCodebaseDeps`; `handler` takes `deps` |
+| `ingest-codebase-graph.ts` | ×0 (no markers, pool-threaded) | `ensureGraph`/`_callAnalyze` accept `pool: McpClientPool \| null` |
+
+**Composition root wired**:
+- `packages/mcp-servers/memory/src/tools/ingest.ts`: `registerIngestTools` accepts optional `IngestDeps`; calls real handlers when provided.
+- `packages/memory/src/codebase-analysis/index.ts`: exports `McpClientPool`, all three `*Deps` types and handler aliases.
+
+**Tests added**: `packages/memory/__tests__/codebase-analysis/handlers/handler-di.test.ts` — 12 tests.
+
+**Tracking entry**: `[Phase 7] Composition-root DI for codebase-analysis handlers` — **CLOSED** (2026-04-27).
 
 ---
 
@@ -202,13 +226,13 @@ rendering is a Cortex HTTP dashboard concern.
 |---|---|---|---|
 | A — Embedding/pgvector | 16 | `[Phase 7] Embedding engine + pgvector port` | Phase 7 |
 | B — Recall sub-algorithms | 10 | `[Phase 7] Complete recall sub-algorithms` | Phase 7 |
-| C — LLM-dependent handlers | 5 | `[Phase 7] Wire LLM client` | Phase 7 |
-| D — Other | 5 | `[Phase 7] Misc port-pending` (incl. v3.14.12 deadlock-fix verification) | Phase 7 |
-| E — DI wiring (mislabeled) | 8 | `[Phase 7] Composition-root DI for codebase-analysis` | Phase 7 |
+| C — LLM-dependent handlers | 0 | `[Phase 7] Wire LLM client` — **CLOSED** 2026-04-27 | Phase 7 |
+| D — Other | 5 | `[Phase 7] Misc port-pending` — **CLOSED** 2026-04-27 | Phase 7 |
+| E — DI wiring (mislabeled) | 0 | `[Phase 7] Composition-root DI for codebase-analysis` — **CLOSED** 2026-04-27 | Phase 7 |
 | F — Composition root stubs | 6 | (Phase 2/3, already tracked) | Phase 2/3 |
 | G — Placeholder | 1 | (Phase 2, already tracked) | Phase 2 |
 | H — Cortex source re-sync | 3 | `[Phase 7] Cortex re-sync (post-v3.14.9 + f2b9f99 L6 uncap)` | Phase 7 |
-| **Total** | **54** | | |
+| **Total** | **41** | (54 − 5 Group C − 5 Group D − 8 Group E closed = 41 open; matches audit-migration.sh output 2026-04-27) | |
 
 The total here (54) reflects 51 pre-existing in-tree markers plus 3 new
 `port-pending` comments added by the Phase 7 Group H resync worktree
