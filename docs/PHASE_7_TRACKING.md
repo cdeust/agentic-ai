@@ -143,36 +143,56 @@ already tracks this row.
 agentic-ai Phase-6 close (2026-04-28). The TS port in
 `packages/memory/src/` is therefore drift relative to current Cortex.
 
-**Source**: `inventory/CORTEX_DELTA.md` (commit landing alongside this
-update) catalogues every relevant change with file-level granularity.
+**Source**: `inventory/CORTEX_DELTA.md` catalogues every relevant change
+with file-level granularity. Cortex HEAD at port time: `f2b9f99`.
 
-**Material deltas to re-sync**:
-- v3.14.8/9 — `ingest_codebase` no caps + Rust-style qn fallback +
-  schema simplification → re-port `packages/memory/src/codebase-analysis/handlers/ingest-codebase.ts`
-  and helpers.
-- v3.14.12 — MCP client deadlock fix → verify TS SDK already covers the
-  long-upstream-response cancellation path.
-- **f2b9f99 (post-v3.14.12)** — workflow-graph L6 uncap: drop
-  `_MAX_SYMBOLS_PER_FILE` LIMIT in load-all mode, bump asyncio
-  `line_limit` 10 MB → 1 GB, replace hand-typed edge-label list with
-  Cartesian enumeration, promote `Import` to a first-class symbol label
-  (with `_NON_QUALIFIED_LABELS` set), wire `Defines_File_Import` and
-  `Uses_*` edges. Net effect on live Cortex 6-project graph: 305K → 342K
-  nodes, 397K → 479K edges (+45.7× symbol count). Mirror in
-  `packages/memory/src/workflow-graph/sources/ast-source.ts` and
-  `packages/memory/src/infrastructure/mcp-client.ts`. Source:
-  `inventory/CORTEX_DELTA.md` Group 6.
+**Ported in `port/cortex-resync-2026-04-28` (2026-04-28)**:
 
-**Out of scope**: graph dashboard / 400K-node rendering — already deferred
-to post-cutover via ADR-0011 (Cortex HTTP server defer). f2b9f99 removed
-the Cortex-side data cap that was hiding the rendering problem; the
-rendering work itself remains a separate Cortex-only concern.
+### Group 1 — `ingest_codebase` overhaul (v3.14.8/v3.14.9)
 
-**Acceptance criterion**: new `port/cortex-resync-2026-04-28` worktree
-that ports the v3.14.8..f2b9f99 deltas, with each TS file carrying a
-`source: cortex@f2b9f99` line so future drift is immediately visible.
+| File | Delta ported |
+|---|---|
+| `ingest-codebase-cypher.ts` | `filePathFromQn` now returns `string[]` (priority-ordered candidates: file path, dotted-module, Rust-style drop-1/2/3). Matches Python `file_path_from_qn` heuristics 1-4 (py:53-111). |
+| `ingest-codebase.ts` | `_attributeFilesToSymbols` iterates the candidates list and picks the first match against knownFiles (py:118-126). `_pullSymbolsAndFiles` passes `null` to `fetchFiles` — files always fetched uncapped (py:162-168). |
+| Tests | `__tests__/codebase-analysis/ingest-codebase-cypher.test.ts` — 13 new tests. |
 
-**Tracking entry**: `[Phase 7] Cortex re-sync (post-v3.14.9 ingest_codebase + v3.14.12 deadlock fix + f2b9f99 L6 uncap)` — open.
+**Schema simplification** (v3.14.9 -21 lines): the TS schema file already matches
+the simplified form; no change needed.
+
+### Group 6 — L6 AST uncap (f2b9f99, post-v3.14.12)
+
+| File | Delta ported |
+|---|---|
+| `workflow-graph/sources/source-ast.ts` | Full implementation replacing the previous stub. `_SYMBOL_LABELS` now includes `Import`. `_NON_QUALIFIED_LABELS = {"Import"}` guards `s.id` / `s.path` fallback. Load-all mode (paths=[]) is uncapped. Cartesian-product edge enumeration for `Calls_*`, `Imports_*`, `HasMethod_*`, `Defines_File_Import`, `Uses_*`. |
+| Tests | `__tests__/workflow-graph/source-ast.test.ts` — 14 tests (9 runnable, 5 it.todo live-AP). |
+
+### Group 5 — MCP client deadlock fix (v3.14.12) — VERIFIED NO-OP
+
+The TS port uses the official `@modelcontextprotocol/sdk` Client which
+handles timeout and cancellation natively — see `callUpstream` in
+`ingest-helpers.ts`. No TS-side port required. Verification:
+- `callUpstream` throws `McpConnectionError` on the current stub path; the
+  real pool path will inherit the SDK's built-in timeout.
+- Python's fix was a `callTimeoutMs` + `idleTimeoutMs` guard on the subprocess
+  stdin/stdout reader. The TS SDK uses Node.js readable streams with built-in
+  backpressure and destruction semantics.
+
+Group D in PHASE_7_TRACKING.md is updated accordingly (no longer open for
+the deadlock-fix verification item).
+
+### Groups 2, 3, 4 — No TS action required
+
+- Group 2 (uvx removal): already clean in TS (grep returns nothing).
+- Group 3 (self-locating launcher): TS launcher is `node dist/index.js` and
+  doesn't need self-location; no-op.
+- Group 4 (automatised-pipeline rename): Phase 3 unstarted;
+  rename already documented in MIGRATION_MANIFEST.md.
+
+**Out of scope**: graph dashboard / 400K-node rendering — deferred via
+ADR-0011 (Cortex HTTP server defer). f2b9f99 only fixes the data-side cap;
+rendering is a Cortex HTTP dashboard concern.
+
+**Tracking entry**: `[Phase 7] Cortex re-sync (post-v3.14.9 + f2b9f99 L6 uncap)` — **CLOSED** (2026-04-28).
 
 ---
 
@@ -187,17 +207,20 @@ that ports the v3.14.8..f2b9f99 deltas, with each TS file carrying a
 | E — DI wiring (mislabeled) | 8 | `[Phase 7] Composition-root DI for codebase-analysis` | Phase 7 |
 | F — Composition root stubs | 6 | (Phase 2/3, already tracked) | Phase 2/3 |
 | G — Placeholder | 1 | (Phase 2, already tracked) | Phase 2 |
-| H — Cortex source re-sync | n/a (drift, not in-tree port-pending markers) | `[Phase 7] Cortex re-sync (post-v3.14.9)` | Phase 7 |
-| **Total in-tree markers** | **51** | | |
+| H — Cortex source re-sync | 3 | `[Phase 7] Cortex re-sync (post-v3.14.9 + f2b9f99 L6 uncap)` | Phase 7 |
+| **Total** | **54** | | |
 
-The total here (51) differs from the audit's count of 56 due to two
-reconciliations: (a) the `packages/core/src/index.ts` placeholder was
-hardened in this same commit and now carries one explicit `port-pending`
-marker (Group G); (b) some Phase-4 files had multiple port-pending lines
-collapsed into a single conceptual marker in the audit. The grep-able
-total in `packages/*/src` should remain in the 50–60 range until Phase 7
-work begins; `scripts/audit-migration.sh` Check 6 surfaces the exact
-count for human review.
+The total here (54) reflects 51 pre-existing in-tree markers plus 3 new
+`port-pending` comments added by the Phase 7 Group H resync worktree
+(port/cortex-resync-2026-04-28):
+- 2 in `workflow-graph/sources/source-ast.ts` — sync façades that return []
+  immediately; callers that need AP data must use `loadSymbolsAsync()` /
+  `loadAstEdgesAsync()` once the MCP client pool is wired.
+- 1 in the source-ast.ts module-level comment (mcp_client_pool reference).
+
+The grep-able total in `packages/*/src` should remain in the 50–60 range
+until Phase 7 work begins; `scripts/audit-migration.sh` Check 6 surfaces
+the exact count for human review.
 
 ---
 
