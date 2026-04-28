@@ -129,7 +129,18 @@ jobs:
         # source: docs/audits/FINAL_CROSS_AUDIT.md §F-HIGH-001 (Borges, 2026-04-27).
         run: |
           set -euo pipefail
-          if grep -rEn '\$\{[A-Z_]+:-' plugins/ 2>/dev/null; then
+          # Scan only actual manifest files (*.json) — markdown docs in
+          # plugins/ legitimately QUOTE the forbidden pattern when explaining
+          # ADR-0010, so they're excluded by the --include filter.
+          # Within the JSON manifests, `_note` keys carry human-readable
+          # explanations of the bug being prevented; filter those out so
+          # the grep only flags real `command`/`args`/`env` violations.
+          # source: ci-pull-request 25044348628 (2026-04-28) — UNIFIED_LAYOUT.md,
+          # SURVEY.md, and the three .mcp.json `_note` fields were all false
+          # positives explaining the canonical pattern.
+          violations=$(grep -rEn --include='*.json' '\$\{[A-Z_]+:-' plugins/ 2>/dev/null | grep -v '"_note":' || true)
+          if [[ -n "$violations" ]]; then
+            echo "$violations"
             echo "::error::Found shell parameter-expansion fallback pattern in a Claude plugin manifest." >&2
             echo "::error::Claude Code does NOT support \${VAR:-fallback}. Use bare \${CLAUDE_PLUGIN_ROOT}, wrap shell logic in 'bash -c'." >&2
             echo "::error::See docs/ADR/0010-claude-plugin-root-expansion.md for the canonical pattern." >&2
