@@ -1,5 +1,5 @@
 {
-  "name": "zetetic-team-subagents",
+  "name": "zetetic-reasoning",
   "description": "97 genius reasoning patterns from history's greatest minds. One epistemic standard none of them can bypass.",
   "version": "2.13.1",
   "author": {
@@ -7,7 +7,7 @@
     "email": "admin@ai-architect.tools"
   },
   "homepage": "https://ai-architect.tools",
-  "repository": "https://github.com/cdeust/zetetic-team-subagents",
+  "repository": "https://github.com/cdeust/agentic-ai",
   "license": "MIT",
   "keywords": [
     "research",
