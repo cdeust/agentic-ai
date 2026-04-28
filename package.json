@@ -13,7 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint . --max-warnings=0",
-    "typecheck": "pnpm -r exec tsc --noEmit",
+    "typecheck": "pnpm -r --if-present run typecheck",
     "parity": "vitest run --config parity-oracle/vitest.parity.config.ts",
     "layer-check": "tsx scripts/check-layer-imports.ts",
     "layer-check:self-test": "tsx scripts/check-layer-imports.ts --self-test",
