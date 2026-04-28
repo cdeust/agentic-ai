@@ -173,7 +173,7 @@ if [[ -d "$CLONE_DIR" ]]; then
   run "rm -rf '$CLONE_DIR'"
 fi
 
-run "git clone '$SOURCE_REPO' '$CLONE_DIR'"
+run "git clone --no-local '$SOURCE_REPO' '$CLONE_DIR'"
 log "  Clone created."
 
 # Capture pre-mutation commit list for later comparison
