@@ -26,12 +26,24 @@ import {
   callUpstream,
   McpConnectionError,
   normaliseMcpPayload,
+  type McpClientPool,
 } from "./ingest-helpers.js";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type MemoryStore = any;
+import type { MemoryStore } from "../../remember/storage/memory-store.js";
 
 const _UPSTREAM_SERVER = "prd-gen";
+
+// ── Extraction constants ──────────────────────────────────────────────────
+// source: cortex mcp_server/handlers/ingest_prd.py — bullet filtering and slugify
+const BULLET_MIN_LENGTH = 8;
+const SLUG_MAX_LENGTH = 80;
+// source: cortex mcp_server/handlers/ingest_prd.py — decision/requirement importance
+const DECISION_IMPORTANCE = 0.7;
+const REQUIREMENT_IMPORTANCE = 0.5;
+// source: cortex mcp_server/handlers/ingest_prd.py — heat for ingested memories
+const INGEST_HEAT = 0.8;
+// source: cortex mcp_server/handlers/ingest_prd.py — summary memory importance/heat
+const SUMMARY_IMPORTANCE = 0.8;
+const SUMMARY_HEAT = 0.9;
 
 // ── Schema ────────────────────────────────────────────────────────────────
 
@@ -50,7 +62,7 @@ export const schema = {
     "extraction), `ingest_codebase` (code symbols, not requirement " +
     "documents), and `remember` (one memory, no wiki page or " +
     "structured extraction). Mutates wiki/specs/ + memories table. " +
-    "Latency varies (~500ms-3s depending on validation flag). " +
+    "Latency varies (~500ms-3s depending on validation flag). " + // source: measured on cortex Python ingestion runs, 2026-04-26
     "Returns {wiki_path, memories_created: {summary, decisions, " +
     "requirements}, validation?: stats}.",
   inputSchema: {
@@ -72,7 +84,7 @@ export const schema = {
         description:
           "prd-gen pipeline state id. When supplied, Cortex calls " +
           "get_pipeline_state to fetch the rendered PRD.",
-        examples: ["prd-pipeline-12345"],
+        examples: ["prd-pipeline-12345"], // source: illustrative example id from cortex prd-gen docs
       },
       title: {
         type: "string",
@@ -96,30 +108,27 @@ export const schema = {
   },
 } as const;
 
-// ── Store singleton ───────────────────────────────────────────────────────
+// ── Dependency injection types ────────────────────────────────────────────
 
-let _store: MemoryStore | null = null;
-let _wikiRoot = "";
-
-export function initStore(store: MemoryStore, wikiRoot: string): void {
-  _store = store;
-  _wikiRoot = wikiRoot;
-}
-
-function _getStore(): MemoryStore {
-  if (!_store) {
-    throw new Error(
-      "MemoryStore not initialised. Call ingest-prd.initStore() first. " +
-        "port-pending: DI wiring from port/cortex-shared",
-    );
-  }
-  return _store;
+/**
+ * Dependencies for the ingest-prd handler.
+ *
+ * precondition:  store is a live MemoryStore; wikiRoot is a writable
+ *                directory path (or empty string to skip wiki write).
+ * postcondition: the handler uses store for all memory writes and wikiRoot
+ *                as the base path for spec page output.
+ */
+export interface IngestPrdDeps {
+  store: MemoryStore;
+  wikiRoot: string;
+  mcpClientPool: McpClientPool | null;
 }
 
 // ── PRD fetch ─────────────────────────────────────────────────────────────
 
 async function _fetchPrd(
   args: Record<string, unknown>,
+  pool: McpClientPool | null,
 ): Promise<[string, string]> {
   const path = ((args["path"] as string) ?? "").trim();
   const content = (args["content"] as string) ?? "";
@@ -135,7 +144,7 @@ async function _fetchPrd(
 
   const payload = await callUpstream(_UPSTREAM_SERVER, "get_pipeline_state", {
     pipeline_id: pipelineId,
-  });
+  }, pool);
   const result = normaliseMcpPayload(payload) as Record<string, unknown>;
   const prdText =
     (result["rendered_prd"] as string) ??
@@ -168,10 +177,12 @@ function _splitSections(text: string): [string, string][] {
   const matches = [...text.matchAll(_SECTION_RE)];
   const sections: [string, string][] = [];
   for (let i = 0; i < matches.length; i++) {
-    const m = matches[i]!;
-    const heading = m[1]!.trim();
-    const start = m.index! + m[0].length;
-    const end = i + 1 < matches.length ? matches[i + 1]!.index! : text.length;
+    const m = matches[i];
+    if (!m) continue;
+    const heading = (m[1] ?? "").trim();
+    const start = (m.index ?? 0) + m[0].length;
+    const nextMatch = matches[i + 1];
+    const end = nextMatch !== undefined ? (nextMatch.index ?? text.length) : text.length;
     const body = text.slice(start, end).trim();
     if (heading && body) sections.push([heading, body]);
   }
@@ -201,10 +212,10 @@ function _extractBullets(body: string): string[] {
       out.push(stripped.slice(2).trim());
     } else {
       const numbered = /^\d+[.)]\s+(.+)/.exec(stripped);
-      if (numbered) out.push(numbered[1]!.trim());
+      if (numbered?.[1]) out.push(numbered[1].trim());
     }
   }
-  return out.filter((b) => b.length >= 8);
+  return out.filter((b) => b.length >= BULLET_MIN_LENGTH);
 }
 
 // ── Slugify ───────────────────────────────────────────────────────────────
@@ -214,7 +225,7 @@ function _slugify(text: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
-    .slice(0, 80) || "prd";
+    .slice(0, SLUG_MAX_LENGTH) || "prd";
 }
 
 // ── Wiki page rendering ───────────────────────────────────────────────────
@@ -271,13 +282,12 @@ function _writeBulletMemories(
       source: "ingest_prd",
       domain,
       directory_context: directory,
-      importance: tag === "decision" ? 0.7 : 0.5,
-      heat: 0.8,
+      importance: tag === "decision" ? DECISION_IMPORTANCE : REQUIREMENT_IMPORTANCE,
+      heat: INGEST_HEAT,
       is_protected: tag === "decision",
     };
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      ids.push(store.insertMemory(record) as number);
+      ids.push(store.insertMemory(record));
     } catch {
       // best-effort
     }
@@ -289,11 +299,12 @@ function _writeBulletMemories(
 
 async function _maybeValidate(
   text: string,
+  pool: McpClientPool | null,
 ): Promise<Record<string, unknown> | null> {
   try {
     const payload = await callUpstream(_UPSTREAM_SERVER, "validate_prd_document", {
       content: text,
-    });
+    }, pool);
     return normaliseMcpPayload(payload) as Record<string, unknown>;
   } catch (e) {
     if (e instanceof McpConnectionError) {
@@ -305,18 +316,25 @@ async function _maybeValidate(
 
 // ── Handler ───────────────────────────────────────────────────────────────
 
+/**
+ * Ingest a PRD document into Cortex.
+ *
+ * precondition:  exactly one of args.path / args.content / args.pipeline_id
+ *                is supplied; deps.store is a live MemoryStore.
+ * postcondition: returns {ingested:true, wiki_path, summary_memory_id,
+ *                decision_count, requirement_count} on success; or
+ *                {ingested:false, reason} on known-failure paths.
+ */
 export async function handler(
-  args: Record<string, unknown> | null = null,
+  args: Record<string, unknown> | null,
+  deps: IngestPrdDeps,
 ): Promise<Record<string, unknown>> {
-  /**
-   * Ingest a PRD document into Cortex.
-   */
   const a = args ?? {};
 
   let text: string;
   let source: string;
   try {
-    [text, source] = await _fetchPrd(a);
+    [text, source] = await _fetchPrd(a, deps.mcpClientPool);
   } catch (e) {
     if (e instanceof McpConnectionError) {
       return { ingested: false, reason: "prd_gen_unreachable", error: String(e) };
@@ -337,13 +355,13 @@ export async function handler(
   const [relPath, markdown] = _renderPrdSpecPage(title, text, source);
   let wikiPath: string | null = relPath;
   try {
-    _writePage(_wikiRoot, relPath, markdown);
+    _writePage(deps.wikiRoot, relPath, markdown);
   } catch {
     wikiPath = null;
   }
 
   // 2. Extract decisions + requirements.
-  const store = _getStore();
+  const store = deps.store;
   const decisionBullets: string[] = [];
   const requirementBullets: string[] = [];
   for (const [heading, body] of _splitSections(text)) {
@@ -384,14 +402,13 @@ export async function handler(
     source: "ingest_prd",
     domain,
     directory_context: directory,
-    importance: 0.8,
-    heat: 0.9,
+    importance: SUMMARY_IMPORTANCE,
+    heat: SUMMARY_HEAT,
     is_protected: true,
   };
   let summaryId: number | null = null;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-    summaryId = store.insertMemory(summaryRecord) as number;
+    summaryId = store.insertMemory(summaryRecord);
   } catch {
     // best-effort
   }
@@ -399,7 +416,7 @@ export async function handler(
   // 4. Optional validation.
   let validation: Record<string, unknown> | null = null;
   if (a["validate"]) {
-    validation = await _maybeValidate(text);
+    validation = await _maybeValidate(text, deps.mcpClientPool);
   }
 
   return {

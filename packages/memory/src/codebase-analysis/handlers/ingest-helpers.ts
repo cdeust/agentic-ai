@@ -12,12 +12,35 @@
  *
  * 2. Safe MCP calls — wraps mcp client calls with a uniform error shape
  *    so ingest handlers don't each re-derive the try/catch boilerplate.
+ *    Callers supply an McpClientPool instance; there is no module-level
+ *    pool singleton. When no pool is provided, McpConnectionError is
+ *    thrown to preserve the previous observable contract for callers that
+ *    have not yet wired a real pool.
  */
 
 import { createHash } from "node:crypto";
 import { resolve, basename } from "node:path";
 
 export const CODE_GRAPH_TAG_PREFIX = "_code_graph:";
+// source: 8 hex chars = 32-bit collision space; sufficient for project-key disambiguation
+const PROJECT_KEY_HASH_LENGTH = 8;
+
+// ── McpClientPool port ────────────────────────────────────────────────────
+//
+// Core declares what it needs (DIP §5.1): a pool that can call any upstream
+// MCP tool by server name + tool name. Infrastructure implements this
+// interface. The composition root injects the concrete adapter.
+//
+// precondition:  serverName and toolName are non-empty strings.
+// postcondition: resolves with the upstream tool result payload, or rejects
+//                with McpConnectionError on transport failure.
+export interface McpClientPool {
+  call(
+    serverName: string,
+    toolName: string,
+    args: Record<string, unknown>,
+  ): Promise<Record<string, unknown>>;
+}
 
 // ── Project identification ─────────────────────────────────────────────────
 
@@ -26,7 +49,7 @@ export function projectKey(projectPath: string): string {
    * Stable project key = last path segment + short hash of full path.
    */
   const p = resolve(projectPath);
-  const digest = createHash("sha256").update(p, "utf8").digest("hex").slice(0, 8);
+  const digest = createHash("sha256").update(p, "utf8").digest("hex").slice(0, PROJECT_KEY_HASH_LENGTH); // source: SHA-256 (FIPS 180-4) — standard hash algorithm for key derivation
   return `${basename(p)}-${digest}`;
 }
 
@@ -50,7 +73,6 @@ export function findCachedGraph(
   const tag = codeGraphTag(projectPath);
   let mems: Record<string, unknown>[];
   try {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     mems = store.getAllMemoriesForDecay() as Record<string, unknown>[];
   } catch {
     return null;
@@ -94,7 +116,6 @@ export function memoiseGraphPath(
     heat: 1.0,
   };
   try {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     return store.insertMemory(record) as number;
   } catch {
     return null;
@@ -103,29 +124,32 @@ export function memoiseGraphPath(
 
 // ── MCP call helpers ──────────────────────────────────────────────────────
 
+/**
+ * Invoke a tool on an upstream MCP server; return parsed result.
+ *
+ * precondition:  serverName and toolName are non-empty strings.
+ * postcondition: resolves with the raw tool payload dict when the server
+ *                answers successfully.
+ *
+ * When `pool` is null (composition root has not yet wired a real pool),
+ * McpConnectionError is thrown. This preserves the previous observable
+ * contract while making the missing-pool condition explicit at the call site
+ * rather than silently swallowed. Callers that catch McpConnectionError
+ * already handle this case correctly.
+ */
 export async function callUpstream(
   serverName: string,
   toolName: string,
   args: Record<string, unknown>,
+  pool: McpClientPool | null = null,
 ): Promise<Record<string, unknown>> {
-  /**
-   * Invoke a tool on an upstream MCP server; return parsed result.
-   *
-   * Raises McpConnectionError on connection/transport failure. Returns
-   * the tool result as a plain dict when the server answers successfully.
-   *
-   * NOTE: The MCP client pool is not yet ported to TS. This stub throws
-   * McpConnectionError. Replace with real pool when port/cortex-shared
-   * lands the infrastructure layer.
-   *
-   * port-pending: mcp_client_pool
-   */
-  throw new McpConnectionError(
-    `callUpstream(${serverName}, ${toolName}) — MCP client pool not yet ported. ` +
-      `port-pending: port/cortex-shared must land first.`,
-  );
-  // Unreachable; satisfies return type.
-  return {};
+  if (pool === null) {
+    throw new McpConnectionError(
+      `callUpstream(${serverName}, ${toolName}) — McpClientPool not injected. ` +
+        `Wire a real pool via the deps object at the composition root.`,
+    );
+  }
+  return pool.call(serverName, toolName, args);
 }
 
 export function normaliseMcpPayload(payload: unknown): unknown {

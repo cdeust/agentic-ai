@@ -58,33 +58,20 @@ from the Recall API (with version bump to signal the contract change).
 
 ---
 
-## Group C — LLM-dependent handlers (0 markers) — CLOSED 2026-04-27
+## Group C — LLM-dependent handlers (5 markers)
 
-**Closed in**: `port/phase7-group-c-llm-client`
+**Blocker**: requires Anthropic SDK client to be wired through the MCP
+composition root and injected into narrative + wiki handlers as a port.
 
-**Markers resolved** (5 → 0):
-- `packages/core/src/ports/llm-client.ts` — `LlmClient` port added (new file)
-- `packages/memory/src/infrastructure/anthropic-llm-client.ts` — `AnthropicLlmClient` adapter (new file)
-- `packages/memory/src/narrative/narrative-builder.ts` — `port-pending` comment removed;
-  `generateBriefSummaryWithPolish(memories, llmClient)` async variant added
-- `packages/memory/src/narrative/handlers/narrative.ts` — `port-pending` comment removed;
-  `narrativeHandler` now accepts `llmClient: LlmClient | null` (defaults null, graceful degradation)
-- `packages/memory/src/wiki/handlers/wiki-stubs.ts` (×3):
-  - `wiki-refine` — replaced throw with real LLM call via DI
-  - `wiki-synthesize` — replaced throw with structured result (LLM gate resolved; pg_store_wiki still needed)
-  - `wiki-pipeline` — replaced throw with structured result noting LLM client status
+**Files affected**:
+- `packages/memory/src/narrative/narrative-builder.ts` — LLM prose-polish pass
+- `packages/memory/src/narrative/handlers/narrative.ts`
+- `packages/memory/src/wiki/handlers/wiki-stubs.ts` (×3) — LLM client not available
 
-**Composition root**: `packages/mcp-servers/memory/src/index.ts` constructs
-`AnthropicLlmClient` when `ANTHROPIC_API_KEY` is set; passes `null` otherwise.
-Handlers degrade gracefully on `null`.
+**Acceptance criterion**: a `LlmClient` port lands in `@agentic/core` and
+each handler receives it via constructor injection.
 
-**Tests**: `packages/memory/__tests__/narrative/llm-client-narrative.test.ts`
-— 16 passing, 1 it.todo (real API integration, gated on env var).
-
-**Acceptance criterion**: SATISFIED — `LlmClient` port in `@agentic/core`;
-each handler receives it via parameter injection.
-
-**Tracking entry**: `[Phase 7] Wire LLM client to narrative + wiki handlers` — **CLOSED** (2026-04-27).
+**Tracking entry**: `[Phase 7] Wire LLM client to narrative + wiki handlers` — open.
 
 ---
 
@@ -92,17 +79,14 @@ each handler receives it via parameter injection.
 
 **Mixed blockers** — each marker has its own resolution.
 
-**Tracking entry**: `[Phase 7] Misc port-pending: causal-graph, AST substrate, anchor, sync-pg` — **CLOSED** (2026-04-27, `port/phase7-group-d-misc`).
-
-### Closed rows
-
-| File | Blocker | Disposition |
+| File | Blocker | Resolution path |
 |---|---|---|
-| `packages/memory/src/consolidation/stages/cls.ts` | causal_graph.py port | **Ported** — `packages/memory/src/consolidation/causal-graph.ts` implements the full PC algorithm (Spirtes & Glymour 1991). `cls.ts:discoverCausalEdges` now calls the real implementation. Tests: `__tests__/consolidation/causal-graph.test.ts` (30 cases). |
-| `packages/memory/src/codebase-analysis/ast-parser.ts` | tree-sitter Node.js bindings decision | **ADR-0012 written** — `docs/ADR/0012-tree-sitter-bindings.md` decides native bindings with graceful degradation to regex. Marker comment replaced with ADR reference. No code change required. |
-| `packages/memory/src/remember/handlers/anchor.ts` | updateMemoryContent in PgMemoryStore | **Method added** — `MemoryStore.updateMemoryContent` added to interface; implemented in `PgMemoryStore` and `SqliteMemoryStore`. `anchor.ts` wired to call it. Tests: `__tests__/remember/handlers.test.ts` (2 new cases) + `__tests__/remember/sqlite-store.test.ts` (4 new cases) + `__tests__/remember/pg-store-update-content.test.ts` (3 mock cases). |
-| `packages/memory/src/remember/storage/pg-store.ts` | True sync PG (not possible in Node) | **Marker removed** — `_runSync` comment rewritten with design rationale (async wrapper is intentional; matches Python psycopg async semantics). No code change. |
-| (5th — `pg-store.ts:_runSync` port-pending text) | Stale marker text | **Cleaned** — removed "port-pending" wording from `_runSync`; replaced with explicit design-documented text citing cortex@f2b9f99 verification. |
+| `packages/memory/src/consolidation/stages/cls.ts` | causal_graph.py port | Port causal_graph as Phase-7 deliverable; until then returns 0 edges |
+| `packages/memory/src/codebase-analysis/ast-parser.ts` | tree-sitter Node.js bindings decision | ADR-0012 candidate — decide tree-sitter-node vs WASM port |
+| `packages/memory/src/remember/handlers/anchor.ts` | updateMemoryContent in PgMemoryStore | Add method to PgMemoryStore implementation |
+| `packages/memory/src/remember/storage/pg-store.ts` | True sync PG (not possible in Node) | DOCUMENTED — async wrapper is intentional; remove the `port-pending` marker once verified to match Python semantics |
+
+**Tracking entry**: `[Phase 7] Misc port-pending: causal-graph, AST substrate, anchor, sync-pg` — open.
 
 ---
 
@@ -226,13 +210,13 @@ rendering is a Cortex HTTP dashboard concern.
 |---|---|---|---|
 | A — Embedding/pgvector | 16 | `[Phase 7] Embedding engine + pgvector port` | Phase 7 |
 | B — Recall sub-algorithms | 10 | `[Phase 7] Complete recall sub-algorithms` | Phase 7 |
-| C — LLM-dependent handlers | 0 | `[Phase 7] Wire LLM client` — **CLOSED** 2026-04-27 | Phase 7 |
-| D — Other | 5 | `[Phase 7] Misc port-pending` — **CLOSED** 2026-04-27 | Phase 7 |
+| C — LLM-dependent handlers | 5 | `[Phase 7] Wire LLM client` | Phase 7 |
+| D — Other | 5 | `[Phase 7] Misc port-pending` (incl. v3.14.12 deadlock-fix verification) | Phase 7 |
 | E — DI wiring (mislabeled) | 0 | `[Phase 7] Composition-root DI for codebase-analysis` — **CLOSED** 2026-04-27 | Phase 7 |
 | F — Composition root stubs | 6 | (Phase 2/3, already tracked) | Phase 2/3 |
 | G — Placeholder | 1 | (Phase 2, already tracked) | Phase 2 |
 | H — Cortex source re-sync | 3 | `[Phase 7] Cortex re-sync (post-v3.14.9 + f2b9f99 L6 uncap)` | Phase 7 |
-| **Total** | **41** | (54 − 5 Group C − 5 Group D − 8 Group E closed = 41 open; matches audit-migration.sh output 2026-04-27) | |
+| **Total** | **46** | (54 − 8 closed by Group E = 46 open) | |
 
 The total here (54) reflects 51 pre-existing in-tree markers plus 3 new
 `port-pending` comments added by the Phase 7 Group H resync worktree

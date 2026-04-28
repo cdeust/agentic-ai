@@ -47,36 +47,32 @@ import {
   McpConnectionError,
   normaliseMcpPayload,
   projectKey,
+  type McpClientPool,
 } from "./ingest-helpers.js";
+import type { MemoryStore } from "../../remember/storage/memory-store.js";
 
 export { schema };
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type MemoryStore = any;
 
 const _UPSTREAM_SERVER = "codebase";
 
 const _DEFAULT_TOP_SYMBOLS: number | null = null;
 const _DEFAULT_TOP_PROCESSES: number | null = null;
 
-// ── Store singleton (port-pending: replace with DI when shared lands) ─────
+// ── Dependency injection types ────────────────────────────────────────────
 
-let _store: MemoryStore | null = null;
-let _wikiRoot = "";
-
-export function initStore(store: MemoryStore, wikiRoot: string): void {
-  _store = store;
-  _wikiRoot = wikiRoot;
-}
-
-function _getStore(): MemoryStore {
-  if (!_store) {
-    throw new Error(
-      "MemoryStore not initialised. Call ingest-codebase.initStore() first. " +
-        "port-pending: DI wiring from port/cortex-shared",
-    );
-  }
-  return _store;
+/**
+ * Dependencies for the ingest-codebase handler.
+ *
+ * precondition:  store is a live MemoryStore; wikiRoot is a writable
+ *                directory path (or empty string to skip wiki writes).
+ * postcondition: the handler uses store for all memory/entity writes,
+ *                wikiRoot as the base path for process wiki pages, and
+ *                mcpClientPool for upstream MCP calls.
+ */
+export interface IngestCodebaseDeps {
+  store: MemoryStore;
+  wikiRoot: string;
+  mcpClientPool: McpClientPool | null;
 }
 
 function _defaultOutputDir(projectPath: string): string {
@@ -213,11 +209,12 @@ async function _pullSymbolsAndFiles(
 async function _pullProcesses(
   graphPath: string,
   topProcesses: number | null,
+  pool: McpClientPool | null,
 ): Promise<Record<string, unknown>[]> {
   try {
     const procPayload = await callUpstream(_UPSTREAM_SERVER, "get_processes", {
       graph_path: graphPath,
-    });
+    }, pool);
     const procResult = normaliseMcpPayload(procPayload) as Record<string, unknown>;
     const allProcs = (procResult["processes"] as Record<string, unknown>[]) ?? [];
     return topProcesses === null ? allProcs : allProcs.slice(0, topProcesses);
@@ -228,12 +225,19 @@ async function _pullProcesses(
 
 // ── Handler ───────────────────────────────────────────────────────────────
 
+/**
+ * Ingest a codebase analysis into Cortex's store.
+ *
+ * precondition:  args.project_path is a non-empty string pointing to an
+ *                existing directory; deps.store is a live MemoryStore.
+ * postcondition: returns {ingested:true, graph_path, memories_written,
+ *                entities_written, edges_written, ...} on success; or
+ *                {ingested:false, reason} on known-failure paths.
+ */
 export async function handler(
-  args: Record<string, unknown> | null = null,
+  args: Record<string, unknown> | null,
+  deps: IngestCodebaseDeps,
 ): Promise<Record<string, unknown>> {
-  /**
-   * Ingest a codebase analysis into Cortex's store.
-   */
   const a = args ?? {};
   const projectPath = ((a["project_path"] as string) ?? "").trim();
   if (!projectPath) return { ingested: false, reason: "project_path is required" };
@@ -244,7 +248,7 @@ export async function handler(
   const topSymbols = _parseIntOrNull(a["top_symbols"] ?? _DEFAULT_TOP_SYMBOLS);
   const topProcesses = _parseIntOrNull(a["top_processes"] ?? _DEFAULT_TOP_PROCESSES);
 
-  const store = _getStore();
+  const store = deps.store;
 
   let graphPath: string;
   let analyzeStats: Record<string, unknown>;
@@ -255,6 +259,7 @@ export async function handler(
       outputDir,
       language,
       forceReindex,
+      deps.mcpClientPool,
     );
   } catch (e) {
     if (e instanceof McpConnectionError) {
@@ -282,7 +287,7 @@ export async function handler(
 
   const processes =
     topProcesses === null || topProcesses > 0
-      ? await _pullProcesses(graphPath, topProcesses)
+      ? await _pullProcesses(graphPath, topProcesses, deps.mcpClientPool)
       : [];
 
   const symMem = writers.writeSymbolMemories(store, symbols, projectPath, `code:${projectPath.split("/").pop()}`);
@@ -293,7 +298,7 @@ export async function handler(
   const fileEnt = writers.writeFileEntities(store, files, domain);
   const callCount = writers.writeSymbolRelationships(store, callEdges, symEnt);
   const containCount = writers.writeFileRelationships(store, fileEdges, fileEnt, symEnt);
-  const wikiPaths = pages.writeProcessPages(processes, _wikiRoot);
+  const wikiPaths = pages.writeProcessPages(processes, deps.wikiRoot);
 
   const response: Record<string, unknown> = {
     ingested: true,

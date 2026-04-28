@@ -16,6 +16,7 @@ import {
   McpConnectionError,
   memoiseGraphPath,
   normaliseMcpPayload,
+  type McpClientPool,
 } from "./ingest-helpers.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -46,20 +47,31 @@ async function _callAnalyze(
   projectPath: string,
   outputDir: string,
   language: string,
+  pool: McpClientPool | null,
 ): Promise<unknown> {
   return callUpstream(_UPSTREAM_SERVER, "analyze_codebase", {
     path: resolve(projectPath),
     output_dir: resolve(outputDir),
     language,
-  });
+  }, pool);
 }
 
+/**
+ * Return [graphPath, analyzeStats].
+ *
+ * precondition:  store is a live MemoryStore; projectPath and outputDir
+ *                are non-empty strings.
+ * postcondition: graphPath points to an existing Kuzu graph directory;
+ *                analyzeStats contains upstream response fields including
+ *                reused_cached.
+ */
 export async function ensureGraph(
   store: MemoryStore,
   projectPath: string,
   outputDir: string,
   language: string,
   forceReindex: boolean,
+  pool: McpClientPool | null = null,
 ): Promise<[string, Record<string, unknown>]> {
   /**
    * Return [graphPath, analyzeStats].
@@ -73,7 +85,7 @@ export async function ensureGraph(
   }
 
   silentCleanStaleGraphSlot(outputDir);
-  let payload = await _callAnalyze(projectPath, outputDir, language);
+  let payload = await _callAnalyze(projectPath, outputDir, language, pool);
   let result = normaliseMcpPayload(payload) as Record<string, unknown>;
 
   // Self-heal: AP returns this specific error when the slot was a
@@ -85,7 +97,7 @@ export async function ensureGraph(
     String(result["message"] ?? "").includes("Not a directory")
   ) {
     silentCleanStaleGraphSlot(outputDir);
-    payload = await _callAnalyze(projectPath, outputDir, language);
+    payload = await _callAnalyze(projectPath, outputDir, language, pool);
     result = normaliseMcpPayload(payload) as Record<string, unknown>;
   }
 
