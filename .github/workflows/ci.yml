@@ -18,7 +18,13 @@ jobs:
     # +5 min CI buys early detection of macOS-only build failures before they
     # reach developer machines.
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    # 60-min cap accommodates cold cargo builds on Ubuntu CI runners.
+    # The Rust workspace pulls in ~300 crates (tantivy, tree-sitter family,
+    # rust-analyzer-style symbol resolution); cold first-run build observed
+    # at 25-30 min on ubuntu-latest, ~4 min on macos-latest. Subsequent runs
+    # hit the Cargo registry cache and complete in ~5 min on Ubuntu.
+    # source: PR #18 CI runs 25053733202, 25056121308 (2026-04-28).
+    timeout-minutes: 60
 
     strategy:
       fail-fast: false
