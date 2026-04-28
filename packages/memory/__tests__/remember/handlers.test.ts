@@ -118,6 +118,34 @@ describe("anchor handler", () => {
     const result = anchor({ memory_id: memory_id!, reason: "Critical" }, store);
     expect(result.content_preview).toContain("[ANCHOR: Critical]");
   });
+
+  // Verifies updateMemoryContent is wired and persists to the store.
+  // Postcondition: store.getMemory returns the anchor-prefixed content and
+  //   the _anchor tag after anchor() is called.
+  // source: cortex@f2b9f99 mcp_server/handlers/anchor.py:143-146
+  it("persists updated content and _anchor tag via updateMemoryContent", () => {
+    const { memory_id } = remember({ content: "Original content.", force: true }, store);
+    anchor({ memory_id: memory_id!, reason: "Architecture decision" }, store);
+
+    const mem = store.getMemory(memory_id!);
+    expect(mem).not.toBeNull();
+    // Content must start with the anchor prefix.
+    expect(mem!.content).toMatch(/^\[ANCHOR: Architecture decision\]/);
+    // Tags must include _anchor and _anchor:<reason>.
+    expect(mem!.tags).toContain("_anchor");
+    expect(mem!.tags.some((t) => t.startsWith("_anchor:Architecture"))).toBe(true);
+  });
+
+  it("does not prefix content twice on re-anchor", () => {
+    const { memory_id } = remember({ content: "Fact.", force: true }, store);
+    anchor({ memory_id: memory_id!, reason: "First" }, store);
+    anchor({ memory_id: memory_id!, reason: "First" }, store);
+
+    const mem = store.getMemory(memory_id!);
+    // buildAnchorContent skips prefix if content already starts with [ANCHOR:
+    const prefixCount = (mem!.content.match(/\[ANCHOR:/g) ?? []).length;
+    expect(prefixCount).toBe(1);
+  });
 });
 
 describe("forget handler", () => {

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- this file is a single-adapter port; split deferred per §4.1 until a second concern boundary appears */
 /**
  * sqlite-store.ts — SQLite (better-sqlite3) adapter for MemoryStore.
  *
@@ -139,10 +140,13 @@ CREATE TABLE IF NOT EXISTS memory_entities (
   PRIMARY KEY (memory_id, entity_id)
 )`;
 
+// source: infrastructure/sqlite_store.py:HOMEOSTATIC_STATE_DDL — factor bounds (0, 10) open interval; default 1.0
+const HOMEOSTATIC_STATE_FACTOR_DEFAULT = 1.0; // source: infrastructure/sqlite_store.py:HOMEOSTATIC_STATE_DDL
+const HOMEOSTATIC_STATE_FACTOR_MAX = 10; // source: infrastructure/sqlite_store.py:HOMEOSTATIC_STATE_DDL
 const HOMEOSTATIC_STATE_DDL = `
 CREATE TABLE IF NOT EXISTS homeostatic_state (
   domain TEXT PRIMARY KEY,
-  factor REAL NOT NULL DEFAULT 1.0 CHECK (factor > 0.0 AND factor < 10.0),
+  factor REAL NOT NULL DEFAULT ${HOMEOSTATIC_STATE_FACTOR_DEFAULT} CHECK (factor > 0 AND factor < ${HOMEOSTATIC_STATE_FACTOR_MAX}),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 )`;
 
@@ -232,6 +236,7 @@ export class SqliteMemoryStore implements MemoryStore {
   private _stmtUpdateMetamemory!: Statement;
   private _stmtSetProtected!: Statement;
   private _stmtMarkStale!: Statement;
+  private _stmtUpdateContent!: Statement;
 
   /**
    * Create an SqliteMemoryStore.
@@ -402,6 +407,10 @@ export class SqliteMemoryStore implements MemoryStore {
     this._stmtMarkStale = this._db.prepare(
       `UPDATE memories SET is_stale = ? WHERE id = ?`,
     );
+
+    this._stmtUpdateContent = this._db.prepare(
+      `UPDATE memories SET content = ?, tags = ? WHERE id = ?`,
+    );
   }
 
   // ── Memory CRUD ────────────────────────────────────────────────────────
@@ -429,7 +438,7 @@ export class SqliteMemoryStore implements MemoryStore {
       heat_base: clampHeat(data.heat ?? 1.0),
       heat_base_set_at: now,
       surprise_score: data.surprise_score ?? 0.0,
-      importance: data.importance ?? 0.5,
+      importance: data.importance ?? 0.5, // eslint-disable-line @typescript-eslint/no-magic-numbers -- source: infrastructure/sqlite_store.py default importance
       emotional_valence: data.emotional_valence ?? 0.0,
       confidence: data.confidence ?? 1.0,
       store_type: data.store_type ?? "episodic",
@@ -560,6 +569,20 @@ export class SqliteMemoryStore implements MemoryStore {
     this._stmtMarkStale.run(boolToInt(stale), memoryId);
   }
 
+  /**
+   * Update content and tags for a single memory row.
+   *
+   * precondition:  memoryId > 0; content is non-empty.
+   * postcondition: memories.content = content AND memories.tags = JSON.stringify(tags).
+   *   Single prepared-statement run — atomic within SQLite's default autocommit.
+   *
+   * source: cortex@f2b9f99 mcp_server/handlers/anchor.py:143-146
+   *   UPDATE memories SET … tags = %s::jsonb, content = %s … WHERE id = %s
+   */
+  updateMemoryContent(memoryId: number, content: string, tags: string[]): void {
+    this._stmtUpdateContent.run(content, JSON.stringify(tags), memoryId);
+  }
+
   // ── Homeostatic state ──────────────────────────────────────────────────
 
   getHomeostaticFactor(domain: string): number {
@@ -570,7 +593,9 @@ export class SqliteMemoryStore implements MemoryStore {
   }
 
   setHomeostaticFactor(domain: string, factor: number): void {
-    const clamped = Math.max(0.01, Math.min(9.99, factor));
+    // source: infrastructure/sqlite_store.py:set_homeostatic_factor — (0.01, 9.99) matches DB CHECK constraint
+    // eslint-disable-next-line @typescript-eslint/no-magic-numbers -- source: infrastructure/sqlite_store.py:set_homeostatic_factor bounds
+    const clamped = Math.max(0.01, Math.min(9.99, factor)); // source: infrastructure/sqlite_store.py:set_homeostatic_factor
     this._stmtUpsertHomeostatic.run(domain || "", clamped, nowIso());
   }
 
@@ -694,7 +719,7 @@ export class SqliteMemoryStore implements MemoryStore {
       heat_base_set_at: (row["heat_base_set_at"] as string) ?? "",
       no_decay: Boolean(row["no_decay"]),
       surprise_score: (row["surprise_score"] as number) ?? 0.0,
-      importance: (row["importance"] as number) ?? 0.5,
+      importance: (row["importance"] as number) ?? 0.5, // eslint-disable-line @typescript-eslint/no-magic-numbers -- source: infrastructure/sqlite_store.py _normalize_row default importance
       emotional_valence: (row["emotional_valence"] as number) ?? 0.0,
       confidence: (row["confidence"] as number) ?? 1.0,
       access_count: (row["access_count"] as number) ?? 0,

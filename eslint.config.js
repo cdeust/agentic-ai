@@ -206,6 +206,13 @@ const config = [
       "@typescript-eslint/no-magic-numbers": "off",
       "no-console": "off",
       "no-restricted-imports": "off",
+      // Tests legitimately use `!` for fixture-derived values whose
+      // nullability TypeScript can't statically prove (e.g.
+      // `mock.calls[0]![0]` after asserting toHaveBeenCalledOnce, or
+      // `result.find(p => p.id === x)!.value` when the seed data
+      // guarantees the find succeeds). The strict preset enables this
+      // rule globally; tests opt out.
+      "@typescript-eslint/no-non-null-assertion": "off",
     },
   },
 
