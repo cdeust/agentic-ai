@@ -136,6 +136,34 @@ already tracks this row.
 
 ---
 
+## Group H — Cortex source-repo re-sync (post-Phase-4 drift)
+
+**Blocker**: the Cortex Python source advanced 6 user-facing releases
+(v3.14.7 → v3.14.12) between the inventory snapshot (2026-04-26) and the
+agentic-ai Phase-6 close (2026-04-28). The TS port in
+`packages/memory/src/` is therefore drift relative to current Cortex.
+
+**Source**: `inventory/CORTEX_DELTA.md` (commit landing alongside this
+update) catalogues every relevant change with file-level granularity.
+
+**Material deltas to re-sync**:
+- v3.14.8/9 — `ingest_codebase` no caps + Rust-style qn fallback +
+  schema simplification → re-port `packages/memory/src/codebase-analysis/handlers/ingest-codebase.ts`
+  and helpers.
+- v3.14.12 — MCP client deadlock fix → verify TS SDK already covers the
+  long-upstream-response cancellation path.
+
+**Out of scope**: graph dashboard / 400K-node rendering — already deferred
+to post-cutover via ADR-0011 (Cortex HTTP server defer).
+
+**Acceptance criterion**: new `port/cortex-resync-2026-04-28` worktree
+that ports the v3.14.8..v3.14.12 deltas, with each TS file carrying a
+`source: cortex@df141f5` line so future drift is immediately visible.
+
+**Tracking entry**: `[Phase 7] Cortex re-sync (post-v3.14.9 ingest_codebase + v3.14.12 deadlock fix)` — open.
+
+---
+
 ## Summary
 
 | Group | Markers | Tracking entry | Blocking phase |
@@ -143,11 +171,12 @@ already tracks this row.
 | A — Embedding/pgvector | 16 | `[Phase 7] Embedding engine + pgvector port` | Phase 7 |
 | B — Recall sub-algorithms | 10 | `[Phase 7] Complete recall sub-algorithms` | Phase 7 |
 | C — LLM-dependent handlers | 5 | `[Phase 7] Wire LLM client` | Phase 7 |
-| D — Other | 5 | `[Phase 7] Misc port-pending` | Phase 7 |
+| D — Other | 5 | `[Phase 7] Misc port-pending` (incl. v3.14.12 deadlock-fix verification) | Phase 7 |
 | E — DI wiring (mislabeled) | 8 | `[Phase 7] Composition-root DI for codebase-analysis` | Phase 7 |
 | F — Composition root stubs | 6 | (Phase 2/3, already tracked) | Phase 2/3 |
 | G — Placeholder | 1 | (Phase 2, already tracked) | Phase 2 |
-| **Total** | **51** | | |
+| H — Cortex source re-sync | n/a (drift, not in-tree port-pending markers) | `[Phase 7] Cortex re-sync (post-v3.14.9)` | Phase 7 |
+| **Total in-tree markers** | **51** | | |
 
 The total here (51) differs from the audit's count of 56 due to two
 reconciliations: (a) the `packages/core/src/index.ts` placeholder was

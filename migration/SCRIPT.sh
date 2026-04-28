@@ -30,14 +30,17 @@ TARGET_PREFIX="packages/prd-pipeline"
 FEATURE_BRANCH="feat/prd-spec-migration"
 REMOTE_NAME="prd-spec-migration"
 
-PRE_MIGRATION_COMMIT_COUNT=57
-SOURCE_HEAD_SUBJECT="fix(calibration): close Popper AP-5 residual — Zod-validate heldout lock file"
+PRE_MIGRATION_COMMIT_COUNT=123
+SOURCE_HEAD_SUBJECT="docs(phase4): regen bundle + README/About reflect Phase 4 closed-loop shipped"
 SOURCE_TAIL_SUBJECT="Initial release: PRD Spec Generator v2.0.0"
-EXPECTED_MIN_TESTS=343
-# source: re-baselined 2026-04-27 against prd-spec-generator HEAD 6e9adbd
-# (was 17 commits / 267 tests at original SCRIPT.sh authoring 2026-04-26;
-# Phase-4.1 calibration work added 40 commits and 76 tests). Update again
-# before re-running if the source repo advances further.
+EXPECTED_MIN_TESTS=583
+# source: re-baselined 2026-04-28 against prd-spec-generator HEAD 5bb7dd9
+# (was 17 commits / 267 tests at original SCRIPT.sh authoring 2026-04-26).
+# Phase-4 closed-loop + Wave-F production-pilot work landed between
+# 2026-04-26 and 2026-04-28; total +106 commits, +316 tests since the
+# original baseline. Verified `pnpm test` in prd-spec-generator: 58 files,
+# 583 passing tests at HEAD 5bb7dd9. The user explicitly confirmed
+# 2026-04-28 that the source repo is now stabilized; safe to migrate.
 
 # Namespace rename pairs: "OLD:NEW" — longer names MUST come before shorter names
 # that share a prefix (mcp-server-bundle before mcp-server)
