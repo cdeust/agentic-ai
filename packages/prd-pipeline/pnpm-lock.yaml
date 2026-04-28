@@ -20,16 +20,16 @@ importers:
 
   packages/benchmark:
     dependencies:
-      '@prd-gen/core':
+      '/prd-core':
         specifier: workspace:*
         version: link:../core
-      '@prd-gen/orchestration':
+      '/prd-orchestration':
         specifier: workspace:*
         version: link:../orchestration
-      '@prd-gen/strategy':
+      '/prd-strategy':
         specifier: workspace:*
         version: link:../strategy
-      '@prd-gen/validation':
+      '/prd-validation':
         specifier: workspace:*
         version: link:../validation
       ajv:
@@ -76,10 +76,10 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.12.0
         version: 1.29.0(zod@3.25.76)
-      '@prd-gen/core':
+      '/prd-core':
         specifier: workspace:*
         version: link:../core
-      '@prd-gen/verification':
+      '/prd-verification':
         specifier: workspace:*
         version: link:../verification
       zod:
@@ -98,25 +98,25 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.12.0
         version: 1.29.0(zod@3.25.76)
-      '@prd-gen/benchmark':
+      '/prd-benchmark':
         specifier: workspace:*
         version: link:../benchmark
-      '@prd-gen/core':
+      '/prd-core':
         specifier: workspace:*
         version: link:../core
-      '@prd-gen/ecosystem-adapters':
+      '/prd-ecosystem-adapters':
         specifier: workspace:*
         version: link:../ecosystem-adapters
-      '@prd-gen/orchestration':
+      '/prd-orchestration':
         specifier: workspace:*
         version: link:../orchestration
-      '@prd-gen/strategy':
+      '/prd-strategy':
         specifier: workspace:*
         version: link:../strategy
-      '@prd-gen/validation':
+      '/prd-validation':
         specifier: workspace:*
         version: link:../validation
-      '@prd-gen/verification':
+      '/prd-verification':
         specifier: workspace:*
         version: link:../verification
       zod:
@@ -132,10 +132,10 @@ importers:
 
   packages/meta-prompting:
     dependencies:
-      '@prd-gen/core':
+      '/prd-core':
         specifier: workspace:*
         version: link:../core
-      '@prd-gen/strategy':
+      '/prd-strategy':
         specifier: workspace:*
         version: link:../strategy
       zod:
@@ -154,19 +154,19 @@ importers:
 
   packages/orchestration:
     dependencies:
-      '@prd-gen/core':
+      '/prd-core':
         specifier: workspace:*
         version: link:../core
-      '@prd-gen/meta-prompting':
+      '/prd-meta-prompting':
         specifier: workspace:*
         version: link:../meta-prompting
-      '@prd-gen/strategy':
+      '/prd-strategy':
         specifier: workspace:*
         version: link:../strategy
-      '@prd-gen/validation':
+      '/prd-validation':
         specifier: workspace:*
         version: link:../validation
-      '@prd-gen/verification':
+      '/prd-verification':
         specifier: workspace:*
         version: link:../verification
       zod:
@@ -184,7 +184,7 @@ importers:
 
   packages/strategy:
     dependencies:
-      '@prd-gen/core':
+      '/prd-core':
         specifier: workspace:*
         version: link:../core
       zod:
@@ -197,7 +197,7 @@ importers:
 
   packages/validation:
     dependencies:
-      '@prd-gen/core':
+      '/prd-core':
         specifier: workspace:*
         version: link:../core
       js-yaml:
@@ -222,7 +222,7 @@ importers:
 
   packages/verification:
     dependencies:
-      '@prd-gen/core':
+      '/prd-core':
         specifier: workspace:*
         version: link:../core
       zod:

@@ -326,7 +326,7 @@ describe("pipeline KPIs", () => {
     //   2. claim count > 0 (so we know the path actually fired)
     //   3. evaluateGates(kpis, false) flags distribution_pass_rate_max
     //      ONLY if rate > 0.95 — at 50/50 the gate must NOT fire
-    const { makeCannedDispatcher } = await import("@prd-gen/orchestration");
+    const { makeCannedDispatcher } = await import("/prd-orchestration");
     const baseDispatch = makeCannedDispatcher({
       freeform_answer: "benchmark-answer",
       graph_path: "/tmp/benchmark/graph",

@@ -1,8 +1,8 @@
-import { type PRDContext, type SectionType } from "@prd-gen/core";
+import { type PRDContext, type SectionType } from "/prd-core";
 import {
   SECTIONS_BY_CONTEXT,
   SECTION_RECALL_TEMPLATES as ORCHESTRATION_RECALL_TEMPLATES,
-} from "@prd-gen/orchestration";
+} from "/prd-orchestration";
 
 /**
  * Context budget coordinator — Beer's missing S2.
@@ -245,7 +245,7 @@ export function calculateContextBudget(
 /**
  * Maps section type to the Cortex recall query pattern.
  *
- * Single source of truth: @prd-gen/orchestration owns the canonical templates
+ * Single source of truth: /prd-orchestration owns the canonical templates
  * because that's the package that actually issues the queries during
  * section_generation. We re-export here so the host can pre-fetch using the
  * SAME templates the orchestrator will later use, preventing host/orchestrator

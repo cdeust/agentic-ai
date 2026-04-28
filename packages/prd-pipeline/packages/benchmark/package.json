@@ -1,5 +1,5 @@
 {
-  "name": "@prd-gen/benchmark",
+  "name": "/prd-benchmark",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -22,10 +22,10 @@
     "calibrate:gates": "node dist/calibration/calibration/calibrate-gates.js"
   },
   "dependencies": {
-    "@prd-gen/core": "workspace:*",
-    "@prd-gen/orchestration": "workspace:*",
-    "@prd-gen/strategy": "workspace:*",
-    "@prd-gen/validation": "workspace:*",
+    "/prd-core": "workspace:*",
+    "/prd-orchestration": "workspace:*",
+    "/prd-strategy": "workspace:*",
+    "/prd-validation": "workspace:*",
     "ajv": "^8.17.1",
     "mathjs": "^13.0.0",
     "zod": "^3.24.0"

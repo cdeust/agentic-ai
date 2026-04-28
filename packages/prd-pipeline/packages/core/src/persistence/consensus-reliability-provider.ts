@@ -26,8 +26,8 @@ import type { JudgeReliabilityRecord, VerdictDirection } from "./reliability-rep
 /**
  * Port for per-(judge × claim_type × verdict_direction) reliability lookup.
  *
- * Consumed by the consensus engine in @prd-gen/verification.
- * Implemented by BenchmarkConsensusReliabilityProvider in @prd-gen/benchmark.
+ * Consumed by the consensus engine in /prd-verification.
+ * Implemented by BenchmarkConsensusReliabilityProvider in /prd-benchmark.
  *
  * Precondition (per call):
  *   - runId is a non-empty string identifying the current pipeline run.

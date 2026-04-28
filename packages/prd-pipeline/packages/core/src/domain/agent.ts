@@ -4,7 +4,7 @@
  * These are pure domain entities — they describe WHAT a judge / claim /
  * verdict IS, independent of HOW they are spawned (Agent tool, MCP, etc.).
  *
- * Origin: previously lived in `@prd-gen/ecosystem-adapters/contracts/subagent.ts`,
+ * Origin: previously lived in `/prd-ecosystem-adapters/contracts/subagent.ts`,
  * which placed pure domain types in the infrastructure layer. The Phase 3+4
  * cross-audit (code-reviewer H1) flagged this as a §2.2 layer violation:
  * use-case packages (verification, orchestration) had to import from

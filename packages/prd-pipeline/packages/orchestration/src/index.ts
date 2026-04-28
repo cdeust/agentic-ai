@@ -1,7 +1,7 @@
 // Re-export core domain types consumed by the benchmark layer.
 // The benchmark must depend on orchestration, not directly on core (§2.2).
 // source: B3 layer-compliance fix — Wave C integration.
-export { type SectionType, SectionTypeSchema } from "@prd-gen/core";
+export { type SectionType, SectionTypeSchema } from "/prd-core";
 
 // Types
 export {
@@ -74,7 +74,7 @@ export {
 
 // Wave F2 — production-mode dispatcher (real subagents via AgentInvoker).
 // Companion to makeCannedDispatcher; consumed by
-// @prd-gen/benchmark calibrate-gates-production.ts.
+// /prd-benchmark calibrate-gates-production.ts.
 export {
   makeProductionDispatcher,
   makeStubAgentInvoker,

@@ -20,7 +20,7 @@
  *   Tests for Comparing Survival Distributions." Biometrika 68(1), 316-319.
  *   (Sample size for log-rank.)
  *
- * Layer contract (§2.2): stdlib-only. No I/O, no @prd-gen/core imports, no
+ * Layer contract (§2.2): stdlib-only. No I/O, no /prd-core imports, no
  * orchestration imports. Pure functions only — suitable for direct unit
  * testing without mocks.
  */

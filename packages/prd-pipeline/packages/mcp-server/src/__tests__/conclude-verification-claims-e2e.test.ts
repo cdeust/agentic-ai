@@ -17,7 +17,7 @@
  *
  * Strategy: construct ConcludeOptions via buildConcludeOpts (same function the
  * handler calls) + a stub reliability repo (to activate the onObservation closure)
- * + vi.mock on @prd-gen/benchmark to spy on appendObservationLog without disk I/O.
+ * + vi.mock on /prd-benchmark to spy on appendObservationLog without disk I/O.
  * The real math oracle is exercised (no mock) to prove arithmetic evaluation is live.
  * The schema oracle is mocked to avoid network/filesystem access in CI.
  *
@@ -26,17 +26,17 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import type { Claim, JudgeVerdict } from "@prd-gen/core";
-import { ClaimSchema } from "@prd-gen/core";
-import { concludeSection } from "@prd-gen/verification";
+import type { Claim, JudgeVerdict } from "/prd-core";
+import { ClaimSchema } from "/prd-core";
+import { concludeSection } from "/prd-verification";
 import { buildConcludeOpts } from "../build-conclude-opts.js";
 
-// ─── Mock @prd-gen/benchmark ──────────────────────────────────────────────────
+// ─── Mock /prd-benchmark ──────────────────────────────────────────────────
 // Spy on appendObservationLog without disk I/O.
 // FAILS_ON: test that relies on real filesystem — intentional, this is a unit seam.
 
-vi.mock("@prd-gen/benchmark", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@prd-gen/benchmark")>();
+vi.mock("/prd-benchmark", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("/prd-benchmark")>();
   return {
     ...actual,
     appendObservationLog: vi.fn(),
@@ -106,7 +106,7 @@ describe("conclude_verification claims param — Curie A2.3 MCP-tool-API closure
     // Invariant: the oracle result does not abort the pipeline; log always written.
 
     const { appendObservationLog, JUDGE_OBSERVATION_LOG_PATH } =
-      await import("@prd-gen/benchmark");
+      await import("/prd-benchmark");
 
     const claimsMap = buildClaimsMap([
       {
@@ -154,7 +154,7 @@ describe("conclude_verification claims param — Curie A2.3 MCP-tool-API closure
     // Postcondition: MATH-H2 log entry has oracle_resolved_truth; FR-H2 entry does not.
     // Invariant: both entries are written; ungrounded path is not broken.
 
-    const { appendObservationLog } = await import("@prd-gen/benchmark");
+    const { appendObservationLog } = await import("/prd-benchmark");
 
     const claimsMap = buildClaimsMap([
       {

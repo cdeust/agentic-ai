@@ -6,8 +6,8 @@
  *   D2.5-3b: Control-arm runs return null (CC-3 gate via isControlArmRun).
  *   D2.5-3c: Treatment-arm runs with no DB record return null (cold start).
  *   D2.5-3d: Treatment-arm runs with a DB record return the record.
- *   D2.5-3e: Layer check — this adapter imports only from @prd-gen/core
- *             and calibration-seams.js (NOT from @prd-gen/verification).
+ *   D2.5-3e: Layer check — this adapter imports only from /prd-core
+ *             and calibration-seams.js (NOT from /prd-verification).
  *
  * source: Wave D2 deliverable D2.5-3.
  * source: CC-3 / B-Popper-1 — isControlArmRun gate.
@@ -21,8 +21,8 @@ import {
   SqliteReliabilityRepository,
   DEFAULT_RELIABILITY_PRIOR,
   RELIABILITY_SCHEMA_VERSION,
-} from "@prd-gen/core";
-import type { AgentIdentity } from "@prd-gen/core";
+} from "/prd-core";
+import type { AgentIdentity } from "/prd-core";
 import { BenchmarkConsensusReliabilityProvider } from "../consensus-reliability-adapter.js";
 import { isControlArmRun, fnv1a32 } from "../calibration-seams.js";
 

@@ -1,5 +1,5 @@
 {
-  "name": "@prd-gen/mcp-server",
+  "name": "/prd-mcp-server",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -15,13 +15,13 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
-    "@prd-gen/benchmark": "workspace:*",
-    "@prd-gen/core": "workspace:*",
-    "@prd-gen/ecosystem-adapters": "workspace:*",
-    "@prd-gen/orchestration": "workspace:*",
-    "@prd-gen/strategy": "workspace:*",
-    "@prd-gen/validation": "workspace:*",
-    "@prd-gen/verification": "workspace:*",
+    "/prd-benchmark": "workspace:*",
+    "/prd-core": "workspace:*",
+    "/prd-ecosystem-adapters": "workspace:*",
+    "/prd-orchestration": "workspace:*",
+    "/prd-strategy": "workspace:*",
+    "/prd-validation": "workspace:*",
+    "/prd-verification": "workspace:*",
     "zod": "^3.24.0"
   },
   "devDependencies": {

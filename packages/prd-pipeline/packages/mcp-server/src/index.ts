@@ -13,9 +13,9 @@ import {
   STRATEGY_TIERS,
   SectionTypeSchema,
   type PRDContext,
-} from "@prd-gen/core";
+} from "/prd-core";
 
-import { tryCreateEvidenceRepository, type EvidenceRepository } from "@prd-gen/core";
+import { tryCreateEvidenceRepository, type EvidenceRepository } from "/prd-core";
 
 /**
  * Minimal structural alias for the optional better-sqlite3-backed evidence
@@ -25,7 +25,7 @@ import { tryCreateEvidenceRepository, type EvidenceRepository } from "@prd-gen/c
  */
 type EvidenceRepositoryLike = EvidenceRepository;
 
-import { validateSection, validateDocument } from "@prd-gen/validation";
+import { validateSection, validateDocument } from "/prd-validation";
 import { registerBudgetTools } from "./budget-tools.js";
 import { registerPipelineTools } from "./pipeline-tools.js";
 import {

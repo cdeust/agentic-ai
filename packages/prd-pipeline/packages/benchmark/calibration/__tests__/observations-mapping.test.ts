@@ -23,7 +23,7 @@ import {
   type GoldenSet,
   type ReliabilityRepository,
 } from "../observations.js";
-import type { JudgeVerdict } from "@prd-gen/core";
+import type { JudgeVerdict } from "/prd-core";
 
 // ─── Test helpers ─────────────────────────────────────────────────────────────
 

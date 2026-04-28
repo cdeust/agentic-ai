@@ -1,5 +1,5 @@
 /**
- * specOracle — Hard Output Rules validation via @prd-gen/validation.
+ * specOracle — Hard Output Rules validation via /prd-validation.
  *
  * Precondition:  payload.markdown is a non-empty string; payload.section_type
  *                is a valid SectionType; payload.expected_passes is the claim.
@@ -9,19 +9,19 @@
  * Invariant:     No LLM calls are made. validateSection() is pure regex/parsing.
  *
  * !! IMPORTANT — INTERNAL GROUNDING CAVEAT !!
- * This oracle is "weakly external" because @prd-gen/validation is maintained
+ * This oracle is "weakly external" because /prd-validation is maintained
  * by the same team as the annotators it grounds. Rule changes to the validator
  * silently shift ground truth. See docs/PHASE_4_PLAN.md §4.1 for the full
  * discussion. The evidence string ALWAYS includes this caveat so downstream
  * consumers can weight it appropriately.
  *
- * Layer: benchmark/calibration. Depends on @prd-gen/validation (inner
+ * Layer: benchmark/calibration. Depends on /prd-validation (inner
  *   workspace package — acceptable; benchmark is in the same monorepo and
  *   depends on validation per package.json).
  */
 
-import { validateSection } from "@prd-gen/validation";
-import type { SectionType } from "@prd-gen/core";
+import { validateSection } from "/prd-validation";
+import type { SectionType } from "/prd-core";
 import type { SpecPayload, OracleResult } from "./oracle-types.js";
 
 /** Maximum number of violated rule_ids to include in evidence. */
@@ -85,5 +85,5 @@ export async function specOracle(payload: SpecPayload): Promise<OracleResult> {
  * source: docs/PHASE_4_PLAN.md §4.1 "Externally-grounded held-out subset".
  */
 const CAVEAT =
-  "specOracle is internally-grounded; ground truth shifts when @prd-gen/validation " +
+  "specOracle is internally-grounded; ground truth shifts when /prd-validation " +
   "rules change. See docs/PHASE_4_PLAN.md §4.1.";

@@ -1,7 +1,7 @@
 import type {
   HardOutputRuleViolation,
   SectionType,
-} from "@prd-gen/core";
+} from "/prd-core";
 import { makeViolation } from "./helpers.js";
 
 // Document-Level Rule 19: FR-to-AC Coverage

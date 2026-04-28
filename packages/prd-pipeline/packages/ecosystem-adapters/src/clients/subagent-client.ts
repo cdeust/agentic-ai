@@ -20,7 +20,7 @@
  * the host issue all judge calls in parallel.
  */
 
-// Direct import from @prd-gen/core (canonical home for these domain types
+// Direct import from /prd-core (canonical home for these domain types
 // since the layer-violation fix). Pre-fix, this file imported through the
 // back-compat shim at "../contracts/subagent.js"; that shim is now unused
 // internally (cross-audit dijkstra H2, Phase 3+4 follow-up, 2026-04).
@@ -33,8 +33,8 @@ import {
   ClaimSchema,
   VerdictSchema,
   extractJsonObject,
-} from "@prd-gen/core";
-import { buildJudgePrompt } from "@prd-gen/verification";
+} from "/prd-core";
+import { buildJudgePrompt } from "/prd-verification";
 import { z } from "zod";
 
 // ─── Pending invocation envelope ────────────────────────────────────────────
@@ -280,7 +280,7 @@ function parseJudgeVerdict(
   });
 }
 
-// extractJsonObject moved to @prd-gen/core/utils/json-extract (Phase 3+4
+// extractJsonObject moved to /prd-core/utils/json-extract (Phase 3+4
 // cross-audit, code-reviewer H1). Imported above.
 
 function subagentTypeToIdentity(

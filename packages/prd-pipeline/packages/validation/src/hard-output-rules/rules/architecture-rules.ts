@@ -1,4 +1,4 @@
-import type { HardOutputRuleViolation, SectionType } from "@prd-gen/core";
+import type { HardOutputRuleViolation, SectionType } from "/prd-core";
 import { extractCodeBlocks, makeViolation } from "./helpers.js";
 
 // Rule 12: Clean Architecture in Technical Spec

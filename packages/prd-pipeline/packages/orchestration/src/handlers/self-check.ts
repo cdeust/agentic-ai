@@ -15,19 +15,19 @@
 import type { StepHandler } from "../runner.js";
 import type { ActionResult, NextAction } from "../types/actions.js";
 import { appendError, type PipelineState } from "../types/state.js";
-import { validateDocument } from "@prd-gen/validation";
+import { validateDocument } from "/prd-validation";
 import {
   planDocumentVerification,
   concludeDocument,
   buildJudgePrompt,
-} from "@prd-gen/verification";
+} from "/prd-verification";
 import {
   VerdictSchema,
   agentSubagentType,
   extractJsonObject,
   type JudgeRequest,
   type JudgeVerdict,
-} from "@prd-gen/core";
+} from "/prd-core";
 import { z } from "zod";
 import { SELF_CHECK_JUDGE_INV_PREFIX } from "./protocol-ids.js";
 

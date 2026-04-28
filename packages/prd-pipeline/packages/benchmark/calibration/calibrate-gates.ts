@@ -9,7 +9,7 @@
  *   3. `data/event-rate-K50.json`                — §4.2 event_rate measurement.
  *
  * Invocation:
- *   pnpm --filter @prd-gen/benchmark run calibrate:gates
+ *   pnpm --filter /prd-benchmark run calibrate:gates
  *
  *
  * source: docs/PHASE_4_PLAN.md §4.5 Implementation gates.

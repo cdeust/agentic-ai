@@ -6,7 +6,7 @@ const PKG_ROOT = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   test: {
-    name: "@prd-gen/mcp-server",
+    name: "/prd-mcp-server",
     root: PKG_ROOT,
     include: ["src/**/*.test.ts"],
     exclude: ["dist/**", "node_modules/**", "**/.claude/**"],

@@ -15,7 +15,7 @@
  *      data exists.
  *
  * Layer contract (§2.2): imports from Node stdlib only. No
- * @prd-gen/core / @prd-gen/orchestration imports — this is a leaf utility
+ * /prd-core / /prd-orchestration imports — this is a leaf utility
  * consumed by `pipeline-kpis.ts` (which is already in the calibration
  * import perimeter via `instrumentation.ts`).
  *

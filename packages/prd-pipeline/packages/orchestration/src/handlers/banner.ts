@@ -1,5 +1,5 @@
 import type { StepHandler } from "../runner.js";
-import { CAPABILITIES } from "@prd-gen/core";
+import { CAPABILITIES } from "/prd-core";
 
 /**
  * First step of the pipeline — emits the welcome banner with the run ID

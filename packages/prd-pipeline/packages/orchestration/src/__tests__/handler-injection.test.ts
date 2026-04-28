@@ -29,7 +29,7 @@ import {
   type ActionResult,
   type PipelineState,
 } from "../index.js";
-import type { SectionType } from "@prd-gen/core";
+import type { SectionType } from "/prd-core";
 
 function stepOnce(state: PipelineState, result?: ActionResult) {
   return step({ state, result });
@@ -534,7 +534,7 @@ describe("strategy wiring (Phase 4 closure)", () => {
     // Recording only required[0] would systematically over-weight the
     // first strategy and leave required[1..n] invisible to the feedback
     // loop. This test pins the per-strategy attribution.
-    const { buildSectionPrompt } = await import("@prd-gen/meta-prompting");
+    const { buildSectionPrompt } = await import("/prd-meta-prompting");
 
     const seed = newPipelineState({
       run_id: "wire_strategy_exec_pass",

@@ -67,7 +67,7 @@ jobs:
       - name: Build (sequential)
         # source: a non-sequential build raced package outputs and broke
         # transitively on cold caches. The orchestration package depends on
-        # core's dist/ via @prd-gen/core; if core finishes after orchestration
+        # core's dist/ via /prd-core; if core finishes after orchestration
         # starts, the latter cannot resolve types. Sequential is mandatory.
         run: pnpm build
 

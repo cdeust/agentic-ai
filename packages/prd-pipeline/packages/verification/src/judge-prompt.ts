@@ -5,13 +5,13 @@
  * agent or team agent). The judge MUST return a single JSON object matching
  * `JudgeVerdict` — we parse it; we don't free-form synthesize.
  *
- * Lives in `@prd-gen/verification` because it is a use-case-layer concern:
+ * Lives in `/prd-verification` because it is a use-case-layer concern:
  * the verification module owns the judge orchestration domain, including
  * how a judge is briefed. The infrastructure layer (ecosystem-adapters)
  * needs only to dispatch the resulting `subagent_type + prompt` to the
  * host's Agent tool.
  *
- * Origin: previously lived in `@prd-gen/ecosystem-adapters/clients/judge-prompt.ts`.
+ * Origin: previously lived in `/prd-ecosystem-adapters/clients/judge-prompt.ts`.
  * Moved here to fix the §2.2 layer violation surfaced by the Phase 3+4
  * cross-audit (code-reviewer H1).
  *
@@ -20,7 +20,7 @@
  * source: cross-audit code-reviewer H1 (Phase 3+4, 2026-04).
  */
 
-import { type JudgeRequest, agentSubagentType } from "@prd-gen/core";
+import { type JudgeRequest, agentSubagentType } from "/prd-core";
 
 export interface BuiltJudgePrompt {
   readonly description: string;

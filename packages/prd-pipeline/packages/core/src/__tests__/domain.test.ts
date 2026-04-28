@@ -1,7 +1,7 @@
 /**
  * Domain-type contract tests.
  *
- * Per cross-audit test-engineer C1 (Phase 3+4, 2026-04): @prd-gen/core defines
+ * Per cross-audit test-engineer C1 (Phase 3+4, 2026-04): /prd-core defines
  * load-bearing constants (CAPABILITIES, PRD_CONTEXT_CONFIGS, VerdictSchema,
  * SectionTypeSchema) that every downstream package depends on. A silent change
  * to any of them cascades through the full pipeline. These tests pin the

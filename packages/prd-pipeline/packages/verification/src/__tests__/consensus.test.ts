@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { consensus } from "../consensus.js";
-import type { JudgeVerdict } from "@prd-gen/core";
+import type { JudgeVerdict } from "/prd-core";
 
 const judge = (kind: "genius" | "team", name: string) =>
   ({ kind, name } as const) as JudgeVerdict["judge"];

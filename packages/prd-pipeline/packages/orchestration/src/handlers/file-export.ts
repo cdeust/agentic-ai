@@ -16,7 +16,7 @@ import {
   SECTION_DISPLAY_NAMES,
   SECTION_ORDER,
   type SectionType,
-} from "@prd-gen/core";
+} from "/prd-core";
 
 const OUTPUT_DIR = "prd-output";
 

@@ -103,7 +103,7 @@ describe("SqliteReliabilityRepository — empty-DB / prior contract", () => {
     // callers receive null and must fall back to DEFAULT_RELIABILITY_PRIOR.
     // source: docs/PHASE_4_PLAN.md §4.1 — "For agents with insufficient global
     // data, fall back to Beta(7, 3) prior."
-    // B-Shannon-7: single source of truth in @prd-gen/core.
+    // B-Shannon-7: single source of truth in /prd-core.
     expect(DEFAULT_RELIABILITY_PRIOR.alpha).toBe(7);
     expect(DEFAULT_RELIABILITY_PRIOR.beta).toBe(3);
 

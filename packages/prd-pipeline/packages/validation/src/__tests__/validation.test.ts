@@ -1,5 +1,5 @@
 /**
- * @prd-gen/validation contract tests.
+ * /prd-validation contract tests.
  *
  * Per cross-audit test-engineer C1 (Phase 3+4, 2026-04): the validation
  * package gates section_generation retries. A regression that silently
@@ -16,7 +16,7 @@ import {
   isCriticalRule,
   scorePenalty,
   isDeterministicRule,
-} from "@prd-gen/core";
+} from "/prd-core";
 
 describe("isCriticalRule + scorePenalty + isDeterministicRule contracts", () => {
   it("scorePenalty is 0.15 for critical and 0.05 for non-critical", () => {

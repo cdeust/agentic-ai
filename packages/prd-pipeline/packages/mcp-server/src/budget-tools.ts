@@ -10,7 +10,7 @@ import { z } from "zod";
 import {
   HardOutputRuleViolationSchema,
   type PRDContext,
-} from "@prd-gen/core";
+} from "/prd-core";
 import {
   calculateContextBudget,
   SECTION_RECALL_TEMPLATES,

@@ -20,8 +20,8 @@ import {
   PRD_CONTEXT_CONFIGS,
   type PRDContext,
   type SectionType,
-} from "@prd-gen/core";
-import type { StrategyAssignment } from "@prd-gen/strategy";
+} from "/prd-core";
+import type { StrategyAssignment } from "/prd-strategy";
 
 export interface SectionPromptInput {
   readonly section_type: SectionType;
@@ -32,7 +32,7 @@ export interface SectionPromptInput {
   readonly prior_violations: readonly string[];
   readonly attempt: number;
   /**
-   * Research-evidence-backed strategy assignment chosen by `@prd-gen/strategy`.
+   * Research-evidence-backed strategy assignment chosen by `/prd-strategy`.
    * Optional because legacy callers may construct prompts without it; when
    * present, the rendered prompt includes a `<strategies>` block telling the
    * engineer subagent which reasoning patterns to apply (and avoid).

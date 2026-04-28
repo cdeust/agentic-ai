@@ -3,7 +3,7 @@
  *
  * Precondition: caller supplies { id, type, payload } matching the oracle's expected payload shape.
  * Postcondition: returned { truth, oracle_evidence } is determined solely by objective
- *   external criteria (Ajv, mathjs, tsc, @prd-gen/validation) — no LLM involvement.
+ *   external criteria (Ajv, mathjs, tsc, /prd-validation) — no LLM involvement.
  */
 
 export interface OracleInput {
@@ -59,7 +59,7 @@ export interface CodePayload {
 export interface SpecPayload {
   /** Markdown content to validate. */
   readonly markdown: string;
-  /** PRD section type (must be a valid SectionType from @prd-gen/core). */
+  /** PRD section type (must be a valid SectionType from /prd-core). */
   readonly section_type: string;
   /** The claim being made: "markdown passes Hard Output Rules for section_type." */
   readonly expected_passes: boolean;

@@ -26,7 +26,7 @@
  *
  * Layer contract (§2.2): orchestration-internal. Imports only from
  * `./types/actions.js` and the existing `./canned-dispatcher.js`. No
- * dependency on `@prd-gen/ecosystem-adapters` or `@prd-gen/benchmark`.
+ * dependency on `/prd-ecosystem-adapters` or `/prd-benchmark`.
  *
  * source: Wave F2 brief — production-mode calibration runner.
  */

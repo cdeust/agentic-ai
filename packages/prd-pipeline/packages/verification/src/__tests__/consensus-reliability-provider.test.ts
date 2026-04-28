@@ -11,17 +11,17 @@
  *            one judge produces a DIFFERENT consensus verdict than a run without
  *            calibration in a 2-judge tie-break scenario.
  *
- * Layer check: this test file imports from @prd-gen/core (types) and from
- * ../consensus.js (implementation). It does NOT import @prd-gen/benchmark.
+ * Layer check: this test file imports from /prd-core (types) and from
+ * ../consensus.js (implementation). It does NOT import /prd-benchmark.
  *
  * source: Wave D2 deliverable D2.5.
  */
 
 import { describe, it, expect } from "vitest";
 import { consensus } from "../consensus.js";
-import type { JudgeVerdict, AgentIdentity, ConsensusReliabilityProvider } from "@prd-gen/core";
-import type { VerdictDirection, JudgeReliabilityRecord } from "@prd-gen/core";
-import type { Claim } from "@prd-gen/core";
+import type { JudgeVerdict, AgentIdentity, ConsensusReliabilityProvider } from "/prd-core";
+import type { VerdictDirection, JudgeReliabilityRecord } from "/prd-core";
+import type { Claim } from "/prd-core";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

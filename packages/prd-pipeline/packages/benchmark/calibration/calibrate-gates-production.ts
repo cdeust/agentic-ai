@@ -31,7 +31,7 @@ import {
   makeProductionDispatcher,
   type AgentInvoker,
   type ProductionDispatcher,
-} from "@prd-gen/orchestration";
+} from "/prd-orchestration";
 import { detectMachineClass, type MachineClass } from "./machine-class.js";
 import { computeGateStats } from "./gate-stats.js";
 import {

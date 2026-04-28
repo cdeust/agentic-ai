@@ -253,7 +253,7 @@ describe("buildSectionPrompt", () => {
     });
     // Load-bearing rules — these align with the validation package's regex
     // patterns. If a rule is dropped here AND in validation, the contract
-    // silently weakens. The tests in @prd-gen/validation pin the validator
+    // silently weakens. The tests in /prd-validation pin the validator
     // side; this pins the prompt side.
     expect(out).toContain("FR-XXX");
     expect(out).toContain("AC-XXX");

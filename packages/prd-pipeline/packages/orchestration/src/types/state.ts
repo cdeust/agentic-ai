@@ -12,11 +12,11 @@ import {
   PRDContextSchema,
   SectionTypeSchema,
   AgentIdentitySchema,
-} from "@prd-gen/core";
+} from "/prd-core";
 import {
   StrategyAssignmentSchema,
   ExecutionResultSchema,
-} from "@prd-gen/strategy";
+} from "/prd-strategy";
 
 export const PipelineStepSchema = z.enum([
   "banner",
@@ -49,7 +49,7 @@ export const SectionStatusSchema = z.object({
   /** Markdown content of the section — populated after generation passes validation */
   content: z.string().optional(),
   /**
-   * Strategy assignment chosen by `@prd-gen/strategy.selectStrategy` at the
+   * Strategy assignment chosen by `/prd-strategy.selectStrategy` at the
    * pending → retrieving transition. Persisted on the section so retries
    * use the SAME strategies (not re-selecting per attempt) and so
    * `EffectivenessTracker.recordExecution` has the assignment to attribute

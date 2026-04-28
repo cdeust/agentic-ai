@@ -1,5 +1,5 @@
 {
-  "name": "@prd-gen/orchestration",
+  "name": "/prd-orchestration",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -10,11 +10,11 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@prd-gen/core": "workspace:*",
-    "@prd-gen/meta-prompting": "workspace:*",
-    "@prd-gen/strategy": "workspace:*",
-    "@prd-gen/validation": "workspace:*",
-    "@prd-gen/verification": "workspace:*",
+    "/prd-core": "workspace:*",
+    "/prd-meta-prompting": "workspace:*",
+    "/prd-strategy": "workspace:*",
+    "/prd-validation": "workspace:*",
+    "/prd-verification": "workspace:*",
     "zod": "^3.24.0"
   },
   "devDependencies": {

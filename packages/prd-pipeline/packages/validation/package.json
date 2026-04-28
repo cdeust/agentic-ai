@@ -1,5 +1,5 @@
 {
-  "name": "@prd-gen/validation",
+  "name": "/prd-validation",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -10,7 +10,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@prd-gen/core": "workspace:*",
+    "/prd-core": "workspace:*",
     "js-yaml": "^4.1.0",
     "zod": "^3.24.0"
   },

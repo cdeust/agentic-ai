@@ -4,12 +4,12 @@
  * Closed-form Beta-Binomial conjugate update for per-(judge × claim_type)
  * reliability with sensitivity / specificity split.
  *
- * Layer rule (coding-standards §2.2): this module imports from @prd-gen/core
+ * Layer rule (coding-standards §2.2): this module imports from /prd-core
  * (inner layer) and stdlib only. No orchestration, no verification, no
  * infrastructure. Callers in the composition root wire these pure functions
  * to data sources.
  *
- * The Beta prior is defined as the single source of truth in @prd-gen/core
+ * The Beta prior is defined as the single source of truth in /prd-core
  * (DIP §1.5 / B-Shannon-7): inner layers define abstractions; outer layers
  * import from them.
  *
@@ -30,14 +30,14 @@
 import {
   DEFAULT_RELIABILITY_PRIOR,
   RELIABILITY_PRIOR_ESS,
-} from "@prd-gen/core";
+} from "/prd-core";
 
 /**
  * Beta-distribution parameters. Both must be strictly positive (Gelman
  * et al. 2013, eqn 2.13).
  *
  * This is a local alias for the math layer; the canonical definition
- * (BetaParamsCore) lives in @prd-gen/core/reliability-repository.
+ * (BetaParamsCore) lives in /prd-core/reliability-repository.
  * The two types are structurally compatible (same shape).
  */
 export interface BetaParams {
@@ -51,7 +51,7 @@ export { DEFAULT_RELIABILITY_PRIOR };
  * Prior effective sample size, re-exported for callers.
  * Equals DEFAULT_RELIABILITY_PRIOR.alpha + DEFAULT_RELIABILITY_PRIOR.beta = 10.
  *
- * source: docs/PHASE_4_PLAN.md §4.1; @prd-gen/core RELIABILITY_PRIOR_ESS.
+ * source: docs/PHASE_4_PLAN.md §4.1; /prd-core RELIABILITY_PRIOR_ESS.
  */
 export const PRIOR_ESS: number = RELIABILITY_PRIOR_ESS;
 

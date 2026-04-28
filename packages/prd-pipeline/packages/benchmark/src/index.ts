@@ -55,7 +55,7 @@ export {
 } from "./calibrated-gates-loader.js";
 
 // Phase 4.2 — retry-ablation arm seams.
-// Re-exported from calibration/ so the composition root (@prd-gen/mcp-server)
+// Re-exported from calibration/ so the composition root (/prd-mcp-server)
 // can import without taking the calibration sub-path. These seams are the
 // ONLY benchmark-layer functions the composition root is permitted to call;
 // all other calibration math stays in calibration/.

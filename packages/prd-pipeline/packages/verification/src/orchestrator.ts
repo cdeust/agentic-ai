@@ -24,7 +24,7 @@ import type {
   JudgeVerdict,
   AgentIdentity,
   ReliabilityObservation,
-} from "@prd-gen/core";
+} from "/prd-core";
 import { extractClaims, extractClaimsFromDocument } from "./claim-extractor.js";
 import { selectJudges } from "./judge-selector.js";
 import {
@@ -106,7 +106,7 @@ export interface ClaimObservationFlushed {
  * Called once per (judge × claim) after consensus. The composition root
  * wires this to `repository.recordObservation` + `appendObservationLog`.
  *
- * Layer contract (§2.2): orchestrator does NOT import @prd-gen/benchmark or
+ * Layer contract (§2.2): orchestrator does NOT import /prd-benchmark or
  * any infrastructure module. All I/O happens via this callback in the outer
  * composition root.
  *

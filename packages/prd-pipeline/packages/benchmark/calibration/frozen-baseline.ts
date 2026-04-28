@@ -28,7 +28,7 @@ import { dirname, resolve } from "node:path";
  * `pipeline-kpis.ts` (source) or `pipeline-kpis.js` (dist). Both layouts
  * share the package-root anchor at `packages/benchmark/`. The walk stops
  * at the first directory that contains a `package.json` whose `name` is
- * `@prd-gen/benchmark` (the package root).
+ * `/prd-benchmark` (the package root).
  *
  * source: D3.1 brief — runner must be invokable from both source (vitest)
  *   and dist (production CI). The two layouts differ:

@@ -1,12 +1,12 @@
 /**
  * BenchmarkConsensusReliabilityProvider — adapter implementing the
- * ConsensusReliabilityProvider port declared in @prd-gen/core.
+ * ConsensusReliabilityProvider port declared in /prd-core.
  *
  * Layer contract (§2.2 / coding-standards):
- *   - Port (ConsensusReliabilityProvider) lives in @prd-gen/core (inner layer).
- *   - This adapter lives in @prd-gen/benchmark (outer layer), src/ directory.
- *   - @prd-gen/verification consumes the port, never this adapter.
- *   - Only the composition root (@prd-gen/mcp-server) imports this adapter
+ *   - Port (ConsensusReliabilityProvider) lives in /prd-core (inner layer).
+ *   - This adapter lives in /prd-benchmark (outer layer), src/ directory.
+ *   - /prd-verification consumes the port, never this adapter.
+ *   - Only the composition root (/prd-mcp-server) imports this adapter
  *     and injects it into ConsensusConfig.reliabilityProvider.
  *
  * DIP (§1.5): core declares the interface; benchmark implements it;
@@ -33,8 +33,8 @@ import type {
   AgentIdentity,
   VerdictDirection,
   ReliabilityRepository,
-} from "@prd-gen/core";
-import type { Claim } from "@prd-gen/core";
+} from "/prd-core";
+import type { Claim } from "/prd-core";
 
 // ─── CC-3 control-arm predicate (inlined from calibration-seams.ts) ──────────
 

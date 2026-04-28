@@ -18,8 +18,8 @@
 
 import { appendFileSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { MAX_ATTEMPTS } from "@prd-gen/orchestration";
-import type { SectionType, PipelineState, SectionStatus } from "@prd-gen/orchestration";
+import { MAX_ATTEMPTS } from "/prd-orchestration";
+import type { SectionType, PipelineState, SectionStatus } from "/prd-orchestration";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

@@ -20,7 +20,7 @@
  */
 
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
-import { OracleUnavailableError } from "@prd-gen/benchmark/calibration";
+import { OracleUnavailableError } from "/prd-benchmark/calibration";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -59,7 +59,7 @@ describe("B1 — oracle resolution in onObservation", () => {
     //
     // This test verifies the dispatch logic by calling invokeOracle directly
     // with a math payload — consistent with what build-conclude-opts.ts does.
-    const { invokeOracle } = await import("@prd-gen/benchmark/calibration");
+    const { invokeOracle } = await import("/prd-benchmark/calibration");
 
     const obs = makeObs({
       type: "math",

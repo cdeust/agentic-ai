@@ -39,18 +39,18 @@ export const RELIABILITY_CLAIM_CORPUS_PATH =
 export const RELIABILITY_HELDOUT_LOCK_PATH =
   "packages/benchmark/calibration/data/heldout-partition.lock.json";
 
-// ─── ClaimType enum (mirror of @prd-gen/core ClaimSchema.claim_type) ─────────
+// ─── ClaimType enum (mirror of /prd-core ClaimSchema.claim_type) ─────────
 
 /**
- * Subset of @prd-gen/core ClaimSchema.claim_type re-stated as a Zod enum so
+ * Subset of /prd-core ClaimSchema.claim_type re-stated as a Zod enum so
  * the corpus file is statically validated without a runtime dependency on
- * @prd-gen/core (the corpus is read by tooling that should not have to load
+ * /prd-core (the corpus is read by tooling that should not have to load
  * the orchestration graph).
  *
  * Drift between the two enums is caught by the cross-package compile check
- * in @prd-gen/core/__tests__ (typed import below would error at build time).
+ * in /prd-core/__tests__ (typed import below would error at build time).
  *
- * source: @prd-gen/core domain/agent.ts ClaimSchema.claim_type enum (2026-04).
+ * source: /prd-core domain/agent.ts ClaimSchema.claim_type enum (2026-04).
  */
 export const ClaimTypeSchema = z.enum([
   "architecture",

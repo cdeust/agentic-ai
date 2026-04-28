@@ -17,7 +17,7 @@ import {
   PRE_REGISTERED_SEED_45_PRODUCTION,
   mulberry32ForCli,
 } from "./calibrate-gates-production.js";
-import { makeStubAgentInvoker } from "@prd-gen/orchestration";
+import { makeStubAgentInvoker } from "/prd-orchestration";
 import { resolveFrozenBaselineCommit } from "./frozen-baseline.js";
 import { parseFlag, hasFlag } from "./calibrate-gates-cli.js";
 

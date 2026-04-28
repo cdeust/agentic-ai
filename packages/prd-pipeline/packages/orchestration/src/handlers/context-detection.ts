@@ -4,7 +4,7 @@ import {
   PRD_CONTEXT_CONFIGS,
   CAPABILITIES,
   type PRDContext,
-} from "@prd-gen/core";
+} from "/prd-core";
 
 const TRIGGER_WORDS: Record<PRDContext, readonly string[]> = {
   proposal: ["proposal", "pitch", "stakeholder"],

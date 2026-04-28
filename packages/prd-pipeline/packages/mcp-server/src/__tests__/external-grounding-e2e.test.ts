@@ -12,7 +12,7 @@
  *   Test 3: grounded claim (code) + tsc unavailable →
  *           log written without oracle_resolved_truth; one-shot warn fires.
  *
- * Strategy: vi.mock on @prd-gen/benchmark to spy on appendObservationLog,
+ * Strategy: vi.mock on /prd-benchmark to spy on appendObservationLog,
  * so tests do not write to disk. The real math oracle is exercised (no mock)
  * to prove arithmetic evaluation is live. The code oracle is mocked to
  * simulate OracleUnavailableError without requiring tsc in CI.
@@ -22,17 +22,17 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import type { Claim, JudgeVerdict } from "@prd-gen/core";
+import type { Claim, JudgeVerdict } from "/prd-core";
 import {
   concludeSection,
   type ConcludeOptions,
-} from "@prd-gen/verification";
-import { OracleUnavailableError } from "@prd-gen/benchmark/calibration";
+} from "/prd-verification";
+import { OracleUnavailableError } from "/prd-benchmark/calibration";
 
 // ─── Mock appendObservationLog ────────────────────────────────────────────────
 
-vi.mock("@prd-gen/benchmark", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@prd-gen/benchmark")>();
+vi.mock("/prd-benchmark", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("/prd-benchmark")>();
   return {
     ...actual,
     // Spy on appendObservationLog without disk I/O.
@@ -104,7 +104,7 @@ function makeCodeClaim(claim_id: string): Claim {
 /**
  * Constructs a minimal ConcludeOptions that wires oracle resolution through
  * the onObservation callback, calling appendObservationLog from
- * @prd-gen/benchmark. Mirrors the logic in build-conclude-opts.ts but
+ * /prd-benchmark. Mirrors the logic in build-conclude-opts.ts but
  * without the reliability-repo overhead.
  *
  * Precondition: appendObservationLog is vi.mock()'ed above.
@@ -115,9 +115,9 @@ async function makeConcludeOptsWithOracle(
 ): Promise<ConcludeOptions> {
   // Import inside function so vi.mock() overrides are visible.
   const { appendObservationLog, JUDGE_OBSERVATION_LOG_PATH } =
-    await import("@prd-gen/benchmark");
+    await import("/prd-benchmark");
   const { invokeOracle, OracleUnavailableError: UnavailError } =
-    await import("@prd-gen/benchmark/calibration");
+    await import("/prd-benchmark/calibration");
 
   // Precondition: claimsMap is populated by the test.
   const claimTypes = new Map<string, Claim["claim_type"]>();
@@ -198,7 +198,7 @@ describe("F1.D Test 1: grounded claim resolves via mathOracle", () => {
     const claimsMap = new Map([["MATH-001", claim]]);
     const opts = await makeConcludeOptsWithOracle(claimsMap);
 
-    const { appendObservationLog } = await import("@prd-gen/benchmark");
+    const { appendObservationLog } = await import("/prd-benchmark");
 
     concludeSection("requirements", [makeVerdict("MATH-001")], opts);
 
@@ -236,7 +236,7 @@ describe("F1.D Test 2: ungrounded claim preserves consensus-majority path", () =
     const claimsMap = new Map([["FR-001", claim]]);
     const opts = await makeConcludeOptsWithOracle(claimsMap);
 
-    const { appendObservationLog } = await import("@prd-gen/benchmark");
+    const { appendObservationLog } = await import("/prd-benchmark");
 
     concludeSection("requirements", [makeVerdict("FR-001")], opts);
 
@@ -267,7 +267,7 @@ async function makeConcludeOptsWithUnavailableCodeOracle(
   claimsMap: ReadonlyMap<string, Claim>,
 ): Promise<ConcludeOptions> {
   const { appendObservationLog, JUDGE_OBSERVATION_LOG_PATH } =
-    await import("@prd-gen/benchmark");
+    await import("/prd-benchmark");
 
   const claimTypes = new Map<string, Claim["claim_type"]>();
   for (const [id, claim] of claimsMap) {
@@ -330,7 +330,7 @@ describe("F1.D Test 3: code oracle unavailable → warn fires, no oracle_resolve
     const claimsMap = new Map([["CODE-001", claim]]);
 
     const warnSpy = vi.spyOn(console, "warn");
-    const { appendObservationLog } = await import("@prd-gen/benchmark");
+    const { appendObservationLog } = await import("/prd-benchmark");
     const opts = await makeConcludeOptsWithUnavailableCodeOracle(claimsMap);
 
     concludeSection("requirements", [makeVerdict("CODE-001")], opts);

@@ -155,7 +155,7 @@ export interface ReliabilityObservation {
 /**
  * Port (core declares, infrastructure implements — DIP §1.5).
  *
- * Consumers (e.g. the consensus engine in @prd-gen/verification) import only
+ * Consumers (e.g. the consensus engine in /prd-verification) import only
  * this interface and the domain types. They never import the SQLite
  * implementation directly.
  *

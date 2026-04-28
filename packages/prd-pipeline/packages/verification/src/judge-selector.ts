@@ -10,7 +10,7 @@
  * is robust to single-judge failure modes.
  */
 
-import type { Claim, AgentIdentity } from "@prd-gen/core";
+import type { Claim, AgentIdentity } from "/prd-core";
 
 export interface JudgePanel {
   readonly genius: ReadonlyArray<AgentIdentity & { kind: "genius" }>;

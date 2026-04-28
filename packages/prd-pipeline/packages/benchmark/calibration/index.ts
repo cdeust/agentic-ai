@@ -74,8 +74,8 @@ export {
 } from "./gate-tuning-seams.js";
 
 // Phase 4.1 / Wave D2 — ConsensusReliabilityProvider adapter.
-// Layer: benchmark implements the port declared in @prd-gen/core.
-// Consumed only by the composition root (@prd-gen/mcp-server).
+// Layer: benchmark implements the port declared in /prd-core.
+// Consumed only by the composition root (/prd-mcp-server).
 export { BenchmarkConsensusReliabilityProvider } from "./consensus-reliability-adapter.js";
 
 // Phase 4.5 — calibration runner + outputs (Wave D / D3).

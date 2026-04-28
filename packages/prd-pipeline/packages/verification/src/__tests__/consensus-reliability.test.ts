@@ -22,8 +22,8 @@ import type {
   JudgeReliabilityRecord,
   VerdictDirection,
   ConsensusReliabilityProvider,
-} from "@prd-gen/core";
-import type { Claim } from "@prd-gen/core";
+} from "/prd-core";
+import type { Claim } from "/prd-core";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

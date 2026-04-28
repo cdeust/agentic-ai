@@ -1,7 +1,7 @@
 /**
  * B-Shannon-7 drift detection: verify that the single source of truth for
- * the Beta(7,3) prior in @prd-gen/core is consistent with the math layer
- * re-export in @prd-gen/benchmark/calibration/reliability.ts.
+ * the Beta(7,3) prior in /prd-core is consistent with the math layer
+ * re-export in /prd-benchmark/calibration/reliability.ts.
  *
  * If either module's values are changed without updating the other, this
  * test catches it at CI time.

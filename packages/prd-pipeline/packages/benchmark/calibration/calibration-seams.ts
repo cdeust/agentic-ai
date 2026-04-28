@@ -30,7 +30,7 @@
 // Wave D1.A: import from orchestration so MAX_ATTEMPTS_BASELINE tracks the
 // authoritative value without a mirror constant. The benchmark layer is allowed
 // to import orchestration (§2.2 benchmark → orchestration direction).
-import { MAX_ATTEMPTS as _MAX_ATTEMPTS_FROM_ORCHESTRATION } from "@prd-gen/orchestration";
+import { MAX_ATTEMPTS as _MAX_ATTEMPTS_FROM_ORCHESTRATION } from "/prd-orchestration";
 
 // ─── Re-exports from heldout-seals.ts (backward compat + single import point)
 
@@ -228,7 +228,7 @@ export function getRetryArmForRun(runId: string): RetryArm {
 /**
  * Baseline MAX_ATTEMPTS for the Phase 4.2 control arm.
  *
- * Re-exported from @prd-gen/orchestration so a single constant is authoritative.
+ * Re-exported from /prd-orchestration so a single constant is authoritative.
  * Wave D1.A eliminated the mirror constant in retry-observations.ts.
  *
  * source: packages/orchestration/src/handlers/section-generation.ts — the

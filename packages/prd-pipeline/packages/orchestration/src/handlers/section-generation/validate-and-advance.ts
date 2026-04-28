@@ -24,13 +24,13 @@ import {
   type PipelineState,
   type SectionStatus,
 } from "../../types/state.js";
-import { validateSection } from "@prd-gen/validation";
+import { validateSection } from "/prd-validation";
 import {
   SECTION_DISPLAY_NAMES,
   type PRDContext,
   type SectionType,
-} from "@prd-gen/core";
-import type { StrategyAssignment, ExecutionResult } from "@prd-gen/strategy";
+} from "/prd-core";
+import type { StrategyAssignment, ExecutionResult } from "/prd-strategy";
 import { MAX_ATTEMPTS } from "../section-generation-constants.js";
 
 // ─── replaceSection ───────────────────────────────────────────────────────────

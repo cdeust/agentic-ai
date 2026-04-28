@@ -12,7 +12,7 @@
  *   updatePosterior       — Bayes-update a posterior given one observation.
  *   NO_INFORMATION_FLOOR  — reliability floor below which judge is skipped.
  *
- * Layer contract (§2.2): imports from @prd-gen/core only (no benchmark, no
+ * Layer contract (§2.2): imports from /prd-core only (no benchmark, no
  * infrastructure, no orchestration).
  *
  * source: Fowler (2018), Refactoring, §6.1 Extract Function.
@@ -27,8 +27,8 @@ import type {
   JudgeReliabilityRecord,
   VerdictDirection,
   ConsensusReliabilityProvider,
-} from "@prd-gen/core";
-import { DEFAULT_RELIABILITY_PRIOR } from "@prd-gen/core";
+} from "/prd-core";
+import { DEFAULT_RELIABILITY_PRIOR } from "/prd-core";
 // Type-only import: interfaces are erased at runtime, so the circular
 // dependency with consensus.ts is safe (no runtime value dependency).
 // source: TypeScript Handbook — "import type" for circular type dependencies.

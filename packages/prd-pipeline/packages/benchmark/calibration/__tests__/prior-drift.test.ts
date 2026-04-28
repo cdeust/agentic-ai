@@ -1,11 +1,11 @@
 /**
  * B-Shannon-7 drift detection (benchmark side): verify that the Beta prior
  * values re-exported from reliability.ts match the canonical values in
- * @prd-gen/core at runtime.
+ * /prd-core at runtime.
  *
  * This test catches future drift if either module's constants are changed
  * without updating the other. It is the enforcement complement to the import
- * chain (reliability.ts imports DEFAULT_RELIABILITY_PRIOR from @prd-gen/core
+ * chain (reliability.ts imports DEFAULT_RELIABILITY_PRIOR from /prd-core
  * and re-exports it — so these values MUST match by construction, but this
  * test makes the assertion explicit and visible in CI output).
  *
@@ -16,7 +16,7 @@ import { describe, it, expect } from "vitest";
 import {
   DEFAULT_RELIABILITY_PRIOR as CORE_PRIOR,
   RELIABILITY_PRIOR_ESS as CORE_ESS,
-} from "@prd-gen/core";
+} from "/prd-core";
 import {
   DEFAULT_RELIABILITY_PRIOR as BENCH_PRIOR,
   PRIOR_ESS as BENCH_ESS,

@@ -10,7 +10,7 @@
  * input rather than returning a fallback so callers must explicitly handle
  * the parse-failure case.
  *
- * Origin: previously lived in `@prd-gen/ecosystem-adapters/clients/subagent-client.ts`.
+ * Origin: previously lived in `/prd-ecosystem-adapters/clients/subagent-client.ts`.
  * The Phase 3+4 cross-audit (code-reviewer H1) flagged orchestration handlers
  * importing this utility from the infrastructure layer as a §2.2 violation.
  * It belongs in core because it has no infrastructure dependency.

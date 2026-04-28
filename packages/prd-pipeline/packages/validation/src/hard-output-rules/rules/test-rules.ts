@@ -1,4 +1,4 @@
-import type { HardOutputRuleViolation, SectionType } from "@prd-gen/core";
+import type { HardOutputRuleViolation, SectionType } from "/prd-core";
 import { findPatternViolations, makeViolation } from "./helpers.js";
 
 // Rule 7: No Placeholder Tests

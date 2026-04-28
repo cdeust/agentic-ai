@@ -10,7 +10,7 @@
  *
  * Layer contract (§2.2):
  *   mcp-server (composition root) → benchmark (adapter) → core (port)
- *   This is the ONLY file in mcp-server that imports @prd-gen/benchmark.
+ *   This is the ONLY file in mcp-server that imports /prd-benchmark.
  *
  * DIP (§1.5): core declares the interface; benchmark implements it; this
  * composition-root module wires them at startup.
@@ -25,9 +25,9 @@ import {
   tryCreateReliabilityRepository,
   RELIABILITY_SCHEMA_VERSION,
   type ConsensusReliabilityProvider,
-} from "@prd-gen/core";
-import type { ReliabilityRepository } from "@prd-gen/core";
-import { BenchmarkConsensusReliabilityProvider } from "@prd-gen/benchmark";
+} from "/prd-core";
+import type { ReliabilityRepository } from "/prd-core";
+import { BenchmarkConsensusReliabilityProvider } from "/prd-benchmark";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 

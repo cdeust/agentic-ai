@@ -21,14 +21,14 @@
  *     ["judge_invocation_failed"]) are EXCLUDED from the reliability estimate.
  *   - Sensitivity/specificity split per (agent, claim_type) deferred to B1.
  *
- * Layer contract (§2.2): this file imports from @prd-gen/core (type-only)
+ * Layer contract (§2.2): this file imports from /prd-core (type-only)
  * and Node stdlib only. It does NOT import from orchestration, mcp-server,
  * or any infrastructure adapter.
  */
 
 import { readFileSync, appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
-import type { JudgeVerdict, Claim } from "@prd-gen/core";
+import type { JudgeVerdict, Claim } from "/prd-core";
 
 // ─── Schema version ──────────────────────────────────────────────────────────
 

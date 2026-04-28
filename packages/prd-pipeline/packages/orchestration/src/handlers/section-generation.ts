@@ -35,9 +35,9 @@ import {
   SECTION_DISPLAY_NAMES,
   CAPABILITIES,
   type SectionType,
-} from "@prd-gen/core";
-import { buildSectionPrompt } from "@prd-gen/meta-prompting";
-import { selectStrategy, type StrategyAssignment } from "@prd-gen/strategy";
+} from "/prd-core";
+import { buildSectionPrompt } from "/prd-meta-prompting";
+import { selectStrategy, type StrategyAssignment } from "/prd-strategy";
 import { SECTIONS_BY_CONTEXT, SECTION_RECALL_TEMPLATES } from "../section-plan.js";
 import {
   replaceSection,

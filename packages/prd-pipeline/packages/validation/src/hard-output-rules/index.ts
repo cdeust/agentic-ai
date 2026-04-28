@@ -3,8 +3,8 @@ import type {
   HardOutputRuleViolation,
   ValidationReport,
   SectionType,
-} from "@prd-gen/core";
-import { isCriticalRule, scorePenalty } from "@prd-gen/core";
+} from "/prd-core";
+import { isCriticalRule, scorePenalty } from "/prd-core";
 
 import { rulesForSection, DOCUMENT_LEVEL_RULES } from "./rule-mapping.js";
 

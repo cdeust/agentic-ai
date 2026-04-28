@@ -1,4 +1,4 @@
-import type { HardOutputRuleViolation, SectionType } from "@prd-gen/core";
+import type { HardOutputRuleViolation, SectionType } from "/prd-core";
 import { findAbsenceViolation } from "./helpers.js";
 
 // Rule 63: Dependency Vulnerability Scanning

@@ -1,4 +1,4 @@
-import type { HardOutputRule, HardOutputRuleViolation } from "@prd-gen/core";
+import type { HardOutputRule, HardOutputRuleViolation } from "/prd-core";
 
 /**
  * Validation failure → corrective retrieval mapper.

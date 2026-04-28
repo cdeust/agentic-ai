@@ -28,7 +28,7 @@ import {
   type GoldenSet,
 } from "../observations.js";
 import { verifyHeldoutPartitionSeal } from "../calibration-seams.js";
-import type { JudgeVerdict } from "@prd-gen/core";
+import type { JudgeVerdict } from "/prd-core";
 
 function makeVerdict(overrides: Partial<JudgeVerdict> = {}): JudgeVerdict {
   return {
@@ -368,7 +368,7 @@ import {
   getMaxAttemptsForRun,
   MAX_ATTEMPTS_BASELINE,
 } from "../calibration-seams.js";
-import { MAX_ATTEMPTS } from "@prd-gen/orchestration";
+import { MAX_ATTEMPTS } from "/prd-orchestration";
 import { isControlArmRun as isControlArmRun2 } from "../observations.js";
 
 describe("getRetryArmForRun — Phase 4.2 ablation arm", () => {
@@ -444,7 +444,7 @@ describe("getMaxAttemptsForRun — Phase 4.2 CC-3 control arm", () => {
 // ─── D1.A: MAX_ATTEMPTS_BASELINE tracks orchestration export ─────────────────
 
 describe("MAX_ATTEMPTS_BASELINE — single source of truth (Wave D1.A)", () => {
-  it("MAX_ATTEMPTS_BASELINE equals MAX_ATTEMPTS exported from @prd-gen/orchestration", () => {
+  it("MAX_ATTEMPTS_BASELINE equals MAX_ATTEMPTS exported from /prd-orchestration", () => {
     // Postcondition (D1.A): MAX_ATTEMPTS_BASELINE is no longer a hardcoded
     // mirror constant — it is derived from the orchestration export. This test
     // enforces the single-source-of-truth invariant: if MAX_ATTEMPTS changes

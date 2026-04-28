@@ -38,8 +38,8 @@ import {
   type NextAction,
   type PipelineState,
   type StepOutput,
-} from "@prd-gen/orchestration";
-import type { SectionType } from "@prd-gen/core";
+} from "/prd-orchestration";
+import type { SectionType } from "/prd-core";
 import {
   extractMismatchEvents,
   type MismatchKind,

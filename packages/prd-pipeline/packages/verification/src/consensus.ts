@@ -35,8 +35,8 @@ import type {
   JudgeReliabilityRecord,
   VerdictDirection,
   ConsensusReliabilityProvider,
-} from "@prd-gen/core";
-import { DEFAULT_RELIABILITY_PRIOR } from "@prd-gen/core";
+} from "/prd-core";
+import { DEFAULT_RELIABILITY_PRIOR } from "/prd-core";
 import { bayesian } from "./consensus-strategy.js";
 
 // Verdict severity for ordering — higher = more concerning.
@@ -81,7 +81,7 @@ export type ConsensusStrategy = "weighted_average" | "bayesian";
 /**
  * Reliability lookup callback — injected by the composition root.
  *
- * Layer contract (§2.2): verification cannot import @prd-gen/benchmark.
+ * Layer contract (§2.2): verification cannot import /prd-benchmark.
  *
  * Precondition: callback is pure (no side effects, idempotent).
  * Postcondition: returns null → caller falls back to DEFAULT_RELIABILITY_PRIOR.

@@ -15,7 +15,7 @@
  * upstream emitter rotated formats.
  */
 
-import type { PipelineState } from "@prd-gen/orchestration";
+import type { PipelineState } from "/prd-orchestration";
 
 /**
  * source: packages/orchestration/src/handlers/self-check.ts (Phase B append).

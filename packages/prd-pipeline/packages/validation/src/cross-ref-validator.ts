@@ -1,4 +1,4 @@
-import type { CrossRefValidationResult } from "@prd-gen/core";
+import type { CrossRefValidationResult } from "/prd-core";
 
 /**
  * Deterministic cross-reference graph validator (NEW — fixes LLM-only self-check).

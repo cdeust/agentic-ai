@@ -3,7 +3,7 @@
  *
  * Storage choice: SQLite via better-sqlite3, matching the EvidenceRepository
  * convention in this package. Justification:
- *   1. better-sqlite3 is already a hard dependency of @prd-gen/core.
+ *   1. better-sqlite3 is already a hard dependency of /prd-core.
  *   2. The per-judge reliability table is relational (primary key on
  *      4-tuple, UPSERT semantics, version row) — relational storage is
  *      strictly better than JSON-file for these access patterns.

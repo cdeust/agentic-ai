@@ -18,7 +18,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import * as yaml from "js-yaml";
-import type { SectionType } from "@prd-gen/core";
+import type { SectionType } from "/prd-core";
 
 import type {
   AuditRule,

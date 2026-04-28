@@ -3,10 +3,10 @@
  * ConsensusReliabilityProvider port for the benchmark calibration layer.
  *
  * Layer contract (§2.2 / coding-standards):
- *   - Port (ConsensusReliabilityProvider) lives in @prd-gen/core (inner layer).
- *   - This adapter lives in @prd-gen/benchmark (outer layer).
- *   - @prd-gen/verification consumes the port, never this adapter.
- *   - Only the composition root (@prd-gen/mcp-server) imports this adapter
+ *   - Port (ConsensusReliabilityProvider) lives in /prd-core (inner layer).
+ *   - This adapter lives in /prd-benchmark (outer layer).
+ *   - /prd-verification consumes the port, never this adapter.
+ *   - Only the composition root (/prd-mcp-server) imports this adapter
  *     and injects it into ConsensusConfig.reliabilityProvider.
  *
  * DIP (§1.5): core declares the interface; benchmark implements it;
@@ -22,10 +22,10 @@ import type {
   JudgeReliabilityRecord,
   AgentIdentity,
   VerdictDirection,
-} from "@prd-gen/core";
-import type { Claim } from "@prd-gen/core";
+} from "/prd-core";
+import type { Claim } from "/prd-core";
 import { getReliabilityForRun } from "./calibration-seams.js";
-import type { ReliabilityRepository } from "@prd-gen/core";
+import type { ReliabilityRepository } from "/prd-core";
 
 /**
  * Adapter that bridges the ConsensusReliabilityProvider port to the

@@ -1,4 +1,4 @@
-import type { HardOutputRule, SectionType } from "@prd-gen/core";
+import type { HardOutputRule, SectionType } from "/prd-core";
 
 /**
  * Maps SectionType to applicable HardOutputRules.

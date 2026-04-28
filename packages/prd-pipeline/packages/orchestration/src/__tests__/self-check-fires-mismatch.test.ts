@@ -13,7 +13,7 @@
  * instrumentation module, which asserts on the emitted strings).
  *
  * Coupling discipline: imports `MISMATCH_DIAGNOSTIC_PREFIX` from
- * `@prd-gen/benchmark` (not a local re-definition) so the prefix
+ * `/prd-benchmark` (not a local re-definition) so the prefix
  * used in the assertion is ALWAYS in sync with the prefix used in
  * `extractMismatchEvents`. Any divergence between the handler and the
  * parser will be caught here.
@@ -35,12 +35,12 @@ import {
 //      detected — mismatch_kind:" prefix appended to state.errors).
 //   2. MISMATCH_DIAGNOSTIC_PREFIX in packages/benchmark/src/instrumentation.ts
 //      (the parser that extractMismatchEvents uses).
-// We cannot import MISMATCH_DIAGNOSTIC_PREFIX from @prd-gen/benchmark here
+// We cannot import MISMATCH_DIAGNOSTIC_PREFIX from /prd-benchmark here
 // because that would create a circular dependency (orchestration → benchmark
 // is the wrong direction per §2.2 layer rules: benchmark depends on orchestration,
 // not vice versa). If either the handler or the parser changes their prefix,
 // this test will start failing (the mismatchErrors array will be empty) AND
-// the instrumentation-injection.test.ts in @prd-gen/benchmark will also fail —
+// the instrumentation-injection.test.ts in /prd-benchmark will also fail —
 // providing two independent loud-failure signals.
 // source: Popper AP-4 / Curie A3 (Phase 3+4 cross-audit, 2026-04).
 const MISMATCH_DIAGNOSTIC_PREFIX =
@@ -207,7 +207,7 @@ describe("self-check handler fires mismatch diagnostics (C3 / Popper AP-4)", () 
       const phaseBOutput = step({ state: mutatedState, result: phaseBResult });
 
       // Primary assertion: state.errors must contain at least one entry whose
-      // prefix matches MISMATCH_DIAGNOSTIC_PREFIX (imported from @prd-gen/benchmark).
+      // prefix matches MISMATCH_DIAGNOSTIC_PREFIX (imported from /prd-benchmark).
       const mismatchErrors = phaseBOutput.state.errors.filter((e) =>
         e.startsWith(MISMATCH_DIAGNOSTIC_PREFIX),
       );

@@ -29,7 +29,7 @@ import { GateCalibrationK100Schema } from "../calibration-outputs.js";
 import {
   makeStubAgentInvoker,
   type AgentInvoker,
-} from "@prd-gen/orchestration";
+} from "/prd-orchestration";
 
 const TMP_PREFIX = join(
   tmpdir(),

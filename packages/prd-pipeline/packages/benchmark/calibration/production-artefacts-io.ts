@@ -13,7 +13,7 @@
 import { writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { execSync } from "node:child_process";
-import type { ProductionDispatcher } from "@prd-gen/orchestration";
+import type { ProductionDispatcher } from "/prd-orchestration";
 import { clopperPearson } from "./clopper-pearson.js";
 import { measureEventRate } from "./event-rate.js";
 import type { EventRateK50 } from "./calibration-outputs.js";

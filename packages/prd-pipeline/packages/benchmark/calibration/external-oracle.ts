@@ -11,7 +11,7 @@
  *   - schemaOracle: JSON Schema validation via Ajv (deterministic).
  *   - mathOracle:   Mathematical expression evaluation via mathjs (deterministic).
  *   - codeOracle:   TypeScript compilation check via tsc subprocess (deterministic).
- *   - specOracle:   Hard Output Rules validation via @prd-gen/validation
+ *   - specOracle:   Hard Output Rules validation via /prd-validation
  *                   (internally-grounded — see caveat in spec-oracle.ts).
  *
  * This module exports:
@@ -29,16 +29,16 @@
 // ─── Grounding type ───────────────────────────────────────────────────────────
 
 /**
- * Re-exported from @prd-gen/core for backward compatibility.
+ * Re-exported from /prd-core for backward compatibility.
  *
  * Wave F: ExternalGroundingType was promoted to core/domain/agent.ts because
  * it is load-bearing for the Claim contract. Keeping a local definition here
  * would duplicate the type and risk divergence. All new call sites should
- * import from @prd-gen/core; this re-export preserves existing imports.
+ * import from /prd-core; this re-export preserves existing imports.
  *
  * source: docs/PHASE_4_PLAN.md §4.1 "Externally-grounded held-out subset".
  */
-import type { ExternalGroundingType } from "@prd-gen/core";
+import type { ExternalGroundingType } from "/prd-core";
 export type { ExternalGroundingType };
 
 // ─── Legacy oracle contract (backward-compatible) ─────────────────────────────
