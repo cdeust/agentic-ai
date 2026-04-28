@@ -43,10 +43,14 @@ FEATURE_BRANCH="feat/zetetic-migration"
 REMOTE_NAME="zetetic-migration"
 
 # Source: measured 2026-04-27 against zetetic-team-subagents HEAD.
-# `git -C /Users/cdeust/Developments/zetetic-team-subagents log --all --oneline | wc -l` = 78
-# (--all includes remote-tracking refs; without --all the count is 77 because
-# one ref is only on origin; the SCRIPT.sh prd-migration uses --all consistently)
-PRE_MIGRATION_COMMIT_COUNT=78
+# `git -C /Users/cdeust/Developments/zetetic-team-subagents log --oneline | wc -l` = 77
+# Note: `--all` returns 78 because of a `backup/before-scrub` branch with an
+# extra commit that is NOT on main. After `git clone --no-local` + filter-repo
+# the clone contains only the main branch (77 commits). The preflight check
+# uses `--all` on the source repo; this check warns rather than aborts, so the
+# discrepancy does not block execution. The load-bearing invariant is the
+# post-filter-repo count = 77 and the rev-list ancestry depth check in Step 4.
+PRE_MIGRATION_COMMIT_COUNT=77
 SOURCE_HEAD_SUBJECT="fix(linkedin): trim pipeline post under LinkedIn 3000-char limit"
 SOURCE_TAIL_SUBJECT="Initial release: 11 Claude Code agents for engineering teams"
 
@@ -130,8 +134,11 @@ if [[ "$ACTUAL_HEAD_SUBJECT" != "$SOURCE_HEAD_SUBJECT" ]]; then
 fi
 log "  Source HEAD: OK ($ACTUAL_HEAD_SUBJECT)"
 
-log "Checking source repo commit count..."
-ACTUAL_COMMIT_COUNT=$(git -C "$SOURCE_REPO" log --all --oneline | wc -l | tr -d ' ')
+log "Checking source repo commit count (main branch only)..."
+# Use `log --oneline` (main only), not `--all`, because the source repo has a
+# `backup/before-scrub` branch that inflates --all by 1. filter-repo rewrites
+# only the main branch, so the post-filter count must match the main-only count.
+ACTUAL_COMMIT_COUNT=$(git -C "$SOURCE_REPO" log --oneline | wc -l | tr -d ' ')
 if [[ "$ACTUAL_COMMIT_COUNT" != "$PRE_MIGRATION_COMMIT_COUNT" ]]; then
   log "  WARNING: expected $PRE_MIGRATION_COMMIT_COUNT commits, found $ACTUAL_COMMIT_COUNT."
   log "  Proceeding, but update PRE_MIGRATION_COMMIT_COUNT if this is intentional."
