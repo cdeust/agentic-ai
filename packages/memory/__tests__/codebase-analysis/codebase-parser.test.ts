@@ -8,7 +8,8 @@
 
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseFile, detectLanguage, buildMemoryContent } from "../../src/codebase-analysis/codebase-parser.js";
 import {
   extractImportsPython,
@@ -16,8 +17,18 @@ import {
   extractDocstring,
 } from "../../src/codebase-analysis/codebase-extractors.js";
 
-const FIXTURE_ROOT =
-  "/Users/cdeust/Developments/agentic-ai/worktrees/port-parity-baseline/parity-oracle/codebase/fixture-repos/small-python/src";
+// Resolve the fixture root relative to the test file rather than via an
+// absolute /Users/cdeust path (which only exists on the original author's
+// machine and breaks CI). The fixture lives in the parity-oracle/ sibling
+// directory at the monorepo root.
+//   __dirname → packages/memory/__tests__/codebase-analysis
+//   ../../../../parity-oracle/codebase/fixture-repos/small-python/src
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const FIXTURE_ROOT = resolve(
+  __dirname,
+  "../../../..",
+  "parity-oracle/codebase/fixture-repos/small-python/src",
+);
 
 function readFixture(name: string): string {
   return readFileSync(join(FIXTURE_ROOT, name), "utf8");

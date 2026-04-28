@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "."
+  },
+  "references": [
+    { "path": "../core" },
+    { "path": "../orchestration" },
+    { "path": "../strategy" },
+    { "path": "../validation" }
+  ],
+  "include": ["src/**/*", "calibration/**/*"],
+  "exclude": [
+    "src/**/__tests__/**",
+    "src/**/*.test.ts",
+    "calibration/**/__tests__/**",
+    "calibration/**/*.test.ts"
+  ]
+}

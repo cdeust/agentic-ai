@@ -1,0 +1,17 @@
+{
+  "$schema": "reliability-heldout-lock-schema-v2",
+  "schema_version": 2,
+  "_comment": "Phase 4.1 reliability held-out partition — Wave F3 FULLY SEALED. Drawn from data/reliability-claim-corpus.json (50 claims, schema=15/math=15/code=13/spec=7) using pre-registered seed 'phase4-section-4.1-rng-2025'. Stratified 20% draw via mulberry32(fnv1a32(seed)). Held-out partition_size=10 (sidecar partition_hash=cfd81fa1e68395b1…). Reproduce via: node packages/benchmark/calibration/scripts/seal-reliability-corpus.mjs.",
+  "seed": "phase4-section-4.1-rng-2025",
+  "partition_size": 10,
+  "sealed_at": "2026-04-28T07:02:13.944Z",
+  "external_grounding_breakdown": {
+    "schema": 3,
+    "math": 3,
+    "code": 3,
+    "spec": 1
+  },
+  "external_grounding_total": 10,
+  "external_grounding_schema_version": 1,
+  "claim_set_hash": "7db6660ce21150a5aa007d5c01718cbe35bb6259ccbe237098724bb04d196247"
+}

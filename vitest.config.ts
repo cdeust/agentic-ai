@@ -21,6 +21,7 @@ export default defineConfig({
     projects: [
       "packages/*/vitest.config.ts",
       "packages/mcp-servers/*/vitest.config.ts",
+      "packages/prd-pipeline/packages/*/vitest.config.ts",
     ],
   },
 });

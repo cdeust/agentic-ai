@@ -152,15 +152,27 @@ update) catalogues every relevant change with file-level granularity.
   and helpers.
 - v3.14.12 — MCP client deadlock fix → verify TS SDK already covers the
   long-upstream-response cancellation path.
+- **f2b9f99 (post-v3.14.12)** — workflow-graph L6 uncap: drop
+  `_MAX_SYMBOLS_PER_FILE` LIMIT in load-all mode, bump asyncio
+  `line_limit` 10 MB → 1 GB, replace hand-typed edge-label list with
+  Cartesian enumeration, promote `Import` to a first-class symbol label
+  (with `_NON_QUALIFIED_LABELS` set), wire `Defines_File_Import` and
+  `Uses_*` edges. Net effect on live Cortex 6-project graph: 305K → 342K
+  nodes, 397K → 479K edges (+45.7× symbol count). Mirror in
+  `packages/memory/src/workflow-graph/sources/ast-source.ts` and
+  `packages/memory/src/infrastructure/mcp-client.ts`. Source:
+  `inventory/CORTEX_DELTA.md` Group 6.
 
 **Out of scope**: graph dashboard / 400K-node rendering — already deferred
-to post-cutover via ADR-0011 (Cortex HTTP server defer).
+to post-cutover via ADR-0011 (Cortex HTTP server defer). f2b9f99 removed
+the Cortex-side data cap that was hiding the rendering problem; the
+rendering work itself remains a separate Cortex-only concern.
 
 **Acceptance criterion**: new `port/cortex-resync-2026-04-28` worktree
-that ports the v3.14.8..v3.14.12 deltas, with each TS file carrying a
-`source: cortex@df141f5` line so future drift is immediately visible.
+that ports the v3.14.8..f2b9f99 deltas, with each TS file carrying a
+`source: cortex@f2b9f99` line so future drift is immediately visible.
 
-**Tracking entry**: `[Phase 7] Cortex re-sync (post-v3.14.9 ingest_codebase + v3.14.12 deadlock fix)` — open.
+**Tracking entry**: `[Phase 7] Cortex re-sync (post-v3.14.9 ingest_codebase + v3.14.12 deadlock fix + f2b9f99 L6 uncap)` — open.
 
 ---
 
