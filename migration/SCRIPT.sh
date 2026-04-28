@@ -242,14 +242,26 @@ run "git -C '$MONOREPO_ROOT' merge --allow-unrelated-histories \
   '$REMOTE_NAME/main'"
 
 if [[ "$DRY_RUN" == "false" ]]; then
+  # Path-filtered count: commits that touched packages/prd-pipeline/. This
+  # can be LESS than PRE_MIGRATION_COMMIT_COUNT because filter-repo
+  # preserves empty commits in linear history but `git log -- path` skips
+  # them. The load-bearing invariant is that the merge brought in
+  # PRE_MIGRATION_COMMIT_COUNT new commits (linear history is complete);
+  # the path-filtered count is an informational lower bound.
   MERGED_COUNT=$(git -C "$MONOREPO_ROOT" log --oneline -- "$TARGET_PREFIX/" | wc -l | tr -d ' ')
-  log "  Commits visible under $TARGET_PREFIX/: $MERGED_COUNT"
-  # +1 for the merge commit itself
-  EXPECTED=$((PRE_MIGRATION_COMMIT_COUNT + 1))
-  if [[ "$MERGED_COUNT" -lt "$PRE_MIGRATION_COMMIT_COUNT" ]]; then
-    abort "Too few commits under $TARGET_PREFIX/ after merge: got $MERGED_COUNT, need ≥ $PRE_MIGRATION_COMMIT_COUNT"
+  log "  Commits touching $TARGET_PREFIX/ (path-filtered, excludes empty commits): $MERGED_COUNT"
+  # The right invariant: HEAD now has PRE_MIGRATION_COMMIT_COUNT + 1
+  # additional commits compared to the merge's first parent. The merge's
+  # second parent is the rewritten remote tip; ancestry from that side
+  # must equal PRE_MIGRATION_COMMIT_COUNT.
+  set +o pipefail
+  REWRITTEN_ANCESTRY=$(git -C "$MONOREPO_ROOT" rev-list "${REMOTE_NAME}/main" --count 2>/dev/null || echo "0")
+  set -o pipefail
+  log "  Rewritten-side ancestry depth: $REWRITTEN_ANCESTRY (expected $PRE_MIGRATION_COMMIT_COUNT)"
+  if [[ "$REWRITTEN_ANCESTRY" != "$PRE_MIGRATION_COMMIT_COUNT" ]]; then
+    abort "Rewritten ancestry mismatch: got $REWRITTEN_ANCESTRY, expected $PRE_MIGRATION_COMMIT_COUNT. Linear history is incomplete — investigate."
   fi
-  log "  Merge verified: I1 holds in monorepo."
+  log "  Merge verified: I1 holds in monorepo (linear history complete)."
 fi
 
 # -----------------------------------------------------------------------------
