@@ -1,24 +1,17 @@
 /**
- * @agentic/core — PLACEHOLDER PACKAGE — DO NOT IMPORT FROM CONSUMERS YET.
+ * @agentic/core — public barrel.
  *
- * STATUS: port-pending (Phase 2 prerequisite).
+ * Phase 3 bootstraps this package with the CodebasePort interface and its
+ * Zod schemas. The full domain type space (PRDContext, HardOutputRule, etc.)
+ * will be added when the `port/core-types` worktree lands.
  *
- * The full domain type space — Zod schemas (PRDContext, HardOutputRule,
- * SectionType, etc.), agent identities, ports for memory/codebase/reasoning —
- * was designed in the `port/core-types` worktree (commit a9c2be3) but never
- * translated into source. Until that lands, this barrel is empty.
- *
- * Consumers that `import { … } from "@agentic/core"` will find nothing here.
- * Either:
- *   - import the symbol from its current home (`@agentic/memory`, etc.) and
- *     accept that it will move when core types land, OR
- *   - block on the `port/core-types` follow-up worktree.
- *
- * Tracking:
- *   - docs/audits/FINAL_CROSS_AUDIT.md §F-MED-001 (Borges, 2026-04-27)
- *   - docs/PHASE_PLAN.md §Phase-0 → packages/core/ (still `[ ]`)
- *
- * source: post-Phase-4 cleanup, 2026-04-26; placeholder hardened in
- * Phase-6 final-cross-audit follow-up, 2026-04-27.
+ * source: docs/PHASE_3_PLAN.md §2.6 — CodebasePort final home
+ * source: docs/audits/FINAL_CROSS_AUDIT.md §F-MED-001 — placeholder note
  */
+
+// CodebasePort and all associated schemas + errors.
+export * from "./ports/codebase.js";
+
+// Legacy placeholder — kept so existing consumers of `__PLACEHOLDER__` don't
+// hard-fail until the full `port/core-types` migration completes.
 export const __PLACEHOLDER__ = true;

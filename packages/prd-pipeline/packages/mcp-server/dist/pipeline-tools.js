@@ -14,11 +14,11 @@
  * call submit_action_result with the result, repeat until `done`.
  */
 import { z } from "zod";
-import { newPipelineState, step, InMemoryRunStore, ActionResultSchema, } from "@prd-gen/orchestration";
-import { planSectionVerification, planDocumentVerification, concludeSection, concludeDocument, } from "@prd-gen/verification";
-import { SectionTypeSchema, JudgeVerdictSchema, ClaimSchema, ExternalGroundingTypeSchema, tryCreateEvidenceRepository, } from "@prd-gen/core";
-import { EffectivenessTracker } from "@prd-gen/strategy";
-import { getRetryArmForRun, getMaxAttemptsForRun, MAX_ATTEMPTS_BASELINE, } from "@prd-gen/benchmark";
+import { newPipelineState, step, InMemoryRunStore, ActionResultSchema, } from "@agentic/prd-orchestration";
+import { planSectionVerification, planDocumentVerification, concludeSection, concludeDocument, } from "@agentic/prd-verification";
+import { SectionTypeSchema, JudgeVerdictSchema, ClaimSchema, ExternalGroundingTypeSchema, tryCreateEvidenceRepository, } from "@agentic/prd-core";
+import { EffectivenessTracker } from "@agentic/prd-strategy";
+import { getRetryArmForRun, getMaxAttemptsForRun, MAX_ATTEMPTS_BASELINE, } from "@agentic/prd-benchmark";
 import { buildConcludeOpts } from "./build-conclude-opts.js";
 const runStore = new InMemoryRunStore();
 /**

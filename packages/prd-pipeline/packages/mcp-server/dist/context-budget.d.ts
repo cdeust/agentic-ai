@@ -1,4 +1,4 @@
-import { type PRDContext, type SectionType } from "@prd-gen/core";
+import { type PRDContext, type SectionType } from "@agentic/prd-core";
 export interface ContextBudgetAllocation {
     /** Total tokens available for this PRD generation */
     totalBudget: number;
@@ -33,7 +33,7 @@ export declare function calculateContextBudget(prdContext: PRDContext, completed
 /**
  * Maps section type to the Cortex recall query pattern.
  *
- * Single source of truth: @prd-gen/orchestration owns the canonical templates
+ * Single source of truth: /prd-orchestration owns the canonical templates
  * because that's the package that actually issues the queries during
  * section_generation. We re-export here so the host can pre-fetch using the
  * SAME templates the orchestrator will later use, preventing host/orchestrator
