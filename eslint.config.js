@@ -50,7 +50,18 @@ const config = [
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        projectService: true,
+        projectService: {
+          // allowDefaultProject lets test files that are excluded from the
+          // package tsconfig.json still be parsed by the TypeScript project
+          // service. Test files are excluded from tsconfig to keep compiled
+          // output clean, but ESLint still needs to type-check them.
+          // source: @typescript-eslint docs §projectService.allowDefaultProject
+          allowDefaultProject: [
+            "packages/*/__tests__/*.ts",
+            "packages/*/__tests__/*/*.ts",
+            "packages/*/__tests__/*/*/*.ts",
+          ],
+        },
         tsconfigRootDir: import.meta.dirname,
         ecmaVersion: 2022,
         sourceType: "module",
@@ -176,6 +187,13 @@ const config = [
   // to assemble fixtures. The layer-import rule is suspended for test files
   // only because tests build full dependency graphs including adapters.
   // Console is also permitted in tests for debugging output.
+  //
+  // allowDefaultProject: test files are excluded from the package-level
+  // tsconfig.json (to keep compiled output clean) but must still be parseable
+  // by the TypeScript project service used by ESLint. allowDefaultProject
+  // instructs the project service to parse these files using the default
+  // compiler options rather than failing with "not found by the project
+  // service". source: @typescript-eslint/typescript-eslint docs §allowDefaultProject.
   {
     files: [
       "**/__tests__/**/*.ts",

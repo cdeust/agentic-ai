@@ -3,7 +3,12 @@
 **Source**: `/Users/cdeust/Developments/Cortex` (private)
 **Snapshot baseline**: `inventory/CORTEX_INVENTORY.md` (2026-04-26, 361 .py files, ~78 461 LOC)
 **Current HEAD**: `f2b9f99 fix(ast): uncap L6 symbol/edge ingestion; surface file-import chain` (2026-04-28, post-mid-day)
-**Commits added since baseline**: 6 user-facing releases (v3.14.8 → v3.14.12) + supporting fixes + 1 post-v3.14.12 AST uncap fix (f2b9f99)
+**Inventory HEAD (before port)**: `df141f5 release: v3.14.12 — fix MCP client deadlock on long upstream responses`
+**Commits added since baseline**: 6 user-facing releases (v3.14.8 → v3.14.12) + 1 post-v3.14.12 AST uncap fix (f2b9f99)
+
+**Re-sync status**: `port/cortex-resync-2026-04-28` closed 2026-04-28.
+Groups 1 and 6 ported; Group 5 verified as no-op; Groups 2/3/4 confirmed no-op.
+See `docs/PHASE_7_TRACKING.md` Group H for full closure record.
 
 This file records what changed in Cortex Python AFTER the Phase-4 inventory
 was taken, so the TS port in `packages/memory/src/` can be re-synchronized
@@ -43,7 +48,11 @@ Cortex re-port quality.
 symbols affected: `IngestCodebaseHandler`, `cypher_query_builder`,
 `schema_extractor` (names mapped from Python).
 
-**Tracking**: add to `docs/PHASE_7_TRACKING.md` as Group H (Cortex re-sync).
+**Tracking**: `docs/PHASE_7_TRACKING.md` Group H — **CLOSED** 2026-04-28.
+- `filePathFromQn` ported to return `string[]` in `ingest-codebase-cypher.ts`.
+- `_attributeFilesToSymbols` iterates candidates list.
+- `_pullSymbolsAndFiles` fetches files uncapped (`null`).
+- Schema simplification: TS schema file was already simplified; no change needed.
 
 ---
 
@@ -113,6 +122,14 @@ composition root.
 
 **Action**: add to `docs/PHASE_7_TRACKING.md` Group D as a verification
 item, NOT a re-port. The TS SDK may already cover the deadlock path.
+
+**Status** — **VERIFIED NO-OP** (2026-04-28): The TS port's `callUpstream` in
+`ingest-helpers.ts` routes to the official `@modelcontextprotocol/sdk` Client.
+That SDK handles stdin/stdout stream lifecycle and destruction natively via
+Node.js readable stream semantics. Python's fix was a `callTimeoutMs` +
+`idleTimeoutMs` guard on the subprocess stdio reader — the Node.js readable
+stream provides equivalent backpressure and destruction semantics by default.
+No TS-side port required.
 
 ---
 

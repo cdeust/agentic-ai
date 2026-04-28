@@ -2,6 +2,16 @@
  * Handler: ingest-codebase — pull codebase analysis from the upstream
  * ai-automatised-pipeline MCP server into Cortex's store.
  *
+ * source: cortex@f2b9f99 mcp_server/handlers/ingest_codebase.py:1-290
+ *
+ * Re-synced 2026-04-28 (Phase 7 Group H): ported v3.14.8/v3.14.9 deltas —
+ *   - _attributeFilesToSymbols: iterates filePathFromQn candidates (string[])
+ *     and picks the first match against knownFiles. Matches Python
+ *     _attribute_files_to_symbols multi-candidate fallback (py:91-143).
+ *   - _pullSymbolsAndFiles: passes null (not topSymbols) to fetchFiles.
+ *     Files are ALWAYS fetched uncapped so containment edges resolve.
+ *     Source: ingest_codebase.py lines 162-168 comment.
+ *
  * Ported from mcp_server/handlers/ingest_codebase.py
  *
  * Flow
@@ -110,14 +120,19 @@ function _attributeFilesToSymbols(
       sym.file = authoritative;
       continue;
     }
-    // No containment edge — try the qn-split fallback
-    const candidate = cypher.filePathFromQn(qn);
-    if (candidate && knownFiles.has(candidate)) {
-      sym.file = candidate;
+    // No containment edge — try the qn-split fallback.
+    // filePathFromQn returns a priority-ordered list; pick the first
+    // candidate present in knownFiles (matches Python: next(c for c in
+    // candidates if c in known_files, None)).
+    // source: cortex@f2b9f99 ingest_codebase.py:118-126
+    const candidates = cypher.filePathFromQn(qn);
+    const match = candidates.find((c) => knownFiles.has(c)) ?? null;
+    if (match !== null) {
+      sym.file = match;
       fallbackUsed++;
     } else {
       sym.file = null;
-      if (candidate) fallbackUnverified++;
+      if (candidates.length > 0) fallbackUnverified++;
     }
   }
 
@@ -154,7 +169,12 @@ async function _pullSymbolsAndFiles(
   const diagnostics: string[] = [];
   const [symbols, symDiag] = await cypher.fetchTopSymbols(graphPath, topSymbols);
   diagnostics.push(...symDiag);
-  const [files, fileDiag] = await cypher.fetchFiles(graphPath, topSymbols);
+  // Files are ALWAYS fetched uncapped (limit=null), regardless of topSymbols.
+  // The File→symbol containment join filters by the known-files set; if files
+  // are truncated to a slice smaller than the symbols' file population, the
+  // join collapses to near-zero edges. Decouple: always pull every File node.
+  // source: cortex@f2b9f99 ingest_codebase.py:162-168
+  const [files, fileDiag] = await cypher.fetchFiles(graphPath, null);
   diagnostics.push(...fileDiag);
 
   let callEdges: [string, string][] = [];

@@ -1,7 +1,13 @@
 /**
  * Cypher fetchers for ingest-codebase.
  *
- * Ported from mcp_server/handlers/ingest_codebase_cypher.py
+ * source: cortex@f2b9f99 mcp_server/handlers/ingest_codebase_cypher.py:1-340
+ *
+ * Re-synced 2026-04-28 (Phase 7 Group H): ported v3.14.8/v3.14.9 deltas —
+ *   - filePathFromQn now returns string[] (priority-ordered candidates, not
+ *     a single head). Matches Python file_path_from_qn heuristics 1-4.
+ *   - fetchFiles always passes limit=null (files are UNCAPPED; see Python
+ *     ingest_codebase.py _pull_symbols_and_files comment).
  *
  * Pure data extraction from the upstream Kuzu graph via the
  * `query_graph` MCP tool. No I/O against Cortex's own stores —
@@ -66,25 +72,74 @@ export interface FileRow {
 
 // ── Fallback ──────────────────────────────────────────────────────────────
 
-export function filePathFromQn(qn: string): string | null {
+// source: cortex@f2b9f99 mcp_server/handlers/ingest_codebase_cypher.py:53-111
+// file_path_from_qn — Rust-style qualified-name fallback (v3.14.9)
+const _CODE_EXTS = [".py", ".ts", ".tsx", ".rs", ".js"] as const;
+// Maximum number of tail segments to drop when deriving a Rust-style module path.
+// Covers the deepest realistic nesting: module::Class::method::closure (drop 3).
+// source: cortex@f2b9f99 ingest_codebase_cypher.py:100-110
+// eslint-disable-next-line @typescript-eslint/no-magic-numbers
+const _MAX_RUST_QN_DROP = 3 as const;
+
+export function filePathFromQn(qn: string): string[] {
   /**
-   * Last-resort heuristic: derive a file-path-shaped string from a
-   * qualified_name when the graph has no (:File)-[]->(:symbol) edge
-   * for it.
+   * Last-resort heuristic: derive plausible file-path candidates from a
+   * qualified_name when the graph has no (:File)-[]->(:symbol) edge for it.
    *
-   * Many language indexers emit `qualified_name = "<file>::<sym>"`
-   * (Python via the AP indexer does this), in which case splitting on
-   * `::` and taking the first segment yields the file path. Other
-   * languages (e.g., Rust `crate::module::Type::method`) do NOT
-   * encode a file path here — the head segment will be a crate or
-   * module name, not a real path. Callers should prefer the
-   * containment-edge mapping; only use this fallback when no edge
-   * exists, and then validate against the known-files set before
-   * trusting the result.
+   * Returns a list of candidates in priority order. Callers MUST validate
+   * each candidate against the known-files set before trusting it — the qn
+   * alone cannot distinguish a Python module from a Rust crate path.
+   *
+   * Heuristics applied (priority order):
+   *   1. `<path/with/extension>::<sym>` — head already a file path (Python).
+   *   2. `<dotted.module>::<sym>` — convert dots → slashes + append .py.
+   *   3. `<a::b::c>::<sym>` — convert `::` → slashes + append .py, drop last
+   *      1, 2, or 3 segments progressively (Rust-style module path).
+   *
+   * Returns [] when qn is empty or has no `::`.
+   *
+   * pre:  qn is a non-empty string
+   * post: each element is a relative file-path candidate (no validation)
    */
-  if (!qn || !qn.includes("::")) return null;
-  const head = qn.split("::", 2)[0] ?? null;
-  return head || null;
+  if (!qn || !qn.includes("::")) return [];
+
+  const candidates: string[] = [];
+  const head = qn.split("::", 2)[0] ?? "";
+  if (!head) return [];
+
+  const headIsPath =
+    head.includes("/") || _CODE_EXTS.some((ext) => head.endsWith(ext));
+  const headIsDottedModule =
+    !headIsPath &&
+    head.includes(".") &&
+    !head.includes("/") &&
+    !_CODE_EXTS.some((ext) => head.endsWith(ext));
+
+  // (1) head already looks like a file path — trust it as-is.
+  if (headIsPath) {
+    candidates.push(head);
+    return candidates;
+  }
+
+  // (2) dotted-module head (classic Python `pkg.mod::Sym`).
+  if (headIsDottedModule) {
+    candidates.push(head.replaceAll(".", "/") + ".py");
+    return candidates;
+  }
+
+  // (3) Rust-style `a::b::c::sym` — try progressively shorter prefixes so
+  // both `module::function` (drop 1) and `module::Class::method` (drop 2)
+  // resolve.
+  const parts = qn.split("::");
+  for (let drop = 1; drop <= _MAX_RUST_QN_DROP; drop++) {
+    if (parts.length - drop < 1) break;
+    const prefix = parts.slice(0, parts.length - drop);
+    if (prefix.length === 0) continue;
+    const cand = prefix.join("/") + ".py";
+    if (!candidates.includes(cand)) candidates.push(cand);
+  }
+
+  return candidates;
 }
 
 // ── Query runner ──────────────────────────────────────────────────────────
@@ -161,6 +216,7 @@ export async function fetchTopSymbols(
       continue;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const columns = (result!["columns"] as string[]) ?? [
       "qualified_name",
       "name",
@@ -168,6 +224,7 @@ export async function fetchTopSymbols(
       "end_line",
       "visibility",
     ];
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     for (const row of (result!["rows"] as unknown[][]) ?? []) {
       const record: Record<string, unknown> = {};
       columns.forEach((col, i) => {
@@ -230,6 +287,7 @@ export async function fetchCallEdges(
       continue;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     for (const row of (result!["rows"] as unknown[][]) ?? []) {
       if ((row as unknown[]).length < 2) continue;
       const src = row[0] as string;
@@ -283,6 +341,7 @@ export async function fetchFileContainment(
     return [edges, diagnostics];
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   for (const row of (result!["rows"] as unknown[][]) ?? []) {
     if ((row as unknown[]).length < 2) continue;
     const f = row[0] as string;
@@ -332,13 +391,22 @@ export async function fetchFiles(
   if (err !== null) return [[], [`files: ${err}`]];
 
   const rows: FileRow[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   for (const row of (result!["rows"] as unknown[][]) ?? []) {
     if ((row as unknown[]).length < 1 || !row[0]) continue;
+    // Destructure result row to avoid magic index numbers.
+    // Column order matches: RETURN f.path, f.name, f.extension, f.size_bytes
+    const [fPath, fName, fExt, fSize] = row as [
+      string,
+      string | null,
+      string | null,
+      number | null,
+    ];
     rows.push({
-      path: row[0] as string,
-      name: (row[1] as string) ?? null,
-      extension: (row[2] as string) ?? null,
-      size_bytes: (row[3] as number) ?? null,
+      path: fPath,
+      name: fName ?? null,
+      extension: fExt ?? null,
+      size_bytes: fSize ?? null,
     });
   }
   return [rows, []];
