@@ -1,0 +1,10 @@
+# Rust build output — never committed.
+# source: PHASE_3_PLAN.md §5.4#1 — per coding-standards.md §4.1 (file size),
+# target/ can exceed 500 MB; committed build artefacts violate §9 (anti-patterns: dead code).
+target/
+
+# Cargo machine-local lock data (not the workspace Cargo.lock which IS committed)
+.cargo/
+
+# macOS artefacts
+.DS_Store

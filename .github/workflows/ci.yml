@@ -12,17 +12,67 @@ concurrency:
 
 jobs:
   build-test:
-    name: build + test + parity
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    name: build + test + parity (${{ matrix.os }}, node ${{ matrix.node-version }})
+    # source: docs/PHASE_3_PLAN.md §7.1 — decision to add macos-latest (closed
+    # 2026-04-28). Primary dev env is macOS; Rust binaries are platform-specific;
+    # +5 min CI buys early detection of macOS-only build failures before they
+    # reach developer machines.
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
 
     strategy:
       fail-fast: false
       matrix:
         node-version: [20.x, 22.x]
+        # source: docs/PHASE_3_PLAN.md §7.1 — decision 7.1 (closed 2026-04-28).
+        # Windows is out of scope (ADR-0001 §4.1: setsid/PGID has no Windows equiv).
+        os: [ubuntu-latest, macos-latest]
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        # source: docs/PHASE_3_PLAN.md §7.2 — pin to 1.94.0 for reproducible
+        # builds per coding-standards.md §8. rust-toolchain.toml in
+        # packages/codebase-rust/ specifies the channel; this action reads it.
+        # Using actions-rust-lang/setup-rust-toolchain@v1 which natively reads
+        # rust-toolchain.toml and also handles sccache / Cargo registry caching.
+        # source: https://github.com/actions-rust-lang/setup-rust-toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          # rustflags: "" disables the default -D warnings injection that would
+          # break the upstream Rust source (which may have non-fatal warnings).
+          # source: docs/PHASE_3_PLAN.md §5.4#1 — verbatim copy rule.
+          rustflags: ""
+          cache-workspaces: "packages/codebase-rust -> target"
+
+      - name: Cache Cargo registry and index
+        # source: docs/PHASE_3_PLAN.md §5.4#1 — "Cache ~/.cargo and target/ per OS".
+        # Key includes Cargo.lock hash to invalidate on dependency changes.
+        # source: https://github.com/actions/cache (cache@v4, stable action).
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ matrix.os }}-cargo-registry-${{ hashFiles('packages/codebase-rust/Cargo.lock') }}
+          restore-keys: |
+            ${{ matrix.os }}-cargo-registry-
+
+      - name: Setup rust-analyzer
+        # source: docs/PHASE_3_PLAN.md §7.4 — decision to install rust-analyzer
+        # in CI (closed 2026-04-28). Success path is the load-bearing case;
+        # testing only error paths leaves the happy path uncovered.
+        # rust-analyzer is installed only when the binary is absent (cache hit
+        # skips this). Version channel matches Rust 1.94.0 stable.
+        # source: https://github.com/rust-lang/rust-analyzer/releases
+        run: |
+          if ! command -v rust-analyzer &>/dev/null; then
+            echo "Installing rust-analyzer..."
+            rustup component add rust-analyzer
+          else
+            echo "rust-analyzer already available: $(rust-analyzer --version)"
+          fi
 
       - name: Setup pnpm
         # No `version:` arg — pnpm version is sourced from package.json's
