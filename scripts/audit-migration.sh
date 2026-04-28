@@ -131,7 +131,10 @@ if [[ ! -f docs/PHASE_7_TRACKING.md ]]; then
   err "docs/PHASE_7_TRACKING.md is missing. Per FINAL_CROSS_AUDIT §F-LOW-003 every port-pending marker requires a tracking entry before cutover."
 else
   set +e
-  claimed=$(grep -E '^\| \*\*Total\*\* \| \*\*[0-9]+\*\*' docs/PHASE_7_TRACKING.md | grep -oE '\*\*[0-9]+\*\*' | head -1 | grep -oE '[0-9]+')
+  # Match any "**Total*" row (allows "**Total**" or "**Total in-tree markers**"
+  # — keeps the regex resilient to minor heading rephrasings while remaining
+  # specific enough to avoid the per-group rows.
+  claimed=$(grep -E '^\| \*\*Total[^|]*\*\* \| \*\*[0-9]+\*\*' docs/PHASE_7_TRACKING.md | grep -oE '\*\*[0-9]+\*\*' | head -1 | grep -oE '[0-9]+')
   set -e
   claimed=${claimed:-0}
   note "  port-pending markers (PHASE_7_TRACKING.md claimed total): $claimed"
