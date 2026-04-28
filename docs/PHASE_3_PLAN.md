@@ -859,6 +859,18 @@ Per `docs/PHASE_PLAN.md` Phase 3 gates: `dijkstra`, `lamport`.
 
 Each question lists **default**, **alternatives**, **decision deadline**, **blast radius**.
 
+### Decisions (closed 2026-04-28)
+
+| # | Decision | Rationale |
+|---|---|---|
+| 7.1 | **Add `macos-latest` to CI matrix** (override default) | Primary dev environment is macOS; Rust binaries are platform-specific; +5 min CI buys early detection of macOS-only build failures. Catches issues before they hit dev machines. |
+| 7.2 | `1.94.0` exact pin via `rust-toolchain.toml` (default) | coding-standards.md §8 source-discipline + reproducible parity oracle. Stable drift can silently break CI on clippy lint changes. |
+| 7.3 | crates.io fetch with `Cargo.lock` (default) | 50 MB in-repo vendor is heavy for an unproven need. Lockfile pins versions; air-gap is post-cutover concern, not Phase 3. |
+| 7.4 | **Install `rust-analyzer` in CI** (override default) | Success path is the load-bearing case; testing only error paths leaves the happy path uncovered in CI. +30 s install + 150 MB cache is acceptable. Zetetic standard: "benchmark is proof". |
+| 7.5 | Tools 1–17 (graph + lifecycle); defer artifact-writers (18–23) to Phase 6 (default) | PHASE_PLAN.md Phase 3 deliverable specifies `index_codebase` parity, not all 23. Phase 6 dual-run captures the rest. Avoids gold-plating. |
+| 7.6 | `@agentic/codebase` (default) | Symmetric with `@agentic/memory`, `@agentic/reasoning`. The "rust" suffix on `@agentic/codebase-rust` handles disambiguation. |
+| 7.7 | Archive on GitHub per `docs/CUTOVER_RUNBOOK.md` Phase 6 (default) | Consistent with Cortex / prd-spec / zetetic disposition; preserves history publicly. Local working copy left in place for reference.
+
 ### 7.1 CI matrix scope
 
 **Question:** Should Phase 3 add `os: [ubuntu-latest, macos-latest]` to the CI matrix?
