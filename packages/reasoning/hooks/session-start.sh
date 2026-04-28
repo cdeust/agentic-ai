@@ -28,7 +28,7 @@ echo -e "${TEAL}  ╚══════╝╚══════╝   ╚═╝  
 echo ""
 echo -e "${WHITE}${BOLD}  A G E N T S${RESET}"
 echo ""
-echo -e "${WHITE}  97 reasoning patterns  ·  63 skills  ·  14 hooks  ·  17 tools${RESET}"
+echo -e "${WHITE}  98 reasoning patterns  ·  63 skills  ·  14 hooks  ·  17 tools${RESET}"
 echo ""
 echo -e "${LIGHT}  Pearl ── Peirce ── Feynman ── Toulmin ── Cochrane${RESET}"
 echo -e "${SUBTLE}  causal    abductive  integrity   argument   evidence${RESET}"

@@ -10,7 +10,7 @@ The Ostrom audit of `memory/scope-registry.json` v1 returned the verdict:
 
 Concrete defects flagged:
 
-1. **Coverage gap.** 19 team agents and 97 genius agents — 116 total — but only 3 named per-agent scopes (`engineer`, `architect`, `research`). The other 114 agents had no home scope, so any write fell back to `defaults` (owners=`["_user"]`) which they cannot write. In practice agents wrote wherever they liked because `strict_unknown_scope: false` permitted it.
+1. **Coverage gap.** 19 team agents and 98 genius agents — 116 total — but only 3 named per-agent scopes (`engineer`, `architect`, `research`). The other 114 agents had no home scope, so any write fell back to `defaults` (owners=`["_user"]`) which they cannot write. In practice agents wrote wherever they liked because `strict_unknown_scope: false` permitted it.
 2. **Curator unwired.** The registry referenced `_curator` but the `curator_agents` list contained only `["_user"]`. The `_curator` token resolved to nothing. `lessons` (owners `_user` + `_curator`) was therefore write-dead for any agent.
 3. **Permissive mode.** `strict_unknown_scope: false` meant unknown-scope writes silently succeeded against `defaults`, defeating the ACL.
 
@@ -28,7 +28,7 @@ Exception: `research-scientist` and `experiment-runner` continue to share the `r
 `orchestrator` gets its own scope **and** is added to `curator_agents`. The dual role is documented in the scope description.
 
 ### 2. Single shared `genius` scope (1:98)
-All 97 genius agents share one scope. Per-agent isolation is enforced by **subpath convention**, not ACL:
+All 98 genius agents share one scope. Per-agent isolation is enforced by **subpath convention**, not ACL:
 - Each genius MUST write under `/memories/genius/<agent-slug>/`.
 - Reads across subpaths are permitted by design — cross-pollination is the entire point of the genius pool (Lamport reading Ostrom reading Taleb).
 - TTL 60 days, `max_file_kb` 100, owners `["*"]`, readers `["*"]`.

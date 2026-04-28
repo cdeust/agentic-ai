@@ -295,7 +295,7 @@ CONF
   echo "    - refactorer, latex-engineer          → haiku  + low     (mechanical)"
   echo "    - most team agents                     → sonnet + medium  (balanced)"
   echo "    - architect, security, research roles  → opus   + high    (deep)"
-  echo "    - 97 genius agents                     → sonnet (effort kept from frontmatter:"
+  echo "    - 98 genius agents                     → sonnet (effort kept from frontmatter:"
   echo "                                              deep-reasoning geniuses default to high,"
   echo "                                              procedural geniuses default to medium)"
   echo ""
@@ -640,7 +640,7 @@ check_py_dep "mlx-lm" "mlx_lm" "pip install mlx-lm"
 step "Verification"
 
 genius_count=$(find "$CLAUDE_DIR/agents/genius" -name "*.md" -not -name "INDEX.md" 2>/dev/null | wc -l | tr -d ' ')
-[[ "$genius_count" -ge 90 ]] && ok "Genius agents accessible ($genius_count agents)" || warn "Expected ~97 genius agents, found $genius_count"
+[[ "$genius_count" -ge 90 ]] && ok "Genius agents accessible ($genius_count agents)" || warn "Expected ~98 genius agents, found $genius_count"
 
 team_count=$(find "$CLAUDE_DIR/agents" -maxdepth 1 -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
 ok "Team agents installed ($team_count)"

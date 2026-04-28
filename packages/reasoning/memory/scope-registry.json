@@ -89,7 +89,7 @@
       "max_file_kb": 100
     },
     "genius": {
-      "description": "Shared scope for the 97 genius agents under agents/genius/ (excluding INDEX.md). Per-agent isolation enforced by SUBPATH CONVENTION (NOT by ACL): every genius agent MUST write under /memories/genius/<agent-slug>/ and SHOULD read primarily its own subpath. Cross-genius reads are permitted by design (cross-pollination is the point of the genius pool). See memory/ADR-001-scope-coverage.md and memory/scope-coverage.md.",
+      "description": "Shared scope for the 98 genius agents under agents/genius/ (excluding INDEX.md). Per-agent isolation enforced by SUBPATH CONVENTION (NOT by ACL): every genius agent MUST write under /memories/genius/<agent-slug>/ and SHOULD read primarily its own subpath. Cross-genius reads are permitted by design (cross-pollination is the point of the genius pool). See memory/ADR-001-scope-coverage.md and memory/scope-coverage.md.",
       "owners": [
         "*"
       ],

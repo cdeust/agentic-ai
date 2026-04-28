@@ -64,7 +64,7 @@ cp -r zetetic-team-subagents/skills/ ~/.claude/skills/
 | `engineer`, `code-reviewer`, `test-engineer`, `frontend-engineer`, `dba`, `devops-engineer`, `data-scientist`, `experiment-runner`, `mlops`, `ux-designer`, `professor` | sonnet | medium | Procedural with decision points |
 | `orchestrator` | opus | medium | Routing, not deep reasoning |
 | `architect`, `security-auditor`, `research-scientist`, `paper-writer`, `reviewer-academic` | opus | high | Deep structural / evidence reasoning |
-| 97 genius agents (default) | sonnet | medium-or-high (from frontmatter) | Procedural patterns at medium; deep-reasoning patterns (Feynman, Dijkstra, Lamport, Gödel, Einstein) at high |
+| 98 genius agents (default) | sonnet | medium-or-high (from frontmatter) | Procedural patterns at medium; deep-reasoning patterns (Feynman, Dijkstra, Lamport, Gödel, Einstein) at high |
 
 Estimated token savings vs. all-opus default: **~2.5–3×** on typical sessions (measured against opus-only baseline; report your own measurements at [Discussions](https://github.com/cdeust/zetetic-team-subagents/discussions) if they differ).
 

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="Zetetic Agents — 97 reasoning patterns, one epistemic standard" width="100%"/>
+  <img src="assets/banner.svg" alt="Zetetic Agents — 98 reasoning patterns, one epistemic standard" width="100%"/>
 </p>
 
 <p align="center">
@@ -12,7 +12,7 @@
 </p>
 
 > **Claude Code agents whose commits are blocked when constants lack source citations.**
-> 97 genius reasoning agents (plus 19 team-role agents = 116 total) each citing their primary paper and documenting their refusal conditions, paired with a pre-commit hook that blocks any floating-point constant with 3+ significant digits that lacks a `source:` annotation.
+> 98 genius reasoning agents (plus 19 team-role agents = 116 total) each citing their primary paper and documenting their refusal conditions, paired with a pre-commit hook that blocks any floating-point constant with 3+ significant digits that lacks a `source:` annotation.
 > Not a prompt library. A methodology with **commit-time enforcement**.
 
 ---
@@ -45,7 +45,7 @@ Every AI agent system ships a role prompt. *"You are a senior engineer."* The ag
 
 Zetetic Agents are different in one specific way: **they can say "I don't know."**
 
-97 reasoning patterns drawn from primary sources — Dijkstra's correctness discipline, Curie's residual-with-a-carrier method, Hamilton's fault-tolerance protocol, Cochrane's evidence synthesis — routed automatically to your problem by *shape*, not by *field*. Every output is sourced. Every commit is checked. The standard is not a prompt. It is a gate.
+98 reasoning patterns drawn from primary sources — Dijkstra's correctness discipline, Curie's residual-with-a-carrier method, Hamilton's fault-tolerance protocol, Cochrane's evidence synthesis — routed automatically to your problem by *shape*, not by *field*. Every output is sourced. Every commit is checked. The standard is not a prompt. It is a gate.
 
 ---
 
@@ -87,7 +87,7 @@ That's the whole install. The plugin's installer copies agents, skills, hooks, a
 
 | Capability | What it gives you (concretely) |
 |---|---|
-| **97 documented refusals** | Each genius agent's body documents conditions under which it refuses (when to stop, what to cite, when to hand off). Refusal conditions are intent statements, not enforced contracts. |
+| **98 documented refusals** | Each genius agent's body documents conditions under which it refuses (when to stop, what to cite, when to hand off). Refusal conditions are intent statements, not enforced contracts. |
 | **63 multi-step workflows** | Type one slash command, get a sourced research brief / debugging trace / ADR. Each agent in the chain produces output and declares what it could not verify. |
 | **Commit-time gates** | `pre-commit-zetetic.sh` blocks commits with `UNSOURCED` keywords (always/never/obviously) at any profile. `MAGIC_NUMBER` floats (3+ decimals without `source:`) and `TODO_NO_REF` warn at default profile, block under `ZETETIC_PROFILE=strict`. Active only when `git commit` is invoked through Claude Code's hook system. |
 | **650+ problem-shape triggers** | [`agents/genius/INDEX.md`](agents/genius/INDEX.md) maps natural-language problem descriptions to reasoning methods. <!-- source: 654 data rows counted by python3 -c "from re import sub; ..." (see docs/AGENT-INTERNALS.md) on 2026-04-25. --> |

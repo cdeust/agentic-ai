@@ -34,7 +34,7 @@ adheres to [Semantic Versioning](https://semver.org/).
 - **PII scanner daemon.** Persistent process eliminates Python cold-start;
   median scan time reduced 34→8 ms.
 - **Memory contract on every agent.** `memory_scope` frontmatter +
-  `memory` body block added to all 19 team agents and all 97 genius
+  `memory` body block added to all 19 team agents and all 98 genius
   agents (so each agent declares what it persists and where).
 - README rewrite (Tier 1 visibility), 6 supporting docs, full CI matrix,
   Codespaces config (subsequently removed per cross-check feedback).

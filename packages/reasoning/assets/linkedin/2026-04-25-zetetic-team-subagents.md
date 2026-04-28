@@ -21,7 +21,7 @@ What I find more interesting is what happens at commit time. A pre-commit hook s
 
 In the repo:
 
-• 97 reasoning-pattern agents (Dijkstra, Curie, Hamilton, Cochrane, and so on) with primary-source citations
+• 98 reasoning-pattern agents (Dijkstra, Curie, Hamilton, Cochrane, and so on) with primary-source citations
 • 19 role-based team agents (engineer, architect, dba, etc.)
 • 63 slash-command workflows like /deep-research and /paper-vs-code-audit
 • A local implementation of Anthropic's memory_20250818 tool with scope-based ACL

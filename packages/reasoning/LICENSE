@@ -1,6 +1,6 @@
 MIT License
 
-zetetic-team-subagents — 97 reasoning patterns plus 19 team-role agents for
+zetetic-team-subagents — 98 reasoning patterns plus 19 team-role agents for
 Claude Code, with commit-time enforcement of source discipline. Each genius
 agent is built around a primary academic source; each team agent specializes
 in a professional role. The pre-commit hook gates magic numbers, unsourced
@@ -34,7 +34,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
-The reasoning patterns encoded in the 97 genius agents are derived from
+The reasoning patterns encoded in the 98 genius agents are derived from
 published academic work cited in each agent's documentation (e.g., Pearl
 on causal inference, Curie on measurement discipline, Dijkstra on program
 correctness). The MIT license covers the encoding of those methods as

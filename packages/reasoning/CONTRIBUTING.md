@@ -1,6 +1,6 @@
 # Contributing to zetetic-team-subagents
 
-Thanks for considering a contribution. This project ships **97 reasoning
+Thanks for considering a contribution. This project ships **98 reasoning
 patterns + 19 team agents + 63 skills + 16 lifecycle hooks**, with
 commit-time enforcement of source discipline. Every change is held to the
 same standard the agents enforce on user code.

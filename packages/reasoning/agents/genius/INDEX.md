@@ -954,7 +954,7 @@ The orchestrator selects genius agents by **problem shape**, not by field or his
 
 ---
 
-## Quick Reference: Agent → Shapes (complete, 97 agents)
+## Quick Reference: Agent → Shapes (complete, 98 agents)
 
 | Agent | Shapes |
 |---|---|

@@ -67,7 +67,7 @@ Plus local-extension errors for path-traversal rejection and ACL denials. Full t
 
 ## Scope ACL
 
-24 scopes declared in `memory/scope-registry.json` with `owners` (write list), `readers` (read list), `ttl_days`, and `max_file_kb`. Default: per-team-agent dedicated scope (engineer → `/memories/engineer/`); 97 genius agents share `/memories/genius/<slug>/` by subpath convention. Curator scopes (`global`, `lessons`) are write-locked to `_user` and the `orchestrator` agent.
+24 scopes declared in `memory/scope-registry.json` with `owners` (write list), `readers` (read list), `ttl_days`, and `max_file_kb`. Default: per-team-agent dedicated scope (engineer → `/memories/engineer/`); 98 genius agents share `/memories/genius/<slug>/` by subpath convention. Curator scopes (`global`, `lessons`) are write-locked to `_user` and the `orchestrator` agent.
 
 `strict_unknown_scope: true` — writes to undeclared scopes are denied. Adding a new scope requires editing `scope-registry.json`.
 
