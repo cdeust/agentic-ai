@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "references": [
+    { "path": "../benchmark" },
+    { "path": "../core" },
+    { "path": "../ecosystem-adapters" },
+    { "path": "../orchestration" },
+    { "path": "../strategy" },
+    { "path": "../validation" },
+    { "path": "../verification" }
+  ],
+  "include": ["src/**/*"]
+}
