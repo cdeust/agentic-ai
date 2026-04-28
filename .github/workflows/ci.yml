@@ -12,17 +12,97 @@ concurrency:
 
 jobs:
   build-test:
-    name: build + test + parity
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    name: build + test + parity (${{ matrix.os }}, node ${{ matrix.node-version }})
+    # source: docs/PHASE_3_PLAN.md §7.1 — decision to add macos-latest (closed
+    # 2026-04-28). Primary dev env is macOS; Rust binaries are platform-specific;
+    # +5 min CI buys early detection of macOS-only build failures before they
+    # reach developer machines.
+    runs-on: ${{ matrix.os }}
+    # 60-min cap accommodates cold cargo builds on Ubuntu CI runners.
+    # The Rust workspace pulls in ~300 crates (tantivy, tree-sitter family,
+    # rust-analyzer-style symbol resolution); cold first-run build observed
+    # at 25-30 min on ubuntu-latest, ~4 min on macos-latest. Subsequent runs
+    # hit the Cargo registry cache and complete in ~5 min on Ubuntu.
+    # source: PR #18 CI runs 25053733202, 25056121308 (2026-04-28).
+    timeout-minutes: 60
+
+    env:
+      # zstd-sys + lbug both statically link libzstd in this workspace,
+      # producing rust-lld "duplicate symbol: ZSTD_*" errors on Linux
+      # (macOS ld64 silently dedupes). Setting ZSTD_SYS_USE_PKG_CONFIG=1
+      # makes zstd-sys link the system libzstd dynamically, eliminating
+      # the conflict. Harmless on macOS where zstd-sys ignores it
+      # (no pkg-config installed by default).
+      # source: ai-automatised-pipeline/.github/workflows/release.yml
+      # (upstream's known fix); CI run 25057922391 reproduced the error.
+      ZSTD_SYS_USE_PKG_CONFIG: "1"
 
     strategy:
       fail-fast: false
       matrix:
         node-version: [20.x, 22.x]
+        # source: docs/PHASE_3_PLAN.md §7.1 — decision 7.1 (closed 2026-04-28).
+        # Windows is out of scope (ADR-0001 §4.1: setsid/PGID has no Windows equiv).
+        os: [ubuntu-latest, macos-latest]
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install Linux build deps (libzstd, pkg-config, cmake)
+        # Required by ZSTD_SYS_USE_PKG_CONFIG=1 above. Without these,
+        # zstd-sys's pkg-config probe falls back to the bundled static
+        # build and the duplicate-symbol error reappears.
+        # source: ai-automatised-pipeline/.github/workflows/release.yml.
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            libzstd-dev pkg-config cmake
+
+      - name: Setup Rust toolchain
+        # source: docs/PHASE_3_PLAN.md §7.2 — pin to 1.94.0 for reproducible
+        # builds per coding-standards.md §8.
+        #
+        # Toolchain is specified explicitly here rather than relying on
+        # rust-toolchain.toml auto-detection: the action by default scans the
+        # REPO ROOT for that file, but the file lives at
+        # packages/codebase-rust/rust-toolchain.toml. With auto-detection
+        # missing, the action installs `stable`, breaking decision 7.2 and
+        # also breaking `rustup component add rust-analyzer` (the action of
+        # decision 7.4 requires a non-stable channel for rust-analyzer to
+        # resolve as an installable component on x86_64-unknown-linux-gnu).
+        #
+        # source: actions-rust-lang/setup-rust-toolchain@v1 README §toolchain
+        # input; CI failure on PR #18 run 25053733202 confirmed the bug.
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: "1.94.0"
+          components: "rustfmt,clippy,rust-analyzer"
+          # rustflags: "" disables the default -D warnings injection that would
+          # break the upstream Rust source (which may have non-fatal warnings).
+          # source: docs/PHASE_3_PLAN.md §5.4#1 — verbatim copy rule.
+          rustflags: ""
+          cache-workspaces: "packages/codebase-rust -> target"
+
+      - name: Cache Cargo registry and index
+        # source: docs/PHASE_3_PLAN.md §5.4#1 — "Cache ~/.cargo and target/ per OS".
+        # Key includes Cargo.lock hash to invalidate on dependency changes.
+        # source: https://github.com/actions/cache (cache@v4, stable action).
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ matrix.os }}-cargo-registry-${{ hashFiles('packages/codebase-rust/Cargo.lock') }}
+          restore-keys: |
+            ${{ matrix.os }}-cargo-registry-
+
+      - name: Verify rust-analyzer
+        # source: docs/PHASE_3_PLAN.md §7.4 — decision to install rust-analyzer
+        # in CI (closed 2026-04-28). The component is installed by the
+        # actions-rust-lang/setup-rust-toolchain step above (components input).
+        # This step verifies the install succeeded and prints the version.
+        run: rust-analyzer --version
 
       - name: Setup pnpm
         # No `version:` arg — pnpm version is sourced from package.json's

@@ -1,0 +1,21 @@
+{
+  "name": "@agentic/codebase-rust",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Rust workspace housing the ai-architect-mcp binary. Built via cargo; consumed via @agentic/codebase subprocess adapter.",
+  "scripts": {
+    "build": "cargo build --release --manifest-path Cargo.toml",
+    "build:debug": "cargo build --manifest-path Cargo.toml",
+    "test": "cargo test --release --manifest-path Cargo.toml",
+    "clean": "cargo clean --manifest-path Cargo.toml",
+    "binary-path": "node -e \"console.log(require('path').join(__dirname,'target','release','ai-architect-mcp'))\""
+  },
+  "files": [
+    "Cargo.toml",
+    "Cargo.lock",
+    "rust-toolchain.toml",
+    "src",
+    "tests"
+  ],
+  "license": "MIT"
+}
