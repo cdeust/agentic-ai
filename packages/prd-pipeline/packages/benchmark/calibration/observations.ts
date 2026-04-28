@@ -28,7 +28,7 @@
 
 import { readFileSync, appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
-import type { JudgeVerdict, Claim } from "/prd-core";
+import type { JudgeVerdict, Claim } from "@agentic/prd-core";
 
 // ─── Schema version ──────────────────────────────────────────────────────────
 

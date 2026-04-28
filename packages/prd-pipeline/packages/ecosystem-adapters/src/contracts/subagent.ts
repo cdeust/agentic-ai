@@ -32,4 +32,4 @@ export {
   type JudgeRequest,
   type SubagentInvocation,
   type SubagentResponse,
-} from "/prd-core";
+} from "@agentic/prd-core";

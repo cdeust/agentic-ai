@@ -20,8 +20,8 @@ import {
   PRD_CONTEXT_CONFIGS,
   type PRDContext,
   type SectionType,
-} from "/prd-core";
-import type { StrategyAssignment } from "/prd-strategy";
+} from "@agentic/prd-core";
+import type { StrategyAssignment } from "@agentic/prd-strategy";
 
 export interface SectionPromptInput {
   readonly section_type: SectionType;

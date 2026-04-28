@@ -2,7 +2,7 @@ import type {
   HardOutputRule,
   HardOutputRuleViolation,
   SectionType,
-} from "/prd-core";
+} from "@agentic/prd-core";
 import { makeViolation } from "./helpers.js";
 
 // Rule 3: AC Numbering

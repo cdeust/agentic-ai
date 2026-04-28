@@ -5,11 +5,11 @@ import {
   PRD_CONTEXT_CONFIGS,
   CAPABILITIES,
   extractJsonObject,
-} from "/prd-core";
+} from "@agentic/prd-core";
 import {
   buildClarificationPrompt,
   type GeneratedQuestion,
-} from "/prd-meta-prompting";
+} from "@agentic/prd-meta-prompting";
 
 /**
  * Clarification loop (SKILL.md Rule 1).

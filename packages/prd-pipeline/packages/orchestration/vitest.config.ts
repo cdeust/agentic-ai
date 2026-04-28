@@ -6,7 +6,7 @@ const PKG_ROOT = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   test: {
-    name: "/prd-orchestration",
+    name: "@agentic/prd-orchestration",
     root: PKG_ROOT,
     include: ["src/**/*.test.ts"],
     exclude: ["dist/**", "node_modules/**", "**/.claude/**"],

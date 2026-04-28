@@ -1,5 +1,5 @@
 {
-  "name": "/prd-ecosystem-adapters",
+  "name": "@agentic/prd-ecosystem-adapters",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
-    "/prd-core": "workspace:*",
-    "/prd-verification": "workspace:*",
+    "@agentic/prd-core": "workspace:*",
+    "@agentic/prd-verification": "workspace:*",
     "zod": "^3.24.0"
   },
   "devDependencies": {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { selectJudges, getPanel, PANELS } from "../judge-selector.js";
-import type { Claim } from "/prd-core";
+import type { Claim } from "@agentic/prd-core";
 
 const claim = (claim_type: Claim["claim_type"]): Claim => ({
   claim_id: "X-1",

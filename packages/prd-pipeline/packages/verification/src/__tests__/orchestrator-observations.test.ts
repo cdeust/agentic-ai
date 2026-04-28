@@ -10,7 +10,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 import { concludeSection } from "../orchestrator.js";
-import type { JudgeVerdict, AgentIdentity } from "/prd-core";
+import type { JudgeVerdict, AgentIdentity } from "@agentic/prd-core";
 import type { ClaimObservationFlushed, ConcludeOptions } from "../orchestrator.js";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

@@ -16,19 +16,19 @@
  * source: Wave D code-reviewer extraction; coding-standards.md §4.1.
  */
 
-import type { Claim } from "/prd-core";
+import type { Claim } from "@agentic/prd-core";
 import {
   appendObservationLog,
   JUDGE_OBSERVATION_LOG_PATH,
-} from "/prd-benchmark";
+} from "@agentic/prd-benchmark";
 import {
   invokeOracle,
   OracleUnavailableError,
   type OracleInput,
-} from "/prd-benchmark/calibration";
+} from "@agentic/prd-benchmark/calibration";
 import {
   type ConcludeOptions,
-} from "/prd-verification";
+} from "@agentic/prd-verification";
 import {
   getReliabilityRepo,
   getConsensusReliabilityProvider,

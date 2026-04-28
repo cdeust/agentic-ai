@@ -22,17 +22,17 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import type { Claim, JudgeVerdict } from "/prd-core";
+import type { Claim, JudgeVerdict } from "@agentic/prd-core";
 import {
   concludeSection,
   type ConcludeOptions,
-} from "/prd-verification";
-import { OracleUnavailableError } from "/prd-benchmark/calibration";
+} from "@agentic/prd-verification";
+import { OracleUnavailableError } from "@agentic/prd-benchmark/calibration";
 
 // ─── Mock appendObservationLog ────────────────────────────────────────────────
 
-vi.mock("/prd-benchmark", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("/prd-benchmark")>();
+vi.mock("@agentic/prd-benchmark", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@agentic/prd-benchmark")>();
   return {
     ...actual,
     // Spy on appendObservationLog without disk I/O.
@@ -115,9 +115,9 @@ async function makeConcludeOptsWithOracle(
 ): Promise<ConcludeOptions> {
   // Import inside function so vi.mock() overrides are visible.
   const { appendObservationLog, JUDGE_OBSERVATION_LOG_PATH } =
-    await import("/prd-benchmark");
+    await import("@agentic/prd-benchmark");
   const { invokeOracle, OracleUnavailableError: UnavailError } =
-    await import("/prd-benchmark/calibration");
+    await import("@agentic/prd-benchmark/calibration");
 
   // Precondition: claimsMap is populated by the test.
   const claimTypes = new Map<string, Claim["claim_type"]>();
@@ -198,7 +198,7 @@ describe("F1.D Test 1: grounded claim resolves via mathOracle", () => {
     const claimsMap = new Map([["MATH-001", claim]]);
     const opts = await makeConcludeOptsWithOracle(claimsMap);
 
-    const { appendObservationLog } = await import("/prd-benchmark");
+    const { appendObservationLog } = await import("@agentic/prd-benchmark");
 
     concludeSection("requirements", [makeVerdict("MATH-001")], opts);
 
@@ -236,7 +236,7 @@ describe("F1.D Test 2: ungrounded claim preserves consensus-majority path", () =
     const claimsMap = new Map([["FR-001", claim]]);
     const opts = await makeConcludeOptsWithOracle(claimsMap);
 
-    const { appendObservationLog } = await import("/prd-benchmark");
+    const { appendObservationLog } = await import("@agentic/prd-benchmark");
 
     concludeSection("requirements", [makeVerdict("FR-001")], opts);
 
@@ -267,7 +267,7 @@ async function makeConcludeOptsWithUnavailableCodeOracle(
   claimsMap: ReadonlyMap<string, Claim>,
 ): Promise<ConcludeOptions> {
   const { appendObservationLog, JUDGE_OBSERVATION_LOG_PATH } =
-    await import("/prd-benchmark");
+    await import("@agentic/prd-benchmark");
 
   const claimTypes = new Map<string, Claim["claim_type"]>();
   for (const [id, claim] of claimsMap) {
@@ -330,7 +330,7 @@ describe("F1.D Test 3: code oracle unavailable → warn fires, no oracle_resolve
     const claimsMap = new Map([["CODE-001", claim]]);
 
     const warnSpy = vi.spyOn(console, "warn");
-    const { appendObservationLog } = await import("/prd-benchmark");
+    const { appendObservationLog } = await import("@agentic/prd-benchmark");
     const opts = await makeConcludeOptsWithUnavailableCodeOracle(claimsMap);
 
     concludeSection("requirements", [makeVerdict("CODE-001")], opts);

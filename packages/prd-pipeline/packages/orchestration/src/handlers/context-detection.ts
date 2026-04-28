@@ -4,7 +4,7 @@ import {
   PRD_CONTEXT_CONFIGS,
   CAPABILITIES,
   type PRDContext,
-} from "/prd-core";
+} from "@agentic/prd-core";
 
 const TRIGGER_WORDS: Record<PRDContext, readonly string[]> = {
   proposal: ["proposal", "pitch", "stakeholder"],

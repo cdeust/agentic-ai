@@ -16,7 +16,7 @@ import {
   SECTION_DISPLAY_NAMES,
   SECTION_ORDER,
   type SectionType,
-} from "/prd-core";
+} from "@agentic/prd-core";
 
 const OUTPUT_DIR = "prd-output";
 

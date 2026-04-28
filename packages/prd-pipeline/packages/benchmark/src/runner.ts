@@ -1,8 +1,8 @@
 import { readFileSync, readdirSync, existsSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { validateSection, validateDocument } from "/prd-validation";
-import { validateCrossReferences } from "/prd-validation";
-import type { SectionType, ValidationReport, CrossRefValidationResult } from "/prd-core";
+import { validateSection, validateDocument } from "@agentic/prd-validation";
+import { validateCrossReferences } from "@agentic/prd-validation";
+import type { SectionType, ValidationReport, CrossRefValidationResult } from "@agentic/prd-core";
 
 /**
  * Benchmark runner — executes golden fixtures through the validation pipeline.

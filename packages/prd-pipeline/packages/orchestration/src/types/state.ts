@@ -12,11 +12,11 @@ import {
   PRDContextSchema,
   SectionTypeSchema,
   AgentIdentitySchema,
-} from "/prd-core";
+} from "@agentic/prd-core";
 import {
   StrategyAssignmentSchema,
   ExecutionResultSchema,
-} from "/prd-strategy";
+} from "@agentic/prd-strategy";
 
 export const PipelineStepSchema = z.enum([
   "banner",

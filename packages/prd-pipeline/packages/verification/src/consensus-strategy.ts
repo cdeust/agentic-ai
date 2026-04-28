@@ -27,8 +27,8 @@ import type {
   JudgeReliabilityRecord,
   VerdictDirection,
   ConsensusReliabilityProvider,
-} from "/prd-core";
-import { DEFAULT_RELIABILITY_PRIOR } from "/prd-core";
+} from "@agentic/prd-core";
+import { DEFAULT_RELIABILITY_PRIOR } from "@agentic/prd-core";
 // Type-only import: interfaces are erased at runtime, so the circular
 // dependency with consensus.ts is safe (no runtime value dependency).
 // source: TypeScript Handbook — "import type" for circular type dependencies.

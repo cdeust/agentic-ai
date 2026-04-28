@@ -1,4 +1,4 @@
-import type { HardOutputRuleViolation, SectionType } from "/prd-core";
+import type { HardOutputRuleViolation, SectionType } from "@agentic/prd-core";
 import {
   findAbsenceViolation,
   extractCodeBlocks,

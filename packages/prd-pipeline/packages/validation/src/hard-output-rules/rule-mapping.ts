@@ -1,4 +1,4 @@
-import type { HardOutputRule, SectionType } from "/prd-core";
+import type { HardOutputRule, SectionType } from "@agentic/prd-core";
 
 /**
  * Maps SectionType to applicable HardOutputRules.

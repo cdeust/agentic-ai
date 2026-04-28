@@ -24,7 +24,7 @@ import type {
   JudgeVerdict,
   AgentIdentity,
   ReliabilityObservation,
-} from "/prd-core";
+} from "@agentic/prd-core";
 import { extractClaims, extractClaimsFromDocument } from "./claim-extractor.js";
 import { selectJudges } from "./judge-selector.js";
 import {

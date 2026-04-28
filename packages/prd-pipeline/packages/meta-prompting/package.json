@@ -1,5 +1,5 @@
 {
-  "name": "/prd-meta-prompting",
+  "name": "@agentic/prd-meta-prompting",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -10,8 +10,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "/prd-core": "workspace:*",
-    "/prd-strategy": "workspace:*",
+    "@agentic/prd-core": "workspace:*",
+    "@agentic/prd-strategy": "workspace:*",
     "zod": "^3.24.0"
   },
   "devDependencies": {

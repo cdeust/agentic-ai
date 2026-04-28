@@ -35,8 +35,8 @@ import type {
   JudgeReliabilityRecord,
   VerdictDirection,
   ConsensusReliabilityProvider,
-} from "/prd-core";
-import { DEFAULT_RELIABILITY_PRIOR } from "/prd-core";
+} from "@agentic/prd-core";
+import { DEFAULT_RELIABILITY_PRIOR } from "@agentic/prd-core";
 import { bayesian } from "./consensus-strategy.js";
 
 // Verdict severity for ordering — higher = more concerning.

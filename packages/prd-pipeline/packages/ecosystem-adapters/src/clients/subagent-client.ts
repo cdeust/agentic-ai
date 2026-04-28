@@ -33,8 +33,8 @@ import {
   ClaimSchema,
   VerdictSchema,
   extractJsonObject,
-} from "/prd-core";
-import { buildJudgePrompt } from "/prd-verification";
+} from "@agentic/prd-core";
+import { buildJudgePrompt } from "@agentic/prd-verification";
 import { z } from "zod";
 
 // ─── Pending invocation envelope ────────────────────────────────────────────

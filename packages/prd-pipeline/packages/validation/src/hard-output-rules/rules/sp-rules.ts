@@ -1,7 +1,7 @@
 import type {
   HardOutputRuleViolation,
   SectionType,
-} from "/prd-core";
+} from "@agentic/prd-core";
 import { findPatternViolations, makeViolation } from "./helpers.js";
 
 // Rule 8: SP Not In FR Table

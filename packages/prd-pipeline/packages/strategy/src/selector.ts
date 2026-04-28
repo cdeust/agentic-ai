@@ -1,6 +1,6 @@
-import type { ThinkingStrategy, StrategyTier } from "/prd-core";
-import { CAPABILITIES, STRATEGY_TIERS, ThinkingStrategySchema } from "/prd-core";
-import type { EvidenceRepository } from "/prd-core";
+import type { ThinkingStrategy, StrategyTier } from "@agentic/prd-core";
+import { CAPABILITIES, STRATEGY_TIERS, ThinkingStrategySchema } from "@agentic/prd-core";
+import type { EvidenceRepository } from "@agentic/prd-core";
 import { z } from "zod";
 import { ResearchEvidenceDatabase } from "./research-evidence-database.js";
 import {

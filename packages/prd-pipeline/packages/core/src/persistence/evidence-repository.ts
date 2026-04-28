@@ -367,7 +367,7 @@ export class EvidenceRepository {
  * dynamically importing the module + casting through `unknown`.
  *
  * source: code-reviewer M7 (Phase 3+4 cross-audit, 2026-04). Pre-fix the
- * mcp-server composition root used `await import("/prd-core")` +
+ * mcp-server composition root used `await import("@agentic/prd-core")` +
  * `mod.EvidenceRepository as unknown as new (...) => ...` to avoid
  * making the native module a hard dependency. Static import + factory
  * preserves the same optionality without runtime reflection.

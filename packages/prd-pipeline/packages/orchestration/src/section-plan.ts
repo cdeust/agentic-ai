@@ -6,7 +6,7 @@
  * focus of each context type. Tune by use, not by guess.
  */
 
-import type { PRDContext, SectionType } from "/prd-core";
+import type { PRDContext, SectionType } from "@agentic/prd-core";
 
 export const SECTIONS_BY_CONTEXT: Record<PRDContext, readonly SectionType[]> = {
   proposal: [

@@ -7,7 +7,7 @@
  */
 
 import type { AuditRule, AuditFinding, SectionInput } from "./types.js";
-import type { SectionType } from "/prd-core";
+import type { SectionType } from "@agentic/prd-core";
 
 // ─── Pattern helpers ─────────────────────────────────────────────────────────
 

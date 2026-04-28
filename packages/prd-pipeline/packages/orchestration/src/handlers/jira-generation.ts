@@ -12,7 +12,7 @@
 
 import type { StepHandler } from "../runner.js";
 import { appendError, type PipelineState } from "../types/state.js";
-import { buildJiraPrompt } from "/prd-meta-prompting";
+import { buildJiraPrompt } from "@agentic/prd-meta-prompting";
 import { JIRA_GENERATION_INV_ID as INVOCATION_ID } from "./protocol-ids.js";
 
 const BATCH_ID = "jira_generation";

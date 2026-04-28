@@ -16,7 +16,7 @@ import { describe, it, expect } from "vitest";
 import {
   DEFAULT_RELIABILITY_PRIOR as CORE_PRIOR,
   RELIABILITY_PRIOR_ESS as CORE_ESS,
-} from "/prd-core";
+} from "@agentic/prd-core";
 import {
   DEFAULT_RELIABILITY_PRIOR as BENCH_PRIOR,
   PRIOR_ESS as BENCH_ESS,

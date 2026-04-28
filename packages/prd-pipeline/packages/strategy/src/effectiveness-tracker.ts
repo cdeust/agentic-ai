@@ -1,6 +1,6 @@
-import type { ThinkingStrategy, PRDContext } from "/prd-core";
-import { ThinkingStrategySchema, PRDContextSchema } from "/prd-core";
-import type { EvidenceRepository, StrategyExecution } from "/prd-core";
+import type { ThinkingStrategy, PRDContext } from "@agentic/prd-core";
+import { ThinkingStrategySchema, PRDContextSchema } from "@agentic/prd-core";
+import type { EvidenceRepository, StrategyExecution } from "@agentic/prd-core";
 import { z } from "zod";
 import { StrategyAssignmentSchema, type StrategyAssignment } from "./selector.js";
 

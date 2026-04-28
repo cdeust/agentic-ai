@@ -9,4 +9,4 @@
  * source: cross-audit code-reviewer H1 (Phase 3+4, 2026-04).
  */
 
-export { buildJudgePrompt, type BuiltJudgePrompt } from "/prd-verification";
+export { buildJudgePrompt, type BuiltJudgePrompt } from "@agentic/prd-verification";

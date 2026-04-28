@@ -28,7 +28,7 @@ import {
   type GoldenSet,
 } from "../observations.js";
 import { verifyHeldoutPartitionSeal } from "../calibration-seams.js";
-import type { JudgeVerdict } from "/prd-core";
+import type { JudgeVerdict } from "@agentic/prd-core";
 
 function makeVerdict(overrides: Partial<JudgeVerdict> = {}): JudgeVerdict {
   return {
@@ -368,7 +368,7 @@ import {
   getMaxAttemptsForRun,
   MAX_ATTEMPTS_BASELINE,
 } from "../calibration-seams.js";
-import { MAX_ATTEMPTS } from "/prd-orchestration";
+import { MAX_ATTEMPTS } from "@agentic/prd-orchestration";
 import { isControlArmRun as isControlArmRun2 } from "../observations.js";
 
 describe("getRetryArmForRun — Phase 4.2 ablation arm", () => {

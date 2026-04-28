@@ -1,5 +1,5 @@
 {
-  "name": "/prd-orchestration",
+  "name": "@agentic/prd-orchestration",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -10,11 +10,11 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "/prd-core": "workspace:*",
-    "/prd-meta-prompting": "workspace:*",
-    "/prd-strategy": "workspace:*",
-    "/prd-validation": "workspace:*",
-    "/prd-verification": "workspace:*",
+    "@agentic/prd-core": "workspace:*",
+    "@agentic/prd-meta-prompting": "workspace:*",
+    "@agentic/prd-strategy": "workspace:*",
+    "@agentic/prd-validation": "workspace:*",
+    "@agentic/prd-verification": "workspace:*",
     "zod": "^3.24.0"
   },
   "devDependencies": {

@@ -21,8 +21,8 @@ import {
   SqliteReliabilityRepository,
   DEFAULT_RELIABILITY_PRIOR,
   RELIABILITY_SCHEMA_VERSION,
-} from "/prd-core";
-import type { AgentIdentity } from "/prd-core";
+} from "@agentic/prd-core";
+import type { AgentIdentity } from "@agentic/prd-core";
 import { BenchmarkConsensusReliabilityProvider } from "../consensus-reliability-adapter.js";
 import { isControlArmRun, fnv1a32 } from "../calibration-seams.js";
 

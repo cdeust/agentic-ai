@@ -30,7 +30,7 @@
 import {
   DEFAULT_RELIABILITY_PRIOR,
   RELIABILITY_PRIOR_ESS,
-} from "/prd-core";
+} from "@agentic/prd-core";
 
 /**
  * Beta-distribution parameters. Both must be strictly positive (Gelman

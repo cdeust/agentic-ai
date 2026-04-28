@@ -5,7 +5,7 @@
  * source: cross-audit code-reviewer Blocking-#1 (Phase 3+4 follow-up, 2026-04).
  */
 
-import type { SectionType } from "/prd-core";
+import type { SectionType } from "@agentic/prd-core";
 
 export interface AuditRuleFamily {
   readonly code: string;

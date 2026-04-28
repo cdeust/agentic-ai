@@ -8,7 +8,7 @@
  * No LLM calls. No semantic understanding. The judges do that.
  */
 
-import type { SectionType, Claim } from "/prd-core";
+import type { SectionType, Claim } from "@agentic/prd-core";
 
 type ClaimType = Claim["claim_type"];
 

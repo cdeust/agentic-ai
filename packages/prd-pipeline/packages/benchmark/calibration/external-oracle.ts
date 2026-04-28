@@ -38,7 +38,7 @@
  *
  * source: docs/PHASE_4_PLAN.md §4.1 "Externally-grounded held-out subset".
  */
-import type { ExternalGroundingType } from "/prd-core";
+import type { ExternalGroundingType } from "@agentic/prd-core";
 export type { ExternalGroundingType };
 
 // ─── Legacy oracle contract (backward-compatible) ─────────────────────────────

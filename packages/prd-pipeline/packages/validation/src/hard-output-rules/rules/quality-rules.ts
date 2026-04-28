@@ -1,7 +1,7 @@
 import type {
   HardOutputRuleViolation,
   SectionType,
-} from "/prd-core";
+} from "@agentic/prd-core";
 import { makeViolation } from "./helpers.js";
 
 // Rule 2: No Self-Referencing Dependencies

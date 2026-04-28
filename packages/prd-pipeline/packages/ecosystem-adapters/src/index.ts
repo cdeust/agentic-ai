@@ -35,4 +35,4 @@ export {
 
 // Re-export from core for backward compatibility (Phase 3+4 cross-audit
 // closure — code-reviewer H1). New code should import from /prd-core.
-export { extractJsonObject } from "/prd-core";
+export { extractJsonObject } from "@agentic/prd-core";

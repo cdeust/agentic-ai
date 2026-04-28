@@ -33,8 +33,8 @@ import type {
   AgentIdentity,
   VerdictDirection,
   ReliabilityRepository,
-} from "/prd-core";
-import type { Claim } from "/prd-core";
+} from "@agentic/prd-core";
+import type { Claim } from "@agentic/prd-core";
 
 // ─── CC-3 control-arm predicate (inlined from calibration-seams.ts) ──────────
 

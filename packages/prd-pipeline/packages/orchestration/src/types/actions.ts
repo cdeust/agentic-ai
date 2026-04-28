@@ -19,7 +19,7 @@
  */
 
 import { z } from "zod";
-import { PRDContextSchema, SectionTypeSchema, VerdictSchema } from "/prd-core";
+import { PRDContextSchema, SectionTypeSchema, VerdictSchema } from "@agentic/prd-core";
 
 // ─── Action 1: ask_user ─────────────────────────────────────────────────────
 

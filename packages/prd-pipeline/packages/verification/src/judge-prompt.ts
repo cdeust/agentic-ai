@@ -20,7 +20,7 @@
  * source: cross-audit code-reviewer H1 (Phase 3+4, 2026-04).
  */
 
-import { type JudgeRequest, agentSubagentType } from "/prd-core";
+import { type JudgeRequest, agentSubagentType } from "@agentic/prd-core";
 
 export interface BuiltJudgePrompt {
   readonly description: string;

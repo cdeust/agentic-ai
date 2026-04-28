@@ -2,8 +2,8 @@ import type {
   HardOutputRule,
   HardOutputRuleViolation,
   SectionType,
-} from "/prd-core";
-import { isCriticalRule, scorePenalty } from "/prd-core";
+} from "@agentic/prd-core";
+import { isCriticalRule, scorePenalty } from "@agentic/prd-core";
 
 /**
  * Find all matches of a pattern and return a violation for each.

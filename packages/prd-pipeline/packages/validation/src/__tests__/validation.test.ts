@@ -16,7 +16,7 @@ import {
   isCriticalRule,
   scorePenalty,
   isDeterministicRule,
-} from "/prd-core";
+} from "@agentic/prd-core";
 
 describe("isCriticalRule + scorePenalty + isDeterministicRule contracts", () => {
   it("scorePenalty is 0.15 for critical and 0.05 for non-critical", () => {

@@ -1,4 +1,4 @@
-import type { HardOutputRule, HardOutputRuleViolation } from "/prd-core";
+import type { HardOutputRule, HardOutputRuleViolation } from "@agentic/prd-core";
 
 /**
  * Validation failure → corrective retrieval mapper.

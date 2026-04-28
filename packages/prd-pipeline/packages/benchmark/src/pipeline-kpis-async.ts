@@ -22,7 +22,7 @@ import {
   type NextAction,
   type PipelineState,
   type StepOutput,
-} from "/prd-orchestration";
+} from "@agentic/prd-orchestration";
 import type { PipelineKpis, PipelineKpiInput } from "./pipeline-kpis.js";
 import { extractMismatchEvents } from "./instrumentation.js";
 

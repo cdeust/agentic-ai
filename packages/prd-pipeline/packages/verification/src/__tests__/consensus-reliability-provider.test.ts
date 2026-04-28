@@ -19,9 +19,9 @@
 
 import { describe, it, expect } from "vitest";
 import { consensus } from "../consensus.js";
-import type { JudgeVerdict, AgentIdentity, ConsensusReliabilityProvider } from "/prd-core";
-import type { VerdictDirection, JudgeReliabilityRecord } from "/prd-core";
-import type { Claim } from "/prd-core";
+import type { JudgeVerdict, AgentIdentity, ConsensusReliabilityProvider } from "@agentic/prd-core";
+import type { VerdictDirection, JudgeReliabilityRecord } from "@agentic/prd-core";
+import type { Claim } from "@agentic/prd-core";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

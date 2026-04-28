@@ -22,10 +22,10 @@ import type {
   JudgeReliabilityRecord,
   AgentIdentity,
   VerdictDirection,
-} from "/prd-core";
-import type { Claim } from "/prd-core";
+} from "@agentic/prd-core";
+import type { Claim } from "@agentic/prd-core";
 import { getReliabilityForRun } from "./calibration-seams.js";
-import type { ReliabilityRepository } from "/prd-core";
+import type { ReliabilityRepository } from "@agentic/prd-core";
 
 /**
  * Adapter that bridges the ConsensusReliabilityProvider port to the

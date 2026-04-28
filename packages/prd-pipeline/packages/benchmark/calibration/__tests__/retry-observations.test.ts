@@ -25,7 +25,7 @@ import {
   type RetryAttemptObservation,
   type RetryArm,
 } from "../retry-observations.js";
-import type { PipelineState } from "/prd-orchestration";
+import type { PipelineState } from "@agentic/prd-orchestration";
 
 // ─── Fixture helpers ──────────────────────────────────────────────────────────
 

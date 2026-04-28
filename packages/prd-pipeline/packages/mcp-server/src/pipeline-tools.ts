@@ -23,13 +23,13 @@ import {
   ActionResultSchema,
   type PipelineState,
   type ActionResult,
-} from "/prd-orchestration";
+} from "@agentic/prd-orchestration";
 import {
   planSectionVerification,
   planDocumentVerification,
   concludeSection,
   concludeDocument,
-} from "/prd-verification";
+} from "@agentic/prd-verification";
 import {
   SectionTypeSchema,
   JudgeVerdictSchema,
@@ -38,13 +38,13 @@ import {
   tryCreateEvidenceRepository,
   type EvidenceRepository,
   type Claim,
-} from "/prd-core";
-import { EffectivenessTracker } from "/prd-strategy";
+} from "@agentic/prd-core";
+import { EffectivenessTracker } from "@agentic/prd-strategy";
 import {
   getRetryArmForRun,
   getMaxAttemptsForRun,
   MAX_ATTEMPTS_BASELINE,
-} from "/prd-benchmark";
+} from "@agentic/prd-benchmark";
 import { buildConcludeOpts } from "./build-conclude-opts.js";
 
 const runStore = new InMemoryRunStore();

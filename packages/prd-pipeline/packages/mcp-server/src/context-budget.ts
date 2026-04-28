@@ -1,8 +1,8 @@
-import { type PRDContext, type SectionType } from "/prd-core";
+import { type PRDContext, type SectionType } from "@agentic/prd-core";
 import {
   SECTIONS_BY_CONTEXT,
   SECTION_RECALL_TEMPLATES as ORCHESTRATION_RECALL_TEMPLATES,
-} from "/prd-orchestration";
+} from "@agentic/prd-orchestration";
 
 /**
  * Context budget coordinator — Beer's missing S2.

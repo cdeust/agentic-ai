@@ -10,7 +10,7 @@
 import {
   PRD_CONTEXT_CONFIGS,
   type PRDContext,
-} from "/prd-core";
+} from "@agentic/prd-core";
 
 export interface ClarificationPromptInput {
   readonly feature_description: string;

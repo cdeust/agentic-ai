@@ -20,8 +20,8 @@
  *   depends on validation per package.json).
  */
 
-import { validateSection } from "/prd-validation";
-import type { SectionType } from "/prd-core";
+import { validateSection } from "@agentic/prd-validation";
+import type { SectionType } from "@agentic/prd-core";
 import type { SpecPayload, OracleResult } from "./oracle-types.js";
 
 /** Maximum number of violated rule_ids to include in evidence. */

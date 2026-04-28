@@ -25,9 +25,9 @@ import {
   tryCreateReliabilityRepository,
   RELIABILITY_SCHEMA_VERSION,
   type ConsensusReliabilityProvider,
-} from "/prd-core";
-import type { ReliabilityRepository } from "/prd-core";
-import { BenchmarkConsensusReliabilityProvider } from "/prd-benchmark";
+} from "@agentic/prd-core";
+import type { ReliabilityRepository } from "@agentic/prd-core";
+import { BenchmarkConsensusReliabilityProvider } from "@agentic/prd-benchmark";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 

@@ -1,5 +1,5 @@
-import type { ThinkingStrategy, StrategyTier } from "/prd-core";
-import { STRATEGY_TIERS, getStrategyTier } from "/prd-core";
+import type { ThinkingStrategy, StrategyTier } from "@agentic/prd-core";
+import { STRATEGY_TIERS, getStrategyTier } from "@agentic/prd-core";
 
 /**
  * Research evidence for strategy selection -- ported from ResearchEvidenceDatabase.swift.
