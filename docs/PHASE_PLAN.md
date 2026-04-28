@@ -59,11 +59,11 @@ Authoritative plan for the four-repo unification. Updated as phases complete.
 **Mission:** Migrate `prd-spec-generator` and `zetetic-team-subagents` into the monorepo with full commit history.
 
 ### Deliverables
-- [x] `git subtree add` (or `git filter-repo --to-subdirectory-filter`) for each repo — `migration/SCRIPT.sh` uses `git filter-repo --to-subdirectory-filter` per ADR-0005
-- [x] `prd-spec-generator/` → `packages/prd-pipeline/` (rename `@prd-gen/*` → `@agentic/prd-*`) — landed on branch `feat/prd-spec-migration` 2026-04-28; 123 commits + 11 sub-package renames
-- [ ] `zetetic-team-subagents/` → `packages/reasoning/`
-- [x] Verify `git log --all --format=%H | wc -l` matches sum of source repos — rewritten ancestry depth check passes (`PRE_MIGRATION_COMMIT_COUNT=123`)
-- [x] All prd-spec tests pass inside the monorepo — **2041 tests pass** (previously 583 in source; new total includes 771 from agentic-ai memory + 1270 from prd-pipeline subpackages)
+- [x] `git subtree add` (or `git filter-repo --to-subdirectory-filter`) for each repo — `migration/SCRIPT.sh` and `migration/ZETETIC_SCRIPT.sh` use `git filter-repo --to-subdirectory-filter` per ADR-0005
+- [x] `prd-spec-generator/` → `packages/prd-pipeline/` (rename `@prd-gen/*` → `@agentic/prd-*`) — merged to main 2026-04-28 via PR #14 (commit `bc3c2fc`); 123 commits + 11 sub-package renames + Liskov F1/F2/F3/F4 closures applied post-merge
+- [x] `zetetic-team-subagents/` → `packages/reasoning/` — landed on branch `feat/zetetic-migration` 2026-04-27; 77 commits rewritten + 308 files; all CI gates pass; rebased onto main 2026-04-28 post-prd-merge
+- [x] Verify `git log --all --format=%H | wc -l` matches sum of source repos — rewritten ancestry depth check passes (prd: 123 commits, zetetic: 77 commits, both via `git rev-list <remote>/main --count` invariant in the migration scripts)
+- [x] All prd-spec tests pass inside the monorepo — **2041 tests pass** (was 583 in source; new total includes 771 from agentic-ai memory + 1270 from prd-pipeline subpackages)
 
 ### Genius gate
 - `feynman` — rederive 3 random formulas (consensus weighting, strategy scoring, validator penalty) from scratch in the new layout

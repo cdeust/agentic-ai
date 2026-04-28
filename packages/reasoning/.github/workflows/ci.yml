@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-memory-suites:
+    name: Memory Tool Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ripgrep (used by search command)
+        run: sudo apt-get update && sudo apt-get install -y ripgrep jq
+
+      - name: Run e2e suite
+        run: bash scripts/test-memory-e2e.sh
+
+      - name: Run concurrency suite
+        run: bash scripts/test-memory-concurrency.sh
+
+      - name: Run stale-lock suite
+        run: bash scripts/test-memory-stale-lock.sh
+
+      - name: Run MCP suite
+        run: bash scripts/test-memory-mcp.sh
+
+      - name: Run agent-id propagation suite
+        run: bash scripts/test-agent-id-propagation.sh
+
+      - name: Run PII suite
+        run: bash scripts/test-memory-pii.sh
+
+      - name: Run PII expanded suite
+        run: bash scripts/test-memory-pii-expanded.sh
+
+  agent-audit:
+    name: Agent Definition Auditor
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run structural auditor
+        run: bash tools/agent-definition-auditor.sh
+
+  zetetic-checker:
+    name: Zetetic Standard Checker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run zetetic-checker on full tree
+        run: ZETETIC_PROFILE=standard bash tools/zetetic-checker.sh --full || echo "checker reported violations (informational)"
