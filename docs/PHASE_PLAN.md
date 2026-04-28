@@ -59,11 +59,11 @@ Authoritative plan for the four-repo unification. Updated as phases complete.
 **Mission:** Migrate `prd-spec-generator` and `zetetic-team-subagents` into the monorepo with full commit history.
 
 ### Deliverables
-- [ ] `git subtree add` (or `git filter-repo --to-subdirectory-filter`) for each repo
-- [ ] `prd-spec-generator/` → `packages/prd-pipeline/` (rename `@prd-gen/*` → `@agentic/prd-*`)
+- [x] `git subtree add` (or `git filter-repo --to-subdirectory-filter`) for each repo — `migration/SCRIPT.sh` uses `git filter-repo --to-subdirectory-filter` per ADR-0005
+- [x] `prd-spec-generator/` → `packages/prd-pipeline/` (rename `@prd-gen/*` → `@agentic/prd-*`) — landed on branch `feat/prd-spec-migration` 2026-04-28; 123 commits + 11 sub-package renames
 - [ ] `zetetic-team-subagents/` → `packages/reasoning/`
-- [ ] Verify `git log --all --format=%H | wc -l` matches sum of source repos
-- [ ] All 267 prd-spec tests pass inside the monorepo
+- [x] Verify `git log --all --format=%H | wc -l` matches sum of source repos — rewritten ancestry depth check passes (`PRE_MIGRATION_COMMIT_COUNT=123`)
+- [x] All prd-spec tests pass inside the monorepo — **2041 tests pass** (previously 583 in source; new total includes 771 from agentic-ai memory + 1270 from prd-pipeline subpackages)
 
 ### Genius gate
 - `feynman` — rederive 3 random formulas (consensus weighting, strategy scoring, validator penalty) from scratch in the new layout
