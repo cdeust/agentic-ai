@@ -2,8 +2,8 @@
 
 **Source**: `/Users/cdeust/Developments/Cortex` (private)
 **Snapshot baseline**: `inventory/CORTEX_INVENTORY.md` (2026-04-26, 361 .py files, ~78 461 LOC)
-**Current HEAD**: `df141f5 release: v3.14.12 — fix MCP client deadlock on long upstream responses` (2026-04-28)
-**Commits added since baseline**: 6 user-facing releases (v3.14.8 → v3.14.12) + supporting fixes
+**Current HEAD**: `f2b9f99 fix(ast): uncap L6 symbol/edge ingestion; surface file-import chain` (2026-04-28, post-mid-day)
+**Commits added since baseline**: 6 user-facing releases (v3.14.8 → v3.14.12) + supporting fixes + 1 post-v3.14.12 AST uncap fix (f2b9f99)
 
 This file records what changed in Cortex Python AFTER the Phase-4 inventory
 was taken, so the TS port in `packages/memory/src/` can be re-synchronized
@@ -116,6 +116,95 @@ item, NOT a re-port. The TS SDK may already cover the deadlock path.
 
 ---
 
+## Group 6 — L6 AST uncap + file-import surfacing (f2b9f99, post-v3.14.12)
+
+**Affects TS port**:
+- `packages/memory/src/workflow-graph/sources/ast-source.ts` (mirror of
+  `mcp_server/infrastructure/workflow_graph_source_ast.py`)
+- `packages/memory/src/infrastructure/mcp-client.ts` (mirror of
+  `mcp_server/infrastructure/mcp_client.py` line_limit constant)
+
+### Cortex Python deltas
+
+Three substantive fixes in one commit:
+
+1. **`_MAX_SYMBOLS_PER_FILE` cap removed in load-all mode**.
+   Previous: `LIMIT 500 * max(0, len(paths))` — when `paths=[]` (the L6
+   full-graph load), this evaluated to LIMIT 0, capping every per-label
+   query at 500 symbols total. Result on the live Cortex graph: 2,007
+   symbols emitted instead of 91,648.
+   New: drop the LIMIT entirely when `paths=[]`; keep it only on
+   path-filtered queries.
+
+2. **`mcp_client.py` line_limit bumped 10 MB → 1 GB**.
+   asyncio's StreamReader was tripping `LimitOverrunError` on JSON-RPC
+   frames carrying 100K+ symbols + edges. Backpressure remains via OS
+   pipe buffering; the asyncio cap was the wrong gate.
+
+3. **Edge-kind enumeration: hardcoded → Cartesian product**.
+   `_load_edges_async` was iterating a hand-typed (src, dst) label list,
+   silently dropping edges where the rel table existed but wasn't named
+   (e.g. `Imports_File_Class`, `Imports_File_TypeAlias`,
+   `Imports_File_Macro`). New: full Cartesian over `_SYMBOL_LABELS`;
+   AP returns empty rows for missing rel tables, so over-enumeration is
+   safe.
+
+4. **Import nodes promoted to first-class symbols**.
+   `_SYMBOL_LABELS` gains `"Import"`. New `_NON_QUALIFIED_LABELS = {"File", "Import"}`
+   tells `_load_symbols_async` to read `s.id` + `s.path` instead of
+   `s.qualified_name` / `s.name` for these labels (Import nodes don't
+   carry the latter). `_run_edge` similarly switches to `dst.id` when
+   the dst label is non-qualified. Wires `Defines_File_Import` as an
+   `"imports"`-kind edge — a single AP table holding 36,637 edges/project
+   that the loader was previously ignoring entirely.
+
+5. **`Uses_*` edges captured**.
+   Type-usage edges (Method/Function uses Struct/Class/etc.) were never
+   loaded. Adding them yields +6,774 edges on the full Cortex roster.
+
+### Net effect (live Cortex 6-project graph, per commit msg)
+
+| Metric | Before | After | Multiplier |
+|---|---|---|---|
+| symbols | 2,007 | 91,648 | 45.7× |
+| imports | 4,121 | 41,846 | 10.2× |
+| uses | 0 | 6,774 | new kind |
+| defined_in | 54,889 | 91,648 | 1.7× |
+| total nodes | 305,669 | 342,849 | 1.12× |
+| total edges | 397,382 | 479,109 | 1.21× |
+
+### TS port status
+
+`packages/memory/src/workflow-graph/` was ported from Cortex HEAD as of
+2026-04-26 and now has the same caps the Python file just removed. The
+re-sync should:
+
+- Mirror the conditional-LIMIT logic in load-all mode.
+- Bump the equivalent line_limit constant in `mcp-client.ts` (verify the
+  TS MCP SDK exposes a comparable buffer cap; if not, this is a no-op
+  because Node streams use 64 KiB chunks with backpressure by default).
+- Replace any hand-typed edge label table with the same Cartesian
+  enumeration.
+- Add `"Import"` to `SYMBOL_LABELS` + `NON_QUALIFIED_LABELS` set; patch
+  the symbol-load and edge-resolve helpers accordingly.
+- Wire `Defines_File_Import` and the `Uses_*` edge family.
+
+### 400K-node rendering — graph viz scope
+
+The user noted: "for graph we're still in the middle of nowhere because
+now we have to solve a problem of showing 400K nodes." f2b9f99 EXPOSES
+the 400K-node territory by removing the data-side cap; rendering 342K
+nodes / 479K edges is now the load-bearing problem. **That rendering
+work lives in the Cortex HTTP dashboard, not in agentic-ai.** Per
+ADR-0011, the dashboard is deferred. The TS port's contract here is
+faithful data ingestion (this Group 6 re-sync), not visualization.
+
+**Tracking**: extends Group H in `docs/PHASE_7_TRACKING.md` —
+`[Phase 7] Cortex re-sync` now covers v3.14.8/9 ingest_codebase + v3.14.12
+deadlock + f2b9f99 L6 uncap. Update PHASE_7_TRACKING accordingly.
+
+---
+
 ## Out of scope for this monorepo
 
 The user explicitly noted: "for graph we're still in the middle of nowhere
@@ -123,7 +212,8 @@ because now we have to solve a problem of showing 400K nodes." That is a
 Cortex-side rendering performance problem (likely in the HTTP dashboard or
 graph-visualization layer), not a port concern. ADR-0011 already defers
 the Cortex HTTP server / dashboard to post-cutover. No action in
-agentic-ai.
+agentic-ai. (f2b9f99 removed the data-side cap that was hiding the
+problem; rendering the now-uncapped graph is still out of scope here.)
 
 ---
 
@@ -131,7 +221,8 @@ agentic-ai.
 
 | Group | Source | Action | Tracking entry |
 |---|---|---|---|
-| H — Cortex re-sync (codebase-analysis) | v3.14.8/9 | Re-port `ingest_codebase*` from current Cortex HEAD | New: `[Phase 7] Cortex codebase-analysis re-sync (post-v3.14.9 ingest_codebase)` |
+| H — Cortex re-sync (codebase-analysis) | v3.14.8/9 | Re-port `ingest_codebase*` from current Cortex HEAD | `[Phase 7] Cortex codebase-analysis re-sync (post-v3.14.9 ingest_codebase)` |
+| H — Cortex re-sync (workflow-graph L6) | f2b9f99 | Mirror cap removal + Import-as-symbol + Cartesian edge enum + line_limit bump in TS workflow-graph port | `[Phase 7] Cortex workflow-graph L6 uncap (post-f2b9f99)` |
 | (D extension) | v3.14.12 | Verify TS MCP SDK already covers the deadlock case | Update existing Group D |
 
 All other Cortex deltas are no-ops or already aligned.
