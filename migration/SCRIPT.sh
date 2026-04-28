@@ -206,11 +206,16 @@ if [[ "$DRY_RUN" == "false" ]]; then
     abort "Root commit subject mismatch. Expected '$SOURCE_TAIL_SUBJECT', got '$POST_TAIL'."
   fi
 
-  # Verify I2: every file in HEAD is under packages/prd-pipeline/
+  # Verify I2: every file in HEAD is under packages/prd-pipeline/.
+  # Note: grep exits 1 when nothing matches (all files ARE under the prefix —
+  # the success case). With `set -o pipefail` that crashes the script, so we
+  # disable pipefail just for this check.
+  set +o pipefail
   OUTSIDE_PREFIX=$(git -C "$CLONE_DIR" ls-files | grep -v "^$TARGET_PREFIX/" | wc -l | tr -d ' ')
+  set -o pipefail
   if [[ "$OUTSIDE_PREFIX" != "0" ]]; then
     abort "filter-repo left $OUTSIDE_PREFIX files outside $TARGET_PREFIX/:
-$(git -C "$CLONE_DIR" ls-files | grep -v "^$TARGET_PREFIX/")"
+$(git -C "$CLONE_DIR" ls-files | grep -v "^$TARGET_PREFIX/" || true)"
   fi
 
   log "  History rewrite verified: I1 + I2 hold."
