@@ -9,8 +9,15 @@
  * source: docs/audits/FINAL_CROSS_AUDIT.md §F-MED-001 — placeholder note
  */
 
-// CodebasePort and all associated schemas + errors.
+// CodebasePort interface + input schemas.
 export * from "./ports/codebase.js";
+
+// Output Zod schemas (split into a sibling file to keep each file ≤500 LOC
+// per coding-standards.md §4.1).
+export * from "./ports/codebase-outputs.js";
+
+// Typed CodebasePort errors (split for §4.1).
+export * from "./ports/codebase-errors.js";
 
 // Legacy placeholder — kept so existing consumers of `__PLACEHOLDER__` don't
 // hard-fail until the full `port/core-types` migration completes.

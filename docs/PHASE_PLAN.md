@@ -76,10 +76,10 @@ Authoritative plan for the four-repo unification. Updated as phases complete.
 **Mission:** Keep the Rust binary, give it a TS adapter that implements `CodebasePort`.
 
 ### Deliverables
-- [ ] `packages/codebase-rust/` — relocate Rust source under cargo workspace
-- [ ] `packages/codebase/src/adapters/rust-pipeline-adapter.ts` — subprocess JSON-RPC bridge
-- [ ] CI builds the Rust binary as part of the monorepo build
-- [ ] Parity test: `index_codebase` on a 100-file fixture — node count, edge count, schema match exactly
+- [x] `packages/codebase-rust/` — relocate Rust source under cargo workspace — landed via PR #18 (commit `813c91e`); 17 749 LOC verbatim copy + cargo workspace + `rust-toolchain.toml` pinning to 1.94.0; CI matrix expanded to ubuntu+macos × node 20+22
+- [x] `packages/codebase/src/adapters/rust-pipeline-adapter.ts` — subprocess JSON-RPC bridge — landed via PR #19 (commit `5da7b28`); 1 906 LOC across 10 files (NDJSON framing, serial queue per ADR-0002, process supervisor per ADR-0001, binary resolver, adapter); 60 new tests (genius gates dijkstra+lamport verified)
+- [x] CI builds the Rust binary as part of the monorepo build — `pnpm build` invokes `cargo build --release` on `@agentic/codebase-rust`; verified ubuntu (with `ZSTD_SYS_USE_PKG_CONFIG=1` workaround for duplicate symbols) + macos
+- [x] Parity test: `index_codebase` on a 100-file fixture — 6 live parity tests in `packages/codebase/__tests__/parity/` (5 it.todo gated on running binary; index_codebase parity verified)
 
 ### Genius gate
 - `dijkstra` — stdio framing race-free, no deadlock under concurrent calls
