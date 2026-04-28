@@ -206,16 +206,16 @@ importers:
 
   packages/prd-pipeline/packages/benchmark:
     dependencies:
-      /prd-core:
+      '@agentic/prd-core':
         specifier: workspace:*
         version: link:../core
-      /prd-orchestration:
+      '@agentic/prd-orchestration':
         specifier: workspace:*
         version: link:../orchestration
-      /prd-strategy:
+      '@agentic/prd-strategy':
         specifier: workspace:*
         version: link:../strategy
-      /prd-validation:
+      '@agentic/prd-validation':
         specifier: workspace:*
         version: link:../validation
       ajv:
@@ -259,10 +259,10 @@ importers:
 
   packages/prd-pipeline/packages/ecosystem-adapters:
     dependencies:
-      /prd-core:
+      '@agentic/prd-core':
         specifier: workspace:*
         version: link:../core
-      /prd-verification:
+      '@agentic/prd-verification':
         specifier: workspace:*
         version: link:../verification
       '@modelcontextprotocol/sdk':
@@ -281,25 +281,25 @@ importers:
 
   packages/prd-pipeline/packages/mcp-server:
     dependencies:
-      /prd-benchmark:
+      '@agentic/prd-benchmark':
         specifier: workspace:*
         version: link:../benchmark
-      /prd-core:
+      '@agentic/prd-core':
         specifier: workspace:*
         version: link:../core
-      /prd-ecosystem-adapters:
+      '@agentic/prd-ecosystem-adapters':
         specifier: workspace:*
         version: link:../ecosystem-adapters
-      /prd-orchestration:
+      '@agentic/prd-orchestration':
         specifier: workspace:*
         version: link:../orchestration
-      /prd-strategy:
+      '@agentic/prd-strategy':
         specifier: workspace:*
         version: link:../strategy
-      /prd-validation:
+      '@agentic/prd-validation':
         specifier: workspace:*
         version: link:../validation
-      /prd-verification:
+      '@agentic/prd-verification':
         specifier: workspace:*
         version: link:../verification
       '@modelcontextprotocol/sdk':
@@ -318,10 +318,10 @@ importers:
 
   packages/prd-pipeline/packages/meta-prompting:
     dependencies:
-      /prd-core:
+      '@agentic/prd-core':
         specifier: workspace:*
         version: link:../core
-      /prd-strategy:
+      '@agentic/prd-strategy':
         specifier: workspace:*
         version: link:../strategy
       zod:
@@ -340,19 +340,19 @@ importers:
 
   packages/prd-pipeline/packages/orchestration:
     dependencies:
-      /prd-core:
+      '@agentic/prd-core':
         specifier: workspace:*
         version: link:../core
-      /prd-meta-prompting:
+      '@agentic/prd-meta-prompting':
         specifier: workspace:*
         version: link:../meta-prompting
-      /prd-strategy:
+      '@agentic/prd-strategy':
         specifier: workspace:*
         version: link:../strategy
-      /prd-validation:
+      '@agentic/prd-validation':
         specifier: workspace:*
         version: link:../validation
-      /prd-verification:
+      '@agentic/prd-verification':
         specifier: workspace:*
         version: link:../verification
       zod:
@@ -370,7 +370,7 @@ importers:
 
   packages/prd-pipeline/packages/strategy:
     dependencies:
-      /prd-core:
+      '@agentic/prd-core':
         specifier: workspace:*
         version: link:../core
       zod:
@@ -383,7 +383,7 @@ importers:
 
   packages/prd-pipeline/packages/validation:
     dependencies:
-      /prd-core:
+      '@agentic/prd-core':
         specifier: workspace:*
         version: link:../core
       js-yaml:
@@ -408,7 +408,7 @@ importers:
 
   packages/prd-pipeline/packages/verification:
     dependencies:
-      /prd-core:
+      '@agentic/prd-core':
         specifier: workspace:*
         version: link:../core
       zod:
