@@ -122,17 +122,62 @@ export interface MemoryStore {
     entityB: string,
     learningRate: number,
   ): Promise<void>;
+
+  /**
+   * Fetch all entities, optionally filtered by domain.
+   * Used by spreading-activation to build the entity graph.
+   * Returns empty array if the entities subsystem is unavailable.
+   */
+  getEntities?(domain?: string): Promise<Array<{
+    id: number;
+    name: string;
+    heat?: number;
+    entity_type?: string;
+  }>>;
+
+  /**
+   * Fetch all entity relationships, optionally filtered by domain.
+   * Used by spreading-activation to build the adjacency graph.
+   * Returns empty array if unavailable.
+   */
+  getRelationships?(domain?: string): Promise<Array<{
+    source_entity_id: number;
+    target_entity_id: number;
+    weight?: number;
+    confidence?: number;
+  }>>;
+
+  /**
+   * Look up an entity by name (case-insensitive).
+   * Returns null if not found. Used by Wave-2 NL token resolution.
+   * source: cortex@bc0ae4f mcp_server/core/recall_pipeline.py:336-368
+   */
+  getEntityByName?(name: string): Promise<{ id: number; name: string } | null>;
 }
 
 // ── EmbeddingEngine port ───────────────────────────────────────────────────
 
 /**
  * Minimal embedding interface needed by the recall handler.
- * The full implementation lives in port/cortex-remember's scope
- * (mcp_server/infrastructure/embedding_engine.py).
  *
- * TODO(port-pending): real implementation requires sentence-transformers
- * or a JS-compatible embedding model (e.g., @xenova/transformers).
+ * This is the STUB port for the recall subsystem. It uses `.encode()` to
+ * return number[] | null so the handler can operate without the full
+ * @agentic/core EmbeddingEngine (which uses Float32Array and `.embed()`).
+ *
+ * When Group A (Phase 7) lands and wires the real embedding adapter, the
+ * composition root should provide an adapter that translates:
+ *   - coreEngine.embed(text) → float[] | null
+ *   - coreEngine.dim → dimensions
+ *
+ * The stub interface is intentionally different from @agentic/core's
+ * EmbeddingEngine to avoid a hard dependency on Group A before it is ready.
+ *
+ * TODO(Group A): flip this import to re-export from @agentic/core once the
+ * composition root ships an adapter from Float32Array to number[].
+ *
+ * source: packages/core/src/ports/embedding.ts (canonical core port)
+ * source: docs/PHASE_7_TRACKING.md §Group A (embedding engine port)
+ * source: docs/PHASE_7_TRACKING.md §Group B (this stub — recall sub-algorithms)
  */
 export interface EmbeddingEngine {
   /** Encode a single text into a float vector. Returns null if unavailable. */

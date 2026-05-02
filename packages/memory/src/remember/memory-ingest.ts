@@ -24,7 +24,23 @@
  *   Wegner 1987: Transactive Memory Systems — team knowledge needs coordination.
  */
 
+import type { EmbeddingEngine } from "@agentic/core";
 import type { MemoryStore } from "./storage/memory-store.js";
+
+// ── Constants ───────────────────────────────────────────────────────────────
+
+// source: Cortex mcp_server/infrastructure/embedding_engine.py:encode() — text.slice(0, 2000) char cap
+const EMBED_MAX_CHARS = 2000;
+
+// source: Cortex mcp_server/core/memory_ingest.py:TURNS_PER_CHUNK_DEFAULT
+const DEFAULT_TURNS_PER_CHUNK = 6;
+
+// source: Adcock et al. 2006: reward-motivated → ~1.5x recall boost
+// source: Cortex mcp_server/core/memory_ingest.py:DECISION_IMPORTANCE_BOOST
+const DECISION_IMPORTANCE_BOOST = 1.5;
+
+// source: Cortex mcp_server/infrastructure/sqlite_store.py default importance = 0.5
+const DEFAULT_IMPORTANCE = 0.5;
 
 // ── Chunking helpers ────────────────────────────────────────────────────────
 
@@ -117,15 +133,6 @@ function detectEntityFlags(content: string): Record<string, boolean> {
   };
 }
 
-// ── Embedding stub ──────────────────────────────────────────────────────────
-// port-pending: sentence-transformers is not yet ported.
-// The EmbeddingEngine interface is defined here; callers inject a real or stub impl.
-
-export interface EmbeddingEngine {
-  encode(text: string): Buffer | null;
-  similarity(a: Buffer, b: Buffer): number;
-}
-
 // ── Main ingestion function ─────────────────────────────────────────────────
 
 export interface IngestOptions {
@@ -156,18 +163,19 @@ export interface IngestMemoryInput {
  *   - Every returned id is a row in the memories table (invariant I2).
  *   - Entity extraction failures do NOT abort ingest (invariant I3).
  *
+ * Async because EmbeddingEngine.embed() is async (ONNX model inference).
  * source: core/memory_ingest.py:ingest_memory
  */
-export function ingestMemory(
+export async function ingestMemory(
   memory: IngestMemoryInput,
   store: MemoryStore,
   embeddings: EmbeddingEngine | null,
   options: IngestOptions = {},
-): number[] {
+): Promise<number[]> {
   const {
     domain = "",
     decompose = true,
-    turnsPerChunk = 6,
+    turnsPerChunk = DEFAULT_TURNS_PER_CHUNK,
     isBenchmark = false,
   } = options;
 
@@ -190,8 +198,15 @@ export function ingestMemory(
     const embedText = entitySummary
       ? `${entitySummary}\n${chunkContent}`
       : chunkContent;
-    const emb =
-      embeddings !== null ? embeddings.encode(embedText.slice(0, 2000)) : null;
+
+    // Encode via the async EmbeddingEngine.embed() — returns Float32Array.
+    // Convert to Buffer for MemoryInsertData compatibility (Buffer over wire/storage).
+    // source: Cortex mcp_server/infrastructure/embedding_engine.py:encode — returns bytes
+    let emb: Buffer | null = null;
+    if (embeddings !== null) {
+      const vec = await embeddings.embed(embedText.slice(0, EMBED_MAX_CHARS));
+      emb = Buffer.from(vec.buffer);
+    }
 
     // Build tag list, extending with entity-derived tags.
     const tags = [...(memory.tags ?? [])];
@@ -216,8 +231,7 @@ export function ingestMemory(
     // synaptic tagging — strong events promote weak traces).
     const isDecision = Boolean(entities["has_decision"]);
     const autoProtect = isDecision && !isBenchmark;
-    // source: Adcock et al. 2006: reward-motivated → ~1.5x recall boost
-    const importanceBoost = isDecision ? 1.5 : 1.0;
+    const importanceBoost = isDecision ? DECISION_IMPORTANCE_BOOST : 1.0;
 
     // ── Team memory propagation (TMS) ────────────────────────────────────
     // Wegner 1987 Transactive Memory Systems: team knowledge requires
@@ -241,7 +255,7 @@ export function ingestMemory(
       tags,
       created_at: memory.created_at,
       heat: memory.heat ?? 1.0,
-      importance: Math.min((memory.importance ?? 0.5) * importanceBoost, 1.0),
+      importance: Math.min((memory.importance ?? DEFAULT_IMPORTANCE) * importanceBoost, 1.0),
       store_type: memory.store_type ?? "episodic",
       is_protected: autoProtect,
       agent_context: agentCtx,
@@ -263,20 +277,21 @@ export function ingestMemory(
  *   - ids is the flat list of all inserted memory IDs.
  *   - sourceMap maps each memory_id to the source string from its input.
  *
+ * Async because ingestMemory is async (EmbeddingEngine.embed() is async).
  * source: core/memory_ingest.py:ingest_memories_batch
  */
-export function ingestMemoriesBatch(
+export async function ingestMemoriesBatch(
   memories: IngestMemoryInput[],
   store: MemoryStore,
   embeddings: EmbeddingEngine | null,
   options: IngestOptions = {},
-): { ids: number[]; sourceMap: Map<number, string> } {
+): Promise<{ ids: number[]; sourceMap: Map<number, string> }> {
   const allIds: number[] = [];
   const sourceMap = new Map<number, string>();
 
   for (const mem of memories) {
     const source = mem.source ?? "";
-    const inserted = ingestMemory(mem, store, embeddings, options);
+    const inserted = await ingestMemory(mem, store, embeddings, options);
     for (const mid of inserted) {
       sourceMap.set(mid, source);
     }
