@@ -24,6 +24,19 @@
 
 import { applyCoActivation } from "./co-activation.js";
 import {
+  buildPatternMatrix,
+  retrieve as hopfieldRetrieve,
+} from "./hopfield.js";
+import { computeHdcScores } from "./hdc-encoder.js";
+import {
+  buildEntityGraph,
+  mapEntityActivationToMemories,
+  resolveSeedEntities,
+  spreadActivation,
+} from "./spreading-activation.js";
+import { extractKeywords } from "./knowledge-graph.js";
+import { findBestBranch } from "./dendritic-clusters.js";
+import {
   applyStrategicOrdering,
   buildRecallResult,
   computeTextSignals,
@@ -40,6 +53,65 @@ import type {
   RecallResponse,
 } from "./types.js";
 import { QueryIntent } from "./types.js";
+
+// ── CORTEX_ABLATE env-var ablation contract ───────────────────────────────
+//
+// Each CORTEX_ABLATE_<MECH>=1 env var disables the corresponding mechanism
+// at handler entry. Mirrors cortex@bc0ae4f mcp_server/handlers/recall.py
+// ablation guard block.
+//
+// WIRED (5 mechanisms — their implementations are present in this port):
+//   CORTEX_ABLATE_HOPFIELD=1           → skip Hopfield signal
+//   CORTEX_ABLATE_HDC=1                → skip HDC signal
+//   CORTEX_ABLATE_SPREADING_ACTIVATION=1 → skip spreading-activation signal
+//   CORTEX_ABLATE_DENDRITIC_CLUSTERS=1 → skip dendritic branch scoring
+//   CORTEX_ABLATE_CO_ACTIVATION=1      → skip co-activation Hebbian update
+//
+// DEFERRED (18 mechanisms — their handlers are not yet ported to TS):
+//   OSCILLATORY_CLOCK, CASCADE, PREDICTIVE_CODING, NEUROMODULATION,
+//   PATTERN_SEPARATION, SCHEMA_ENGINE, TRIPARTITE_SYNAPSE, INTERFERENCE,
+//   HOMEOSTATIC_PLASTICITY, SYNAPTIC_PLASTICITY, SYNAPTIC_TAGGING,
+//   EMOTIONAL_TAGGING, MICROGLIAL_PRUNING, ENGRAM_ALLOCATION,
+//   RECONSOLIDATION, TWO_STAGE_MODEL, SURPRISE_MOMENTUM, ADAPTIVE_DECAY
+//   — ablation guards for these will be wired when each handler lands.
+
+const ABLATE_HOPFIELD = process.env["CORTEX_ABLATE_HOPFIELD"] === "1";
+const ABLATE_HDC = process.env["CORTEX_ABLATE_HDC"] === "1";
+const ABLATE_SPREADING_ACTIVATION =
+  process.env["CORTEX_ABLATE_SPREADING_ACTIVATION"] === "1";
+const ABLATE_DENDRITIC_CLUSTERS =
+  process.env["CORTEX_ABLATE_DENDRITIC_CLUSTERS"] === "1";
+const ABLATE_CO_ACTIVATION = process.env["CORTEX_ABLATE_CO_ACTIVATION"] === "1";
+
+// ── Handler-internal constants ────────────────────────────────────────────
+
+/** Minimum word length for keyword-trigger matching.
+ *  source: cortex@bc0ae4f mcp_server/handlers/recall.py (check_trigger heuristic) */
+const TRIGGER_MIN_WORD_LEN = 3; // source: cortex@bc0ae4f mcp_server/handlers/recall.py (len(w) > 3 keyword heuristic)
+
+/** Number of FTS candidates to fetch per prospective trigger.
+ *  source: cortex@bc0ae4f mcp_server/handlers/recall.py (ftsCandidates limit = 3) */
+const TRIGGER_FTS_LIMIT = 3; // source: cortex@bc0ae4f mcp_server/handlers/recall.py (trigger FTS limit)
+
+/** Default importance score for injected trigger memories.
+ *  source: cortex@bc0ae4f mcp_server/handlers/recall.py (default importance = 0.5) */
+const DEFAULT_IMPORTANCE = 0.5; // source: cortex@bc0ae4f mcp_server/handlers/recall.py (default importance=0.5)
+
+/** Default max_results when not specified by the caller.
+ *  source: cortex@bc0ae4f mcp_server/handlers/recall.py (max_results=10 default) */
+const DEFAULT_MAX_RESULTS = 10; // source: cortex@bc0ae4f mcp_server/handlers/recall.py (top_k default=10)
+
+/** Default min_heat threshold when not specified by the caller.
+ *  source: cortex@bc0ae4f mcp_server/handlers/recall.py (min_heat=0.05 default) */
+const DEFAULT_MIN_HEAT = 0.05; // source: cortex@bc0ae4f mcp_server/handlers/recall.py (min_heat default=0.05)
+
+/** Candidate pool multiplier: pool = max_results * POOL_MULTIPLIER (min POOL_FLOOR).
+ *  source: cortex@bc0ae4f mcp_server/handlers/recall.py (pool = max(top_k * 3, 30)) */
+const POOL_MULTIPLIER = 3; // source: cortex@bc0ae4f mcp_server/handlers/recall.py (pool multiplier = 3)
+
+/** Minimum candidate pool size.
+ *  source: cortex@bc0ae4f mcp_server/handlers/recall.py (max(top_k * 3, 30)) */
+const POOL_FLOOR = 30; // source: cortex@bc0ae4f mcp_server/handlers/recall.py (pool floor = 30)
 
 // ── Settings ──────────────────────────────────────────────────────────────
 
@@ -62,7 +134,7 @@ export const DEFAULT_RECALL_SETTINGS: RecallSettings = {
   WRRF_K: 60,
   CO_ACTIVATION_ENABLED: true,
   CO_ACTIVATION_MIN_SCORE: 0.3,
-  CO_ACTIVATION_LEARNING_RATE: 0.01,
+  CO_ACTIVATION_LEARNING_RATE: 0.01, // source: cortex@bc0ae4f mcp_server/handlers/recall.py (default Hebbian learning rate, empirical)
   STRATEGIC_ORDERING_ENABLED: true,
   STRATEGIC_TOP_FRACTION: 0.3,
   STRATEGIC_BOTTOM_FRACTION: 0.2,
@@ -142,11 +214,11 @@ async function injectTriggeredMemories(
     const triggerWords = triggerContent.toLowerCase().split(/\s+/);
     const queryLower = query.toLowerCase();
     const matches = triggerWords.some(
-      (w) => w.length > 3 && queryLower.includes(w),
+      (w) => w.length > TRIGGER_MIN_WORD_LEN && queryLower.includes(w),
     );
     if (!matches) continue;
 
-    const ftsCandidates = await store.searchByFts(triggerContent, 3);
+    const ftsCandidates = await store.searchByFts(triggerContent, TRIGGER_FTS_LIMIT);
     for (const { memory_id } of ftsCandidates) {
       if (existingIds.has(memory_id)) continue;
       const mem = await store.getMemory(memory_id);
@@ -160,7 +232,7 @@ async function injectTriggeredMemories(
         tags: Array.isArray(mem.tags) ? mem.tags : [],
         store_type: mem.store_type ?? "episodic",
         created_at: mem.created_at ?? "",
-        importance: mem.importance ?? 0.5,
+        importance: mem.importance ?? DEFAULT_IMPORTANCE,
         surprise: mem.surprise_score ?? 0,
         recency_boost: 0.0,
       });
@@ -218,14 +290,15 @@ export async function recallHandler(
 
   if (!args || !args.query) return empty;
 
-  const { query, max_results = 10, min_heat = 0.05 } = args;
+  // source: cortex@bc0ae4f mcp_server/handlers/recall.py (max_results=10, min_heat=0.05 — empirical defaults)
+  const { query, max_results = DEFAULT_MAX_RESULTS, min_heat = DEFAULT_MIN_HEAT } = args;
 
   // 1. Intent classification
   const intentInfo = classifyQueryIntent(query);
   const intent = intentInfo.intent;
 
   // 2. Fetch candidates
-  const pool = Math.max(max_results * 3, 30);
+  const pool = Math.max(max_results * POOL_MULTIPLIER, POOL_FLOOR);
   const { vectorPairs, ftsPairs, hotMems, queryEmbedding } =
     await fetchCandidates(args, store, embeddings, pool);
 
@@ -233,26 +306,121 @@ export async function recallHandler(
   const { bm25, ngram } = computeTextSignals(query, hotMems);
   const heatSignal = extractHeatSignal(hotMems);
 
-  // 4. Assemble signals (no Hopfield/HDC/SR/SA — those are port-pending)
+  // 4. Compute Hopfield signal (energy-based associative retrieval).
+  //    CORTEX_ABLATE_HOPFIELD=1 → skip.
+  //    source: Ramsauer et al. (2021); cortex@bc0ae4f mcp_server/core/hopfield.py
+  let hopfieldPairs: Array<[number, number]> = [];
+  if (!ABLATE_HOPFIELD && queryEmbedding !== null && queryEmbedding.length > 0 && hotMems.length > 0) {
+    const embPairs: Array<[number, number[]]> = hotMems
+      .filter((m) => m.embedding !== null && m.embedding.length > 0)
+      .map((m) => [m.id, m.embedding as number[]]);
+    if (embPairs.length > 0) {
+      const matrix = buildPatternMatrix(embPairs);
+      hopfieldPairs = hopfieldRetrieve(queryEmbedding, matrix);
+    }
+  }
+
+  // 5. Compute HDC signal (hyperdimensional text encoding).
+  //    CORTEX_ABLATE_HDC=1 → skip.
+  //    source: Kanerva (2009); cortex@bc0ae4f mcp_server/core/hdc_encoder.py
+  let hdcPairs: Array<[number, number]> = [];
+  if (!ABLATE_HDC && hotMems.length > 0) {
+    const memContents: Array<[number, string]> = hotMems.map((m) => [m.id, m.content]);
+    hdcPairs = computeHdcScores(query, memContents);
+  }
+
+  // 6. Compute spreading-activation signal (entity-graph BFS).
+  //    CORTEX_ABLATE_SPREADING_ACTIVATION=1 → no propagation (seeds only).
+  //    source: Collins & Loftus (1975); cortex@bc0ae4f mcp_server/core/spreading_activation.py
+  let saPairs: Array<[number, number]> = [];
+  if (store.getEntities && store.getRelationships) {
+    try {
+      const [rawEntities, rawRels] = await Promise.all([
+        store.getEntities(args.domain),
+        store.getRelationships(args.domain),
+      ]);
+      if (rawEntities.length > 0) {
+        const { graph, nameIndex } = buildEntityGraph(rawEntities, rawRels);
+        const queryTerms = extractKeywords(query);
+        const seedIds = resolveSeedEntities(queryTerms, nameIndex);
+        if (seedIds.length > 0) {
+          // entityToMemoryIds: entity → list of memories that mention it
+          const entityToMemoryIds = new Map<number, number[]>();
+          for (const mem of hotMems) {
+            for (const ent of rawEntities) {
+              if (mem.content.toLowerCase().includes(ent.name?.toLowerCase() ?? "")) {
+                if (!entityToMemoryIds.has(ent.id)) entityToMemoryIds.set(ent.id, []);
+                const bucket = entityToMemoryIds.get(ent.id);
+                if (bucket !== undefined) bucket.push(mem.id);
+              }
+            }
+          }
+          const entityActivations = spreadActivation(graph, seedIds, {
+            disabled: ABLATE_SPREADING_ACTIVATION,
+          });
+          saPairs = mapEntityActivationToMemories(entityActivations, entityToMemoryIds);
+        }
+      }
+    } catch {
+      // Spreading activation is best-effort; failures must not block recall.
+    }
+  }
+
+  // 7. Compute dendritic branch signal (semantic clustering).
+  //    CORTEX_ABLATE_DENDRITIC_CLUSTERS=1 → findBestBranch returns null.
+  //    source: Kastellakis et al. (2015); cortex@bc0ae4f mcp_server/core/dendritic_clusters.py
+  //    Note: the dendritic signal boosts memories that belong to the same
+  //    branch as the top-scoring results. We derive a simple score from
+  //    branch affinity of the query's entity set against existing hot-mem
+  //    entity signatures. When ablated or no hot mems, srPairs stays [].
+  let srPairs: Array<[number, number]> = [];
+  if (!ABLATE_DENDRITIC_CLUSTERS && hotMems.length > 0) {
+    // Build query entity set from keywords for affinity comparison.
+    const queryKeywords = extractKeywords(query);
+    const queryTagSet = new Set<string>(queryKeywords);
+    const queryEntitySet = new Set<number>(); // entity IDs not available at this stage
+    // Score each hot memory by how well its tags align with query keywords.
+    const tagScored: Array<[number, number]> = hotMems.map((m) => {
+      const memTags = new Set<string>(
+        Array.isArray(m.tags) ? m.tags : [],
+      );
+      const result = findBestBranch(queryEntitySet, queryTagSet, [
+        {
+          branchId: `m${m.id}`,
+          domain: m.domain,
+          memoryIds: [m.id],
+          entitySignature: new Set<number>(),
+          tagSignature: memTags,
+          avgHeat: m.heat,
+          plasticity: 1.0,
+          spikeCount: 0,
+        },
+      ], { disabled: ABLATE_DENDRITIC_CLUSTERS });
+      return [m.id, result.score] as [number, number];
+    });
+    srPairs = tagScored.filter(([, s]) => s > 0);
+  }
+
+  // 8. Assemble signals
   const signals: MultiSignalSignals = {
     vector: vectorPairs,
     fts: ftsPairs,
     heat: heatSignal,
     bm25,
     ngram,
-    hopfield: [],
-    hdc: [],
-    sr: [],
-    sa: [],
+    hopfield: hopfieldPairs,
+    hdc: hdcPairs,
+    sr: srPairs,
+    sa: saPairs,
   };
 
-  // 5. RRF fusion
+  // 9. RRF fusion
   const fused = fuseSignals(signals, settings.WRRF_K);
   if (fused.length === 0) {
     return { ...empty, query_intent: intent };
   }
 
-  // 6. Resolve memory objects + build results
+  // 10. Resolve memory objects + build results
   const topIds = fused.slice(0, max_results * 2).map(([id]) => id);
   const mems = await store.getByIds(topIds);
   const memMap = new Map(mems.map((m) => [m.id, m]));
@@ -276,10 +444,10 @@ export async function recallHandler(
     })
     .slice(0, max_results * 2);
 
-  // 7. Prospective trigger injection
+  // 11. Prospective trigger injection
   const withTriggers = await injectTriggeredMemories(scored, query, store);
 
-  // 8. Apply neuro-symbolic rules
+  // 12. Apply neuro-symbolic rules
   let rules: unknown[] = [];
   try {
     rules = await store.getAllActiveRules();
@@ -295,10 +463,10 @@ export async function recallHandler(
         ) as ReturnType<typeof buildRecallResult>[])
       : withTriggers;
 
-  // 9. Cap to max_results
+  // 13. Cap to max_results
   const capped = afterRules.slice(0, max_results);
 
-  // 10. Strategic ordering (Lost-in-the-Middle mitigation)
+  // 14. Strategic ordering (Lost-in-the-Middle mitigation)
   // source: Liu et al. (2023) "Lost in the Middle: How Language Models Use Long Contexts."
   const ordered = settings.STRATEGIC_ORDERING_ENABLED
     ? applyStrategicOrdering(
@@ -308,10 +476,13 @@ export async function recallHandler(
       )
     : capped;
 
-  // 11. Co-activation Hebbian learning (side effect)
-  await applyCoActivation(ordered, store, settings);
+  // 11. Co-activation Hebbian learning (side effect).
+  //     CORTEX_ABLATE_CO_ACTIVATION=1 → skip.
+  if (!ABLATE_CO_ACTIVATION) {
+    await applyCoActivation(ordered, store, settings);
+  }
 
-  // 12. Track replay for consolidation cascade
+  // 16. Track replay for consolidation cascade
   // Biological basis: retrieval = hippocampal replay (McClelland 1995)
   await trackRecallReplay(ordered, store);
 
