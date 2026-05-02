@@ -397,12 +397,10 @@ describe("TransformersEmbeddingEngine live model", () => {
     "embed() output is L2-normalised (live model, AGENTIC_EMBED_LIVE=1)",
   );
 
-  it(
+  it.skipIf(!process.env["AGENTIC_EMBED_LIVE"])(
     "live: embed() returns 384-dim L2-normalised Float32Array",
     { timeout: 60_000 },
     async () => {
-      if (!process.env["AGENTIC_EMBED_LIVE"]) return;
-
       const eng = new TransformersEmbeddingEngine();
       const vec = await eng.embed("The quick brown fox jumps over the lazy dog");
 
@@ -418,12 +416,10 @@ describe("TransformersEmbeddingEngine live model", () => {
     },
   );
 
-  it(
+  it.skipIf(!process.env["AGENTIC_EMBED_LIVE"])(
     "live: embedBatch() is consistent with embed()",
     { timeout: 60_000 },
     async () => {
-      if (!process.env["AGENTIC_EMBED_LIVE"]) return;
-
       const eng = new TransformersEmbeddingEngine();
       const texts = ["hello world", "foo bar baz"];
       const [b1, b2] = await eng.embedBatch(texts);
