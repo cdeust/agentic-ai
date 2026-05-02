@@ -23,6 +23,12 @@ export * from "./ports/codebase-errors.js";
 // source: docs/PHASE_7_TRACKING.md §Group C
 export * from "./ports/llm-client.js";
 
+// EmbeddingEngine port — text-to-dense-vector interface used by the memory
+// subsystem (abstention-gate, memory-ingest, post-store, vector storage).
+// source: docs/ADR/0013-embedding-runtime.md
+// source: docs/PHASE_7_TRACKING.md §Group A
+export * from "./ports/embedding.js";
+
 // Legacy placeholder — kept so existing consumers of `__PLACEHOLDER__` don't
 // hard-fail until the full `port/core-types` migration completes.
 export const __PLACEHOLDER__ = true;

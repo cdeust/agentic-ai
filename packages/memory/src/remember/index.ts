@@ -97,10 +97,11 @@ export type { AbstentionClassifier } from "./abstention-gate.js";
 // ── Memory ingest ─────────────────────────────────────────────────────────
 export { ingestMemory, ingestMemoriesBatch, buildEntitySummary } from "./memory-ingest.js";
 export type {
-  EmbeddingEngine,
   IngestMemoryInput,
   IngestOptions,
 } from "./memory-ingest.js";
+// EmbeddingEngine is now the canonical port from @agentic/core.
+export type { EmbeddingEngine } from "@agentic/core";
 
 // ── Post-store ────────────────────────────────────────────────────────────
 export { postStore } from "./post-store.js";

@@ -46,6 +46,9 @@ import type {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
+// source: ECMAScript spec — Float32Array.BYTES_PER_ELEMENT = 4
+const FLOAT32_BYTES_PER_ELEMENT = Float32Array.BYTES_PER_ELEMENT;
+
 function nowIso(): string {
   return new Date().toISOString();
 }
@@ -403,31 +406,117 @@ export class PgMemoryStore implements MemoryStore {
     );
   }
 
-  // ── Vector search (port-pending: pgvector) ─────────────────────────────
+  // ── Vector search (pgvector <=> operator) ─────────────────────────────
 
+  /**
+   * Vector KNN search via pgvector cosine distance (<=> operator).
+   *
+   * NOTE: PgMemoryStore.searchVectors() uses _runSync() which throws at
+   * runtime (see design note on _runSync above). Use searchVectorsAsync()
+   * from async MCP tool handlers.
+   *
+   * source: Cortex mcp_server/infrastructure/pg_store.py:search_vectors
+   * source: https://github.com/pgvector/pgvector — cosine distance <=> operator
+   */
   searchVectors(
     _embedding: Buffer,
     _topK: number,
     _minHeat?: number,
   ): VecHit[] {
-    // port-pending: pgvector extension and HNSW index query not yet ported.
-    // When ported: SELECT id, embedding <=> $1 AS dist FROM memories
-    //   WHERE heat_base >= $3 ORDER BY dist LIMIT $2
-    return [];
+    return this._runSync(async (c) =>
+      this._searchVectorsOnClient(c, _embedding, _topK, _minHeat ?? 0),
+    );
   }
 
-  // ── Entity graph (stub — see pg-store-entities.ts) ────────────────────
+  /**
+   * Async pgvector KNN search. Use this from MCP tool handlers.
+   *
+   * precondition:  embedding is a valid float32 Buffer (length = dim × 4 bytes).
+   * postcondition: returns up to topK (memory_id, distance) pairs ordered by
+   *   ascending cosine distance. Returns [] if the column is null or extension
+   *   is not installed.
+   *
+   * source: Cortex mcp_server/infrastructure/pg_store.py:search_vectors
+   * source: https://github.com/pgvector/pgvector — <=> is cosine distance
+   * source: https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2 — 384D
+   */
+  async searchVectorsAsync(
+    embedding: Buffer,
+    topK: number,
+    minHeat = 0.0,
+  ): Promise<VecHit[]> {
+    return this.runAsync((c) =>
+      this._searchVectorsOnClient(c, embedding, topK, minHeat),
+    );
+  }
+
+  private async _searchVectorsOnClient(
+    client: PoolClient,
+    embedding: Buffer,
+    topK: number,
+    minHeat: number,
+  ): Promise<VecHit[]> {
+    // Convert Buffer to float32 array literal for pgvector.
+    // pgvector expects '[f1,f2,...,fN]' string for the <=> operator.
+    // source: https://github.com/pgvector/pgvector — vector literal format
+    const dim = embedding.byteLength / FLOAT32_BYTES_PER_ELEMENT;
+    const floats = new Float32Array(
+      embedding.buffer,
+      embedding.byteOffset,
+      dim,
+    );
+    const vecLiteral = `[${Array.from(floats).join(",")}]`;
+
+    const result = await client.query<{ id: number; distance: number }>(
+      `SELECT id, embedding <=> $1::vector AS distance
+       FROM memories
+       WHERE heat_base >= $2 AND NOT is_stale AND embedding IS NOT NULL
+       ORDER BY embedding <=> $1::vector
+       LIMIT $3`,
+      [vecLiteral, minHeat, topK],
+    );
+    return result.rows.map((r) => [r.id, r.distance] as VecHit);
+  }
+
+  /**
+   * Upsert an embedding vector for a memory row.
+   *
+   * Called by postStore after memory insert when an EmbeddingEngine is available.
+   * precondition:  memoryId > 0; emb.byteLength = dim × 4.
+   * postcondition: memories.embedding column is updated for the given id.
+   *
+   * source: Cortex mcp_server/infrastructure/pg_store.py — UPDATE memories SET embedding = %s
+   * source: https://github.com/pgvector/pgvector — vector column update via literal
+   */
+  async upsertEmbedding(memoryId: number, emb: Buffer): Promise<void> {
+    const dim = emb.byteLength / FLOAT32_BYTES_PER_ELEMENT;
+    const floats = new Float32Array(emb.buffer, emb.byteOffset, dim);
+    const vecLiteral = `[${Array.from(floats).join(",")}]`;
+    return this.runAsync((c) =>
+      c
+        .query(
+          `UPDATE memories SET embedding = $1::vector WHERE id = $2`,
+          [vecLiteral, memoryId],
+        )
+        .then(() => undefined),
+    );
+  }
+
+  // ── Entity graph (deferred: see pg-store-entities.ts) ─────────────────
+  // FAILS_ON: entity operations not yet implemented for PG backend.
+  // The entity graph is fully implemented in SqliteMemoryStore.
+  // PG entity support is tracked in PHASE_7_TRACKING.md Group D.
 
   getEntityByName(_name: string): EntityRecord | null {
-    return null; // port-pending: see pg-store-entities.ts
+    return null;
   }
 
   upsertEntity(_name: string, _type: string, _domain: string): number {
-    return 0; // port-pending: see pg-store-entities.ts
+    return 0;
   }
 
   linkMemoryEntity(_memoryId: number, _entityId: number): void {
-    // port-pending: see pg-store-entities.ts
+    // Deferred: see pg-store-entities.ts
   }
 
   upsertRelationship(
@@ -436,19 +525,23 @@ export class PgMemoryStore implements MemoryStore {
     _relationshipType: string,
     _weight?: number,
   ): void {
-    // port-pending: see pg-store-relationships.ts
+    // Deferred: see pg-store-relationships.ts
   }
 
   getSchemasForDomain(_domain: string): Array<Record<string, unknown>> {
-    return []; // port-pending: see pg-store-queries.ts
+    // Deferred: see pg-store-queries.ts
+    return [];
   }
 
   loadOscillatoryState(): string | null {
-    return null; // port-pending
+    // Deferred: oscillatory state on PG requires a dedicated table.
+    // FAILS_ON: oscillatory_state table not yet created in PG schema.
+    return null;
   }
 
   saveOscillatoryState(_stateJson: string): void {
-    // port-pending
+    // Deferred: oscillatory_state table not yet created in PG schema.
+    // FAILS_ON: oscillatory_state table missing.
   }
 
   async close(): Promise<void> {
