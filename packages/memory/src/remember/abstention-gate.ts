@@ -25,24 +25,34 @@
 // F1-optimal threshold:        0.45
 // Precision-optimal threshold: 0.55
 // Recall-optimal threshold:    0.35
-export const DEFAULT_THRESHOLD = 0.45;
+// source: cortex core/abstention_gate.py v0.1 model evaluation (calibration on diverse queries)
+export const DEFAULT_THRESHOLD = 0.45; // source: cortex core/abstention_gate.py:DEFAULT_THRESHOLD (F1-optimal at 0.45)
 
-// ── Model interface (port-pending — sentence-transformers not ported yet) ──
+// ── Model interface ─────────────────────────────────────────────────────────
 
 /**
  * AbstentionClassifier interface.
  *
- * Implementors: the real model (port-pending), test stubs.
+ * Implementors: the cortex-beam-abstain classifier (see below), test stubs.
  * precondition:  each pair[1] (passage) is non-empty.
  * postcondition: returned scores[i] is the relevance probability for pairs[i].
+ *
+ * source: cortex core/abstention_gate.py — DistilBERT classifier trained on
+ *   BEAM (query, passage, relevant/irrelevant) pairs with hard-negative mining.
+ *   Model: github.com/cdeust/cortex-know-when-to-stop-training-model
  */
 export interface AbstentionClassifier {
   predictBatch(pairs: Array<[string, string]>): number[];
 }
 
 // The singleton classifier, loaded lazily.
-// port-pending: sentence-transformers / ONNX runtime not yet ported.
-// When the real model is available, replace this with actual load logic.
+// DEFERRED: the @xenova/transformers ONNX runtime is now available (ADR-0013),
+// but the cortex-beam-abstain model file has not been published to HuggingFace
+// as an ONNX export. When the model file is available, load it here via:
+//   const { pipeline } = await import("@xenova/transformers");
+//   const clf = await pipeline("text-classification", "Xenova/cortex-beam-abstain");
+// Until then: graceful degradation to no-op (return all results unchanged).
+// FAILS_ON: classifier model not loaded — filterByAbstention returns all candidates.
 let _classifier: AbstentionClassifier | null = null;
 let _loadAttempted = false;
 
@@ -58,9 +68,11 @@ function getClassifier(): AbstentionClassifier | null {
   if (_classifier !== null) return _classifier;
   if (_loadAttempted) return null;
   _loadAttempted = true;
-  // port-pending: cortex-beam-abstain ONNX runtime is not yet bundled.
-  // When ported, load from ~/.cache/cortex-abstention/model.onnx here.
-  // For now: graceful degradation to no-op.
+  // DEFERRED: cortex-beam-abstain ONNX model not yet bundled.
+  // The ONNX runtime is available via @xenova/transformers (ADR-0013).
+  // Remaining blocker: publish cortex-beam-abstain as Xenova/cortex-beam-abstain
+  // on HuggingFace Hub. Track in PHASE_7_TRACKING.md Group A.
+  // For now: graceful degradation to no-op (return all candidates unchanged).
   return null;
 }
 

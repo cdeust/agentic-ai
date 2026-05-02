@@ -46,6 +46,17 @@ import type {
   VecHit,
 } from "./memory-store.js";
 
+// source: https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2 (dim=384)
+const EMBEDDING_DIM = 384; // source: https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2 (hidden_size=384)
+
+// ── sqlite-vec virtual table DDL ─────────────────────────────────────────────
+// source: Cortex mcp_server/infrastructure/sqlite_schema.py:MEMORIES_VEC_DDL
+// source: https://alexgarcia.xyz/sqlite-vec/ — vec0 virtual table format
+const MEMORIES_VEC_DDL = `
+CREATE VIRTUAL TABLE IF NOT EXISTS memories_vec USING vec0(
+  embedding float[${EMBEDDING_DIM}]
+)`;
+
 // ── Schema SQL ──────────────────────────────────────────────────────────────
 // Verbatim column layout from SCHEMA.md §memories table.
 // source: infrastructure/sqlite_schema.py:MEMORIES_DDL
@@ -214,6 +225,13 @@ function parseJsonArray(v: unknown): string[] {
 export class SqliteMemoryStore implements MemoryStore {
   private readonly _db: DatabaseType;
 
+  /**
+   * Whether the sqlite-vec extension was successfully loaded.
+   * Set once in _tryLoadVec(); immutable thereafter.
+   * source: Cortex mcp_server/infrastructure/sqlite_store.py:_has_vec flag
+   */
+  private _hasVec = false;
+
   // Prepared statements: built once, reused many times.
   // Invariant: these are always prepared against the current schema.
   private _stmtInsertMemory!: Statement;
@@ -254,6 +272,7 @@ export class SqliteMemoryStore implements MemoryStore {
     this._db.pragma("foreign_keys = ON");
     this._initSchema();
     this._runMigrations();
+    this._tryLoadVec();
     this._prepareStatements();
   }
 
@@ -301,6 +320,44 @@ export class SqliteMemoryStore implements MemoryStore {
         // Column already exists — expected on re-init.
       }
     }
+  }
+
+  // ── sqlite-vec extension ───────────────────────────────────────────────
+
+  /**
+   * Attempt to load the sqlite-vec extension and create the memories_vec
+   * virtual table. Gracefully degrades: _hasVec stays false if the
+   * extension is not installed (vector search returns []).
+   *
+   * precondition:  _db is open and schema is initialised.
+   * postcondition: _hasVec = true iff the extension loaded and the virtual
+   *   table was created; otherwise _hasVec = false and vector search is disabled.
+   *
+   * source: Cortex mcp_server/infrastructure/sqlite_store.py:_try_load_vec
+   * source: https://alexgarcia.xyz/sqlite-vec/ — Node.js usage with better-sqlite3
+   * source: https://www.npmjs.com/package/sqlite-vec — loadable extension pattern
+   */
+  private _tryLoadVec(): void {
+    try {
+      // Dynamic require — sqlite-vec is an optional dependency.
+      // If not installed, the require() throws and we degrade gracefully.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const sqliteVec = require("sqlite-vec") as {
+        load: (db: DatabaseType) => void;
+      };
+      sqliteVec.load(this._db);
+      this._db.exec(MEMORIES_VEC_DDL);
+      this._hasVec = true;
+    } catch {
+      // sqlite-vec not installed or extension load failed — degrade gracefully.
+      // Vector search will return [] (consistent with Python fallback).
+      this._hasVec = false;
+    }
+  }
+
+  /** Exposed for tests that need to inspect vec availability. */
+  get hasVec(): boolean {
+    return this._hasVec;
   }
 
   // ── Prepared statements ────────────────────────────────────────────────
@@ -599,23 +656,79 @@ export class SqliteMemoryStore implements MemoryStore {
     this._stmtUpsertHomeostatic.run(domain || "", clamped, nowIso());
   }
 
-  // ── Vector search (stub — sqlite-vec extension is optional) ───────────
+  // ── Vector search (sqlite-vec extension) ──────────────────────────────
 
   /**
-   * Return top-k nearest memories by embedding cosine distance.
+   * Return top-k nearest memories by L2 embedding distance.
    *
-   * port-pending: sqlite-vec extension not loaded automatically.
-   * Returns [] when the extension is not available (graceful degradation).
-   * source: infrastructure/sqlite_store_search.py:vec_search
+   * precondition:  embedding is a valid float32 Buffer of length EMBEDDING_DIM×4 bytes.
+   * postcondition: returns up to topK (memory_id, distance) pairs ordered by
+   *   ascending distance. Returns [] if sqlite-vec is not loaded.
+   *
+   * Implementation: queries the memories_vec virtual table created by
+   * _tryLoadVec(). Falls back to [] when _hasVec = false.
+   *
+   * source: Cortex mcp_server/infrastructure/sqlite_store_search.py:search_vectors
+   * source: https://alexgarcia.xyz/sqlite-vec/ — vec0 KNN MATCH query syntax
    */
   searchVectors(
-    _embedding: Buffer,
-    _topK: number,
+    embedding: Buffer,
+    topK: number,
     _minHeat?: number,
   ): VecHit[] {
-    // port-pending: sqlite-vec extension load is not implemented yet.
-    // When ported, check this._hasVec and query memories_vec virtual table.
-    return [];
+    if (!this._hasVec) return [];
+
+    try {
+      // Validate buffer size: must be exactly EMBEDDING_DIM float32 values.
+      // source: https://alexgarcia.xyz/sqlite-vec/ — float[N] expects N×BYTES_PER_ELEMENT bytes
+      const expectedBytes = EMBEDDING_DIM * Float32Array.BYTES_PER_ELEMENT;
+      if (embedding.byteLength !== expectedBytes) {
+        return [];
+      }
+
+      // sqlite-vec MATCH query: returns rowid (= memory id) and distance.
+      // source: Cortex mcp_server/infrastructure/sqlite_store_search.py:search_vectors
+      //   "SELECT rowid, distance FROM memories_vec WHERE embedding MATCH ? ORDER BY distance LIMIT ?"
+      const rows = this._db
+        .prepare(
+          `SELECT rowid, distance FROM memories_vec
+           WHERE embedding MATCH ?
+           ORDER BY distance
+           LIMIT ?`,
+        )
+        .all(embedding, topK) as Array<{ rowid: number; distance: number }>;
+
+      return rows.map((r) => [r.rowid, r.distance] as VecHit);
+    } catch {
+      // Extension query failed — degrade gracefully.
+      return [];
+    }
+  }
+
+  /**
+   * Upsert an embedding vector for a memory row.
+   *
+   * Called by postStore after memory insert when an EmbeddingEngine is available.
+   * precondition:  memoryId > 0; emb.byteLength === EMBEDDING_DIM × 4.
+   * postcondition: memories_vec row for memoryId is inserted or replaced.
+   *   If sqlite-vec is not loaded, this is a no-op.
+   *
+   * source: Cortex mcp_server/infrastructure/sqlite_store.py — INSERT INTO memories_vec
+   */
+  upsertEmbedding(memoryId: number, emb: Buffer): void {
+    if (!this._hasVec) return;
+
+    try {
+      this._db
+        .prepare(
+          `INSERT INTO memories_vec(rowid, embedding)
+           VALUES (?, ?)
+           ON CONFLICT(rowid) DO UPDATE SET embedding = excluded.embedding`,
+        )
+        .run(memoryId, emb);
+    } catch {
+      // Degrade gracefully — embedding upsert is best-effort.
+    }
   }
 
   // ── Entity graph ───────────────────────────────────────────────────────
@@ -757,8 +870,35 @@ export class SqliteMemoryStore implements MemoryStore {
 
   // ── Relationship query (used by graph navigation, not part of core contract) ──
 
-  getRelationshipsForEntity(_entityId: number): RelationshipRecord[] {
-    // port-pending: full relationship query belongs in graph navigation module.
-    return [];
+  /**
+   * Fetch all relationships where the given entity is source or target.
+   *
+   * postcondition: returns all rows from the relationships table matching
+   *   source_entity_id = entityId OR target_entity_id = entityId.
+   *   Returns [] if entity has no relationships.
+   *
+   * source: Cortex mcp_server/infrastructure/sqlite_store_relationships.py
+   *   — select all rows where source_entity_id = ? OR target_entity_id = ?
+   */
+  getRelationshipsForEntity(entityId: number): RelationshipRecord[] {
+    const rows = this._db
+      .prepare(
+        `SELECT id, source_entity_id, target_entity_id, relationship_type,
+                weight, is_causal, confidence, created_at
+         FROM relationships
+         WHERE source_entity_id = ? OR target_entity_id = ?`,
+      )
+      .all(entityId, entityId) as Array<Record<string, unknown>>;
+
+    return rows.map((r) => ({
+      id: r["id"] as number,
+      source_entity_id: r["source_entity_id"] as number,
+      target_entity_id: r["target_entity_id"] as number,
+      relationship_type: r["relationship_type"] as string,
+      weight: (r["weight"] as number) ?? 1.0,
+      is_causal: Boolean(r["is_causal"]),
+      confidence: (r["confidence"] as number) ?? 1.0,
+      created_at: r["created_at"] as string,
+    }));
   }
 }
