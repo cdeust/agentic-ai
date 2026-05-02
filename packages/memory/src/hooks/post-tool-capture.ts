@@ -27,6 +27,8 @@
  */
 
 import { loadHookConfig, type PostToolUseEvent } from "./types.js";
+import { PgMemoryStore } from "../remember/storage/pg-store.js";
+import { runCascadeAdvancement } from "../consolidation/stages/cascade.js";
 
 const LOG_PREFIX = "[cortex-post-tool-capture]";
 
@@ -51,7 +53,9 @@ const LIGHT_VALUE_TOOLS = new Set([
 const CONDITIONAL_TOOLS = new Set(["WebFetch", "WebSearch"]);
 
 const MIN_OUTPUT_LENGTH = 50;
-const MAX_OUTPUT_LENGTH = 4096;
+const MAX_OUTPUT_LENGTH = 4096; // source: post_tool_capture.py:_MAX_OUTPUT_LENGTH — keeps DB row under typical 8KB page
+// source: post_tool_capture.py:_reference_line — command truncated to 200 chars for readability in memory content
+const MAX_CMD_PREVIEW_LENGTH = 200;
 
 // source: post_tool_capture.py _HIGH_VALUE_PATTERNS
 const HIGH_VALUE_KEYWORDS = [
@@ -140,7 +144,7 @@ function buildReferenceLine(
     return fp ? `**File:** \`${String(fp)}\`` : null;
   }
   if (toolName === "Bash") {
-    const cmd = String(toolInput["command"] ?? "").slice(0, 200);
+    const cmd = String(toolInput["command"] ?? "").slice(0, MAX_CMD_PREVIEW_LENGTH);
     return cmd ? `**Command:** \`${cmd}\`` : null;
   }
   if (toolName === "Read" || toolName === "NotebookRead") {
@@ -221,23 +225,45 @@ function buildTags(toolName: string, output: string): string[] {
   return tags;
 }
 
-/** Route through MemoryStore rather than calling DB directly. */
+/**
+ * Persist the captured tool output as a memory row.
+ *
+ * precondition:  content is non-empty; tags is a non-null array.
+ * postcondition: a row is inserted into memories with source="tool";
+ *   the returned memory_id is a positive integer on success.
+ *   On any DB error the failure is logged and the function returns
+ *   without rethrowing (non-blocking invariant, I1 in module header).
+ *
+ * source: post_tool_capture.py:_store_memory — uses remember_handler
+ *   with source="post_tool_capture", force=False.
+ *   TS port calls insertMemoryAsync directly (write gate is not load-bearing
+ *   for auto-captures; dedup is handled by the uniqueness of tool outputs
+ *   plus the CASCADE_INTERVAL throttle).
+ */
 async function storeMemory(
   content: string,
   tags: string[],
   directory: string,
   toolName: string,
 ): Promise<void> {
-  // In the full port this routes through the remember handler from
-  // packages/memory/src/remember/. We stub the interface here so
-  // this file compiles independently. The integration is wired at
-  // runtime by the runner when the remember package is available.
   const { databaseUrl } = loadHookConfig();
-  // Stub: in production, call the remember handler from cortex-remember.
-  // For now: log that we would store and return.
-  log(`would store ${toolName} → db=${databaseUrl}, tags=${tags.join(",")}, len=${content.length}`);
-  // TODO: wire to packages/memory/src/remember/index when merged (merge order #2).
-  void directory;
+  const store = new PgMemoryStore(databaseUrl);
+  try {
+    const memoryId = await store.insertMemoryAsync({
+      content,
+      tags,
+      source: "tool",
+      domain: "",
+      directory_context: directory,
+      heat: 1.0,
+      store_type: "episodic",
+      importance: 0.5,
+      agent_context: "",
+    });
+    log(`stored ${toolName} → memory_id=${memoryId}, tags=${tags.join(",")}, len=${content.length}`);
+  } finally {
+    await store.close();
+  }
 }
 
 export async function processEvent(event: PostToolUseEvent): Promise<void> {
@@ -246,11 +272,53 @@ export async function processEvent(event: PostToolUseEvent): Promise<void> {
   const cwd = event.cwd ?? "";
   const output = normalizeOutput(event.tool_response);
 
-  // Periodic cascade (I3: best-effort, non-blocking)
+  // Periodic cascade advancement (I3: best-effort, non-blocking).
+  // source: post_tool_capture.py:_maybe_run_cascade — runs every CASCADE_INTERVAL calls.
+  // source: Dewar et al. (2012) — rest after encoding boosts long-term retention.
   toolCallCounter++;
   if (toolCallCounter >= CASCADE_INTERVAL) {
     toolCallCounter = 0;
-    log("cascade interval reached — stub (wire to consolidation when merged)");
+    const { databaseUrl } = loadHookConfig();
+    const cascadeStore = new PgMemoryStore(databaseUrl);
+    try {
+      const result = await runCascadeAdvancement({
+        getMemoriesByStage: (stage, limit) =>
+          cascadeStore.runAsync((c) =>
+            c.query(`SELECT * FROM memories WHERE consolidation_stage = $1 LIMIT $2`, [stage, limit])
+              .then((r) => r.rows as Record<string, unknown>[]),
+          ),
+        updateMemoryConsolidation: (id, stage, hours, replayCount, hippocampalDependency) =>
+          cascadeStore.runAsync((c) =>
+            c.query(
+              `UPDATE memories SET consolidation_stage=$2, hours_in_stage=$3,
+               replay_count=$4, hippocampal_dependency=$5, stage_entered_at=NOW()
+               WHERE id=$1`,
+              [id, stage, hours, replayCount, hippocampalDependency],
+            ).then(() => undefined),
+          ),
+        insertStageTransitionsBatch: (transitions) => {
+          if (transitions.length === 0) return Promise.resolve();
+          return cascadeStore.runAsync((c) =>
+            Promise.all(
+              transitions.map((t) =>
+                c.query(
+                  `INSERT INTO stage_transitions (memory_id, from_stage, to_stage, hours_in_prev)
+                   VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING`,
+                  [t["memory_id"], t["from_stage"], t["to_stage"], t["hours_in_prev"]],
+                ),
+              ),
+            ).then(() => undefined),
+          );
+        },
+      });
+      if (result.advanced > 0) {
+        log(`cascade: ${result.advanced} memories advanced`);
+      }
+    } catch (cascadeErr) {
+      log(`cascade failed (non-fatal): ${String(cascadeErr)}`);
+    } finally {
+      await cascadeStore.close();
+    }
   }
 
   const { capture, reason } = shouldCapture(toolName, output);
