@@ -18,15 +18,25 @@
  * Port of: mcp_server/handlers/consolidation/cls.py
  */
 
+import {
+  computeCoOccurrenceMatrix,
+  discoverCausalEdges as _discoverCausalEdgesImpl,
+} from "../causal-graph.js";
+
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-// Source: issue #13 — previous cap of 500 saw ~2% of a 25k-episodic
-// corpus transferred per run; raised to 2000 after profiling.
-const EPISODIC_SAMPLE_CAP = 2000;
-const SEMANTICS_SAMPLE_CAP = 2000;
+// source: issue #13 — previous cap of 500 saw ~2% of a 25k-episodic corpus; raised to 2000 after profiling.
+const EPISODIC_SAMPLE_CAP = 2000; // source: issue #13
+const SEMANTICS_SAMPLE_CAP = 2000; // source: issue #13
 
 const MIN_PATTERN_SIZE = 3;
 const CLUSTER_THRESHOLD = 0.6;
+
+// source: cortex@f2b9f99 mcp_server/handlers/consolidation/cls.py — schema is capped at 500 chars
+const SCHEMA_MAX_CHARS = 500;
+
+// source: cortex@f2b9f99 mcp_server/handlers/consolidation/cls.py — max 10 unique tags per semantic memory
+const TAGS_MAX_COUNT = 10;
 
 // Source: PC algorithm lower bound — need ≥3 observations per variable
 // to distinguish dependence from sampling noise; need ≥5 active variables
@@ -164,11 +174,14 @@ async function computeConsolidationPlan(
     if (cluster.length < MIN_PATTERN_SIZE) continue;
     patternsFound++;
 
-    const members = cluster.map((i) => episodic[i]!);
+    const members = cluster
+      .map((i) => episodic[i])
+      .filter((m): m is Record<string, unknown> => m !== undefined);
+    // source: cortex@f2b9f99 mcp_server/handlers/consolidation/cls.py — 500-char schema cap matches Python port
     const schema = members
       .map((m) => (m["content"] as string | undefined) ?? "")
       .join(" | ")
-      .slice(0, 500);
+      .slice(0, SCHEMA_MAX_CHARS);
 
     if (existingContents.has(schema)) {
       skippedDuplicate++;
@@ -180,7 +193,7 @@ async function computeConsolidationPlan(
       if (Array.isArray(t)) return t as string[];
       return [];
     });
-    const uniqueTags = [...new Set(allTags)].slice(0, 10);
+    const uniqueTags = [...new Set(allTags)].slice(0, TAGS_MAX_COUNT);
 
     newSemantics.push({
       schema,
@@ -263,10 +276,35 @@ async function discoverCausalEdges(
 
     if (qualifying < MIN_ENTITIES_FOR_PC) return [0, qualifying];
 
-    // Causal graph discovery is I/O-bound and depends on the causal_graph module
-    // (port-pending: mcp_server/core/causal_graph.py). Returning 0 edges until ported.
-    // TODO: port compute_co_occurrence_matrix + discover_causal_edges
-    return [0, qualifying];
+    // Build co-occurrence matrix and entity mention counts.
+    // source: cortex@f2b9f99 mcp_server/core/causal_graph.py:12-31
+    const coOccurrences = computeCoOccurrenceMatrix(episodic, entityNames);
+
+    // Compute per-entity counts from the mention-count map returned above.
+    const entityCountsMap = new Map<string, number>(entityCounts);
+
+    // Build first-seen timestamps from episodic memory created_at fields.
+    const entityFirstSeen = new Map<string, string>();
+    for (const mem of episodic) {
+      const createdAt = mem["created_at"] as string | undefined;
+      if (!createdAt) continue;
+      const content = ((mem["content"] as string | undefined) ?? "").toLowerCase();
+      for (const name of entityNames) {
+        if (content.includes(name.toLowerCase()) && !entityFirstSeen.has(name)) {
+          entityFirstSeen.set(name, createdAt);
+        }
+      }
+    }
+
+    const edges = _discoverCausalEdgesImpl(
+      entityNames,
+      coOccurrences,
+      entityCountsMap,
+      episodic.length,
+      { entityFirstSeen },
+    );
+
+    return [edges.length, qualifying];
   } catch {
     return [0, 0];
   }

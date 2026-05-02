@@ -22,8 +22,9 @@
     "smoke": "node dist/index.js"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@agentic/core": "workspace:*",
     "@agentic/memory": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {

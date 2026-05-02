@@ -145,6 +145,20 @@ export interface MemoryStore {
   /** Set is_stale flag (soft-delete marker). */
   markMemoryStale(memoryId: number, stale: boolean): void;
 
+  /**
+   * Update content and tags for a single memory row.
+   *
+   * precondition:  memoryId > 0; content is non-empty.
+   * postcondition: memories.content = content AND memories.tags = tags for
+   *   the given id; no other columns are modified.
+   *
+   * Used by the anchor handler to write the `[ANCHOR: <reason>]` prefix
+   * and the `_anchor` tag set atomically.
+   *
+   * source: cortex@f2b9f99 mcp_server/handlers/anchor.py:141-146
+   */
+  updateMemoryContent(memoryId: number, content: string, tags: string[]): void;
+
   // ── Homeostatic state ──────────────────────────────────────────────────
 
   /** Fetch per-domain homeostatic scaling factor, defaulting to 1.0. */

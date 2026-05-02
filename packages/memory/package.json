@@ -10,6 +10,10 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./infrastructure/anthropic-llm-client.js": {
+      "import": "./dist/infrastructure/anthropic-llm-client.js",
+      "types": "./dist/infrastructure/anthropic-llm-client.d.ts"
     }
   },
   "scripts": {
@@ -18,6 +22,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@agentic/core": "workspace:*",
+    "@anthropic-ai/sdk": "^0.39.0",
     "better-sqlite3": "^12.0.0",
     "minimatch": "^10.0.1",
     "pg": "^8.13.0",

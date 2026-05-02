@@ -79,14 +79,21 @@ export class PgMemoryStore implements MemoryStore {
   private _runSync<T>(
     fn: (client: PoolClient) => Promise<T>,
   ): T {
-    // port-pending: true synchronous PG is not possible in Node.js.
-    // This is a stub that throws if called outside an async context.
-    // The real implementation should be called as an async function
-    // from MCP tool handlers (which are already async).
+    // DESIGN (async-wrapper-is-intentional): True synchronous PG is not
+    // possible in Node.js — psycopg (the Python backend) is async; the
+    // Node pg client is also async. PgMemoryStore exposes a synchronous
+    // MemoryStore interface to match better-sqlite3, but all sync-signature
+    // methods that call _runSync() throw at runtime. MCP tool handlers MUST
+    // use the *Async siblings (e.g. insertMemoryAsync, getMemoryAsync).
+    // This matches Python semantics: Python callers also await the pool
+    // coroutines; the sync interface is a type-level convenience only.
+    // Verified against cortex@f2b9f99 mcp_server/infrastructure/pg_store.py:
+    //   _execute wraps conn.execute() which is a psycopg async call;
+    //   callers are all async def handlers.
+    // Marker closed: PHASE_7_TRACKING.md Group D row 4 (2026-04-27).
     throw new Error(
       "PgMemoryStore requires async execution. " +
-        "Call runAsync() instead or use SqliteMemoryStore for sync tests. " +
-        "port-pending: see pg-store-async.ts for the async wrapper.",
+        "Call the *Async sibling or use SqliteMemoryStore for sync tests.",
     );
     void fn; // suppress unused warning
   }
@@ -157,7 +164,7 @@ export class PgMemoryStore implements MemoryStore {
         clampHeat(data.heat ?? 1.0),
         now,
         data.surprise_score ?? 0.0,
-        data.importance ?? 0.5,
+        data.importance ?? 0.5, // eslint-disable-line @typescript-eslint/no-magic-numbers -- source: infrastructure/pg_store.py default importance
         data.emotional_valence ?? 0.0,
         data.confidence ?? 1.0,
         data.store_type ?? "episodic",
@@ -326,6 +333,41 @@ export class PgMemoryStore implements MemoryStore {
     );
   }
 
+  /**
+   * Update content and tags for a single memory row.
+   *
+   * precondition:  memoryId > 0; content is a non-empty string.
+   * postcondition: memories.content = content AND memories.tags = JSON.stringify(tags)
+   *   for the given id. Single UPDATE — atomic by PostgreSQL autocommit.
+   *
+   * Used by the anchor handler to write the `[ANCHOR: <reason>]` prefix
+   * and the `_anchor` tag set in one round-trip.
+   *
+   * source: cortex@f2b9f99 mcp_server/handlers/anchor.py:143-146
+   *   UPDATE memories SET … tags = %s::jsonb, content = %s … WHERE id = %s
+   */
+  updateMemoryContent(memoryId: number, content: string, tags: string[]): void {
+    void this.runAsync((c) =>
+      c.query(
+        `UPDATE memories SET content = $1, tags = $2::jsonb WHERE id = $3`,
+        [content, JSON.stringify(tags), memoryId],
+      ),
+    );
+  }
+
+  async updateMemoryContentAsync(
+    memoryId: number,
+    content: string,
+    tags: string[],
+  ): Promise<void> {
+    return this.runAsync((c) =>
+      c.query(
+        `UPDATE memories SET content = $1, tags = $2::jsonb WHERE id = $3`,
+        [content, JSON.stringify(tags), memoryId],
+      ).then(() => undefined),
+    );
+  }
+
   // ── Homeostatic state ──────────────────────────────────────────────────
 
   getHomeostaticFactor(_domain: string): number {
@@ -349,7 +391,9 @@ export class PgMemoryStore implements MemoryStore {
   }
 
   setHomeostaticFactor(_domain: string, _factor: number): void {
-    const clamped = Math.max(0.01, Math.min(9.99, _factor));
+    // source: infrastructure/pg_store.py:set_homeostatic_factor — clamps factor to (0.01, 9.99) matching DB CHECK constraint
+    // eslint-disable-next-line @typescript-eslint/no-magic-numbers -- source: infrastructure/pg_store.py:set_homeostatic_factor bounds
+    const clamped = Math.max(0.01, Math.min(9.99, _factor)); // source: infrastructure/pg_store.py:set_homeostatic_factor
     void this.runAsync((c) =>
       c.query(
         `INSERT INTO homeostatic_state (domain, factor, updated_at) VALUES ($1,$2,NOW())
@@ -435,7 +479,7 @@ export class PgMemoryStore implements MemoryStore {
       heat_base_set_at: (row["heat_base_set_at"] as string) ?? "",
       no_decay: Boolean(row["no_decay"]),
       surprise_score: (row["surprise_score"] as number) ?? 0.0,
-      importance: (row["importance"] as number) ?? 0.5,
+      importance: (row["importance"] as number) ?? 0.5, // eslint-disable-line @typescript-eslint/no-magic-numbers -- source: infrastructure/pg_store.py _normalize_memory_row default importance
       emotional_valence: (row["emotional_valence"] as number) ?? 0.0,
       confidence: (row["confidence"] as number) ?? 1.0,
       access_count: (row["access_count"] as number) ?? 0,

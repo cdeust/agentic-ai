@@ -2,13 +2,14 @@
 
 **Source**: `/Users/cdeust/Developments/Cortex` (private)
 **Snapshot baseline**: `inventory/CORTEX_INVENTORY.md` (2026-04-26, 361 .py files, ~78 461 LOC)
-**Current HEAD**: `f2b9f99 fix(ast): uncap L6 symbol/edge ingestion; surface file-import chain` (2026-04-28, post-mid-day)
-**Inventory HEAD (before port)**: `df141f5 release: v3.14.12 — fix MCP client deadlock on long upstream responses`
-**Commits added since baseline**: 6 user-facing releases (v3.14.8 → v3.14.12) + 1 post-v3.14.12 AST uncap fix (f2b9f99)
+**Current HEAD (2026-05-02)**: `bc0ae4f fix(verif): extend query-entity resolution to natural-language tokens (engineer follow-up)`
+**Previous re-sync target**: `f2b9f99 fix(ast): uncap L6 symbol/edge ingestion; surface file-import chain` (2026-04-28)
+**Inventory HEAD (pre-port)**: `df141f5 release: v3.14.12 — fix MCP client deadlock on long upstream responses`
+**Commits added since baseline**: 6 user-facing releases (v3.14.8 → v3.14.12) + 1 post-v3.14.12 AST uncap (f2b9f99) + **28 verification/benchmark commits between 2026-04-28..2026-05-02**
 
-**Re-sync status**: `port/cortex-resync-2026-04-28` closed 2026-04-28.
-Groups 1 and 6 ported; Group 5 verified as no-op; Groups 2/3/4 confirmed no-op.
-See `docs/PHASE_7_TRACKING.md` Group H for full closure record.
+**Re-sync status**:
+- `port/cortex-resync-2026-04-28` closed 2026-04-28 against f2b9f99 (Groups 1+6 ported; Group 5 no-op; Groups 2/3/4 no-op).
+- **Group 7 (2026-05-02 audit)** — 28 new commits cataloged below; tracking entry added to PHASE_7_TRACKING.md Group H as a follow-up wave.
 
 This file records what changed in Cortex Python AFTER the Phase-4 inventory
 was taken, so the TS port in `packages/memory/src/` can be re-synchronized
@@ -243,3 +244,48 @@ problem; rendering the now-uncapped graph is still out of scope here.)
 | (D extension) | v3.14.12 | Verify TS MCP SDK already covers the deadlock case | Update existing Group D |
 
 All other Cortex deltas are no-ops or already aligned.
+
+---
+
+## Group 7 — Cortex 2026-04-28..2026-05-02 verification + benchmark wave (28 commits)
+
+**Affects TS port**: `packages/memory/src/recall/`, `packages/memory/src/consolidation/`, `packages/memory/src/infrastructure/` (verification ablations); minor `packages/memory/src/handlers/` (telemetry wrap, paging, facets); zero impact on Phase-7 Groups A/B/C/D/E/F/G already cataloged.
+
+### Headline commits (selected)
+
+| Commit | Subject | TS port impact |
+|---|---|---|
+| `bc0ae4f` | extend query-entity resolution to natural-language tokens | recall pipeline: NL token resolver — affects recall sub-algorithms (Group B) |
+| `024ea1a` | batch Hopfield embeddings + real entity-set Jaccard for dendritic stage | Hopfield + DENDRITIC_CLUSTERS — Group B Hopfield variant |
+| `ddb5b58` | wire HOPFIELD/HDC/SPREADING_ACTIVATION/DENDRITIC_CLUSTERS into pg_recall pipeline | wires 4 recall variants into the prod hot path; **Group B in-scope** |
+| `54f8501` | handler-level read-path ablation guards in recall.py | adds `CORTEX_ABLATE_<MECH>` env-var gates; mirror in TS handler entry points |
+| `099ba1e` | wire 23 ablation env vars into production hot-paths | new env-var contract surface — must be wired in TS composition root |
+| `df14e16` | remove `'; '` from comment that broke `ddl.split(';')` extractor | bug fix in schema engine — verify TS port doesn't have the same comment |
+| `34aa452` | repair docstring boundary in `cls.run_cls_cycle` | TS `cls.ts` docstring parity check |
+| `3eab1ed` | wire E2 N-scan ablation env vars into production code path | env var wiring — same surface as 099ba1e |
+
+### Files touched (mcp_server/ scope)
+
+- **mcp_server/core/** (34 file-touch events, 28 unique files): `ablation.py`, `cascade_advancement.py`, `coupled_neuromodulation.py`, `dendritic_clusters.py`, `emotional_tagging.py`, `engram.py`, `hdc_encoder.py`, `homeostatic_plasticity.py`, `hopfield.py`, `interference.py`, `layout_engine.py`, `microglial_pruning.py`, `oscillatory_clock.py`, `pg_recall.py`, `predictive_coding_gate.py`, `recall_pipeline.py`, `reconsolidation.py`, `schema_engine.py`, `separation_core.py`, `spreading_activation.py`, `synaptic_plasticity_hebbian.py`, `synaptic_tagging.py`, `telemetry.py`, `thermodynamics.py`, `tile_renderer.py`, `titans_memory.py`, `tripartite_calcium.py`, `two_stage_model.py`
+- **mcp_server/handlers/** (23 file-touches, 20 unique files): `_telemetry_wrap.py`, `consolidation/cls.py`, `drill_down.py`, `forget.py`, `get_causal_chain.py`, `get_telemetry.py`, `memories_facets.py`, `memories_page.py`, `navigate_memory.py`, `open_visualization.py`, `quadtree_handler.py`, `rate_memory.py`, `recall_hierarchical.py`, `recall.py`, `recompute_layout.py`, `remember.py`, `tile_handler.py`, `validate_memory.py`
+- **mcp_server/infrastructure/** (7 events): unspecified — likely `pg_store_*.py` family
+
+### Categorization
+
+1. **Verification ablations (16 commits, ~70%)** — wires 23 named ablation mechanisms (HOPFIELD, HDC, SPREADING_ACTIVATION, DENDRITIC_CLUSTERS, etc.) behind `CORTEX_ABLATE_<MECH>` env vars at handler-entry guards. Adds N-scan, decay-sweep, longitudinal benchmark runners. **TS impact**: medium — Group B (recall sub-algorithms) gets richer wiring; the 23-env-var ablation contract must be mirrored in `packages/memory/src/recall/` if benchmarks run against the TS port.
+
+2. **Benchmark infrastructure (8 commits, ~28%)** — `benchmarks/lib/*.py` runners for E2 N-scan, decay sweep, ablation longmemeval, latency. **TS impact**: NONE in `packages/memory/src/`; benchmarks are Python-only test harness, not port-relevant.
+
+3. **Paper revisions (4 commits, ~14%)** — `docs/papers/`, `docs/arxiv-context-assembly/`, `docs/arxiv-thermodynamic/`. **TS impact**: NONE; documentation only.
+
+4. **Bug fixes (2 commits)**: `df14e16` (DDL comment break) + `34aa452` (docstring boundary). **TS impact**: low — verify the 2 TS files don't carry the same bugs (`schema-engine.ts`, `cls.ts`).
+
+### Action
+
+Add to `docs/PHASE_7_TRACKING.md` Group H as a 2026-05-02 follow-up wave. Recommended worktree: `port/cortex-resync-2026-05-02` covering:
+- Mirror the 23-env-var ablation contract (handler-entry `CORTEX_ABLATE_<MECH>` guards)
+- Port `coupled_neuromodulation.py` updates (touched 2026-05-02 — likely refines existing TS port)
+- Verify schema-engine + cls TS files don't carry the upstream bugs
+- Group B sub-algorithm ports (Hopfield batch + Jaccard) get a richer reference impl
+
+The 2026-04-28 graph-rendering 400K-node concern remains out-of-scope; this wave is data + recall-pipeline territory only.

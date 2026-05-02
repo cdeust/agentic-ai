@@ -14,14 +14,11 @@
  *
  * Pure business logic — no I/O. Callers pass file content as Buffers.
  *
- * AST SUBSTRATE DECISION (port-pending → tree-sitter Node.js bindings):
- *   The Python source uses tree_sitter_language_pack. The TypeScript port
- *   uses the official tree-sitter Node.js API (npm: tree-sitter) plus
- *   per-language grammar packages (tree-sitter-python, tree-sitter-
- *   javascript, tree-sitter-typescript, tree-sitter-go, tree-sitter-rust,
- *   tree-sitter-swift). These are loaded dynamically so the module does
- *   not hard-fail when grammars are absent; it falls back to regex.
- *   ADR pending: confirm which grammar packages ship in production.
+ * AST SUBSTRATE: native Node.js bindings (`tree-sitter` + per-language
+ *   grammar packages). See docs/ADR/0012-tree-sitter-bindings.md.
+ *   Grammar packages are optionalDependencies — the module degrades
+ *   gracefully to the regex parser when native modules are absent.
+ *   Decision closed: ADR-0012 (2026-04-27).
  */
 
 import { createHash } from "node:crypto";
@@ -32,6 +29,14 @@ import type { FileAnalysis, ImportInfo, SymbolDef } from "./types.js";
 
 // Languages supported by our AST queries
 const AST_SUPPORTED = new Set(["python", "typescript", "javascript", "go", "rust", "swift"]);
+
+// ── Constants ──────────────────────────────────────────────────────────────
+
+// source: cortex@f2b9f99 mcp_server/core/ast_parser.py — 16-hex-char SHA-256 prefix for content dedup
+const CONTENT_HASH_HEX_CHARS = 16;
+
+// source: cortex@f2b9f99 mcp_server/core/ast_parser.py — 200-char docstring/comment truncation cap
+const DOCSTRING_MAX_CHARS = 200;
 
 // ── Substrate availability ─────────────────────────────────────────────────
 
@@ -71,7 +76,7 @@ export function parseFileAst(path: string, content: Buffer): FileAnalysis {
    *   FileAnalysis with imports, definitions, and content hash.
    */
   const language = detectLanguage(path);
-  const contentHash = createHash("sha256").update(content).digest("hex").slice(0, 16);
+  const contentHash = createHash("sha256").update(content).digest("hex").slice(0, CONTENT_HASH_HEX_CHARS); // source: cortex@f2b9f99 mcp_server/core/ast_parser.py — SHA-256 hash truncated to CONTENT_HASH_HEX_CHARS hex chars
   const text = content.toString("utf8");
 
   const extractorAndTree = _getExtractorAndTree(language, content);
@@ -81,7 +86,7 @@ export function parseFileAst(path: string, content: Buffer): FileAnalysis {
 
   const { extractor, tree } = extractorAndTree;
   const root: TsNode = tree.rootNode;
-  const { imports, definitions, calls } = extractor(root, content);
+  const { imports, definitions } = extractor(root, content);
   const docstring = _extractModuleDoc(root, language, content);
 
   const callsPerFunction = _astExtractors.extractCallsPerFunction(root, content);
@@ -149,18 +154,20 @@ export function nodeText(node: TsNode, source: Buffer): string {
 function _extractModuleDoc(root: TsNode, language: string, source: Buffer): string {
   const children: TsNode[] = root.children ?? [];
   if (children.length === 0) return "";
-  const first: TsNode = children[0]!;
+  const first: TsNode = children[0];
+  if (first === undefined) return "";
   if (language === "python") {
-    let target = first;
+    let target: TsNode = first;
     if (first.type === "expression_statement" && (first.children ?? []).length > 0) {
-      target = (first.children as TsNode[])[0]!;
+      const child0: TsNode = (first.children as TsNode[])[0];
+      if (child0 !== undefined) target = child0;
     }
     if (target.type === "string") {
-      return nodeText(target, source).replace(/^["']+|["']+$/g, "").trim().slice(0, 200);
+      return nodeText(target, source).replace(/^["']+|["']+$/g, "").trim().slice(0, DOCSTRING_MAX_CHARS);
     }
   }
   if (first.type === "comment") {
-    return nodeText(first, source).replace(/^[/#* ]+/, "").trim().slice(0, 200);
+    return nodeText(first, source).replace(/^[/#* ]+/, "").trim().slice(0, DOCSTRING_MAX_CHARS);
   }
   return "";
 }

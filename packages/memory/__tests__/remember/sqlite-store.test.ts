@@ -230,3 +230,51 @@ describe("SqliteMemoryStore — entity graph", () => {
     expect(() => store.linkMemoryEntity(memId, entId)).not.toThrow();
   });
 });
+
+// ── updateMemoryContent ───────────────────────────────────────────────────────
+
+describe("updateMemoryContent", () => {
+  // Postcondition: memories.content = newContent AND memories.tags includes
+  // the given tags after the call.
+  // source: cortex@f2b9f99 mcp_server/handlers/anchor.py:143-146
+
+  it("updates content and tags atomically", () => {
+    const memId = store.insertMemory({ content: "Original.", tags: ["old"] });
+
+    store.updateMemoryContent(memId, "[ANCHOR: reason] Original.", ["old", "_anchor", "_anchor:reason"]);
+
+    const mem = store.getMemory(memId);
+    expect(mem).not.toBeNull();
+    expect(mem!.content).toBe("[ANCHOR: reason] Original.");
+    expect(mem!.tags).toContain("_anchor");
+    expect(mem!.tags).toContain("old");
+  });
+
+  it("overwrites existing tags", () => {
+    const memId = store.insertMemory({ content: "Fact.", tags: ["tag1", "tag2"] });
+
+    store.updateMemoryContent(memId, "Updated fact.", ["new-tag"]);
+
+    const mem = store.getMemory(memId);
+    expect(mem!.tags).toEqual(["new-tag"]);
+  });
+
+  it("is a no-op for non-existent id (does not throw)", () => {
+    expect(() => store.updateMemoryContent(99999, "content", [])).not.toThrow();
+  });
+
+  it("does not modify other fields", () => {
+    const memId = store.insertMemory({
+      content: "Preserve fields.",
+      importance: 0.8,
+      is_protected: false,
+    });
+
+    store.updateMemoryContent(memId, "New content.", ["t"]);
+
+    const mem = store.getMemory(memId);
+    // importance and is_protected should be unchanged.
+    expect(mem!.importance).toBeCloseTo(0.8, 3);
+    expect(mem!.is_protected).toBe(false);
+  });
+});

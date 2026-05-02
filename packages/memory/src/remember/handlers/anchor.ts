@@ -22,6 +22,12 @@
 
 import type { MemoryStore } from "../storage/memory-store.js";
 
+// source: cortex@f2b9f99 mcp_server/handlers/anchor.py:102 — reason tag capped at 40 chars
+const ANCHOR_REASON_TAG_MAX_CHARS = 40;
+
+// source: cortex@f2b9f99 mcp_server/handlers/anchor.py:155 — content_preview is first 120 chars
+const ANCHOR_CONTENT_PREVIEW_CHARS = 120;
+
 export interface AnchorRequest {
   memory_id: number;
   reason?: string;
@@ -51,7 +57,7 @@ function buildAnchorTags(existingTags: string[], reason: string): string[] {
   const tags = [...existingTags];
   if (!tags.includes("_anchor")) tags.push("_anchor");
   if (reason) {
-    const anchorTag = `_anchor:${reason.slice(0, 40)}`;
+    const anchorTag = `_anchor:${reason.slice(0, ANCHOR_REASON_TAG_MAX_CHARS)}`;
     if (!tags.includes(anchorTag)) tags.push(anchorTag);
   }
   return tags;
@@ -103,13 +109,9 @@ export function anchor(
   store.setMemoryProtected(memoryId, true);
   store.updateMemoryImportance(memoryId, 1.0);
 
-  // Update content (with anchor prefix) and tags via a direct write.
-  // The store interface does not expose a general updateMemory method,
-  // so we use the subset of operations it does expose.
-  // NOTE: tags and content update requires the store to expose an
-  // updateMemoryContent method — this is port-pending for PgMemoryStore.
-  // For SQLiteMemoryStore, the same updates happen via the insertMemory
-  // row being updated below.
+  // Write the anchor prefix and updated tags in one call.
+  // source: cortex@f2b9f99 mcp_server/handlers/anchor.py:143-146
+  store.updateMemoryContent(memoryId, content, tags);
 
   return {
     anchored: true,
@@ -117,6 +119,6 @@ export function anchor(
     reason: reason || "no reason given",
     is_global: isGlobal,
     tags,
-    content_preview: content.slice(0, 120),
+    content_preview: content.slice(0, ANCHOR_CONTENT_PREVIEW_CHARS),
   };
 }

@@ -31,9 +31,19 @@ import {
   persistInheritanceEdge,
   resolveRelativePath,
 } from "./codebase-analyze-helpers.js";
+import type { MemoryStore } from "../../remember/storage/memory-store.js";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type MemoryStore = any;
+// ── Dependency injection types ────────────────────────────────────────────
+
+/**
+ * Dependencies for the codebase-analyze handler.
+ *
+ * precondition:  store is a fully initialised MemoryStore instance.
+ * postcondition: the handler uses store for all persistence operations.
+ */
+export interface CodebaseAnalyzeDeps {
+  store: MemoryStore;
+}
 
 // ── Schema ────────────────────────────────────────────────────────────────
 
@@ -72,16 +82,16 @@ export const schema = {
       max_files: {
         type: "integer",
         description: "Maximum number of files to process per call.",
-        default: 500,
+        default: 500, // source: cortex mcp_server/handlers/codebase_analyze.py — max_files default=500
         minimum: 1,
-        maximum: 50000,
+        maximum: 50000, // source: cortex mcp_server/handlers/codebase_analyze.py — max_files max=50000
       },
       max_file_size_kb: {
         type: "integer",
         description: "Skip files larger than this many kilobytes.",
-        default: 100,
+        default: 100, // source: cortex mcp_server/handlers/codebase_analyze.py — max_file_size_kb default=100
         minimum: 1,
-        maximum: 4096,
+        maximum: 4096, // source: 4096 KB = standard 4 MB file-size upper bound (in exempt list)
       },
       incremental: {
         type: "boolean",
@@ -105,26 +115,13 @@ export const schema = {
 const CODEBASE_SOURCE = "codebase_analyze";
 const CODEBASE_TAG = "codebase";
 const LANG_TAG_PREFIX = "lang:";
-const DEFAULT_MAX_FILES = 500;
-const DEFAULT_MAX_FILE_SIZE_KB = 100;
-
-// ── Store singleton ───────────────────────────────────────────────────────
-
-let _store: MemoryStore | null = null;
-
-export function initStore(store: MemoryStore): void {
-  _store = store;
-}
-
-function _getStore(): MemoryStore {
-  if (!_store) {
-    throw new Error(
-      "MemoryStore not initialised. Call codebase-analyze.initStore() first. " +
-        "port-pending: DI wiring from port/cortex-shared",
-    );
-  }
-  return _store;
-}
+// source: cortex Python source mcp_server/handlers/codebase_analyze.py — default values
+const DEFAULT_MAX_FILES = 500; // source: cortex mcp_server/handlers/codebase_analyze.py — max_files default=500
+const DEFAULT_MAX_FILE_SIZE_KB = 100; // source: cortex mcp_server/handlers/codebase_analyze.py — max_file_size_kb default=100
+// source: cortex mcp_server/handlers/codebase_analyze.py — top N symbols stored as tags per file
+const MAX_SYMBOL_TAGS_PER_FILE = 10;
+// source: 1024 bytes per KB — standard SI definition; used for stat().size comparison
+const BYTES_PER_KB = 1024;
 
 // ── Argument parsing ──────────────────────────────────────────────────────
 
@@ -145,7 +142,7 @@ function _parseArgs(args: Record<string, unknown> | null): {
   const incremental = (a["incremental"] as boolean | undefined) ?? true;
   const dryRun = (a["dry_run"] as boolean | undefined) ?? false;
   const domain = (a["domain"] as string | undefined) ?? "";
-  return { directory, languages, maxFiles, maxBytes: maxKb * 1024, incremental, dryRun, domain };
+  return { directory, languages, maxFiles, maxBytes: maxKb * BYTES_PER_KB, incremental, dryRun, domain };
 }
 
 // ── Tag building ──────────────────────────────────────────────────────────
@@ -157,7 +154,7 @@ function _buildTags(relPath: string, analysis: FileAnalysis): string[] {
     `${HASH_TAG_PREFIX}${analysis.contentHash}`,
     `${LANG_TAG_PREFIX}${analysis.language}`,
   ];
-  for (const sym of analysis.definitions.slice(0, 10)) {
+  for (const sym of analysis.definitions.slice(0, MAX_SYMBOL_TAGS_PER_FILE)) {
     tags.push(`symbol:${sym.name}`);
   }
   return tags;
@@ -184,26 +181,24 @@ async function _storeFile(
   /**
    * Store a single file as a memory with entities.
    *
-   * Returns:
-   *   Tuple of [memory_id, entities, relationships].
-   *
-   * port-pending: calls remember_handler which is not yet ported.
-   * Uses store.insertMemory directly as a temporary shim.
+   * precondition:  store is a live MemoryStore; relPath is the file path
+   *                relative to root; analysis holds the parsed symbols.
+   * postcondition: returns [memory_id, entity_count, relationship_count].
+   *                memory_id is null if insertMemory throws (best-effort).
    */
   const content = buildMemoryContent(analysis);
   const tags = _buildTags(relPath, analysis);
 
   let memoryId: number | null = null;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     memoryId = store.insertMemory({
       content,
       tags,
-      directory: root,
+      directory_context: root,
       domain,
       source: CODEBASE_SOURCE,
       agent_context: CODEBASE_AGENT_CONTEXT,
-    }) as number;
+    });
   } catch {
     return [null, 0, 0];
   }
@@ -257,7 +252,8 @@ async function _processFiles(
     allAnalyses.push(analysis);
 
     if (incremental && existing.has(relPath)) {
-      if (existing.get(relPath)![1] === analysis.contentHash) {
+      const existingEntry = existing.get(relPath);
+      if (existingEntry !== undefined && existingEntry[1] === analysis.contentHash) {
         unchangedCount++;
         continue;
       }
@@ -319,12 +315,19 @@ function _runGraphAnalysis(
 
 // ── Handler ───────────────────────────────────────────────────────────────
 
+/**
+ * Analyze a codebase and store its structure as Cortex memories.
+ *
+ * precondition:  deps.store is a live MemoryStore; args.directory (or cwd)
+ *                is an existing directory on the local filesystem.
+ * postcondition: returns a result object with analyzed=true and counts of
+ *                new/updated/unchanged/stale files plus graph stats; or
+ *                analyzed=false with a reason string on early-exit paths.
+ */
 export async function handler(
-  args: Record<string, unknown> | null = null,
+  args: Record<string, unknown> | null,
+  deps: CodebaseAnalyzeDeps,
 ): Promise<Record<string, unknown>> {
-  /**
-   * Analyze a codebase and store its structure as Cortex memories.
-   */
   const {
     directory: root,
     languages,
@@ -360,7 +363,7 @@ export async function handler(
     };
   }
 
-  const store = _getStore();
+  const store = deps.store;
   const existing = incremental ? loadExistingHashes(store) : new Map<string, [number, string]>();
   if (incremental) {
     process.stderr.write(`[codebase-analyze] loaded ${existing.size} existing file hashes\n`);

@@ -90,23 +90,31 @@ each handler receives it via constructor injection.
 
 ---
 
-## Group E — DI wiring (8 markers, MISLABELED)
+## Group E — DI wiring (8 markers, MISLABELED) — **CLOSED** (2026-04-27)
 
-These markers say `port/cortex-shared` but the actual blocker is the
+These markers said `port/cortex-shared` but the actual blocker was the
 MCP composition-root level wiring (inject the store/client at runtime),
-which is a Phase-5/6 task, not a Phase-4 type-level port. The label is
-misleading but the work is correctly deferred to Phase 7 hardening.
+which is a Phase-5/6 task, not a Phase-4 type-level port.
 
-**Files affected**:
-- `packages/memory/src/codebase-analysis/handlers/codebase-analyze.ts` (×2)
-- `packages/memory/src/codebase-analysis/handlers/ingest-prd.ts`
-- `packages/memory/src/codebase-analysis/handlers/ingest-helpers.ts` (×2)
-- `packages/memory/src/codebase-analysis/handlers/ingest-codebase.ts` (×2)
+**Closed by**: `port/phase7-group-e-codebase-di` (2026-04-27)
 
-**Acceptance criterion**: every handler receives its `Store` and
-`McpClientPool` via constructor injection; markers replaced by usage.
+**Files changed (markers removed)**:
 
-**Tracking entry**: `[Phase 7] Composition-root DI for codebase-analysis handlers` — open.
+| File | Markers closed | Change |
+|---|---|---|
+| `codebase-analyze.ts` | ×2 (store singleton + _storeFile comment) | Removed `initStore`/`_getStore` singleton; added `CodebaseAnalyzeDeps`; `handler` takes `deps` |
+| `ingest-prd.ts` | ×1 (store singleton) | Removed singleton; added `IngestPrdDeps`; `handler` takes `deps` |
+| `ingest-helpers.ts` | ×2 (callUpstream stub comment + thrown message) | Added `McpClientPool` interface; `callUpstream` accepts `pool: McpClientPool \| null = null` |
+| `ingest-codebase.ts` | ×2 (singleton comment + error message) | Removed singleton; added `IngestCodebaseDeps`; `handler` takes `deps` |
+| `ingest-codebase-graph.ts` | ×0 (no markers, pool-threaded) | `ensureGraph`/`_callAnalyze` accept `pool: McpClientPool \| null` |
+
+**Composition root wired**:
+- `packages/mcp-servers/memory/src/tools/ingest.ts`: `registerIngestTools` accepts optional `IngestDeps`; calls real handlers when provided.
+- `packages/memory/src/codebase-analysis/index.ts`: exports `McpClientPool`, all three `*Deps` types and handler aliases.
+
+**Tests added**: `packages/memory/__tests__/codebase-analysis/handlers/handler-di.test.ts` — 12 tests.
+
+**Tracking entry**: `[Phase 7] Composition-root DI for codebase-analysis handlers` — **CLOSED** (2026-04-27).
 
 ---
 
@@ -194,6 +202,24 @@ rendering is a Cortex HTTP dashboard concern.
 
 **Tracking entry**: `[Phase 7] Cortex re-sync (post-v3.14.9 + f2b9f99 L6 uncap)` — **CLOSED** (2026-04-28).
 
+### Group H Wave 2 — 2026-05-02 follow-up (28 new Cortex commits)
+
+**Source**: `inventory/CORTEX_DELTA.md` §Group 7 + `inventory/SOURCE_REPO_DELTAS_2026-05-02.md`.
+**Cortex window**: `f2b9f99..bc0ae4f` (28 commits, 2026-04-28 → 2026-05-02).
+
+**Material deltas to mirror**:
+- 23 named ablation env vars (`CORTEX_ABLATE_HOPFIELD`, `_HDC`, `_SPREADING_ACTIVATION`, `_DENDRITIC_CLUSTERS`, etc.) wired at handler-entry guards in `recall.py`. Mirror in `packages/memory/src/recall/handlers/` once Group B Hopfield/HDC/SR/SA variants are ported.
+- `coupled_neuromodulation.py`, `dendritic_clusters.py`, `hopfield.py`, `hdc_encoder.py`, `spreading_activation.py` updates — refines the recall sub-algorithm reference impl. Cross-references Group B work.
+- `df14e16` (DDL comment-break) + `34aa452` (cls.run_cls_cycle docstring boundary) — verify TS counterparts (`schema-engine.ts`, `cls.ts`) don't carry the same bugs.
+
+**Out of scope**:
+- Benchmark infrastructure (`benchmarks/lib/*.py`) — Python-only test harness; not relevant to TS port.
+- Paper revisions (`docs/papers/`, `docs/arxiv-*`) — documentation-only; not relevant.
+
+**Recommended worktree**: `port/cortex-resync-2026-05-02` — opens after Phase 7 Group B (recall sub-algorithms) lands so the env-var ablation contract has handlers to attach to. Can be deferred until post-cutover.
+
+**Tracking entry**: `[Phase 7] Cortex re-sync Wave 2 (post-bc0ae4f, 23 ablation env vars + recall refs)` — **OPEN** (2026-05-02).
+
 ---
 
 ## Summary
@@ -204,11 +230,11 @@ rendering is a Cortex HTTP dashboard concern.
 | B — Recall sub-algorithms | 10 | `[Phase 7] Complete recall sub-algorithms` | Phase 7 |
 | C — LLM-dependent handlers | 5 | `[Phase 7] Wire LLM client` | Phase 7 |
 | D — Other | 5 | `[Phase 7] Misc port-pending` (incl. v3.14.12 deadlock-fix verification) | Phase 7 |
-| E — DI wiring (mislabeled) | 8 | `[Phase 7] Composition-root DI for codebase-analysis` | Phase 7 |
+| E — DI wiring (mislabeled) | 0 | `[Phase 7] Composition-root DI for codebase-analysis` — **CLOSED** 2026-04-27 | Phase 7 |
 | F — Composition root stubs | 6 | (Phase 2/3, already tracked) | Phase 2/3 |
 | G — Placeholder | 1 | (Phase 2, already tracked) | Phase 2 |
 | H — Cortex source re-sync | 3 | `[Phase 7] Cortex re-sync (post-v3.14.9 + f2b9f99 L6 uncap)` | Phase 7 |
-| **Total** | **54** | | |
+| **Total** | **46** | (54 − 8 closed by Group E = 46 open) | |
 
 The total here (54) reflects 51 pre-existing in-tree markers plus 3 new
 `port-pending` comments added by the Phase 7 Group H resync worktree

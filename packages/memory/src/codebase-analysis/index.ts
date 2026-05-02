@@ -31,3 +31,34 @@ export * from "./ast-extractors-extra.js";
 export { isAvailable, parseFileAst } from "./ast-parser.js";
 export * from "./scanner-parse.js";
 export * from "./scanner.js";
+
+// ── Handler public API (deps types + handlers) ──────────────────────────────
+// Phase 7 Group E: composition-root DI wiring types. Exported here so the
+// MCP composition root (packages/mcp-servers/memory) can import them via the
+// @agentic/memory namespace without deep path imports.
+export {
+  type McpClientPool,
+  CODE_GRAPH_TAG_PREFIX,
+  projectKey,
+  codeGraphTag,
+  findCachedGraph,
+  memoiseGraphPath,
+  callUpstream,
+  normaliseMcpPayload,
+  McpConnectionError,
+} from "./handlers/ingest-helpers.js";
+export {
+  handler as codebaseAnalyzeHandler,
+  type CodebaseAnalyzeDeps,
+  schema as codebaseAnalyzeSchema,
+} from "./handlers/codebase-analyze.js";
+export {
+  handler as ingestCodebaseHandler,
+  type IngestCodebaseDeps,
+  schema as ingestCodebaseSchema,
+} from "./handlers/ingest-codebase.js";
+export {
+  handler as ingestPrdHandler,
+  type IngestPrdDeps,
+  schema as ingestPrdSchema,
+} from "./handlers/ingest-prd.js";

@@ -19,6 +19,10 @@ export * from "./ports/codebase-outputs.js";
 // Typed CodebasePort errors (split for §4.1).
 export * from "./ports/codebase-errors.js";
 
+// LlmClient port — single-turn completion interface for narrative + wiki handlers.
+// source: docs/PHASE_7_TRACKING.md §Group C
+export * from "./ports/llm-client.js";
+
 // Legacy placeholder — kept so existing consumers of `__PLACEHOLDER__` don't
 // hard-fail until the full `port/core-types` migration completes.
 export const __PLACEHOLDER__ = true;
