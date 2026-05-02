@@ -40,6 +40,52 @@ vi.mock("../../src/hooks/db.js", () => ({
   bumpHeatBySymbols: vi.fn().mockResolvedValue(0),
 }));
 
+// Mock PgMemoryStore so post-tool-capture and compaction-checkpoint unit tests
+// never attempt a real PG connection. The mock records insertions for assertion.
+const mockInsertedRows: Array<{ content: string; tags: string[]; source: string }> = [];
+const mockCheckpointRows: string[] = [];
+
+vi.mock("../../src/remember/storage/pg-store.js", () => {
+  // Must use `function` (not arrow) so `new PgMemoryStore(...)` works.
+  function PgMemoryStore(): {
+    insertMemoryAsync: (data: { content: string; tags: string[]; source: string }) => Promise<number>;
+    runAsync: (fn: (c: { query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }> }) => Promise<unknown>) => Promise<unknown>;
+    close: () => Promise<void>;
+  } {
+    return {
+      insertMemoryAsync(data: { content: string; tags: string[]; source: string }): Promise<number> {
+        mockInsertedRows.push({ content: data.content, tags: data.tags, source: data.source });
+        return Promise.resolve(mockInsertedRows.length);
+      },
+      runAsync(fn: (c: { query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }> }) => Promise<unknown>): Promise<unknown> {
+        const fakeClient = {
+          query(_sql: string, params?: unknown[]): Promise<{ rows: unknown[] }> {
+            if (_sql.includes("INSERT INTO checkpoints")) {
+              mockCheckpointRows.push(String(params?.[0] ?? "unknown"));
+            }
+            return Promise.resolve({ rows: [] });
+          },
+        };
+        return fn(fakeClient);
+      },
+      close(): Promise<void> { return Promise.resolve(); },
+    };
+  }
+  return { PgMemoryStore };
+});
+
+// Mock runCascadeAdvancement so cascade never runs against a real DB in unit tests.
+vi.mock("../../src/consolidation/stages/cascade.js", () => ({
+  runCascadeAdvancement: vi.fn().mockResolvedValue({
+    advanced: 0,
+    scanned: 0,
+    heartbeats_written: 0,
+    heartbeats_skipped: 0,
+    transitions_count: 0,
+    transitions_preview: [],
+  }),
+}));
+
 import * as db from "../../src/hooks/db.js";
 import { processEvent as autoRecallProcess } from "../../src/hooks/auto-recall.js";
 import { processEvent as postToolCaptureProcess } from "../../src/hooks/post-tool-capture.js";
@@ -149,6 +195,11 @@ describe("auto-recall", () => {
 // ── post-tool-capture tests ───────────────────────────────────────────────
 
 describe("post-tool-capture", () => {
+  beforeEach(() => {
+    // Clear recorded rows between tests.
+    mockInsertedRows.length = 0;
+  });
+
   it("captures high-value Edit tool with sufficient output", async () => {
     const stderr: string[] = [];
     const origWrite = process.stderr.write.bind(process.stderr);
@@ -161,7 +212,14 @@ describe("post-tool-capture", () => {
 
     process.stderr.write = origWrite;
     const stderrOut = stderr.join("");
-    expect(stderrOut).toContain("would store Edit");
+    // Real wiring: should log "stored Edit" (not the stub "would store")
+    expect(stderrOut).toContain("stored Edit");
+    expect(stderrOut).not.toContain("would store");
+    // Verify a row was passed to insertMemoryAsync
+    expect(mockInsertedRows.length).toBeGreaterThanOrEqual(1);
+    expect(mockInsertedRows[0]?.source).toBe("tool");
+    expect(mockInsertedRows[0]?.tags).toContain("auto-captured");
+    expect(mockInsertedRows[0]?.tags).toContain("tool:edit");
   });
 
   it("captures light-value Read tool (input reference only)", async () => {
@@ -176,7 +234,12 @@ describe("post-tool-capture", () => {
 
     process.stderr.write = origWrite;
     const stderrOut = stderr.join("");
-    expect(stderrOut).toContain("would store Read");
+    // Real wiring: "stored Read" (not the stub "would store Read")
+    expect(stderrOut).toContain("stored Read");
+    expect(stderrOut).not.toContain("would store");
+    // Verify a row was inserted with correct tags
+    expect(mockInsertedRows.length).toBeGreaterThanOrEqual(1);
+    expect(mockInsertedRows[0]?.tags).toContain("tool:read");
   });
 
   it("skips low-value tools", async () => {
@@ -192,7 +255,8 @@ describe("post-tool-capture", () => {
     process.stderr.write = origWrite;
     const stderrOut = stderr.join("");
     expect(stderrOut).toContain("skip TodoRead");
-    expect(stderrOut).not.toContain("would store");
+    // No rows inserted for low-value tools
+    expect(mockInsertedRows.length).toBe(0);
   });
 });
 
@@ -240,7 +304,11 @@ describe("agent-briefing", () => {
 // ── compaction-checkpoint tests ───────────────────────────────────────────
 
 describe("compaction-checkpoint", () => {
-  it("runs without throwing on valid compaction event", async () => {
+  beforeEach(() => {
+    mockCheckpointRows.length = 0;
+  });
+
+  it("saves checkpoint and logs on valid compaction event", async () => {
     const stderr: string[] = [];
     const origWrite = process.stderr.write.bind(process.stderr);
     process.stderr.write = (chunk: unknown) => {
@@ -252,8 +320,27 @@ describe("compaction-checkpoint", () => {
 
     process.stderr.write = origWrite;
     const stderrOut = stderr.join("");
-    // Should log checkpoint save attempt
-    expect(stderrOut).toContain("checkpoint save");
+    // Real wiring: "checkpoint save: session_id=..." (not the stub message)
+    expect(stderrOut).toContain("checkpoint save: session_id=");
+    expect(stderrOut).not.toContain("stub");
+    // Verify a checkpoint row was recorded
+    expect(mockCheckpointRows.length).toBeGreaterThanOrEqual(1);
+    expect(mockCheckpointRows[0]).toBe(COMPACTION_EVENT.session_id);
+  });
+
+  it("saves checkpoint with auto-compaction session_id on null event", async () => {
+    const stderr: string[] = [];
+    const origWrite = process.stderr.write.bind(process.stderr);
+    process.stderr.write = (chunk: unknown) => {
+      stderr.push(String(chunk));
+      return true;
+    };
+
+    await compactionCheckpointProcess(null);
+
+    process.stderr.write = origWrite;
+    const stderrOut = stderr.join("");
+    expect(stderrOut).toContain("checkpoint save: session_id=auto-compaction");
   });
 
   it("runs without throwing on null event", async () => {
