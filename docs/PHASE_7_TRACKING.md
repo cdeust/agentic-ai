@@ -202,6 +202,24 @@ rendering is a Cortex HTTP dashboard concern.
 
 **Tracking entry**: `[Phase 7] Cortex re-sync (post-v3.14.9 + f2b9f99 L6 uncap)` — **CLOSED** (2026-04-28).
 
+### Group H Wave 2 — 2026-05-02 follow-up (28 new Cortex commits)
+
+**Source**: `inventory/CORTEX_DELTA.md` §Group 7 + `inventory/SOURCE_REPO_DELTAS_2026-05-02.md`.
+**Cortex window**: `f2b9f99..bc0ae4f` (28 commits, 2026-04-28 → 2026-05-02).
+
+**Material deltas to mirror**:
+- 23 named ablation env vars (`CORTEX_ABLATE_HOPFIELD`, `_HDC`, `_SPREADING_ACTIVATION`, `_DENDRITIC_CLUSTERS`, etc.) wired at handler-entry guards in `recall.py`. Mirror in `packages/memory/src/recall/handlers/` once Group B Hopfield/HDC/SR/SA variants are ported.
+- `coupled_neuromodulation.py`, `dendritic_clusters.py`, `hopfield.py`, `hdc_encoder.py`, `spreading_activation.py` updates — refines the recall sub-algorithm reference impl. Cross-references Group B work.
+- `df14e16` (DDL comment-break) + `34aa452` (cls.run_cls_cycle docstring boundary) — verify TS counterparts (`schema-engine.ts`, `cls.ts`) don't carry the same bugs.
+
+**Out of scope**:
+- Benchmark infrastructure (`benchmarks/lib/*.py`) — Python-only test harness; not relevant to TS port.
+- Paper revisions (`docs/papers/`, `docs/arxiv-*`) — documentation-only; not relevant.
+
+**Recommended worktree**: `port/cortex-resync-2026-05-02` — opens after Phase 7 Group B (recall sub-algorithms) lands so the env-var ablation contract has handlers to attach to. Can be deferred until post-cutover.
+
+**Tracking entry**: `[Phase 7] Cortex re-sync Wave 2 (post-bc0ae4f, 23 ablation env vars + recall refs)` — **OPEN** (2026-05-02).
+
 ---
 
 ## Summary
