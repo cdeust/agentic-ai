@@ -190,42 +190,71 @@ describe("wikiRefineHandler — LlmClient injection", () => {
   });
 });
 
-// ── Tests: wikiSynthesizeHandler graceful degradation ─────────────────────────
+// ── Tests: wikiSynthesizeHandler real implementation (CRIT-B fix) ─────────────
+//
+// CRIT-B Phase 7: wikiSynthesizeHandler is now a real implementation.
+// Without a WikiDbClient it throws PortPendingError (NOT returns stub zeros).
 
-describe("wikiSynthesizeHandler — LLM gate resolved", () => {
-  it("returns a structured result (no longer throws) regardless of llmClient", async () => {
-    const { wikiSynthesizeHandler } = await import("../../src/wiki/handlers/wiki-stubs.js");
-    const result = await wikiSynthesizeHandler({}, null);
-    expect(result.error_count).toBe(0);
-    expect(result.note).toContain("Phase 7 Group C");
+describe("wikiSynthesizeHandler — CRIT-B real implementation", () => {
+  it("throws PortPendingError when db is null (correct contract)", async () => {
+    const { wikiSynthesizeHandler, PortPendingError } = await import("../../src/wiki/handlers/wiki-handlers.js");
+    await expect(wikiSynthesizeHandler({}, null, null)).rejects.toThrow(PortPendingError);
   });
 
-  it("accepts llmClient without error", async () => {
-    const { wikiSynthesizeHandler } = await import("../../src/wiki/handlers/wiki-stubs.js");
+  it("PortPendingError names WikiDbClient as the missing dependency", async () => {
+    const { wikiSynthesizeHandler, PortPendingError } = await import("../../src/wiki/handlers/wiki-handlers.js");
+    const err = await wikiSynthesizeHandler({}, null, null).catch((e) => e);
+    expect(err).toBeInstanceOf(PortPendingError);
+    expect(err.message).toContain("WikiDbClient");
+  });
+
+  it("does not call llmClient.complete in the Path A (template-driven) pass", async () => {
+    const { wikiSynthesizeHandler } = await import("../../src/wiki/handlers/wiki-handlers.js");
     const mockClient = makeMockLlmClient("polished");
-    const result = await wikiSynthesizeHandler({}, mockClient);
-    // postcondition: LLM client is accepted but unused until pg_store_wiki lands
+
+    // Provide a minimal stub db that returns no candidates → handler returns 0 counts
+    const stubDb = {
+      query: async () => ({ rows: [], rowCount: 0 }),
+    };
+
+    const result = await wikiSynthesizeHandler({}, mockClient, stubDb);
+    // Path A is template-driven: LLM client must NOT be called
     expect(mockClient.complete).not.toHaveBeenCalled();
-    expect(result.note).toContain("Phase 7 Group C");
+    // With no candidates, returns real zero counts (not hardcoded zeros — computed)
+    expect(result.memories_processed).toBe(0);
+    expect(typeof result.drafts_created).toBe("number");
   });
 });
 
-// ── Tests: wikiPipelineHandler graceful degradation ───────────────────────────
+// ── Tests: wikiPipelineHandler real implementation (CRIT-B fix) ───────────────
+//
+// CRIT-B Phase 7: wikiPipelineHandler now returns real stages + stages_run,
+// capturing PortPendingError per stage rather than returning a fake success.
 
-describe("wikiPipelineHandler — LLM gate resolved", () => {
-  it("returns structured result noting LLM client status when absent", async () => {
-    const { wikiPipelineHandler } = await import("../../src/wiki/handlers/wiki-stubs.js");
-    const result = await wikiPipelineHandler({}, null);
-    expect(result.note).toContain("LLM client absent");
-    expect(result.note).toContain("Phase 7 Group C");
+describe("wikiPipelineHandler — CRIT-B real implementation", () => {
+  it("returns stages object with per-stage results (not a note string)", async () => {
+    const { wikiPipelineHandler } = await import("../../src/wiki/handlers/wiki-handlers.js");
+    const result = await wikiPipelineHandler({}, null, null);
+    expect(result.stages).toBeDefined();
+    expect(typeof result.stages).toBe("object");
   });
 
-  it("returns structured result noting LLM client available when present", async () => {
-    const { wikiPipelineHandler } = await import("../../src/wiki/handlers/wiki-stubs.js");
-    const mockClient = makeMockLlmClient("x");
-    const result = await wikiPipelineHandler({}, mockClient);
-    expect(result.note).toContain("LLM client available");
-    expect(result.note).toContain("Phase 7 Group C");
+  it("stages_run is an array (empty when all are port-pending)", async () => {
+    const { wikiPipelineHandler } = await import("../../src/wiki/handlers/wiki-handlers.js");
+    const result = await wikiPipelineHandler({}, null, null);
+    expect(Array.isArray(result.stages_run)).toBe(true);
+  });
+
+  it("extract stage shows port-pending status", async () => {
+    const { wikiPipelineHandler } = await import("../../src/wiki/handlers/wiki-handlers.js");
+    const result = await wikiPipelineHandler({}, null, null);
+    expect(result.stages["extract"]?.status).toBe("port-pending");
+  });
+
+  it("synthesize stage shows port-pending when db is null", async () => {
+    const { wikiPipelineHandler } = await import("../../src/wiki/handlers/wiki-handlers.js");
+    const result = await wikiPipelineHandler({}, null, null);
+    expect(result.stages["synthesize"]?.status).toBe("port-pending");
   });
 });
 

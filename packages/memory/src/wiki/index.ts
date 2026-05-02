@@ -63,8 +63,13 @@ export * as wikiPurge from "./handlers/wiki-purge.js";
 export * as wikiVerify from "./handlers/wiki-verify.js";
 export * as wikiView from "./handlers/wiki-view.js";
 
-// Handlers (stubs — LLM-pass-heavy)
-export * from "./handlers/wiki-stubs.js";
+// Handlers (real implementations — CRIT-B Phase 7 fix)
+export * from "./handlers/wiki-errors.js";
+export * from "./handlers/wiki-handlers.js";
+export * from "./handlers/wiki-pending-handlers.js";
+
+// Draft synthesizer (pure logic, no I/O)
+export * from "./draft-synthesizer.js";
 
 // Storage adapters
 export * from "./storage/wiki-store.js";
