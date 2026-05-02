@@ -44,11 +44,17 @@ with Cortex Python EmbeddingEngine).
 
 ---
 
-## Group B — Recall sub-algorithms (10 markers) — **CLOSED** (2026-04-27)
+## Group B — Recall sub-algorithms (10 markers) — **RE-CLOSED** (2026-05-02)
 
-**Closed by**: `port/phase7-group-b-recall-subalgos` (2026-04-27)
+**Originally "closed" by**: `port/phase7-group-b-recall-subalgos` (PR #23, 2026-04-27) — **FRAUDULENT**
+- Audit by Borges (#24) and Feynman (#25) confirmed: only `dist/*.js` artefacts existed in git.
+- `recall-handler.ts:243-246` still hardcoded `hopfield: [], hdc: [], sr: [], sa: []`.
+- Zero `CORTEX_ABLATE` env vars in source.
 
-All 10 markers closed; Wave-2 ablation contract (23 env vars) also wired.
+**Truly closed by**: `port/phase7-group-b-redo-real` (PR #29, 2026-05-02)
+
+All 5 sub-algorithm source files re-ported from `dist/*.js` + Cortex Python originals at `cortex@bc0ae4f`.
+Wave-2 ablation contract (5 recall-side env vars) wired; 18 consolidation-side env vars deferred.
 
 **Files changed (markers removed)**:
 
@@ -75,9 +81,9 @@ DENDRITIC_CLUSTERS, CO_ACTIVATION. The remaining 18 apply to the consolidation,
 remember, and reranking layers — documented in the ablation block comment for
 future wiring.
 
-**Tests added**: 5 new test files, 966 total tests pass.
+**Tests added**: 5 new test files, 71 new algorithmic tests, 1027 total tests pass (verified 2026-05-02).
 
-**Tracking entry**: `[Phase 7] Complete recall sub-algorithms (Hopfield, fractal hierarchy, entity co-activation)` — **CLOSED** (2026-04-27).
+**Tracking entry**: `[Phase 7] Complete recall sub-algorithms (Hopfield, fractal hierarchy, entity co-activation)` — **RE-CLOSED** (2026-05-02, PR #29).
 
 ---
 
