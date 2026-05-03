@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# .husky/pre-push — Husky pre-push gate for the agentic-ai monorepo.
+#
+# Runs the SAME hard gates CI would run, BEFORE the push leaves the laptop.
+# Goal: never burn GitHub Actions minutes on a push that would fail in CI.
+#
+# CI gates (in .github/workflows/ci.yml job order):
+#   1. pnpm install --frozen-lockfile
+#   2. pnpm build
+#   3. pnpm layer-check
+#   4. pnpm source-citation-check
+#   5. pnpm audit-migration
+#   6. pnpm test
+#   7. plugin manifest lint (cheap; skipped here — re-run in CI)
+#
+# Bypass:
+#   git push --no-verify           # one-off skip (e.g. branch deletion)
+#   PRE_PUSH_SKIP_TESTS=1 git push # skip just `pnpm test` (~30s saved)
+#   HUSKY=0 git push               # disable all hooks
+#
+# source: 2026-05-03 directive — GitHub Actions billing limits hit twice in 5
+# days because failed CI runs (lint OOM, lockfile drift, hardcoded paths,
+# duplicate-symbol link errors, fraudulent commits) burned ~2000 minutes
+# across PRs #18-#29. Local pre-push gate catches all of those before push.
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+cd "$REPO_ROOT"
+
+# ── Skip on branch deletion (push of nothing) ────────────────────────────────
+# git pre-push receives "<local ref> <local sha> <remote ref> <remote sha>"
+# on stdin; a deletion has local sha = 0000000…
+zero="0000000000000000000000000000000000000000"
+all_deletions=true
+while read -r _local_ref local_sha _remote_ref _remote_sha; do
+  if [[ "$local_sha" != "$zero" ]]; then
+    all_deletions=false
+    break
+  fi
+done
+
+if [[ "$all_deletions" == "true" ]]; then
+  echo "pre-push: branch deletion — skipping gates." >&2
+  exit 0
+fi
+
+start=$(date +%s)
+banner() {
+  printf "\n=== pre-push: [%s] %s ===\n" "$1" "$2" >&2
+}
+
+# ── Gate 1: lockfile + install ───────────────────────────────────────────────
+banner "1/6" "pnpm install --frozen-lockfile (lockfile sync assertion)"
+pnpm install --frozen-lockfile
+
+# ── Gate 2: build (the most-common CI failure on this repo) ──────────────────
+banner "2/6" "pnpm build (TS + Rust workspace)"
+pnpm build
+
+# ── Gate 3: layer check ──────────────────────────────────────────────────────
+banner "3/6" "pnpm layer-check (Clean Architecture dependency rule)"
+pnpm layer-check
+
+# ── Gate 4: source-citation check ────────────────────────────────────────────
+banner "4/6" "pnpm source-citation-check"
+pnpm source-citation-check
+
+# ── Gate 5: migration audit (cheap; protects port-pending tracking) ──────────
+banner "5/6" "pnpm audit-migration"
+pnpm audit-migration
+
+# ── Gate 6: tests (skip with PRE_PUSH_SKIP_TESTS=1 in a pinch) ───────────────
+if [[ "${PRE_PUSH_SKIP_TESTS:-0}" == "1" ]]; then
+  banner "6/6" "tests SKIPPED (PRE_PUSH_SKIP_TESTS=1)"
+else
+  banner "6/6" "pnpm test"
+  pnpm test
+fi
+
+elapsed=$(( $(date +%s) - start ))
+printf "\npre-push: all 6 gates passed in %ss — push is safe.\n" "$elapsed" >&2
