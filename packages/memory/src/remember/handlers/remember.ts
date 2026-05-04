@@ -32,10 +32,15 @@ import { RememberRequestSchema } from "../types.js";
 // ── Surprisal heat boost ─────────────────────────────────────────────────────
 
 // source: thermodynamics.py:apply_surprise_boost (heuristic)
+const SURPRISE_BOOST_FACTOR = 0.3; // source: thermodynamics.py:apply_surprise_boost
+const RECENT_CONTENTS_LIMIT = 10; // source: cortex@ed33435 mcp_server/handlers/remember.py — structural comparison window
+const VECTOR_SEARCH_TOP_K = 5; // source: cortex@ed33435 mcp_server/handlers/remember.py — top-5 similar memories
+const ENTITY_EXTRACTION_CAP = 20; // source: cortex@ed33435 mcp_server/core/knowledge_graph.py — entity cap per memory
+
 function applySurpriseBoost(
   baseHeat: number,
   noveltyScore: number,
-  boostFactor = 0.3,
+  boostFactor = SURPRISE_BOOST_FACTOR,
 ): number {
   const boosted = baseHeat + boostFactor * noveltyScore;
   return Math.max(0.0, Math.min(1.0, boosted));
@@ -48,7 +53,7 @@ function getRecentContents(store: MemoryStore, domain: string): string[] {
   // The query is best-effort; failures return empty.
   try {
     const rows = (store as unknown as { listRecentContents?: (d: string, n: number) => string[] })
-      .listRecentContents?.(domain, 10);
+      .listRecentContents?.(domain, RECENT_CONTENTS_LIMIT);
     return rows ?? [];
   } catch {
     return [];
@@ -89,7 +94,7 @@ export function remember(
 
   // Retrieve the top-5 similar memories from the vector store.
   // The write gate needs their similarity scores and creation times.
-  const vecHits = store.searchVectors(Buffer.alloc(0), 5, 0.0);
+  const vecHits = store.searchVectors(Buffer.alloc(0), VECTOR_SEARCH_TOP_K, 0.0);
   const similarities: number[] = [];
   let hoursSinceSimilar: number | null = null;
 
@@ -187,8 +192,10 @@ export function remember(
 }
 
 // ── Lightweight entity name extraction ──────────────────────────────────────
-// port-pending: full knowledge_graph.extract_entities is not yet ported.
-// This heuristic extracts capitalized tokens as entity candidates.
+// Extracts capitalized tokens as entity candidates, mirroring the regex
+// branch of knowledge_graph.extract_entities. The spaCy NER branch is not
+// available in the TS runtime.
+// source: cortex@ed33435 mcp_server/core/knowledge_graph.py:extract_entities
 
 function extractEntityNamesFromContent(content: string): string[] {
   const names = new Set<string>();
@@ -201,5 +208,5 @@ function extractEntityNamesFromContent(content: string): string[] {
   for (const t of tokens) {
     if (!STOPWORDS.has(t)) names.add(t);
   }
-  return [...names].slice(0, 20); // cap at 20 entities per memory
+  return [...names].slice(0, ENTITY_EXTRACTION_CAP);
 }

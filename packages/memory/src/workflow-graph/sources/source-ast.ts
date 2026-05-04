@@ -18,10 +18,11 @@
  *
  * AP bridge dependency: the Python original uses APBridge (subprocess IPC to
  * the automatised-pipeline Rust binary). The TS port delegates to callUpstream
- * from ingest-helpers, which routes through the MCP client pool (port-pending:
- * mcp_client_pool). Until the pool is wired, every AP call throws
- * McpConnectionError and the loader returns [] gracefully. The public API is
- * identical to the Python original; callers see the correct degraded behavior.
+ * from ingest-helpers, which routes through the MCP client pool. Until the
+ * pool is wired at runtime, every AP call throws McpConnectionError and the
+ * loader returns [] gracefully. The public API is identical to the Python
+ * original; callers see the correct degraded behavior. The MCP pool wiring
+ * is tracked separately in the orchestrator integration work.
  *
  * Peer of source-jsonl.ts, source-native-ast.ts, source-pg.ts.
  * Pure infrastructure — no core imports.
@@ -257,7 +258,7 @@ export class WorkflowGraphASTSource {
    * its MCP connection across calls.
    *
    * pre:  constructor can be called unconditionally; enabled() guards queries
-   * post: loadSymbols / loadAstEdges return [] when AP is disabled / unreachable
+   * post: loadSymbolsAsync / loadAstEdgesAsync return [] when AP is disabled / unreachable
    *
    * source: cortex@f2b9f99 workflow_graph_source_ast.py:250-268
    */
@@ -300,16 +301,6 @@ export class WorkflowGraphASTSource {
     return out;
   }
 
-  // Sync façade — retained for callers that don't await.
-  // WARNING: this runs the async work synchronously via a micro-task drain.
-  // Prefer loadSymbolsAsync() in new code.
-  loadSymbols(filePaths: Iterable<string>): Record<string, unknown>[] {
-    // port-pending: sync façade over async AP calls. Returns [] immediately;
-    // callers that need AP data must use loadSymbolsAsync().
-    void this.loadSymbolsAsync(filePaths);
-    return [];
-  }
-
   async loadAstEdgesAsync(filePaths: Iterable<string>): Promise<Record<string, unknown>[]> {
     /**
      * Return CALLS / IMPORTS / MEMBER_OF / USES edges across every project graph.
@@ -335,14 +326,6 @@ export class WorkflowGraphASTSource {
       }
     }
     return out;
-  }
-
-  // Sync façade — retained for callers that don't await.
-  loadAstEdges(filePaths: Iterable<string>): Record<string, unknown>[] {
-    // port-pending: sync façade over async AP calls. Returns [] immediately;
-    // callers that need AP data must use loadAstEdgesAsync().
-    void this.loadAstEdgesAsync(filePaths);
-    return [];
   }
 
   async searchCodebase(
