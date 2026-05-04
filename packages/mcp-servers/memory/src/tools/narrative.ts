@@ -4,32 +4,46 @@
  * Tools registered (3):
  *   narrative, get_project_story, unified_search
  *
- * Phase 7 Group C: LlmClient is now accepted as an optional dependency.
- * The MemoryStore adapter is still a Phase 5 stub; the LLM client enables
- * the prose-polish pass once both are wired.
+ * Phase 7 Group C + D — DI wiring: MemoryPort store and LlmClient are now
+ * injected via NarrativeDeps. Each tool body calls the real domain handler.
+ * No stub paths remain.
  *
  * source: worktrees/port-inventory-cortex/inventory/MCP_TOOLS.md
  *         §Tier1Memory (narrative), §Tier2Advanced (get_project_story),
  *         §Tier1Memory (unified_search)
+ * source: packages/memory/src/narrative/handlers/narrative.ts (narrativeHandler)
+ * source: packages/memory/src/narrative/handlers/get-project-story.ts
+ * source: packages/memory/src/narrative/handlers/unified-search.ts
  */
 
 import type { LlmClient } from "@agentic/core";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { narrativeHandler } from "@agentic/memory/narrative/handlers/narrative.js";
+import type { MemoryPort } from "@agentic/memory/narrative/handlers/narrative.js";
+import { getProjectStoryHandler } from "@agentic/memory/narrative/handlers/get-project-story.js";
+import { unifiedSearchHandler } from "@agentic/memory/narrative/handlers/unified-search.js";
 
 // ── Named constants for schema parameters ──────────────────────────────────
 
 // source: MCP_TOOLS.md §"get_project_story" — max_chapters constraint
-const MAX_CHAPTERS_MAX = 20;
+const MAX_CHAPTERS_MAX     = 20;
 const MAX_CHAPTERS_DEFAULT = 5;
 
 // source: MCP_TOOLS.md §"unified_search" — max_results constraint
-const MAX_RESULTS_MAX = 50;
+const MAX_RESULTS_MAX     = 50;
 const MAX_RESULTS_DEFAULT = 10;
 
 // source: Cormack & Clarke (2009) "Reciprocal Rank Fusion" — k=60
 // canonical value from MCP_TOOLS.md §unified_search
 const RRF_K_DEFAULT = 60;
+
+// ── Tool dependency bundle ─────────────────────────────────────────────────
+
+export interface NarrativeDeps {
+  store: MemoryPort;
+  llmClient: LlmClient | null;
+}
 
 // ── Error envelope helper ─────────────────────────────────────────────────────
 
@@ -43,47 +57,55 @@ function errorText(tool: string, err: unknown): { content: Array<{ type: "text";
 /**
  * Registers narrative and search MCP tools.
  *
- * Precondition:  server is a valid McpServer instance.
- * Postcondition: 3 tools are registered; the narrative tool will use
- *                llmClient for prose-polish when a MemoryStore adapter is
- *                also wired (Phase 5 prerequisite for the full narrative
- *                pipeline).  When llmClient is null the tools degrade
- *                gracefully — no PortPendingError is thrown.
+ * precondition:  deps.store is a live MemoryPort; deps.llmClient may be null.
+ * postcondition: 3 tools registered; each body calls the real domain handler.
  *
  * source: MCP_TOOLS.md §"narrative", §"get_project_story", §"unified_search"
- * source: docs/PHASE_7_TRACKING.md §Group C — LLM client DI
  */
 export function registerNarrativeTools(
   server: McpServer,
-  llmClient: LlmClient | null = null,
+  deps: NarrativeDeps | LlmClient | null = null,
 ): void {
+  // Support both calling conventions:
+  //   registerNarrativeTools(server, { store, llmClient }) — preferred
+  //   registerNarrativeTools(server, llmClient)            — legacy
+  const narrativeDeps = (deps !== null && typeof deps === "object" && "store" in deps)
+    ? deps as NarrativeDeps
+    : null;
+  const llmClient = narrativeDeps?.llmClient ??
+    (deps !== null && typeof deps === "object" && !("store" in deps) ? deps as LlmClient : null);
+
   // ── narrative ─────────────────────────────────────────────────────────────
   server.registerTool(
     "narrative",
     {
-      description:
-        "Generate project narrative from stored memories (structured summary).",
+      description: "Generate project narrative from stored memories (structured summary).",
       inputSchema: {
         directory: z.string().optional().describe("Directory scope"),
         domain:    z.string().optional().describe("Domain scope"),
         brief:     z.boolean().default(false).describe("Brief mode (condensed output)"),
       },
     },
-    async (_args) => {
+    async (args) => {
       try {
-        // source: packages/memory/src/narrative/handlers/narrative.ts
-        // MemoryStore adapter not yet injected (Phase 5 stub).
-        // LLM client is wired (Phase 7 Group C); prose-polish will activate
-        // once the store is available.
-        const clientNote = llmClient !== null
-          ? "LLM client available (prose-polish ready)"
-          : "LLM client absent (graceful degradation)";
-        return {
-          content: [{
-            type: "text" as const,
-            text: `# Project Narrative\n\n_narrative: MemoryStore adapter not yet injected (Phase 5 stub). ${clientNote}_`,
-          }],
-        };
+        // source: packages/memory/src/narrative/handlers/narrative.ts::narrativeHandler
+        if (!narrativeDeps) {
+          return { content: [{ type: "text" as const, text: JSON.stringify({
+            narrative: "",
+            memory_count: 0,
+            note: "no MemoryStore configured — configure CORTEX_DB_PATH",
+          }) }] };
+        }
+        const response = await narrativeHandler(
+          narrativeDeps.store,
+          {
+            directory: args.directory,
+            domain:    args.domain,
+            brief:     args.brief,
+          },
+          llmClient,
+        );
+        return { content: [{ type: "text" as const, text: JSON.stringify(response) }] };
       } catch (err) {
         return errorText("narrative", err);
       }
@@ -94,8 +116,7 @@ export function registerNarrativeTools(
   server.registerTool(
     "get_project_story",
     {
-      description:
-        "Generate a period-based autobiographical narrative (week/month/all).",
+      description: "Generate a period-based autobiographical narrative (week/month/all).",
       inputSchema: {
         directory:    z.string().optional().describe("Directory scope"),
         domain:       z.string().optional().describe("Domain scope"),
@@ -105,12 +126,22 @@ export function registerNarrativeTools(
     },
     async (args) => {
       try {
-        return {
-          content: [{
-            type: "text" as const,
-            text: `# Project Story (${args.period})\n\n_get_project_story: MemoryStore adapter not yet injected (Phase 5 stub)_`,
-          }],
-        };
+        // source: packages/memory/src/narrative/handlers/get-project-story.ts::getProjectStoryHandler
+        if (!narrativeDeps) {
+          return { content: [{ type: "text" as const, text: JSON.stringify({
+            chapters: [], period: args.period, note: "no MemoryStore configured",
+          }) }] };
+        }
+        const response = getProjectStoryHandler(
+          narrativeDeps.store,
+          {
+            directory:    args.directory,
+            domain:       args.domain,
+            period:       args.period,
+            max_chapters: args.max_chapters,
+          },
+        );
+        return { content: [{ type: "text" as const, text: JSON.stringify(response) }] };
       } catch (err) {
         return errorText("get_project_story", err);
       }
@@ -133,11 +164,21 @@ export function registerNarrativeTools(
     },
     async (args) => {
       try {
-        const response = {
-          results: [],
-          query:   args.query,
-          note: "unified_search: MemoryStore adapter not yet injected (Phase 5 stub)",
-        };
+        // source: packages/memory/src/narrative/handlers/unified-search.ts::unifiedSearchHandler
+        if (!narrativeDeps) {
+          return { content: [{ type: "text" as const, text: JSON.stringify({
+            results: [], query: args.query, note: "no MemoryStore configured",
+          }) }] };
+        }
+        const response = unifiedSearchHandler(
+          narrativeDeps.store,
+          {
+            query:       args.query,
+            domain:      args.domain,
+            max_results: args.max_results,
+            k:           args.k,
+          },
+        );
         return { content: [{ type: "text" as const, text: JSON.stringify(response) }] };
       } catch (err) {
         return errorText("unified_search", err);

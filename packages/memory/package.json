@@ -18,6 +18,170 @@
     "./infrastructure/transformers-embedding-engine.js": {
       "import": "./dist/infrastructure/transformers-embedding-engine.js",
       "types": "./dist/infrastructure/transformers-embedding-engine.d.ts"
+    },
+    "./narrative/handlers/narrative.js": {
+      "import": "./dist/narrative/handlers/narrative.js",
+      "types": "./dist/narrative/handlers/narrative.d.ts"
+    },
+    "./narrative/handlers/get-project-story.js": {
+      "import": "./dist/narrative/handlers/get-project-story.js",
+      "types": "./dist/narrative/handlers/get-project-story.d.ts"
+    },
+    "./narrative/handlers/unified-search.js": {
+      "import": "./dist/narrative/handlers/unified-search.js",
+      "types": "./dist/narrative/handlers/unified-search.d.ts"
+    },
+    "./narrative/handlers/sqlite-narrative-adapter.js": {
+      "import": "./dist/narrative/handlers/sqlite-narrative-adapter.js",
+      "types": "./dist/narrative/handlers/sqlite-narrative-adapter.d.ts"
+    },
+    "./methodology/types.js": {
+      "import": "./dist/methodology/types.js",
+      "types": "./dist/methodology/types.d.ts"
+    },
+    "./methodology/handlers/query-methodology.js": {
+      "import": "./dist/methodology/handlers/query-methodology.js",
+      "types": "./dist/methodology/handlers/query-methodology.d.ts"
+    },
+    "./methodology/handlers/detect-domain.js": {
+      "import": "./dist/methodology/handlers/detect-domain.js",
+      "types": "./dist/methodology/handlers/detect-domain.d.ts"
+    },
+    "./methodology/handlers/rebuild-profiles.js": {
+      "import": "./dist/methodology/handlers/rebuild-profiles.js",
+      "types": "./dist/methodology/handlers/rebuild-profiles.d.ts"
+    },
+    "./methodology/handlers/explore-features.js": {
+      "import": "./dist/methodology/handlers/explore-features.js",
+      "types": "./dist/methodology/handlers/explore-features.d.ts"
+    },
+    "./methodology/handlers/update-profiles.js": {
+      "import": "./dist/methodology/handlers/update-profiles.js",
+      "types": "./dist/methodology/handlers/update-profiles.d.ts"
+    },
+    "./remember/storage/memory-store.js": {
+      "import": "./dist/remember/storage/memory-store.js",
+      "types": "./dist/remember/storage/memory-store.d.ts"
+    },
+    "./remember/storage/sqlite-store.js": {
+      "import": "./dist/remember/storage/sqlite-store.js",
+      "types": "./dist/remember/storage/sqlite-store.d.ts"
+    },
+    "./remember/handlers/remember.js": {
+      "import": "./dist/remember/handlers/remember.js",
+      "types": "./dist/remember/handlers/remember.d.ts"
+    },
+    "./remember/handlers/forget.js": {
+      "import": "./dist/remember/handlers/forget.js",
+      "types": "./dist/remember/handlers/forget.d.ts"
+    },
+    "./remember/handlers/anchor.js": {
+      "import": "./dist/remember/handlers/anchor.js",
+      "types": "./dist/remember/handlers/anchor.d.ts"
+    },
+    "./remember/handlers/rate-memory.js": {
+      "import": "./dist/remember/handlers/rate-memory.js",
+      "types": "./dist/remember/handlers/rate-memory.d.ts"
+    },
+    "./recall/recall-handler.js": {
+      "import": "./dist/recall/recall-handler.js",
+      "types": "./dist/recall/recall-handler.d.ts"
+    },
+    "./recall/recall-hierarchical-handler.js": {
+      "import": "./dist/recall/recall-hierarchical-handler.js",
+      "types": "./dist/recall/recall-hierarchical-handler.d.ts"
+    },
+    "./recall/port.js": {
+      "import": "./dist/recall/port.js",
+      "types": "./dist/recall/port.d.ts"
+    },
+    "./recall/types.js": {
+      "import": "./dist/recall/types.js",
+      "types": "./dist/recall/types.d.ts"
+    },
+    "./graph/handlers/navigate-memory.js": {
+      "import": "./dist/graph/handlers/navigate-memory.js",
+      "types": "./dist/graph/handlers/navigate-memory.d.ts"
+    },
+    "./graph/port.js": {
+      "import": "./dist/graph/port.js",
+      "types": "./dist/graph/port.d.ts"
+    },
+    "./wiki/handlers/wiki-write.js": {
+      "import": "./dist/wiki/handlers/wiki-write.js",
+      "types": "./dist/wiki/handlers/wiki-write.d.ts"
+    },
+    "./wiki/handlers/wiki-read.js": {
+      "import": "./dist/wiki/handlers/wiki-read.js",
+      "types": "./dist/wiki/handlers/wiki-read.d.ts"
+    },
+    "./wiki/handlers/wiki-list.js": {
+      "import": "./dist/wiki/handlers/wiki-list.js",
+      "types": "./dist/wiki/handlers/wiki-list.d.ts"
+    },
+    "./wiki/handlers/wiki-link.js": {
+      "import": "./dist/wiki/handlers/wiki-link.js",
+      "types": "./dist/wiki/handlers/wiki-link.d.ts"
+    },
+    "./wiki/handlers/wiki-adr.js": {
+      "import": "./dist/wiki/handlers/wiki-adr.js",
+      "types": "./dist/wiki/handlers/wiki-adr.d.ts"
+    },
+    "./wiki/handlers/wiki-reindex.js": {
+      "import": "./dist/wiki/handlers/wiki-reindex.js",
+      "types": "./dist/wiki/handlers/wiki-reindex.d.ts"
+    },
+    "./wiki/handlers/wiki-purge.js": {
+      "import": "./dist/wiki/handlers/wiki-purge.js",
+      "types": "./dist/wiki/handlers/wiki-purge.d.ts"
+    },
+    "./wiki/handlers/wiki-verify.js": {
+      "import": "./dist/wiki/handlers/wiki-verify.js",
+      "types": "./dist/wiki/handlers/wiki-verify.d.ts"
+    },
+    "./wiki/storage/wiki-store.js": {
+      "import": "./dist/wiki/storage/wiki-store.js",
+      "types": "./dist/wiki/storage/wiki-store.d.ts"
+    },
+    "./consolidation/handler.js": {
+      "import": "./dist/consolidation/handler.js",
+      "types": "./dist/consolidation/handler.d.ts"
+    },
+    "./import/handler.js": {
+      "import": "./dist/import/handler.js",
+      "types": "./dist/import/handler.d.ts"
+    },
+    "./import/types.js": {
+      "import": "./dist/import/types.js",
+      "types": "./dist/import/types.d.ts"
+    },
+    "./automation/handlers/get-rules.js": {
+      "import": "./dist/automation/handlers/get-rules.js",
+      "types": "./dist/automation/handlers/get-rules.d.ts"
+    },
+    "./automation/handlers/create-trigger.js": {
+      "import": "./dist/automation/handlers/create-trigger.js",
+      "types": "./dist/automation/handlers/create-trigger.d.ts"
+    },
+    "./automation/handlers/add-rule.js": {
+      "import": "./dist/automation/handlers/add-rule.js",
+      "types": "./dist/automation/handlers/add-rule.d.ts"
+    },
+    "./automation/handlers/sync-to-claude-md.js": {
+      "import": "./dist/automation/handlers/sync-to-claude-md.js",
+      "types": "./dist/automation/handlers/sync-to-claude-md.d.ts"
+    },
+    "./workflow-graph/handlers/query-workflow-graph.js": {
+      "import": "./dist/workflow-graph/handlers/query-workflow-graph.js",
+      "types": "./dist/workflow-graph/handlers/query-workflow-graph.d.ts"
+    },
+    "./workflow-graph/handlers/workflow-graph.js": {
+      "import": "./dist/workflow-graph/handlers/workflow-graph.js",
+      "types": "./dist/workflow-graph/handlers/workflow-graph.d.ts"
+    },
+    "./codebase-analysis/handlers/codebase-analyze.js": {
+      "import": "./dist/codebase-analysis/handlers/codebase-analyze.js",
+      "types": "./dist/codebase-analysis/handlers/codebase-analyze.d.ts"
     }
   },
   "scripts": {
