@@ -42,14 +42,24 @@ export const QueryIntentSchema = z.enum([
   "general",
 ]);
 
+// ── Schema bounds ──────────────────────────────────────────────────────────
+// source: cortex@ed33435 mcp_server/handlers/recall.py schema
+const MAX_RESULTS_LIMIT = 100;
+const MAX_RESULTS_DEFAULT = 10;
+const MIN_HEAT_DEFAULT = 0.05; // source: cortex@ed33435 mcp_server/handlers/recall.py schema
+const DEFAULT_IMPORTANCE = 0.5; // source: cortex@ed33435 mcp_server/shared/types.py — default importance
+// source: cortex@ed33435 mcp_server/handlers/recall_hierarchical.py schema
+const MEMORY_IDS_MAX = 5000;
+const CLUSTER_THRESHOLD_DEFAULT = 0.6;
+
 // ── Recall request ─────────────────────────────────────────────────────────
 
 export const RecallRequestSchema = z.object({
   query: z.string().min(1),
   domain: z.string().optional(),
   directory: z.string().optional(),
-  max_results: z.number().int().min(1).max(100).default(10),
-  min_heat: z.number().min(0).max(1).default(0.05),
+  max_results: z.number().int().min(1).max(MAX_RESULTS_LIMIT).default(MAX_RESULTS_DEFAULT),
+  min_heat: z.number().min(0).max(1).default(MIN_HEAT_DEFAULT),
   agent_topic: z.string().optional(),
 });
 
@@ -66,7 +76,7 @@ export const RecallResultSchema = z.object({
   tags: z.array(z.string()),
   store_type: z.string().default("episodic"),
   created_at: z.string(),
-  importance: z.number().default(0.5),
+  importance: z.number().default(DEFAULT_IMPORTANCE),
   surprise: z.number().default(0.0),
   recency_boost: z.number().default(0.0),
 });
@@ -82,7 +92,10 @@ export const MultiSignalSignalsSchema = z.object({
   heat: z.array(z.tuple([z.number().int(), z.number()])),
   bm25: z.array(z.tuple([z.number().int(), z.number()])),
   ngram: z.array(z.tuple([z.number().int(), z.number()])),
-  // These rely on PG stored procs — they are port-pending at the boundary
+  // Hopfield/HDC/SR/SA signals are populated only by the Python/PG path
+  // (pg_recall_hopfield et al. stored procedures). The TS path leaves these
+  // empty and fuses on vector+fts+heat+bm25+ngram.
+  // source: cortex@ed33435 mcp_server/core/pg_recall.py:recall
   hopfield: z.array(z.tuple([z.number().int(), z.number()])).default([]),
   hdc: z.array(z.tuple([z.number().int(), z.number()])).default([]),
   sr: z.array(z.tuple([z.number().int(), z.number()])).default([]),
@@ -148,10 +161,10 @@ export type PgWeights = z.infer<typeof PgWeightsSchema>;
 export const HierarchicalRecallRequestSchema = z.object({
   query: z.string().min(1),
   domain: z.string().optional(),
-  memory_ids: z.array(z.number().int().min(1)).max(5000).optional(),
-  max_results: z.number().int().min(1).max(100).default(10),
-  min_heat: z.number().min(0).max(1).default(0.05),
-  cluster_threshold: z.number().min(0).max(1).default(0.6),
+  memory_ids: z.array(z.number().int().min(1)).max(MEMORY_IDS_MAX).optional(),
+  max_results: z.number().int().min(1).max(MAX_RESULTS_LIMIT).default(MAX_RESULTS_DEFAULT),
+  min_heat: z.number().min(0).max(1).default(MIN_HEAT_DEFAULT),
+  cluster_threshold: z.number().min(0).max(1).default(CLUSTER_THRESHOLD_DEFAULT),
 });
 
 export type HierarchicalRecallRequest = z.infer<
