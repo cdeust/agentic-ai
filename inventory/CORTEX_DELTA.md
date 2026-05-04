@@ -2,7 +2,8 @@
 
 **Source**: `/Users/cdeust/Developments/Cortex` (private)
 **Snapshot baseline**: `inventory/CORTEX_INVENTORY.md` (2026-04-26, 361 .py files, ~78 461 LOC)
-**Current HEAD (2026-05-02)**: `bc0ae4f fix(verif): extend query-entity resolution to natural-language tokens (engineer follow-up)`
+**Freeze HEAD (2026-05-04, v3.15.0)**: `ed33435 release: v3.15.0 — E1 v3 verification campaign + arXiv-ready papers + BEAM-10M harness`
+**Previous HEAD (2026-05-02)**: `bc0ae4f fix(verif): extend query-entity resolution to natural-language tokens (engineer follow-up)`
 **Previous re-sync target**: `f2b9f99 fix(ast): uncap L6 symbol/edge ingestion; surface file-import chain` (2026-04-28)
 **Inventory HEAD (pre-port)**: `df141f5 release: v3.14.12 — fix MCP client deadlock on long upstream responses`
 **Commits added since baseline**: 6 user-facing releases (v3.14.8 → v3.14.12) + 1 post-v3.14.12 AST uncap (f2b9f99) + **28 verification/benchmark commits between 2026-04-28..2026-05-02**
@@ -247,6 +248,16 @@ All other Cortex deltas are no-ops or already aligned.
 
 ---
 
+---
+
+## Freeze line — v3.15.0 (`ed33435`, 2026-05-04)
+
+**TS port catches up against this exact SHA. No further upstream chasing until v1.0.0 ships.**
+
+Cortex Python released v3.15.0 on 2026-05-04 (`ed33435 release: v3.15.0 — E1 v3 verification campaign + arXiv-ready papers + BEAM-10M harness`). This release supersedes the previous re-sync target `bc0ae4f` (2026-05-02). The 40 commits between `bc0ae4f..ed33435` are catalogued below in Group 8. Groups 1–7 remain valid; Group 8 closes the tracking window at the freeze line.
+
+---
+
 ## Group 7 — Cortex 2026-04-28..2026-05-02 verification + benchmark wave (28 commits)
 
 **Affects TS port**: `packages/memory/src/recall/`, `packages/memory/src/consolidation/`, `packages/memory/src/infrastructure/` (verification ablations); minor `packages/memory/src/handlers/` (telemetry wrap, paging, facets); zero impact on Phase-7 Groups A/B/C/D/E/F/G already cataloged.
@@ -289,3 +300,80 @@ Add to `docs/PHASE_7_TRACKING.md` Group H as a 2026-05-02 follow-up wave. Recomm
 - Group B sub-algorithm ports (Hopfield batch + Jaccard) get a richer reference impl
 
 The 2026-04-28 graph-rendering 400K-node concern remains out-of-scope; this wave is data + recall-pipeline territory only.
+
+---
+
+## Group 8 — Cortex 2026-05-02..2026-05-04 (v3.15.0 freeze-line, ~40 commits)
+
+**Cortex window**: `bc0ae4f..ed33435` (2026-05-02 → 2026-05-04).
+**Freeze SHA**: `ed33435 release: v3.15.0 — E1 v3 verification campaign + arXiv-ready papers + BEAM-10M harness`.
+
+### Commits (full log, bc0ae4f..ed33435)
+
+| SHA | Subject | TS port impact |
+|---|---|---|
+| `ed33435` | release: v3.15.0 — E1 v3 verification campaign + arXiv-ready papers + BEAM-10M harness | release tag only |
+| `79f0b20` | style: drop unused id_to_cond local in judge.py (CI fix) | NONE — `judge.py` is benchmark harness |
+| `4918638` | style: ruff check --fix unused imports in BEAM-10M harness (CI fix) | NONE — benchmark harness |
+| `fd51f6f` | style: ruff format BEAM-10M harness + tests (CI fix) | NONE — benchmark harness |
+| `0a53996` | feat(verif): wire BEAM-10M head-to-head live mode (smoke pending API keys) | NONE — Python-only benchmark |
+| `3201cc3` | feat(verif): BEAM-10M LLM head-to-head harness scaffold (Stage 0) | NONE — benchmark scaffold |
+| `551a411` | docs: profile README draft points AI Architect to website not archived repo | NONE — docs |
+| `a787fe6` | docs(paper): arXiv submission readiness — refresh both papers + endorsement template | NONE — docs |
+| `9e6ddf6` | fix(paper): recompile with bibtex pass — all 45 citations now resolve | NONE — docs |
+| `bce4840` | docs(verif): E1 v3 LoCoMo post-plasticity-fix integration — paper §6.3 third pass + README/CLAUDE.md sync | NONE — docs |
+| `30d80fe` | docs: profile README draft for cdeust/cdeust | NONE — docs |
+| `5271828` | style: ruff format run_e1_v3_locomo.py (CI fix) | NONE — benchmark harness |
+| `2f45bcb` | chore(verif): redirect LoCoMo driver to locomo_v3_post_plasticity_fix output | NONE — benchmark harness |
+| `6b80760` | docs(paper): add compiled thermodynamic memory paper PDF | NONE — docs |
+| `3ace1fb` | docs(paper): compile thermodynamic memory paper PDF | NONE — docs |
+| `6f75221` | docs(paper): §6.3 second pass — LoCoMo subsection + plasticity-fix narrative | NONE — docs |
+| `a89ffa3` | feat(verif): E1 v3 LoCoMo ablation results — 14-row two-baseline evidence | NONE — benchmark data |
+| `5f737fe` | fix(verif): apply_hebbian_update preserves result-shape contract on ablation | LOW — `synaptic_plasticity_hebbian.py` fix; verify TS `synaptic-plasticity-hebbian.ts` does not have the same result-shape bug |
+| `c4253cc` | style: ruff format + remove unused imports (CI fix) | NONE |
+| `5398745` | fix(backfill): discover_files walks all four session layouts (issue #15) | LOW — `discover_files` is session-import infrastructure; not yet ported in TS |
+| `db4fe0a` | docs(verif): integrate E1 v3 LME-S evidence into §6.3 + cadence-fix narrative | NONE — docs |
+| `ef178da` | feat(verif): E1 v3 LoCoMo driver — 14-row two-baseline sweep | NONE — benchmark |
+| `6c51bce` | fix(verif): consolidation cadence uses ingested_at instead of wall-clock created_at | MEDIUM — `consolidation.py` cadence fix; verify `packages/memory/src/consolidation/` uses `ingested_at` not `created_at` for cadence gating |
+| `b68c5ac` | feat(verif): --ablate + --with-consolidation flags for LoCoMo harness | NONE — benchmark flags |
+| `c5ade6b` | feat(verif): VADER -> user_mood EMA hook in remember (closes MOOD_CONGRUENT signal gap) | MEDIUM — `remember.py` gains `user_mood` EMA update; verify `packages/memory/src/remember/` wires VADER sentiment or equivalent |
+| `ca7f9d4` | feat(verif): E1 v3 LME-S per-category delta analysis | NONE — benchmark |
+| `9f94bd3` | fix(verif): user_mood DDL comment semicolon + test uses dominant beta | LOW — DDL fix in schema; verify TS `schema-engine.ts` user_mood DDL does not have same comment-semicolon issue |
+| `de1d316` | feat(verif): E1 v3 LongMemEval-S ablation results | NONE — benchmark data |
+| `b4b23e7` | feat(verif): wire PgMemoryStore.get_user_mood for MOOD_CONGRUENT_RERANK | MEDIUM — `pg_store.py` gets `get_user_mood`; verify `pg-store.ts` has equivalent |
+| `0e858e8` | feat(verif): blend-weight calibration results | NONE — benchmark data |
+| `0e1f90d` | feat(verif): --with-consolidation flag for LongMemEval-S harness | NONE — benchmark |
+| `9d6bc96` | feat(verif): wire RECONSOLIDATION into recall post-retrieval path (Nader 2000) | MEDIUM — `recall.py` wires RECONSOLIDATION post-retrieval; verify `recall-handler.ts` reconsolidation path is equivalent |
+| `39ab694` | chore(verif): harness dirty-check ignores submodule internal state | NONE — CI harness |
+| `7a65c9a` | chore(verif): finalize E1 v2 ablation archive + match harness dirty-check to pre-reg | NONE — CI harness |
+| `f09485d` | feat(verif): blend-weight calibration infrastructure + pre-registration | NONE — benchmark |
+| `81e8d90` | feat(verif): wire EMOTIONAL_RETRIEVAL + MOOD_CONGRUENT_RERANK as live read-path stages | MEDIUM — two new rerank signals wired in `recall.py`; verify `recall-handler.ts` has EMOTIONAL_RETRIEVAL and MOOD_CONGRUENT_RERANK ablation guards |
+
+### Categorization
+
+1. **Benchmark / verification infrastructure (~27 commits, ~67%)** — BEAM-10M harness, LoCoMo driver, LME-S analysis, blend-weight calibration, harness CI fixes. **TS impact: NONE** — Python-only test harness; not port-relevant.
+
+2. **Paper / docs (~7 commits, ~17%)** — arXiv submission, LoCoMo PDF, README profiles. **TS impact: NONE**.
+
+3. **Production hot-path changes (~6 commits, ~16%)** — these ARE port-relevant:
+   - `6c51bce` — consolidation cadence: `ingested_at` vs `created_at` (verify TS consolidation layer)
+   - `c5ade6b` — VADER user_mood EMA in `remember.py` (new signal; verify or annotate gap in TS)
+   - `9f94bd3` — DDL semicolon in user_mood schema (verify TS schema-engine)
+   - `b4b23e7` — `get_user_mood` in PgMemoryStore (verify TS pg-store)
+   - `9d6bc96` — RECONSOLIDATION wired in recall post-retrieval (verify TS recall-handler)
+   - `81e8d90` — EMOTIONAL_RETRIEVAL + MOOD_CONGRUENT_RERANK as live read-path stages (verify TS recall-handler)
+   - `5f737fe` — `apply_hebbian_update` result-shape fix (verify TS equivalent)
+
+### Action
+
+All TS-impact items are **verification tasks** (not re-ports from scratch — the mechanisms were partially ported in Groups B/H Wave 2). Recommended worktree: `port/cortex-resync-v3.15.0` covering:
+- Verify `consolidation/` uses `ingested_at` for cadence gating
+- Add `get_user_mood` to `pg-store.ts` if absent
+- Wire EMOTIONAL_RETRIEVAL + MOOD_CONGRUENT_RERANK ablation guards in `recall-handler.ts`
+- Wire RECONSOLIDATION into recall post-retrieval in `recall-handler.ts`
+- Audit DDL comment in `schema-engine.ts` for semicolon issue
+- Verify `synaptic-plasticity-hebbian.ts` result-shape is correct after Hebbian update
+
+**This worktree opens post-v1.0.0 cutover.** None of these block the cutover itself.
+
+**Tracking entry**: `[Phase 7] Cortex re-sync Wave 3 (v3.15.0 freeze-line, 6 hot-path verifications)` — **OPEN** (2026-05-04, freeze SHA `ed33435`).

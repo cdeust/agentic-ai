@@ -247,7 +247,28 @@ rendering is a Cortex HTTP dashboard concern.
 
 **Recommended worktree**: `port/cortex-resync-2026-05-02` — opens after Phase 7 Group B (recall sub-algorithms) lands so the env-var ablation contract has handlers to attach to. Can be deferred until post-cutover.
 
-**Tracking entry**: `[Phase 7] Cortex re-sync Wave 2 (post-bc0ae4f, 23 ablation env vars + recall refs)` — **OPEN** (2026-05-02).
+**Tracking entry**: `[Phase 7] Cortex re-sync Wave 2 (post-bc0ae4f, 23 ablation env vars + recall refs)` — **SUPERSEDED by v1.0.0 catch-up wave (port/catchup-* PRs)** (2026-05-04).
+
+### Group H Wave 3 — v3.15.0 freeze-line (2026-05-04, ~40 new Cortex commits)
+
+**Source**: `inventory/CORTEX_DELTA.md` §Group 8 + `inventory/SOURCE_REPO_DELTAS_2026-05-02.md` freeze note.
+**Cortex window**: `bc0ae4f..ed33435` (~40 commits, 2026-05-02 → 2026-05-04).
+**Freeze SHA**: `ed33435 v3.15.0`. No further upstream chasing until v1.0.0 ships.
+
+**Material hot-path deltas to verify**:
+- `6c51bce` — consolidation cadence: verify `packages/memory/src/consolidation/` uses `ingested_at` (not `created_at`) for cadence gating.
+- `c5ade6b` — VADER user_mood EMA in `remember.py`: verify `packages/memory/src/remember/` wires equivalent sentiment signal or annotate the gap.
+- `b4b23e7` — `get_user_mood` in PgMemoryStore: verify `pg-store.ts` has equivalent method; add if absent.
+- `81e8d90` — EMOTIONAL_RETRIEVAL + MOOD_CONGRUENT_RERANK as live read-path stages: verify ablation guards in `recall-handler.ts`.
+- `9d6bc96` — RECONSOLIDATION wired post-retrieval in `recall.py`: verify `recall-handler.ts` reconsolidation path.
+- `5f737fe` — `apply_hebbian_update` result-shape contract fix: verify `synaptic-plasticity-hebbian.ts` does not have the same shape bug.
+- `9f94bd3` — DDL comment semicolon in user_mood schema: audit `schema-engine.ts` user_mood DDL.
+
+**Out of scope**: BEAM-10M harness, LoCoMo driver, LME-S analysis, arXiv papers — Python-only or documentation; no TS impact.
+
+**Recommended worktree**: `port/cortex-resync-v3.15.0` — opens after v1.0.0 cutover.
+
+**Tracking entry**: `[Phase 7] Cortex re-sync Wave 3 (v3.15.0 freeze-line, 7 hot-path verifications)` — **OPEN** (2026-05-04, freeze SHA `ed33435`).
 
 ---
 
@@ -262,8 +283,10 @@ rendering is a Cortex HTTP dashboard concern.
 | E — DI wiring (mislabeled) | 0 | `[Phase 7] Composition-root DI for codebase-analysis` — **CLOSED** 2026-04-27 | Phase 7 |
 | F — Composition root stubs | 6 | (Phase 2/3, already tracked) | Phase 2/3 |
 | G — Placeholder | 1 | (Phase 2, already tracked) | Phase 2 |
-| H — Cortex source re-sync | 3 | `[Phase 7] Cortex re-sync (post-v3.14.9 + f2b9f99 L6 uncap)` | Phase 7 |
-| H Wave 2 — ablation env vars | 0 | Wired 5/23 ablation vars in recall-handler.ts — **PARTIAL CLOSE** 2026-04-27 | Phase 7 |
+| H — Cortex source re-sync | 3 | `[Phase 7] Cortex re-sync (post-v3.14.9 + f2b9f99 L6 uncap)` — **CLOSED** 2026-04-28 | Phase 7 |
+| H Wave 2 — ablation env vars | 0 | Wired 5/23 ablation vars in recall-handler.ts — **SUPERSEDED by v1.0.0 catch-up wave** 2026-05-04 | Phase 7 |
+| H Wave 3 — v3.15.0 hot-path | 0 | `[Phase 7] Cortex re-sync Wave 3 (v3.15.0 freeze-line, 7 hot-path verifications)` — **OPEN** (post-cutover) | Phase 7 |
+| I — v1.0.0 freeze-line lock | 0 | Cortex pinned at `ed33435 v3.15.0` (2026-05-04). TS port frozen at this SHA. Port/catchup-* PRs deliver parity-runner real subprocess + tracking docs. | Phase 7 |
 | **Total** | **10** | Grep count after Group B close: 10 remain (source-ast.ts ×3, wiki-stubs.ts ×2, types.ts ×1, remember.ts ×1, orchestrator/index.ts ×3) | |
 
 The total here (54) reflects 51 pre-existing in-tree markers plus 3 new

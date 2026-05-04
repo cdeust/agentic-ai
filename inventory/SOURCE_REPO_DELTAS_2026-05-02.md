@@ -6,23 +6,35 @@
 
 | Source repo | Last-sync HEAD | Current HEAD | Commits ahead | Action recommended |
 |---|---|---|---|---|
-| **Cortex (Python)** | `f2b9f99` (2026-04-28) | `bc0ae4f` (2026-05-02) | **28** | `port/cortex-resync-2026-05-02` worktree — see `inventory/CORTEX_DELTA.md` Group 7 for the breakdown |
+| **Cortex (Python)** | `f2b9f99` (2026-04-28) | **`ed33435` (2026-05-04, v3.15.0) — FREEZE LINE** | **~68** (28 through bc0ae4f + ~40 through ed33435) | See `inventory/CORTEX_DELTA.md` Groups 7 + 8. No further upstream chasing until v1.0.0 ships. |
 | **automatised-pipeline (Rust)** | imported verbatim 2026-04-28 (Phase 3 PR #18) | `2cc3780` marketplace bump v0.0.4 | **0** since import | NONE — Rust workspace import was a one-shot copy at v0.0.4; the monorepo owns canonical history forward (per PHASE_3_PLAN.md §C) |
 | **prd-spec-generator (TS)** | `5bb7dd9` (2026-04-28, merged via PR #14) | `5bb7dd9` (unchanged) | **0** | NONE — source repo is stable; the monorepo's `packages/prd-pipeline/` is the canonical home |
 | **zetetic-team-subagents (Bash + MD)** | `36ac353` (Phase 2 zetetic merge, 2026-04-27) | `75c0b0d` LinkedIn-post fixes | **~5** | LOW priority — the new commits are LinkedIn marketing posts, not agent content. Skip unless the post text is needed in `packages/reasoning/assets/linkedin/` |
 
 ---
 
-## Cortex — see CORTEX_DELTA.md §Group 7
+## Cortex — FREEZE LINE 2026-05-04 (`ed33435`, v3.15.0)
 
-28 commits between `f2b9f99..bc0ae4f`. Categorization:
+**Freeze note (2026-05-04)**: Cortex is pinned at `ed33435 v3.15.0`. The TS port catches up against this exact SHA. The other three source repos remain unchanged (see table above). No further upstream Cortex chasing until v1.0.0 ships.
 
-- **Verification ablations (16 commits)**: 23 named `CORTEX_ABLATE_<MECH>` env-var guards wired into the recall hot-path. Mirrors needed in `packages/memory/src/recall/` for Group B parity.
+See `inventory/CORTEX_DELTA.md` §Group 7 (bc0ae4f, 28 commits) and §Group 8 (ed33435, ~40 commits) for full breakdowns.
+
+## Cortex — see CORTEX_DELTA.md §Groups 7 + 8
+
+~68 commits between `f2b9f99..ed33435`. Categorization summary:
+
+**Group 7** — 28 commits `f2b9f99..bc0ae4f` (2026-04-28..2026-05-02):
+- **Verification ablations (16 commits)**: 23 named `CORTEX_ABLATE_<MECH>` env-var guards wired into the recall hot-path. Mirrors needed in `packages/memory/src/recall/` for Group B parity. **Wave 2 ablation vars (5/23) already wired per Group B close.**
 - **Benchmark infrastructure (8 commits)**: pure Python test harness; **no TS port impact**.
 - **Paper revisions (4 commits)**: documentation only; **no TS port impact**.
 - **Bug fixes (2 commits)**: `df14e16` DDL comment-break, `34aa452` docstring boundary in `cls.run_cls_cycle` — verify TS counterparts don't carry the same bugs.
 
-Recommended worktree: `port/cortex-resync-2026-05-02`. Tracked under PHASE_7_TRACKING.md Group H as a follow-up wave.
+**Group 8** — ~40 commits `bc0ae4f..ed33435` (2026-05-02..2026-05-04, v3.15.0):
+- **Benchmark / verification infrastructure (~27 commits)**: BEAM-10M harness, LoCoMo driver, LME-S analysis. **No TS port impact.**
+- **Paper / docs (~7 commits)**: arXiv submission, LoCoMo PDF, README profiles. **No TS port impact.**
+- **Production hot-path changes (6 commits)**: consolidation cadence `ingested_at` fix, VADER user_mood EMA in remember, `get_user_mood` in PgMemoryStore, EMOTIONAL_RETRIEVAL + MOOD_CONGRUENT_RERANK wired in recall, RECONSOLIDATION in recall post-retrieval, hebbian result-shape fix. **TS impact: MEDIUM — verification tasks for post-cutover `port/cortex-resync-v3.15.0` worktree.**
+
+Recommended worktrees: `port/cortex-resync-2026-05-02` (Group 7) and `port/cortex-resync-v3.15.0` (Group 8 — v3.15.0 freeze line). Both tracked under PHASE_7_TRACKING.md Group H. Both open post-v1.0.0 cutover.
 
 ---
 
