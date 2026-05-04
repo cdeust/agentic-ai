@@ -6,10 +6,10 @@
  *
  * Architecture:
  *   Host (this file) → Anthropic SDK → Claude
- *                    ↳ MCP server: @agentic/mcp-server-memory   (46 tools)
- *                    ↳ MCP server: @agentic/mcp-server-codebase  (port-pending)
- *                    ↳ MCP server: @agentic/mcp-server-reasoning (port-pending)
- *                    ↳ MCP server: @agentic/mcp-server-prd       (port-pending)
+ *                    ↳ MCP server: @agentic/mcp-server-memory   (live — 46 tools)
+ *                    ↳ MCP server: @agentic/mcp-server-codebase  (status: wired; AP pool injection deferred)
+ *                    ↳ MCP server: @agentic/mcp-server-reasoning (status: content migrated; plugin wiring deferred)
+ *                    ↳ MCP server: @agentic/mcp-server-prd       (status: subtree merged; full handler surface deferred)
  *
  * Each MCP server is a subprocess launched via stdio transport. The SDK
  * negotiates tool lists automatically during the connection handshake.

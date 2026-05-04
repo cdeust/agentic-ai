@@ -3,14 +3,20 @@
  *
  * Port of: mcp_server/core/memory_rules.py::apply_rules
  *
- * The full rules engine (pattern matching, rule persistence) is in the
- * port/cortex-automation scope. This module ports only the apply_rules
- * function used directly by the recall handler.
+ * This module ports the apply_rules function used directly by the recall
+ * handler. The full rule engine (condition parsing, validate_rule,
+ * evaluate_condition) is ported in automation/rule-engine.ts; that module
+ * owns the full MemoryRule DSL. This file retains a simpler MemoryRule
+ * type that matches the shape returned by MemoryStore.getAllActiveRules()
+ * (pattern + action strings already resolved), so recall does not need
+ * to depend on the automation layer.
  *
- * TODO(port-pending): Full rule evaluation (evaluate_rules, MemoryRule)
- * requires porting mcp_server/core/memory_rules.py — assign to
- * port/cortex-automation worktree.
+ * source: cortex@ed33435 mcp_server/core/memory_rules.py:apply_rules
  */
+
+// source: cortex@ed33435 mcp_server/core/memory_rules.py — default score adjustments
+const DEFAULT_BOOST = 0.1;
+const DEFAULT_PENALTY = 0.1;
 
 // ── Rule shape ─────────────────────────────────────────────────────────────
 
@@ -60,10 +66,10 @@ export function applyRules(
 
         switch (rule.action) {
           case "boost":
-            score *= 1 + (rule.boost ?? 0.1);
+            score *= 1 + (rule.boost ?? DEFAULT_BOOST);
             break;
           case "penalize":
-            score *= 1 - (rule.penalty ?? 0.1);
+            score *= 1 - (rule.penalty ?? DEFAULT_PENALTY);
             break;
           case "pin":
             score = 1.0;

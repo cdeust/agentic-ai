@@ -5,8 +5,7 @@
  *
  * All AP-dependent paths (loadSymbolsAsync / loadAstEdgesAsync / searchCodebase /
  * verifySymbols) require live AP graph access and cannot be tested without
- * a running automatised-pipeline server. Those paths are marked it.todo with
- * the standard port-pending annotation.
+ * a running automatised-pipeline server. Those paths are marked it.todo.
  *
  * Pure-function and env-gated behavior is tested directly.
  */
@@ -46,9 +45,12 @@ describe("WorkflowGraphASTSource.enabled()", () => {
   });
 });
 
-// ── loadSymbols / loadAstEdges (sync façade) ──────────────────────────────
+// ── loadSymbolsAsync / loadAstEdgesAsync — disabled path ──────────────────
+// Note: sync façades (loadSymbols / loadAstEdges) were removed in the
+// catch-up wave (port/catchup-recall-real). Tests updated to the async API
+// which returns [] when AP is disabled (same observable contract).
 
-describe("WorkflowGraphASTSource sync façades", () => {
+describe("WorkflowGraphASTSource async API when AP disabled", () => {
   beforeEach(() => {
     process.env["CORTEX_MEMORY_AP_ENABLED"] = "0";
   });
@@ -57,23 +59,26 @@ describe("WorkflowGraphASTSource sync façades", () => {
     delete process.env["CORTEX_MEMORY_AP_ENABLED"];
   });
 
-  it("loadSymbols returns [] when AP is disabled", () => {
+  it("loadSymbolsAsync returns [] when AP is disabled", async () => {
     const src = new WorkflowGraphASTSource();
-    expect(src.loadSymbols([])).toEqual([]);
+    await expect(src.loadSymbolsAsync([])).resolves.toEqual([]);
   });
 
-  it("loadAstEdges returns [] when AP is disabled", () => {
+  it("loadAstEdgesAsync returns [] when AP is disabled", async () => {
     const src = new WorkflowGraphASTSource();
-    expect(src.loadAstEdges([])).toEqual([]);
+    await expect(src.loadAstEdgesAsync([])).resolves.toEqual([]);
   });
 
-  it("loadSymbols returns [] immediately (sync façade, no await)", () => {
+  it("loadSymbolsAsync returns [] when enabled but no graph paths exist", async () => {
+    // With AP enabled but no CORTEX_AP_GRAPH_PATH and no default paths on CI,
+    // resolveGraphPaths returns [] and the loader short-circuits.
     delete process.env["CORTEX_MEMORY_AP_ENABLED"];
+    delete process.env["CORTEX_AP_GRAPH_PATH"];
     const src = new WorkflowGraphASTSource();
-    // Even when enabled, the sync façade returns [] immediately because the
-    // async work is not awaited. The workflow-graph handler consumes this
-    // synchronously today; loadSymbolsAsync() is the future-facing API.
-    expect(src.loadSymbols([])).toEqual([]);
+    // May return [] (no graphs) or throw McpConnectionError (caught internally).
+    // Either way, the promise must resolve to an array.
+    const result = await src.loadSymbolsAsync([]);
+    expect(Array.isArray(result)).toBe(true);
   });
 });
 

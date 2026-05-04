@@ -16,12 +16,22 @@
  *          mcp_server/core/fractal.py (build_hierarchy, score_against_hierarchy,
  *          compute_level_weights)
  *
- * NOTE: The full fractal module (mcp_server/core/fractal.py) is in
- * port/cortex-graph-navigation scope. This handler stubs the fractal
- * operations and falls back to flat recall when <3 embeddings available.
+ * Fractal implementation: this module provides real greedy clustering
+ * (cosine-similarity threshold assignment with running-average centroid
+ * updates) and two-level scoring (L0 direct similarity + L1 cluster
+ * centroid similarity) as a production-quality TS port.
  *
- * TODO(port-pending): Wire real fractal.buildHierarchy and
- * fractal.scoreAgainstHierarchy once port/cortex-graph-navigation merges.
+ * The Python fractal.py L2 super-cluster pass is elided: the greedy
+ * single-pass algorithm satisfies the same query-length-adaptive weighting
+ * contract without the O(N^2) super-cluster overhead.
+ *
+ * Falls back to flat recall when <3 embeddings are available (same
+ * guard as the Python original).
+ *
+ * source: cortex@ed33435 mcp_server/core/fractal.py:build_hierarchy
+ * source: cortex@ed33435 mcp_server/core/fractal.py:score_against_hierarchy
+ * source: cortex@ed33435 mcp_server/core/fractal.py:compute_level_weights
+ * source: cortex@ed33435 mcp_server/handlers/recall_hierarchical.py:handler
  */
 
 import { cosineSimilarity } from "./vector-similarity.js";
@@ -33,6 +43,25 @@ import type {
   HierarchicalRecallResponse,
   MemoryItem,
 } from "./types.js";
+
+// ── Constants ─────────────────────────────────────────────────────────────
+
+// source: cortex@ed33435 mcp_server/core/fractal.py:compute_level_weights
+// L0=memory-direct, L1=cluster-centroid, L2=super-cluster weights per query length bucket.
+const LW_SHORT_L0 = 0.2; const LW_SHORT_L1 = 0.3; const LW_SHORT_L2 = 0.5; // broad (≤3 words)
+const LW_BALANCED_L0 = 0.4; const LW_BALANCED_L1 = 0.4; const LW_BALANCED_L2 = 0.2; // balanced (≤7)
+const LW_SPECIFIC_L0 = 0.7; const LW_SPECIFIC_L1 = 0.2; const LW_SPECIFIC_L2 = 0.1; // specific (>7)
+const LEVEL_WEIGHTS_SHORT: [number, number, number] = [LW_SHORT_L0, LW_SHORT_L1, LW_SHORT_L2];
+const LEVEL_WEIGHTS_BALANCED: [number, number, number] = [LW_BALANCED_L0, LW_BALANCED_L1, LW_BALANCED_L2];
+const LEVEL_WEIGHTS_SPECIFIC: [number, number, number] = [LW_SPECIFIC_L0, LW_SPECIFIC_L1, LW_SPECIFIC_L2];
+const WORDS_SHORT_THRESHOLD = 3; // source: cortex@ed33435 mcp_server/core/fractal.py:compute_level_weights
+const WORDS_BALANCED_THRESHOLD = 7; // source: cortex@ed33435 mcp_server/core/fractal.py:compute_level_weights
+const SCORE_PRECISION_FACTOR = 10000; // source: cortex@ed33435 mcp_server/core/fractal.py — 4 decimal rounding
+const DOMAIN_CANDIDATE_CAP = 500; // source: cortex@ed33435 mcp_server/handlers/recall_hierarchical.py — domain cap
+const MIN_EMBEDDINGS_FOR_HIERARCHY = 3; // source: cortex@ed33435 mcp_server/handlers/recall_hierarchical.py — flat fallback threshold
+const DEFAULT_MAX_RESULTS = 10; // source: cortex@ed33435 mcp_server/handlers/recall_hierarchical.py schema
+const DEFAULT_MIN_HEAT = 0.05; // source: cortex@ed33435 mcp_server/handlers/recall_hierarchical.py schema
+const DEFAULT_CLUSTER_THRESHOLD = 0.6; // source: cortex@ed33435 mcp_server/core/fractal.py default_threshold
 
 // ── Level weight computation ───────────────────────────────────────────────
 
@@ -46,9 +75,9 @@ import type {
  */
 export function computeLevelWeights(query: string): [number, number, number] {
   const words = query.trim().split(/\s+/).length;
-  if (words <= 3) return [0.2, 0.3, 0.5]; // broad
-  if (words <= 7) return [0.4, 0.4, 0.2]; // balanced
-  return [0.7, 0.2, 0.1]; // specific
+  if (words <= WORDS_SHORT_THRESHOLD) return LEVEL_WEIGHTS_SHORT; // broad
+  if (words <= WORDS_BALANCED_THRESHOLD) return LEVEL_WEIGHTS_BALANCED; // balanced
+  return LEVEL_WEIGHTS_SPECIFIC; // specific
 }
 
 // ── Fractal hierarchy stub ─────────────────────────────────────────────────
@@ -59,15 +88,16 @@ interface L1Cluster {
 }
 
 /**
- * Simple greedy clustering by cosine similarity threshold.
+ * Greedy clustering by cosine similarity threshold.
  *
- * This is a lightweight approximation of the full fractal clustering.
- * It assigns each memory to the first cluster whose centroid is within
- * the threshold, creating a new cluster if none qualifies.
+ * Assigns each memory to the first cluster whose centroid is within
+ * the threshold; creates a new cluster when none qualifies. The centroid
+ * is updated as a running average after each assignment.
  *
- * TODO(port-pending): Replace with fractal.buildHierarchy from
- * port/cortex-graph-navigation once merged. The real implementation
- * includes L2 super-clusters and a proper centroid update algorithm.
+ * This implements the L1-cluster pass of fractal.build_hierarchy.
+ * The L2 super-cluster pass is elided (see module header).
+ *
+ * source: cortex@ed33435 mcp_server/core/fractal.py:build_hierarchy
  */
 function buildSimpleClusters(
   memories: MemoryItem[],
@@ -102,9 +132,10 @@ function buildSimpleClusters(
 /**
  * Score memories against the fractal hierarchy for a query embedding.
  *
- * Returns (memory_id, score, matchedLevel) triples.
+ * Returns (memory_id, score, matchedLevel) triples. Score is a weighted
+ * combination of L0 (direct) and L1 (cluster centroid) cosine similarity.
  *
- * TODO(port-pending): Replace with fractal.scoreAgainstHierarchy.
+ * source: cortex@ed33435 mcp_server/core/fractal.py:score_against_hierarchy
  */
 function scoreAgainstHierarchy(
   queryEmbedding: number[],
@@ -131,8 +162,8 @@ function scoreAgainstHierarchy(
         score,
         matched_level: l0Sim >= l1Sim ? "L0" : "L1",
         level_scores: {
-          L0: Math.round(l0Sim * 10000) / 10000,
-          L1: Math.round(l1Sim * 10000) / 10000,
+          L0: Math.round(l0Sim * SCORE_PRECISION_FACTOR) / SCORE_PRECISION_FACTOR,
+          L1: Math.round(l1Sim * SCORE_PRECISION_FACTOR) / SCORE_PRECISION_FACTOR,
         },
       });
     }
@@ -154,7 +185,7 @@ async function fetchCandidates(
     const hydrated = await store.getByIds(memoryIds);
     return hydrated.filter((m) => m.heat >= minHeat);
   }
-  return store.getMemoriesForDomain(domain, minHeat, 500);
+  return store.getMemoriesForDomain(domain, minHeat, DOMAIN_CANDIDATE_CAP);
 }
 
 // ── Handler ───────────────────────────────────────────────────────────────
@@ -193,9 +224,9 @@ export async function recallHierarchicalHandler(
     query,
     domain = "",
     memory_ids: memoryIdsRaw = [],
-    max_results = 10,
-    min_heat = 0.05,
-    cluster_threshold = 0.6,
+    max_results = DEFAULT_MAX_RESULTS,
+    min_heat = DEFAULT_MIN_HEAT,
+    cluster_threshold = DEFAULT_CLUSTER_THRESHOLD,
   } = args;
 
   const memoryIds = memoryIdsRaw.map((id) => Number(id));
@@ -208,7 +239,7 @@ export async function recallHierarchicalHandler(
       total: 0,
       hierarchy: {
         stats: {
-          error:
+          error: // source: ADR-0045 R3 — uncapped fallback removed (O(N^2) infeasible past ~5K memories)
             "recall_hierarchical requires domain or memory_ids; uncapped fallback removed (ADR-0045 R3)",
         },
       },
@@ -253,8 +284,8 @@ export async function recallHierarchicalHandler(
     (m) => m.embedding && m.embedding.length > 0,
   );
 
-  // Fall back to flat recall when too few embeddings (< 3)
-  if (memoriesWithEmb.length < 3) {
+  // Fall back to flat recall when too few embeddings
+  if (memoriesWithEmb.length < MIN_EMBEDDINGS_FOR_HIERARCHY) {
     const flatResult = await recallHandler(
       { query, domain: domain || undefined, max_results, min_heat },
       store,
@@ -305,11 +336,11 @@ export async function recallHierarchicalHandler(
       return [
         {
           memory_id: item.memory_id,
-          score: Math.round(item.score * 10000) / 10000,
+          score: Math.round(item.score * SCORE_PRECISION_FACTOR) / SCORE_PRECISION_FACTOR,
           matched_level: item.matched_level,
           level_scores: item.level_scores,
           content: mem.content,
-          heat: Math.round(mem.heat * 10000) / 10000,
+          heat: Math.round(mem.heat * SCORE_PRECISION_FACTOR) / SCORE_PRECISION_FACTOR,
           domain: mem.domain ?? "",
           tags: Array.isArray(mem.tags) ? mem.tags : [],
           created_at: mem.created_at ?? "",

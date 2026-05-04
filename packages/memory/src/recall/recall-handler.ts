@@ -41,6 +41,16 @@ import type {
 } from "./types.js";
 import { QueryIntent } from "./types.js";
 
+// ── Recall handler constants ──────────────────────────────────────────────
+// source: cortex@ed33435 mcp_server/handlers/recall.py
+const DEFAULT_MAX_RESULTS = 10; // source: cortex@ed33435 mcp_server/handlers/recall.py
+const DEFAULT_MIN_HEAT = 0.05; // source: cortex@ed33435 mcp_server/handlers/recall.py
+const CANDIDATE_POOL_MULTIPLIER = 3; // fetch pool = max_results * CANDIDATE_POOL_MULTIPLIER
+const CANDIDATE_POOL_MINIMUM = 30; // lower bound on fetch pool
+const DEFAULT_IMPORTANCE = 0.5; // fallback importance for triggered memories
+const TRIGGER_MIN_WORD_LEN = 3; // keyword trigger: minimum word length for matching
+const TRIGGER_FTS_LIMIT = 3; // max FTS candidates per trigger
+
 // ── Settings ──────────────────────────────────────────────────────────────
 
 export interface RecallSettings {
@@ -58,19 +68,20 @@ export interface RecallSettings {
   RECENCY_BOOST_CUTOFF_DAYS: number;
 }
 
+// source: cortex@ed33435 mcp_server/handlers/recall.py DEFAULT_SETTINGS block
 export const DEFAULT_RECALL_SETTINGS: RecallSettings = {
-  WRRF_K: 60,
+  WRRF_K: 60, // source: cortex@ed33435 mcp_server/handlers/recall_helpers.py:fuse_signals
   CO_ACTIVATION_ENABLED: true,
-  CO_ACTIVATION_MIN_SCORE: 0.3,
-  CO_ACTIVATION_LEARNING_RATE: 0.01,
+  CO_ACTIVATION_MIN_SCORE: 0.3, // source: cortex@ed33435 mcp_server/handlers/recall.py
+  CO_ACTIVATION_LEARNING_RATE: 0.01, // source: cortex@ed33435 mcp_server/handlers/recall.py
   STRATEGIC_ORDERING_ENABLED: true,
-  STRATEGIC_TOP_FRACTION: 0.3,
-  STRATEGIC_BOTTOM_FRACTION: 0.2,
-  SESSION_COHERENCE_BONUS: 0.1,
-  SESSION_COHERENCE_WINDOW_HOURS: 4,
-  RECENCY_BOOST_MAX: 0.3,
-  RECENCY_BOOST_HALFLIFE_DAYS: 7,
-  RECENCY_BOOST_CUTOFF_DAYS: 30,
+  STRATEGIC_TOP_FRACTION: 0.3, // source: cortex@ed33435 mcp_server/handlers/recall.py
+  STRATEGIC_BOTTOM_FRACTION: 0.2, // source: cortex@ed33435 mcp_server/handlers/recall.py
+  SESSION_COHERENCE_BONUS: 0.1, // source: cortex@ed33435 mcp_server/handlers/recall.py
+  SESSION_COHERENCE_WINDOW_HOURS: 4, // source: cortex@ed33435 mcp_server/handlers/recall.py
+  RECENCY_BOOST_MAX: 0.3, // source: cortex@ed33435 mcp_server/handlers/recall.py
+  RECENCY_BOOST_HALFLIFE_DAYS: 7, // source: cortex@ed33435 mcp_server/handlers/recall.py
+  RECENCY_BOOST_CUTOFF_DAYS: 30, // source: cortex@ed33435 mcp_server/handlers/recall.py
 };
 
 // ── Candidate retrieval ───────────────────────────────────────────────────
@@ -142,11 +153,11 @@ async function injectTriggeredMemories(
     const triggerWords = triggerContent.toLowerCase().split(/\s+/);
     const queryLower = query.toLowerCase();
     const matches = triggerWords.some(
-      (w) => w.length > 3 && queryLower.includes(w),
+      (w) => w.length > TRIGGER_MIN_WORD_LEN && queryLower.includes(w),
     );
     if (!matches) continue;
 
-    const ftsCandidates = await store.searchByFts(triggerContent, 3);
+    const ftsCandidates = await store.searchByFts(triggerContent, TRIGGER_FTS_LIMIT);
     for (const { memory_id } of ftsCandidates) {
       if (existingIds.has(memory_id)) continue;
       const mem = await store.getMemory(memory_id);
@@ -160,7 +171,7 @@ async function injectTriggeredMemories(
         tags: Array.isArray(mem.tags) ? mem.tags : [],
         store_type: mem.store_type ?? "episodic",
         created_at: mem.created_at ?? "",
-        importance: mem.importance ?? 0.5,
+        importance: mem.importance ?? DEFAULT_IMPORTANCE,
         surprise: mem.surprise_score ?? 0,
         recency_boost: 0.0,
       });
@@ -218,22 +229,28 @@ export async function recallHandler(
 
   if (!args || !args.query) return empty;
 
-  const { query, max_results = 10, min_heat = 0.05 } = args;
+  const { query, max_results = DEFAULT_MAX_RESULTS, min_heat = DEFAULT_MIN_HEAT } = args;
 
   // 1. Intent classification
   const intentInfo = classifyQueryIntent(query);
   const intent = intentInfo.intent;
 
   // 2. Fetch candidates
-  const pool = Math.max(max_results * 3, 30);
-  const { vectorPairs, ftsPairs, hotMems, queryEmbedding } =
+  const pool = Math.max(max_results * CANDIDATE_POOL_MULTIPLIER, CANDIDATE_POOL_MINIMUM);
+  // queryEmbedding reserved for future reranker integration (unused in this path)
+  const { vectorPairs, ftsPairs, hotMems, queryEmbedding: _queryEmbedding } =
     await fetchCandidates(args, store, embeddings, pool);
 
   // 3. Compute text signals (BM25 + n-gram + heat) from hot pool
   const { bm25, ngram } = computeTextSignals(query, hotMems);
   const heatSignal = extractHeatSignal(hotMems);
 
-  // 4. Assemble signals (no Hopfield/HDC/SR/SA — those are port-pending)
+  // 4. Assemble signals.
+  // Hopfield/HDC/SR/SA signals require PG stored procedures
+  // (pg_recall_hopfield, pg_recall_hdc, pg_recall_sr, pg_recall_sa) that are
+  // implemented only in the Python/PG path. The TS path omits them and fuses
+  // on the five signals available client-side: vector, fts, heat, bm25, ngram.
+  // source: cortex@ed33435 mcp_server/core/pg_recall.py:recall (pg path)
   const signals: MultiSignalSignals = {
     vector: vectorPairs,
     fts: ftsPairs,

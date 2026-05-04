@@ -16,8 +16,8 @@
 
 import { WorkflowGraphBuilder } from "../builder.js";
 import { emptyInputs, type WorkflowBuildInputs } from "../inputs.js";
-import { GraphValidationError, validateGraph } from "../schema.js";
-import { WorkflowGraphSource } from "../sources/source.js";
+import { type GraphValidationError, validateGraph } from "../schema.js";
+import type { WorkflowGraphSource } from "../sources/source.js";
 import { WorkflowGraphASTSource } from "../sources/source-ast.js";
 import { WorkflowGraphNativeASTSource } from "../sources/source-native-ast.js";
 
@@ -60,9 +60,11 @@ const _CAMEL_ALIASES: Record<string, string> = {
   session_id: "sessionId",
 };
 
+const DOMAIN_PREFIX = "domain:";
+
 function plainDomain(domainId: string | undefined): string {
   if (!domainId) return "";
-  if (domainId.startsWith("domain:")) return domainId.slice(7);
+  if (domainId.startsWith(DOMAIN_PREFIX)) return domainId.slice(DOMAIN_PREFIX.length);
   return domainId;
 }
 
@@ -107,13 +109,16 @@ export interface BuildWorkflowGraphOptions {
   stage?: "skeleton" | "files" | "full";
 }
 
-export function buildWorkflowGraph(
+export async function buildWorkflowGraph(
   store: unknown,
   source: WorkflowGraphSource,
   options: BuildWorkflowGraphOptions = {},
-): WorkflowGraphPayload {
+): Promise<WorkflowGraphPayload> {
   /**
    * Load sources, build the graph, validate, and return JSON payload.
+   *
+   * Async because the AP AST source (WorkflowGraphASTSource) makes async
+   * MCP calls to the codebase server. All other sources are synchronous.
    *
    * The output shape mirrors the legacy /api/graph response
    * ({nodes, edges, meta}) so the existing bridge in
@@ -162,15 +167,15 @@ export function buildWorkflowGraph(
     inputs.command_file_events = source.loadCommandFiles(store, knownPaths);
   }
 
-  // AST enrichment — both sources are stubbed until cortex-codebase-analysis
-  // (#5) lands. When AP is enabled (source-ast.ts un-stubbed), AP symbols
-  // load first; native-AST symbols load second. ingestSymbol is idempotent
-  // by symbol id so AP's richer symbols win the de-dup.
+  // AST enrichment — AP symbols load first (via async MCP calls); native-AST
+  // symbols load second. ingestSymbol is idempotent by symbol id so AP's
+  // richer symbols win the de-dup. When AP is unreachable both async methods
+  // return [] gracefully (McpConnectionError caught internally).
   if (stage === "full") {
     const astSource = new WorkflowGraphASTSource();
     if (astSource.enabled()) {
-      inputs.ast_symbols = astSource.loadSymbols([]);
-      inputs.ast_edges = astSource.loadAstEdges([]);
+      inputs.ast_symbols = await astSource.loadSymbolsAsync([]);
+      inputs.ast_edges = await astSource.loadAstEdgesAsync([]);
     }
     const nativeSource = new WorkflowGraphNativeASTSource();
     if (nativeSource.enabled() && knownPaths.size > 0) {
@@ -182,7 +187,7 @@ export function buildWorkflowGraph(
   }
 
   if (domainFilter) {
-    const matches = (ev: Record<string, unknown>) =>
+    const matches = (ev: Record<string, unknown>): boolean =>
       (ev["domain"] ?? "") === domainFilter;
     inputs.tool_events = inputs.tool_events.filter(matches);
     inputs.agent_events = inputs.agent_events.filter(matches);

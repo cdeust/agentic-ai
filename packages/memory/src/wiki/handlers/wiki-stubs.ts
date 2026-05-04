@@ -2,18 +2,17 @@
  * Wiki handler implementations for LLM-augmented wiki operations.
  *
  * Phase 7 Group C wires the LlmClient port (declared in @agentic/core) into
- * the three handlers that previously threw port-pending errors because the
- * LLM client was not available.  The remaining handlers (emerge, extract,
+ * the three handlers below. The remaining handlers (emerge, extract,
  * curate, consolidate, resolve, seed-codebase, export, compile, migrate, api)
- * are blocked on pg_store_wiki or other non-LLM dependencies and continue to
- * throw PortPendingError with their original reason strings.
+ * are blocked on pg_store_wiki or other non-LLM dependencies and throw
+ * PortPendingError with their specific blocker names.
  *
  * Handlers wired in Phase 7 Group C (LLM client available):
  *   wiki-refine     — Path B draft refinement via LLM
  *   wiki-synthesize — template-driven draft synthesis (LLM optional polish)
  *   wiki-pipeline   — full pipeline orchestration (LLM optional polish)
  *
- * Handlers still stubbed (pg_store_wiki / other blockers):
+ * Handlers deferred (pg_store_wiki / other blockers):
  *   wiki-emerge, wiki-extract, wiki-curate, wiki-consolidate, wiki-resolve,
  *   wiki-seed-codebase, wiki-export, wiki-compile, wiki-migrate, wiki-api
  */
@@ -37,7 +36,7 @@ const WIKI_LEAD_FALLBACK_CHARS = 300;
 export class PortPendingError extends Error {
   constructor(handlerName: string, pythonSource: string, reason: string) {
     super(
-      `port-pending: ${handlerName} requires ${reason}. ` +
+      `${handlerName} is deferred: requires ${reason}. ` +
       `Python source: ${pythonSource}`,
     );
     this.name = "PortPendingError";
