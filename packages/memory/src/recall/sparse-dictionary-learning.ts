@@ -55,7 +55,8 @@ function solveLeastSquares3(G: number[][], h: number[]): number[] {
   for (let col = 0; col < 3; col++) {
     const M = G.map((row) => [...row]);
     for (let row = 0; row < 3; row++) {
-      if (M[row]) M[row][col] = h_(h, row);
+      const r = M[row];
+      if (r) r[col] = h_(h, row);
     }
     result.push(det3(M) / detG);
   }
@@ -77,9 +78,20 @@ function solveLeastSquares(
   if (n === 0) return [];
 
   const G = Array.from({ length: n }, (_, i) =>
-    Array.from({ length: n }, (__, j) => dot(atoms[selected[i]], atoms[selected[j]])),
+    Array.from({ length: n }, (__, j) => {
+      const ai = selected[i];
+      const aj = selected[j];
+      if (ai === undefined || aj === undefined) return 0;
+      const va = atoms[ai];
+      const vb = atoms[aj];
+      if (!va || !vb) return 0;
+      return dot(va, vb);
+    }),
   );
-  const h = selected.map((i) => dot(atoms[i], b));
+  const h = selected.map((i) => {
+    const v = atoms[i];
+    return v ? dot(v, b) : 0;
+  });
 
   if (n === 1) return solveLeastSquares1(G, h);
   if (n === 2) return solveLeastSquares2(G, h);
@@ -122,7 +134,9 @@ export function omp(
     let bestIdx = -1;
     for (let k = 0; k < K; k++) {
       if (selectedIndices.includes(k)) continue;
-      const corr = Math.abs(dot(residual, atoms[k]));
+      const ak = atoms[k];
+      if (!ak) continue;
+      const corr = Math.abs(dot(residual, ak));
       if (corr > bestCorr) {
         bestCorr = corr;
         bestIdx = k;
@@ -134,7 +148,12 @@ export function omp(
     const coefficients = solveLeastSquares(atoms, signal, selectedIndices);
     residual = [...signal];
     for (let i = 0; i < selectedIndices.length; i++) {
-      residual = subtract(residual, scale(atoms[selectedIndices[i]], coefficients[i]));
+      const si = selectedIndices[i];
+      const ci = coefficients[i];
+      if (si === undefined || ci === undefined) continue;
+      const av = atoms[si];
+      if (!av) continue;
+      residual = subtract(residual, scale(av, ci));
     }
   }
 
@@ -160,25 +179,36 @@ export function initializeAtoms(data: number[][], K: number): number[][] {
   // Termination: loop runs exactly effectiveK - 1 times
   for (let iter = 1; iter < effectiveK; iter++) {
     const lastIdx = selected[selected.length - 1];
+    if (lastIdx === undefined) break;
+    const lastVec = data[lastIdx];
+    if (!lastVec) break;
     for (let i = 0; i < data.length; i++) {
       if (selected.includes(i)) continue;
-      const d = 1 - Math.abs(cosineSimilarity(data[i], data[lastIdx]));
-      minDist[i] = Math.min(minDist[i], d);
+      const di = data[i];
+      const cur = minDist[i];
+      if (!di || cur === undefined) continue;
+      const d = 1 - Math.abs(cosineSimilarity(di, lastVec));
+      minDist[i] = Math.min(cur, d);
     }
 
     let bestDist = -1.0;
     let bestIdx = 0;
     for (let i = 0; i < data.length; i++) {
       if (selected.includes(i)) continue;
-      if (minDist[i] > bestDist) {
-        bestDist = minDist[i];
+      const cur = minDist[i];
+      if (cur === undefined) continue;
+      if (cur > bestDist) {
+        bestDist = cur;
         bestIdx = i;
       }
     }
     selected.push(bestIdx);
   }
 
-  return selected.map((idx) => normalize(data[idx]));
+  return selected.map((idx) => {
+    const v = data[idx];
+    return v ? normalize(v) : [];
+  });
 }
 
 // ── K-SVD dictionary update ───────────────────────────────────────────────────
@@ -187,12 +217,14 @@ function findAtomUsers(
   encodings: OMPResult[],
   atomIndex: number,
 ): Array<{ dataIdx: number; coeff: number }> {
-  const users = [];
+  const users: Array<{ dataIdx: number; coeff: number }> = [];
   for (let i = 0; i < encodings.length; i++) {
     const enc = encodings[i];
+    if (!enc) continue;
     const pos = enc.indices.indexOf(atomIndex);
     if (pos !== -1) {
-      users.push({ dataIdx: i, coeff: enc.coefficients[pos] });
+      const coeff = enc.coefficients[pos];
+      if (coeff !== undefined) users.push({ dataIdx: i, coeff });
     }
   }
   return users;
@@ -208,17 +240,24 @@ function computeAtomContribution(
   const users = findAtomUsers(encodings, atomIndex);
   if (users.length === 0) return zeros(D);
 
-  let contribution = zeros(D);
+  const contribution = zeros(D);
   for (const user of users) {
-    let partial = [...data[user.dataIdx]];
+    const dv = data[user.dataIdx];
     const enc = encodings[user.dataIdx];
+    if (!dv || !enc) continue;
+    let partial = [...dv];
     for (let j = 0; j < enc.indices.length; j++) {
       const aidx = enc.indices[j];
-      if (aidx === atomIndex) continue;
-      partial = subtract(partial, scale(atoms[aidx], enc.coefficients[j]));
+      const coeff = enc.coefficients[j];
+      if (aidx === undefined || coeff === undefined || aidx === atomIndex) continue;
+      const av = atoms[aidx];
+      if (!av) continue;
+      partial = subtract(partial, scale(av, coeff));
     }
     for (let dIdx = 0; dIdx < D; dIdx++) {
-      contribution[dIdx] += partial[dIdx];
+      const p = partial[dIdx];
+      const c = contribution[dIdx];
+      if (p !== undefined && c !== undefined) contribution[dIdx] = c + p;
     }
   }
   return contribution;
@@ -255,7 +294,7 @@ export function updateDictionary(
     for (let k = 0; k < actualK; k++) {
       const contribution = computeAtomContribution(data, encodings, currentAtoms, k, D);
       const newAtom = normalize(contribution);
-      if (norm(newAtom) > 0) {
+      if (norm(newAtom) > 0 && currentAtoms[k] !== undefined) {
         currentAtoms[k] = newAtom;
       }
     }

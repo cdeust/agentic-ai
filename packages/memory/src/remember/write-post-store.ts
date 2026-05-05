@@ -138,7 +138,7 @@ export function runSynapticTagging(
     const recent = store.getHotMemories({ minHeat: 0.0, limit: 50 });
     const candidates = buildTaggingCandidates(recent, memId, newEntityNames, store);
     const newEntSet = new Set(newEntityNames.map((n) => n.toLowerCase()));
-    const tagResults = applySynapticTags(newEntSet, importance, candidates);
+    const tagResults = applySynapticTags(newEntSet, importance, candidates as never);
     for (const tag of tagResults) {
       store.updateMemoryImportance(tag.memory_id, tag.new_importance);
       store.updateMemoryHeat(tag.memory_id, tag.new_heat);
