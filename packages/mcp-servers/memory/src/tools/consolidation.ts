@@ -77,41 +77,55 @@ function toConsolidationStore(store: MemoryStore): ConsolidationStore {
   const ext = store as unknown as Record<string, (...args: unknown[]) => unknown>;
 
   return {
-    getAllMemoriesForDecay: () => Promise.resolve((ext["getAllMemoriesForDecay"]?.() ?? []) as Record<string, unknown>[]),
-    getAllEntities: (opts) => Promise.resolve((ext["getAllEntities"]?.(opts) ?? []) as Record<string, unknown>[]),
-    updateEntitiesHeatBatch: (u) => { ext["updateEntitiesHeatBatch"]?.(u); return Promise.resolve(); },
-    getEpisodicMemories: (l) => Promise.resolve((ext["getEpisodicMemories"]?.(l) ?? []) as Record<string, unknown>[]),
-    getSemanticMemories: (l) => Promise.resolve((ext["getSemanticMemories"]?.(l) ?? []) as Record<string, unknown>[]),
-    getColdMemories: (t, l) => Promise.resolve((ext["getColdMemories"]?.(t, l) ?? []) as Record<string, unknown>[]),
-    compressMemoryToGist: (id, g) => { ext["compressMemoryToGist"]?.(id, g); return Promise.resolve(); },
-    compressMemoryToTags: (id, t) => { ext["compressMemoryToTags"]?.(id, t); return Promise.resolve(); },
-    getMemoriesByStage: (s, l) => Promise.resolve((ext["getMemoriesByStage"]?.(s, l) ?? []) as Record<string, unknown>[]),
-    updateMemoryConsolidation: (id, s, h, r, d) => { ext["updateMemoryConsolidation"]?.(id, s, h, r, d); return Promise.resolve(); },
+    // ── shared / decay ───────────────────────────────────────────────────────
+    getAllMemoriesForDecay:       () => Promise.resolve((ext["getAllMemoriesForDecay"]?.() ?? []) as Record<string, unknown>[]),
+    getAllEntities:               (opts) => Promise.resolve((ext["getAllEntities"]?.(opts) ?? []) as Record<string, unknown>[]),
+    updateEntitiesHeatBatch:     (u) => { ext["updateEntitiesHeatBatch"]?.(u); return Promise.resolve(); },
+    // ── plasticity ───────────────────────────────────────────────────────────
+    getAllRelationships:          () => Promise.resolve((ext["getAllRelationships"]?.() ?? []) as Record<string, unknown>[]),
+    getHotMemories:              (opts) => Promise.resolve((ext["getHotMemories"]?.(opts) ?? []) as Record<string, unknown>[]),
+    findCoAccessedPairs:         (ids) => Promise.resolve((ext["findCoAccessedPairs"]?.(ids) ?? []) as Array<[number, number]>),
+    updateRelationshipsWeightBatch: (u) => { ext["updateRelationshipsWeightBatch"]?.(u); return Promise.resolve(); },
+    // ── pruning ──────────────────────────────────────────────────────────────
+    deleteRelationshipsBatch:    (ids) => Promise.resolve((ext["deleteRelationshipsBatch"]?.(ids) ?? 0) as number),
+    archiveEntitiesBatch:        (ids) => Promise.resolve((ext["archiveEntitiesBatch"]?.(ids) ?? 0) as number),
+    // ── compression + sleep ──────────────────────────────────────────────────
+    insertArchive:               (row) => { ext["insertArchive"]?.(row); return Promise.resolve(); },
+    updateMemoryCompression:     (id, content, embedding, compressionLevel, opts) => { ext["updateMemoryCompression"]?.(id, content, embedding, compressionLevel, opts); return Promise.resolve(); },
+    // ── CLS ──────────────────────────────────────────────────────────────────
+    getEpisodicMemories:         (l) => Promise.resolve((ext["getEpisodicMemories"]?.(l) ?? []) as Record<string, unknown>[]),
+    getSemanticMemories:         (l) => Promise.resolve((ext["getSemanticMemories"]?.(l) ?? []) as Record<string, unknown>[]),
+    // ── memify ───────────────────────────────────────────────────────────────
+    deleteMemory:                (id) => { ext["deleteMemory"]?.(id); return Promise.resolve(); },
+    updateMemoryImportance:      (id, importance) => { ext["updateMemoryImportance"]?.(id, importance); return Promise.resolve(); },
+    insertRelationship:          (rel) => { ext["insertRelationship"]?.(rel); return Promise.resolve(); },
+    // ── sleep ────────────────────────────────────────────────────────────────
+    insertMemory:                (mem) => Promise.resolve((ext["insertMemory"]?.(mem) ?? 0) as number),
+    // ── cascade ──────────────────────────────────────────────────────────────
+    getMemoriesByStage:          (s, l) => Promise.resolve((ext["getMemoriesByStage"]?.(s, l) ?? []) as Record<string, unknown>[]),
+    updateMemoryConsolidation:   (id, s, h, r, d) => { ext["updateMemoryConsolidation"]?.(id, s, h, r, d); return Promise.resolve(); },
     insertStageTransitionsBatch: (t) => { ext["insertStageTransitionsBatch"]?.(t); return Promise.resolve(); },
-    getHomeostaticFactor: (d) => Promise.resolve(store.getHomeostaticFactor(d)),
-    setHomeostaticFactor: (d, f) => { store.setHomeostaticFactor(d, f); return Promise.resolve(); },
-    bumpHeatRawBatch: (u) => { ext["bumpHeatRawBatch"]?.(u); return Promise.resolve(); },
-    getAllEdges: () => Promise.resolve((ext["getAllEdges"]?.() ?? []) as Record<string, unknown>[]),
-    deleteEdges: (ids) => { ext["deleteEdges"]?.(ids); return Promise.resolve(); },
-    archiveEntities: (ids) => { ext["archiveEntities"]?.(ids); return Promise.resolve(); },
-    getEntityMemoryIds: () => Promise.resolve((ext["getEntityMemoryIds"]?.() ?? new Set()) as Set<number>),
-    getRecentMemories: (l) => Promise.resolve((ext["getRecentMemories"]?.(l) ?? []) as Record<string, unknown>[]),
-    updateEdgeWeightBatch: (u) => { ext["updateEdgeWeightBatch"]?.(u); return Promise.resolve(); },
-    markForMemification: (ids) => { ext["markForMemification"]?.(ids); return Promise.resolve(); },
-    getHotMemories: (l) => Promise.resolve((ext["getHotMemories"]?.(l) ?? []) as Record<string, unknown>[]),
-    getRelatedMemories: (ids, l) => Promise.resolve((ext["getRelatedMemories"]?.(ids, l) ?? []) as Record<string, unknown>[]),
-    getOscillatoryState: () => Promise.resolve((ext["getOscillatoryState"]?.() ?? null) as Record<string, unknown> | null),
-    saveOscillatoryState: (s) => { ext["saveOscillatoryState"]?.(s); return Promise.resolve(); },
-    getTransferCandidates: (l) => Promise.resolve((ext["getTransferCandidates"]?.(l) ?? []) as Record<string, unknown>[]),
+    updateStageEnteredAt:        (memoryId, enteredAt) => { ext["updateStageEnteredAt"]?.(memoryId, enteredAt); return Promise.resolve(); },
+    // ── homeostatic ──────────────────────────────────────────────────────────
+    getHomeostaticFactor:        (d) => Promise.resolve(store.getHomeostaticFactor(d)),
+    setHomeostaticFactor:        (d, f) => { store.setHomeostaticFactor(d, f); return Promise.resolve(); },
+    bumpHeatRaw:                 (id, heat) => { ext["bumpHeatRaw"]?.(id, heat); return Promise.resolve(); },
+    // ── batch connection (memify + homeostatic + sleep) ───────────────────────
+    acquireBatch:                () => ({ execute: async (sql: string, params?: unknown[]) => { ext["acquireBatch"]?.(); return { rows: [], rowcount: 0 }; void sql; void params; } }),
+    // ── transfer ─────────────────────────────────────────────────────────────
+    getTransferCandidates:       (l) => Promise.resolve((ext["getTransferCandidates"]?.(l) ?? []) as Record<string, unknown>[]),
     updateHippocampalDependency: (id, d) => { ext["updateHippocampalDependency"]?.(id, d); return Promise.resolve(); },
-    logConsolidation: (e) => { ext["logConsolidation"]?.(e); return Promise.resolve(); },
+    // ── logging ──────────────────────────────────────────────────────────────
+    logConsolidation:            (e) => { ext["logConsolidation"]?.(e); return Promise.resolve(); },
   };
 }
 
 // source: cortex@ed33435 mcp_server/infrastructure/config.py — defaults
 const DEFAULT_CONSOLIDATION_SETTINGS: ConsolidationSettings = {
-  COLD_THRESHOLD: 0.2,  // source: cortex@ed33435 config.py COLD_THRESHOLD default
-  DECAY_FACTOR:   0.95, // source: cortex@ed33435 config.py DECAY_FACTOR default
+  COLD_THRESHOLD:              0.2,  // source: cortex@ed33435 config.py COLD_THRESHOLD default
+  DECAY_FACTOR:                0.95, // source: cortex@ed33435 config.py DECAY_FACTOR default
+  COMPRESSION_GIST_AGE_HOURS:  48,   // source: cortex@ed33435 config.py COMPRESSION_GIST_AGE_HOURS default
+  COMPRESSION_TAG_AGE_HOURS:   168,  // source: cortex@ed33435 config.py COMPRESSION_TAG_AGE_HOURS default (7 days)
 };
 
 // ── ConsolidationEmbeddingEngine (no-op) ──────────────────────────────────────
