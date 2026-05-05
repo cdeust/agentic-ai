@@ -354,4 +354,76 @@ describe("AnthropicLlmClient — SDK transport (mocked @anthropic-ai/sdk)", () =
       /no text content blocks/,
     );
   });
+
+  it("complete() throws when the API response has empty content array", async () => {
+    // source: anthropic-llm-client.ts:89-99 — the for-of loop falls through
+    // when content is empty (e.g. stop_reason:"max_tokens" with no content).
+    // Verify the descriptive error fires for content:[] just as for non-text-block
+    // responses. (Liskov P1b.)
+    const sdkMockC = anthropicMock;
+    sdkMockC.create.mockResolvedValueOnce({
+      content: [],
+      stop_reason: "max_tokens",
+    });
+
+    const { AnthropicLlmClient } = await import(
+      "../../src/infrastructure/anthropic-llm-client.js"
+    );
+    const client = new AnthropicLlmClient({ apiKey: "test-key" });
+
+    await expect(client.complete({ prompt: "hi" })).rejects.toThrow(
+      /no text content blocks/,
+    );
+  });
+
+  it("complete() returns the first text block when text follows a tool_use block", async () => {
+    // source: anthropic-llm-client.ts:89-93 — iterates content and returns the
+    // first text block found. Verify the iteration honors order, not just
+    // "any text block": a tool_use-then-text response must yield the text.
+    // (Liskov P2b.)
+    const sdkMockD = anthropicMock;
+    sdkMockD.create.mockResolvedValueOnce({
+      content: [
+        { type: "tool_use", id: "x", name: "y", input: {} },
+        { type: "text", text: "second-block text" },
+      ],
+      stop_reason: "end_turn",
+    });
+
+    const { AnthropicLlmClient } = await import(
+      "../../src/infrastructure/anthropic-llm-client.js"
+    );
+    const client = new AnthropicLlmClient({ apiKey: "test-key" });
+
+    const out = await client.complete({ prompt: "hi" });
+    expect(out).toBe("second-block text");
+  });
+
+  it("complete() forwards DEFAULT_TEMPERATURE=1.0 when caller omits temperature", async () => {
+    // source: anthropic-llm-client.ts:23 — DEFAULT_TEMPERATURE = 1.0
+    // (the API default; appropriate for the prose-polish task class).
+    // The earlier test sets temperature explicitly; if a regression dropped
+    // the field from `params`, that test would still pass because it asserts
+    // the value the caller supplied. This case asserts the default is
+    // forwarded when the caller omits it. (Feynman gap E.)
+    const sdkMockE = anthropicMock;
+    sdkMockE.create.mockResolvedValueOnce({
+      content: [{ type: "text", text: "ok" }],
+      stop_reason: "end_turn",
+    });
+
+    const { AnthropicLlmClient } = await import(
+      "../../src/infrastructure/anthropic-llm-client.js"
+    );
+    const client = new AnthropicLlmClient({ apiKey: "test-key" });
+    await client.complete({ prompt: "hi" });
+
+    const lastCall = sdkMockE.create.mock.calls.at(-1) as [{
+      temperature: number;
+      max_tokens: number;
+    }];
+    expect(lastCall[0].temperature).toBe(1.0);
+    // and DEFAULT_MAX_TOKENS = 1024 should likewise be forwarded.
+    expect(lastCall[0].max_tokens).toBe(1024);
+  });
 });

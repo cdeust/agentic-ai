@@ -234,8 +234,10 @@ describe("parity: index_codebase", () => {
     Date.now = savedDateNow;
 
     // If TS were computing elapsed from Date.now, it would be 0 with clock frozen.
-    // The Rust binary computes its own elapsed; result must be ≥ 0.
-    expect(result.totalElapsedMs).toBeGreaterThanOrEqual(0);
+    // The Rust binary computes its own elapsed and a real Python-fixture index
+    // takes non-trivial wall time — assert strictly greater than 0 to reject
+    // a hardcoded-zero / TS-computed-zero regression.
+    expect(result.totalElapsedMs).toBeGreaterThan(0);
     expect(result.graphPath).toBeTruthy();
   });
 });

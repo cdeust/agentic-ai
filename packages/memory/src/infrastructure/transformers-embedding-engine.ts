@@ -178,7 +178,22 @@ export class TransformersEmbeddingEngine implements EmbeddingEngine {
 
     // Convert each row to Float32Array.
     // postcondition: each result[i].length === this.dim
-    return nested.map((row) => new Float32Array(row));
+    //
+    // The dim invariant is asserted explicitly: if the loaded model's hidden
+    // dimension drifts from the configured `this.dim` (model swap, ONNX export
+    // mismatch, runaway truncation), silent shape divergence would corrupt
+    // every downstream cosine-similarity. Fail fast at the boundary instead.
+    return nested.map((row) => {
+      const arr = new Float32Array(row);
+      if (arr.length !== this.dim) {
+        throw new Error(
+          `TransformersEmbeddingEngine: pipeline returned vector of length ${arr.length}, ` +
+            `expected ${this.dim} (model=${this.modelId}). The model's hidden dimension ` +
+            `does not match the configured dim — refuse to publish a malformed embedding.`,
+        );
+      }
+      return arr;
+    });
   }
 }
 

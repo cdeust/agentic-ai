@@ -293,10 +293,11 @@ describe("WorkflowGraphASTSource AP-backed paths (mocked callUpstream)", () => {
     // qualified_name for those labels. Verify the row contains the synthetic id.
     // source: source-ast.ts:432-444
     //
-    // _resolveGraphPaths may yield multiple paths when dev-machine roster dirs
-    // (~/.cortex/ap_graphs etc.) happen to exist. The mock returns the same
-    // payload for each path, so we assert on the unique qualified_names rather
-    // than the raw row count.
+    // The HOME tmpdir override in beforeEach() pins _resolveGraphPaths() to
+    // exactly one explicit path (the env var). With one graph path resolved,
+    // the row count must equal the registered mock-row count — assert both
+    // unique qnames and total count to catch a regression that doubles every
+    // symbol via redundant graph-path iteration. (Feynman gap D.)
     mockResponses["MATCH (s:Import)"] = {
       columns: ["qualified_name", "name"],
       rows: [
@@ -309,10 +310,51 @@ describe("WorkflowGraphASTSource AP-backed paths (mocked callUpstream)", () => {
     const rows = await src.loadSymbolsAsync([]);
 
     const importRows = rows.filter((r) => r["symbol_type"] === "import");
+    expect(importRows.length).toBe(2);
     const uniqQNames = new Set(importRows.map((r) => String(r["qualified_name"])));
     expect(uniqQNames.size).toBe(2);
     expect(uniqQNames).toEqual(new Set(["src/app.ts::./utils", "src/app.ts::lodash"]));
     // The id (file::modpath) becomes qualified_name verbatim — no name-prefix needed.
+  });
+
+  it("loadSymbolsAsync — AP error response degrades to []", async () => {
+    // source: source-ast.ts:_asList:194 — payloads with status:"error" return
+    // an empty list. The loader silently skips error responses (one bad table
+    // never kills the whole visualization). Verify the production normaliser
+    // honours that contract. (Liskov P1a.)
+    mockResponses["MATCH (s:Function)"] = {
+      columns: [],
+      rows: [],
+      status: "error",
+    };
+    const src = new WorkflowGraphASTSource();
+    const rows = await src.loadSymbolsAsync([]);
+    // No registered response for any other label → all return empty too.
+    // Function would have returned rows but for the error status; nothing else
+    // is registered. Result must be [].
+    expect(rows.filter((r) => r["symbol_type"] === "function")).toEqual([]);
+  });
+
+  it("loadSymbolsAsync — rows with column-count mismatch are skipped", async () => {
+    // source: source-ast.ts:_asList:201 — when row.length !== columns.length,
+    // the row is skipped (well-formed only). Production protects callers from
+    // partial/garbage data; verify the protection still exists. (Liskov P2a.)
+    mockResponses["MATCH (s:Function)"] = {
+      columns: ["qualified_name", "name"],
+      rows: [
+        ["src/foo.ts::doFoo", "doFoo"], // well-formed (length 2 matches)
+        ["only_one_col"], // malformed: shorter than columns
+        ["a", "b", "c"], // malformed: longer than columns
+      ],
+      status: "ok",
+    };
+    const src = new WorkflowGraphASTSource();
+    const rows = await src.loadSymbolsAsync([]);
+
+    const fnRows = rows.filter((r) => r["symbol_type"] === "function");
+    // Only the well-formed row survives.
+    expect(fnRows.length).toBe(1);
+    expect(fnRows[0]?.["qualified_name"]).toBe("src/foo.ts::doFoo");
   });
 
   it("loadAstEdgesAsync — Defines_File_Import edges appear in imports kind", async () => {
