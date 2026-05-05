@@ -133,3 +133,141 @@ describe("drillDownHandler", () => {
     // No assertion if no children (cluster geometry dependent)
   });
 });
+
+// ── P2b additions: computeLevelWeights, scoreAgainstHierarchy, rollUp ────────
+// These tests would have caught the missing adaptive scoring half of fractal.py.
+// source: cortex@ed33435 mcp_server/core/fractal.py:81-252
+
+import {
+  computeLevelWeights,
+  scoreAgainstHierarchy,
+  rollUp,
+  buildFractalHierarchy,
+} from "../../src/recall/fractal-drill-down.js";
+import { cosineSimilarity } from "../../src/recall/vector-similarity.js";
+
+describe("computeLevelWeights (D-09)", () => {
+  it("short query (<10 words) → L2-heavy (0.3, 0.5, 1.0)", () => {
+    // source: cortex@ed33435 fractal.py:93
+    const [w0, w1, w2] = computeLevelWeights("short query here");
+    expect(w0).toBeCloseTo(0.3, 6);
+    expect(w1).toBeCloseTo(0.5, 6);
+    expect(w2).toBeCloseTo(1.0, 6);
+  });
+
+  it("long query (>30 words) → L0-heavy (1.0, 0.5, 0.3)", () => {
+    // source: cortex@ed33435 fractal.py:95
+    const longQuery = Array.from({ length: 35 }, (_, i) => `word${i}`).join(" ");
+    const [w0, w1, w2] = computeLevelWeights(longQuery);
+    expect(w0).toBeCloseTo(1.0, 6);
+    expect(w1).toBeCloseTo(0.5, 6);
+    expect(w2).toBeCloseTo(0.3, 6);
+  });
+
+  it("medium query (10-30 words) → balanced (0.7, 0.7, 0.7)", () => {
+    // source: cortex@ed33435 fractal.py:97
+    const medQuery = Array.from({ length: 20 }, (_, i) => `word${i}`).join(" ");
+    const [w0, w1, w2] = computeLevelWeights(medQuery);
+    expect(w0).toBeCloseTo(0.7, 6);
+    expect(w1).toBeCloseTo(0.7, 6);
+    expect(w2).toBeCloseTo(0.7, 6);
+  });
+
+  it("empty query is treated as short (< 10 words)", () => {
+    const [w0, , w2] = computeLevelWeights("");
+    expect(w0).toBeCloseTo(0.3, 6);
+    expect(w2).toBeCloseTo(1.0, 6);
+  });
+});
+
+describe("scoreAgainstHierarchy (D-10)", () => {
+  function makeMemForScoring(id: number, seed: number): MemoryItem {
+    return {
+      id,
+      content: `memory ${id}`,
+      domain: "test",
+      heat: 0.5,
+      embedding: makeEmbedding(seed, 8),
+      tags: [],
+    };
+  }
+
+  it("returns scored results sorted descending", () => {
+    const mems = [
+      makeMemForScoring(1, 0.0),
+      makeMemForScoring(2, 1.0),
+      makeMemForScoring(3, 2.0),
+    ];
+    const hierarchy = buildFractalHierarchy(mems, 0.5);
+    const queryEmb = makeEmbedding(0.0, 8); // closest to mem 1
+    const results = scoreAgainstHierarchy(
+      queryEmb,
+      hierarchy,
+      cosineSimilarity,
+      "short query",
+      10,
+    );
+    // Results must be sorted descending by score
+    for (let i = 1; i < results.length; i++) {
+      expect(results[i - 1]!.score).toBeGreaterThanOrEqual(results[i]!.score);
+    }
+  });
+
+  it("respects maxResults limit", () => {
+    const mems = Array.from({ length: 10 }, (_, i) => makeMemForScoring(i + 1, i * 0.5));
+    const hierarchy = buildFractalHierarchy(mems, 0.3);
+    const queryEmb = makeEmbedding(0.0, 8);
+    const results = scoreAgainstHierarchy(queryEmb, hierarchy, cosineSimilarity, "query", 3);
+    expect(results.length).toBeLessThanOrEqual(3);
+  });
+
+  it("each result has memoryId, score, levelScores, matchedLevel", () => {
+    const mems = [makeMemForScoring(1, 0.0), makeMemForScoring(2, 1.0)];
+    const hierarchy = buildFractalHierarchy(mems, 0.5);
+    const queryEmb = makeEmbedding(0.0, 8);
+    const results = scoreAgainstHierarchy(queryEmb, hierarchy, cosineSimilarity);
+    for (const r of results) {
+      expect(r).toHaveProperty("memoryId");
+      expect(r).toHaveProperty("score");
+      expect(r).toHaveProperty("levelScores");
+      expect(r).toHaveProperty("matchedLevel");
+    }
+  });
+});
+
+describe("rollUp (D-11)", () => {
+  function makeMemForRollup(id: number): MemoryItem {
+    return {
+      id,
+      content: `memory ${id}`,
+      domain: "test",
+      heat: 0.5,
+      embedding: makeEmbedding(id * 0.1, 8),
+      tags: [],
+    };
+  }
+
+  it("returns empty path for unknown memory ID", () => {
+    const hierarchy = buildFractalHierarchy([makeMemForRollup(1)], 0.5);
+    expect(rollUp(9999, hierarchy)).toEqual([]);
+  });
+
+  it("returns a path of length >= 1 for a known memory ID", () => {
+    const mems = [makeMemForRollup(1), makeMemForRollup(2), makeMemForRollup(3)];
+    const hierarchy = buildFractalHierarchy(mems, 0.5);
+    // Memory 1 must be assigned to some cluster
+    const path = rollUp(1, hierarchy);
+    expect(path.length).toBeGreaterThanOrEqual(1);
+    // First element should be an L1 cluster ID
+    expect(path[0]).toMatch(/^L1-/);
+  });
+
+  it("path length <= 2 (L1_id + optional L2_id)", () => {
+    const mems = Array.from({ length: 5 }, (_, i) => makeMemForRollup(i + 1));
+    const hierarchy = buildFractalHierarchy(mems, 0.3);
+    for (const mem of mems) {
+      const path = rollUp(mem.id, hierarchy);
+      expect(path.length).toBeLessThanOrEqual(2);
+    }
+  });
+});

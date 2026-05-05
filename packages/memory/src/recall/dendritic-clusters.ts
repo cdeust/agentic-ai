@@ -35,11 +35,24 @@
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
+/**
+ * A dendritic branch groups semantically-related memories via Jaccard
+ * similarity over entity names and tag strings.
+ *
+ * D-05 fix: entitySignature was Set<number> (DB auto-increment IDs) in the
+ * previous TS port. Python uses set[str] (entity names). Jaccard computed over
+ * integer IDs produces numerically different affinity scores than Jaccard over
+ * name strings, causing systematically incorrect branch assignments.
+ * Fix: entitySignature is now Set<string> (entity names), matching Python.
+ * source: cortex@ed33435 mcp_server/core/dendritic_clusters.py:44-67
+ *         (entity_signature typed as set[str])
+ */
 export interface DendriticBranch {
   branchId: string;
   domain: string;
   memoryIds: number[];
-  entitySignature: Set<number>;
+  /** Entity names (strings) — NOT entity integer IDs. */
+  entitySignature: Set<string>;
   tagSignature: Set<string>;
   avgHeat: number;
   plasticity: number;
@@ -116,14 +129,15 @@ function jaccardSimilarity<T>(a: Set<T>, b: Set<T>): number {
  * In biology, dendritic clustering is driven by spatiotemporal coincidence,
  * not semantic similarity. This is a practical engineering proxy.
  *
- * pre:  branch is a valid DendriticBranch
+ * pre:  branch is a valid DendriticBranch; memoryEntities is a Set<string>
+ *       of entity names (not IDs) — matching Python set[str] contract.
  * post: returned value is in [0, 1]
  *
- * source: cortex@bc0ae4f mcp_server/core/dendritic_clusters.py:44-67
+ * source: cortex@ed33435 mcp_server/core/dendritic_clusters.py:44-67
  *         Weights 0.7/0.3 — engineering choice (no paper citation)
  */
 export function computeBranchAffinity(
-  memoryEntities: Set<number>,
+  memoryEntities: Set<string>,
   memoryTags: Set<string>,
   branch: DendriticBranch,
 ): number {
@@ -152,7 +166,7 @@ export function computeBranchAffinity(
  * @param disabled - Pass true for ablation mode (always returns null).
  */
 export function findBestBranch(
-  memoryEntities: Set<number>,
+  memoryEntities: Set<string>,
   memoryTags: Set<string>,
   branches: DendriticBranch[],
   options?: FindBranchOptions,
@@ -186,7 +200,7 @@ export function findBestBranch(
 export function addMemoryToBranch(
   branch: DendriticBranch,
   memoryId: number,
-  memoryEntities: Set<number>,
+  memoryEntities: Set<string>,
   memoryTags: Set<string>,
   memoryHeat: number,
 ): DendriticBranch {
@@ -218,7 +232,7 @@ export function createBranch(
   branchId: string,
   domain: string,
   memoryId: number,
-  memoryEntities: Set<number>,
+  memoryEntities: Set<string>,
   memoryTags: Set<string>,
   memoryHeat: number,
 ): DendriticBranch {

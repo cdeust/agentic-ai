@@ -34,7 +34,7 @@ const ROUND_FACTOR = 10000;
 
 // ── Internal cluster types ────────────────────────────────────────────────────
 
-interface L1Cluster {
+export interface L1Cluster {
   readonly clusterId: string;
   readonly level: 1;
   readonly centroid: number[];
@@ -42,7 +42,7 @@ interface L1Cluster {
   avgHeat: number;
 }
 
-interface L2Cluster {
+export interface L2Cluster {
   readonly clusterId: string;
   readonly level: 2;
   readonly centroid: number[];
@@ -50,7 +50,7 @@ interface L2Cluster {
   readonly directory: string;
 }
 
-interface FractalHierarchy {
+export interface FractalHierarchy {
   readonly l1: Map<string, L1Cluster>;
   readonly l2: Map<string, L2Cluster>;
 }
@@ -179,7 +179,7 @@ function buildL2Clusters(l1Clusters: L1Cluster[]): L2Cluster[] {
  *
  * source: cortex@ed33435 mcp_server/core/fractal.py::build_hierarchy
  */
-function buildFractalHierarchy(
+export function buildFractalHierarchy(
   memories: MemoryItem[],
   threshold: number,
 ): FractalHierarchy {
@@ -193,6 +193,248 @@ function buildFractalHierarchy(
   const l1 = new Map<string, L1Cluster>(l1List.map((c) => [c.clusterId, c]));
   const l2 = new Map<string, L2Cluster>(l2List.map((c) => [c.clusterId, c]));
   return { l1, l2 };
+}
+
+// ── Adaptive retrieval weighting constants (P2b) ──────────────────────────────
+
+// Query length thresholds (word counts) for level-weight selection.
+const SHORT_QUERY_THRESHOLD = 10; // source: cortex@ed33435 mcp_server/core/fractal.py:92 (word_count < 10)
+const LONG_QUERY_THRESHOLD = 30; // source: cortex@ed33435 mcp_server/core/fractal.py:94 (word_count > 30)
+
+// Level weights for short queries (broad — L2 heavy).
+const SHORT_W0 = 0.3; // source: cortex@ed33435 fractal.py:93
+const SHORT_W1 = 0.5; // source: cortex@ed33435 fractal.py:93
+const SHORT_W2 = 1.0; // source: cortex@ed33435 fractal.py:93
+
+// Level weights for long queries (specific — L0 heavy).
+const LONG_W0 = 1.0; // source: cortex@ed33435 fractal.py:95
+const LONG_W1 = 0.5; // source: cortex@ed33435 fractal.py:95
+const LONG_W2 = 0.3; // source: cortex@ed33435 fractal.py:95
+
+// Level weights for medium queries (balanced).
+const MED_W = 0.7; // source: cortex@ed33435 fractal.py:97
+
+// Default maximum results returned by scoreAgainstHierarchy.
+const SCORE_HIERARCHY_MAX_RESULTS = 10; // source: cortex@ed33435 fractal.py:109 (max_results=10 default)
+
+// ── Adaptive retrieval weighting (P2b additions) ──────────────────────────────
+
+/**
+ * Compute retrieval weights for each hierarchy level based on query length.
+ *
+ * Returns [level0Weight, level1Weight, level2Weight].
+ *   Short queries (< 10 words) → broad (L2 heavy): (0.3, 0.5, 1.0)
+ *   Long queries (> 30 words)  → specific (L0 heavy): (1.0, 0.5, 0.3)
+ *   Medium                     → balanced: (0.7, 0.7, 0.7)
+ *
+ * precondition:  query is a string (may be empty).
+ * postcondition: returned tuple sums > 0; all values are positive.
+ *
+ * source: cortex@ed33435 mcp_server/core/fractal.py:81-97 (compute_level_weights)
+ */
+export function computeLevelWeights(
+  query: string,
+): [number, number, number] {
+  const wordCount = query.split(/\s+/).filter((w) => w.length > 0).length;
+  if (wordCount < SHORT_QUERY_THRESHOLD) {
+    // source: cortex@ed33435 fractal.py:93 (word_count < 10 → broad)
+    return [SHORT_W0, SHORT_W1, SHORT_W2];
+  } else if (wordCount > LONG_QUERY_THRESHOLD) {
+    // source: cortex@ed33435 fractal.py:95 (word_count > 30 → specific)
+    return [LONG_W0, LONG_W1, LONG_W2];
+  }
+  // source: cortex@ed33435 fractal.py:97 (medium → balanced)
+  return [MED_W, MED_W, MED_W];
+}
+
+/**
+ * Score individual memories at Level 0.
+ *
+ * For each memory in the L0 level (raw memories), compute cosine similarity
+ * against the query embedding, weighted by w0. Entries are added to results.
+ *
+ * source: cortex@ed33435 mcp_server/core/fractal.py:125-145 (_score_level_0)
+ */
+function scoreLevelZero(
+  hierarchy: FractalHierarchy,
+  queryEmbedding: number[],
+  similarityFn: (a: number[], b: number[]) => number,
+  weight: number,
+  results: Map<number, { memoryId: number; score: number; levelScores: Record<string, number>; matchedLevel: number }>,
+): void {
+  // Level 0 members are the raw MemoryItem objects stored on L1 clusters
+  // (the hierarchy as built here stores them on l1 cluster members).
+  // Walk l1 clusters to access all individual memories at level 0.
+  // source: cortex@ed33435 fractal.py:133 (hierarchy["levels"].get(0, []))
+  for (const cluster of hierarchy.l1.values()) {
+    for (const mem of cluster.members) {
+      const emb = mem.embedding;
+      if (!emb || emb.length === 0) continue;
+      const sim = similarityFn(queryEmbedding, emb);
+      const mid = mem.id;
+      results.set(mid, {
+        memoryId: mid,
+        score: sim * weight,
+        levelScores: { L0: sim },
+        matchedLevel: 0,
+      });
+    }
+  }
+}
+
+/**
+ * Distribute cluster-level scores to member memories at Level 1.
+ *
+ * For each L1 cluster, compute similarity of query to cluster centroid,
+ * weighted by w1. Adds to existing L0 score if the memory was already scored.
+ *
+ * source: cortex@ed33435 mcp_server/core/fractal.py:148-172 (_score_level_1)
+ */
+function scoreLevelOne(
+  hierarchy: FractalHierarchy,
+  queryEmbedding: number[],
+  similarityFn: (a: number[], b: number[]) => number,
+  weight: number,
+  results: Map<number, { memoryId: number; score: number; levelScores: Record<string, number>; matchedLevel: number }>,
+): void {
+  for (const cluster of hierarchy.l1.values()) {
+    if (cluster.centroid.length === 0) continue;
+    const sim = similarityFn(queryEmbedding, cluster.centroid);
+    for (const mem of cluster.members) {
+      const mid = mem.id;
+      const existing = results.get(mid);
+      if (existing !== undefined) {
+        existing.score += sim * weight;
+        existing.levelScores["L1"] = sim;
+      } else {
+        results.set(mid, {
+          memoryId: mid,
+          score: sim * weight,
+          levelScores: { L1: sim },
+          matchedLevel: 1,
+        });
+      }
+    }
+  }
+}
+
+/**
+ * Distribute root-cluster scores to member memories at Level 2.
+ *
+ * For each L2 cluster, compute similarity of query to cluster centroid,
+ * weighted by w2. Distributes to all member memories via child L1 clusters.
+ * Adds to existing score if the memory was already scored at L0 or L1.
+ *
+ * source: cortex@ed33435 mcp_server/core/fractal.py:174-201 (_score_level_2)
+ */
+function scoreLevelTwo(
+  hierarchy: FractalHierarchy,
+  queryEmbedding: number[],
+  similarityFn: (a: number[], b: number[]) => number,
+  weight: number,
+  results: Map<number, { memoryId: number; score: number; levelScores: Record<string, number>; matchedLevel: number }>,
+): void {
+  for (const root of hierarchy.l2.values()) {
+    if (root.centroid.length === 0) continue;
+    const sim = similarityFn(queryEmbedding, root.centroid);
+    for (const childId of root.childClusterIds) {
+      const child = hierarchy.l1.get(childId);
+      if (!child) continue;
+      for (const mem of child.members) {
+        const mid = mem.id;
+        const existing = results.get(mid);
+        if (existing !== undefined) {
+          existing.score += sim * weight;
+          existing.levelScores["L2"] = sim;
+        } else {
+          results.set(mid, {
+            memoryId: mid,
+            score: sim * weight,
+            levelScores: { L2: sim },
+            matchedLevel: 2,
+          });
+        }
+      }
+    }
+  }
+}
+
+export interface HierarchyScoreResult {
+  memoryId: number;
+  score: number;
+  levelScores: Record<string, number>;
+  matchedLevel: number;
+}
+
+/**
+ * Score memories against the fractal hierarchy with adaptive weighting.
+ *
+ * Returns scored results with hierarchy context, sorted descending by score.
+ * Adaptive weights are computed from query word count via computeLevelWeights.
+ *
+ * precondition:  queryEmbedding is a non-empty number array; hierarchy is a
+ *   populated FractalHierarchy; similarityFn returns a score in [-1, 1].
+ * postcondition: returned list has at most maxResults entries; sorted by score
+ *   descending; every entry has memoryId, score, levelScores, matchedLevel.
+ *
+ * source: cortex@ed33435 mcp_server/core/fractal.py:103-122 (score_against_hierarchy)
+ */
+export function scoreAgainstHierarchy(
+  queryEmbedding: number[],
+  hierarchy: FractalHierarchy,
+  similarityFn: (a: number[], b: number[]) => number,
+  query: string = "",
+  maxResults: number = SCORE_HIERARCHY_MAX_RESULTS,
+): HierarchyScoreResult[] {
+  const [w0, w1, w2] = computeLevelWeights(query);
+  const results = new Map<number, HierarchyScoreResult>();
+
+  scoreLevelZero(hierarchy, queryEmbedding, similarityFn, w0, results);
+  scoreLevelOne(hierarchy, queryEmbedding, similarityFn, w1, results);
+  scoreLevelTwo(hierarchy, queryEmbedding, similarityFn, w2, results);
+
+  const sorted = Array.from(results.values())
+    .sort((a, b) => b.score - a.score);
+  return sorted.slice(0, maxResults);
+}
+
+/**
+ * Given a memory ID, return its cluster hierarchy path [L1_id, L2_id].
+ *
+ * Returns the path from the memory's L1 cluster up to its L2 root cluster,
+ * or a partial path if no L2 cluster contains the L1 cluster.
+ * Returns [] when the memory is not found in any L1 cluster.
+ *
+ * precondition:  memoryId is a valid integer.
+ * postcondition: returned array has length 0, 1, or 2; elements are cluster
+ *   ID strings.
+ *
+ * source: cortex@ed33435 mcp_server/core/fractal.py:234-252 (roll_up)
+ */
+export function rollUp(
+  memoryId: number,
+  hierarchy: FractalHierarchy,
+): string[] {
+  const path: string[] = [];
+
+  // invariant: path holds the partial path found so far
+  // termination: iterates over finite l1 and l2 Maps
+  for (const [, cluster] of hierarchy.l1) {
+    const found = cluster.members.some((m) => m.id === memoryId);
+    if (!found) continue;
+
+    path.push(cluster.clusterId);
+    // Walk l2 clusters to find which one contains this l1 cluster
+    for (const [, root] of hierarchy.l2) {
+      if (root.childClusterIds.includes(cluster.clusterId)) {
+        path.push(root.clusterId);
+        break;
+      }
+    }
+    break; // each memory is in at most one L1 cluster
+  }
+
+  return path;
 }
 
 // ── Fractal navigation (core logic) ───────────────────────────────────────────

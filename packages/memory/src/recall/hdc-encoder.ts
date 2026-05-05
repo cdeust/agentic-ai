@@ -52,9 +52,15 @@ const BYTE2_SHIFT = 8;  // bits to shift hash byte 2
 // Named constant to avoid magic-number lint violation on hash[3].
 const HASH_BYTE3_INDEX = 3; // source: cortex@bc0ae4f mcp_server/core/hdc_encoder.py:44 (4th byte of SHA-256 digest)
 
-// Minimum word length to pass similarity threshold.
-// source: cortex@bc0ae4f mcp_server/core/hdc_encoder.py:171 (len(w) > 1 filter)
-const MIN_WORD_LEN = 2; // used as: word.length > MIN_WORD_LEN (i.e. > 2 → length >= 3)
+// Minimum word length to pass the tokenization filter.
+// Python: len(w) > 1  → includes 2-char words (length >= 2).
+// Previous TS: w.length > 2 → excluded 2-char words (D-03 divergence: words
+//   like "go", "js", "ts", "db", "id", "ui" were dropped from TS encoding
+//   but included in Python encoding, producing different query vectors).
+// Fix: MIN_WORD_LEN = 1 so the filter expression w.length > MIN_WORD_LEN
+//   evaluates as w.length > 1, identical to Python len(w) > 1.
+// source: cortex@ed33435 mcp_server/core/hdc_encoder.py:171 (len(w) > 1)
+const MIN_WORD_LEN = 1; // used as: word.length > MIN_WORD_LEN (i.e. > 1 → length >= 2)
 
 // Default similarity threshold for HDC scores.
 // source: cortex@bc0ae4f mcp_server/core/hdc_encoder.py:224
