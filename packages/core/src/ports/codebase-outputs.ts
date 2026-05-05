@@ -221,3 +221,28 @@ export const LspResolveOutputSchema = z
   })
   .passthrough();
 export type LspResolveOutput = z.infer<typeof LspResolveOutputSchema>;
+
+// Tools 2-7, 18, 20-23 output schemas
+// source: ai-automatised-pipeline/src/tool_schemas.rs (commit 2cc3780)
+export const ExtractFindingOutputSchema = z.object({ status: z.string(), run_id: z.string(), finding_id: z.string(), stage: z.string().optional(), artifacts: z.array(z.string()).optional() }).passthrough();
+export type ExtractFindingOutput = z.infer<typeof ExtractFindingOutputSchema>;
+export const RefineFindingOutputSchema = z.object({ status: z.string(), run_id: z.string(), finding_id: z.string(), artifact: z.string().optional() }).passthrough();
+export type RefineFindingOutput = z.infer<typeof RefineFindingOutputSchema>;
+export const StartVerificationOutputSchema = z.object({ status: z.string(), run_id: z.string(), finding_id: z.string(), session: z.record(z.string(), z.unknown()).optional() }).passthrough();
+export type StartVerificationOutput = z.infer<typeof StartVerificationOutputSchema>;
+export const AppendClarificationOutputSchema = z.object({ status: z.string(), run_id: z.string(), finding_id: z.string(), turn_index: z.coerce.number().int().nonnegative().optional() }).passthrough();
+export type AppendClarificationOutput = z.infer<typeof AppendClarificationOutputSchema>;
+export const FinalizeVerificationOutputSchema = z.object({ status: z.string(), run_id: z.string(), finding_id: z.string(), sha256: z.string().optional(), artifact: z.string().optional() }).passthrough();
+export type FinalizeVerificationOutput = z.infer<typeof FinalizeVerificationOutputSchema>;
+export const AbortVerificationOutputSchema = z.object({ status: z.string(), run_id: z.string(), finding_id: z.string(), aborted_at: z.string().optional() }).passthrough();
+export type AbortVerificationOutput = z.infer<typeof AbortVerificationOutputSchema>;
+export const DetectChangesOutputSchema = z.object({ affectedCount: z.coerce.number().int().nonnegative(), affected: z.array(z.record(z.string(), z.unknown())), riskScore: z.coerce.number().min(0).max(1), elapsedMs: z.coerce.number().nonnegative().optional() }).passthrough();
+export type DetectChangesOutput = z.infer<typeof DetectChangesOutputSchema>;
+export const PreparePrdInputOutputSchema = z.object({ status: z.string(), run_id: z.string(), finding_id: z.string(), artifact: z.string().optional(), symbols: z.array(z.record(z.string(), z.unknown())).optional() }).passthrough();
+export type PreparePrdInputOutput = z.infer<typeof PreparePrdInputOutputSchema>;
+export const ValidatePrdAgainstGraphOutputSchema = z.object({ status: z.string(), gatesPassed: z.boolean().optional(), hallucinations: z.array(z.record(z.string(), z.unknown())).optional(), warnings: z.array(z.record(z.string(), z.unknown())).optional(), criticalCount: z.coerce.number().int().nonnegative().optional(), warningCount: z.coerce.number().int().nonnegative().optional() }).passthrough();
+export type ValidatePrdAgainstGraphOutput = z.infer<typeof ValidatePrdAgainstGraphOutputSchema>;
+export const CheckSecurityGatesOutputSchema = z.object({ status: z.string(), gatesPassed: z.boolean(), flags: z.array(z.record(z.string(), z.unknown())).optional(), criticalCount: z.coerce.number().int().nonnegative().optional() }).passthrough();
+export type CheckSecurityGatesOutput = z.infer<typeof CheckSecurityGatesOutputSchema>;
+export const VerifySemanticDiffOutputSchema = z.object({ regressionScore: z.coerce.number().nonnegative(), nodesAdded: z.coerce.number().int().nonnegative().optional(), nodesRemoved: z.coerce.number().int().nonnegative().optional(), edgesAdded: z.coerce.number().int().nonnegative().optional(), edgesRemoved: z.coerce.number().int().nonnegative().optional(), danglingRefs: z.array(z.string()).optional(), newUnresolved: z.array(z.string()).optional(), newCycles: z.array(z.array(z.string())).optional(), report: z.record(z.string(), z.unknown()).optional() }).passthrough();
+export type VerifySemanticDiffOutput = z.infer<typeof VerifySemanticDiffOutputSchema>;

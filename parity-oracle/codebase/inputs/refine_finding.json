@@ -1,0 +1,26 @@
+{
+  "_meta": {
+    "source_tool": "refine_finding (Stage 1b \u2014 tool_schemas.rs:82-136 commit 2cc3780)",
+    "purpose_one_liner": "Stage 1b persistence \u2014 writes stage-1.refined.json.",
+    "failure_modes_caught": [
+      "Tool missing",
+      "nested camelCase translation failure"
+    ]
+  },
+  "run_id": "FIXTURE_RUN_001",
+  "finding_id": "FIXTURE_FINDING_001",
+  "output_dir": "/tmp/parity-test-refine",
+  "refined_prompt": {
+    "text": "Refined text",
+    "role_hint": "engineer"
+  },
+  "refinement": {
+    "added_context": [
+      {
+        "kind": "file",
+        "content": "test"
+      }
+    ],
+    "orchestrator_version": "0.1.0"
+  }
+}

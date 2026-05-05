@@ -1,0 +1,15 @@
+{
+  "_meta": {
+    "source_tool": "append_clarification (Stage 2b \u2014 tool_schemas.rs:155-173 commit 2cc3780)",
+    "purpose_one_liner": "Append clarification turn; enforce alternation invariant.",
+    "failure_modes_caught": [
+      "Tool missing",
+      "kind enum not passed correctly"
+    ]
+  },
+  "run_id": "FIXTURE_RUN_001",
+  "finding_id": "FIXTURE_FINDING_001",
+  "output_dir": "/tmp/parity-test-verify",
+  "kind": "agent_question",
+  "content": "What is the expected behavior?"
+}

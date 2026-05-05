@@ -1,0 +1,13 @@
+{
+  "_meta": {
+    "source_tool": "finalize_verification (Stage 2c \u2014 tool_schemas.rs:175-190 commit 2cc3780)",
+    "purpose_one_liner": "Finalize session; compute sha256 hash.",
+    "failure_modes_caught": [
+      "Tool missing",
+      "sha256 absent"
+    ]
+  },
+  "run_id": "FIXTURE_RUN_001",
+  "finding_id": "FIXTURE_FINDING_001",
+  "output_dir": "/tmp/parity-test-verify"
+}

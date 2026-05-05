@@ -1,0 +1,14 @@
+{
+  "_meta": {
+    "source_tool": "abort_verification (Stage 2d \u2014 tool_schemas.rs:192-208 commit 2cc3780)",
+    "purpose_one_liner": "Abort non-terminal session; state=aborted.",
+    "failure_modes_caught": [
+      "Tool missing",
+      "aborted_at not set"
+    ]
+  },
+  "run_id": "FIXTURE_RUN_001",
+  "finding_id": "FIXTURE_FINDING_001",
+  "output_dir": "/tmp/parity-test-verify",
+  "reason": "parity test abort"
+}

@@ -1,0 +1,10 @@
+{
+  "_capture_status": "TO-BE-CAPTURED",
+  "_capture_blocked_reason": "Requires Rust binary.",
+  "_schema_shape": {
+    "status": "string"
+  },
+  "_critical_invariants": [
+    "status present"
+  ]
+}

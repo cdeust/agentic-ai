@@ -40,6 +40,9 @@ import type {
   GetContextOutput,
   AnalyzeCodebaseOutput,
   LspResolveOutput,
+  ExtractFindingOutput, RefineFindingOutput, StartVerificationOutput, AppendClarificationOutput,
+  FinalizeVerificationOutput, AbortVerificationOutput, DetectChangesOutput, PreparePrdInputOutput,
+  ValidatePrdAgainstGraphOutput, CheckSecurityGatesOutput, VerifySemanticDiffOutput,
 } from "./codebase-outputs.js";
 
 // ─── Common / shared schemas ──────────────────────────────────────────────────
@@ -193,6 +196,34 @@ export const LspResolveInputSchema = z
   .strict();
 export type LspResolveInput = z.infer<typeof LspResolveInputSchema>;
 
+// Input schemas: tools 2-7, 18, 20-23
+// source: ai-automatised-pipeline/src/tool_schemas.rs (commit 2cc3780)
+export const ExtractFindingInputSchema = z.object({ finding: z.union([z.record(z.string(), z.unknown()), z.string().regex(/^\/.*\.json$/)]), outputDir: z.string().min(1), runId: z.string().optional() }).strict();
+export type ExtractFindingInput = z.infer<typeof ExtractFindingInputSchema>;
+export const RefinedPromptSchema = z.object({ text: z.string().min(1), roleHint: z.string(), tokenEstimate: z.number().int().nullable().optional() });
+export const RefinementContextItemSchema = z.object({ kind: z.string(), content: z.string(), provenance: z.string().optional() });
+export const RefinementSchema = z.object({ addedContext: z.array(RefinementContextItemSchema), orchestratorVersion: z.string() });
+export const RefineFindingInputSchema = z.object({ runId: z.string().min(1), findingId: z.string().min(1), outputDir: z.string().min(1), refinedPrompt: RefinedPromptSchema, refinement: RefinementSchema }).strict();
+export type RefineFindingInput = z.infer<typeof RefineFindingInputSchema>;
+export const StartVerificationInputSchema = z.object({ runId: z.string().min(1), findingId: z.string().min(1), outputDir: z.string().min(1) }).strict();
+export type StartVerificationInput = z.infer<typeof StartVerificationInputSchema>;
+export const AppendClarificationInputSchema = z.object({ runId: z.string().min(1), findingId: z.string().min(1), outputDir: z.string().min(1), kind: z.enum(["agent_question", "user_answer"]), content: z.string().min(1), meta: z.record(z.string(), z.unknown()).optional() }).strict();
+export type AppendClarificationInput = z.infer<typeof AppendClarificationInputSchema>;
+export const FinalizeVerificationInputSchema = z.object({ runId: z.string().min(1), findingId: z.string().min(1), outputDir: z.string().min(1) }).strict();
+export type FinalizeVerificationInput = z.infer<typeof FinalizeVerificationInputSchema>;
+export const AbortVerificationInputSchema = z.object({ runId: z.string().min(1), findingId: z.string().min(1), outputDir: z.string().min(1), reason: z.string().optional() }).strict();
+export type AbortVerificationInput = z.infer<typeof AbortVerificationInputSchema>;
+export const DetectChangesInputSchema = z.object({ graphPath: z.string().min(1), diffText: z.string().optional(), codebasePath: z.string().optional(), baseRef: z.string().optional(), headRef: z.string().optional() }).strict();
+export type DetectChangesInput = z.infer<typeof DetectChangesInputSchema>;
+export const PreparePrdInputInputSchema = z.object({ runId: z.string().min(1), findingId: z.string().min(1), outputDir: z.string().min(1), graphPath: z.string().min(1) }).strict();
+export type PreparePrdInputInput = z.infer<typeof PreparePrdInputInputSchema>;
+export const ValidatePrdAgainstGraphInputSchema = z.object({ prdPath: z.string().min(1), graphPath: z.string().min(1), affectedSymbolsPath: z.string().optional(), outputDir: z.string().optional(), runId: z.string().optional(), findingId: z.string().optional() }).strict();
+export type ValidatePrdAgainstGraphInput = z.infer<typeof ValidatePrdAgainstGraphInputSchema>;
+export const CheckSecurityGatesInputSchema = z.object({ graphPath: z.string().min(1), changedSymbols: z.array(z.string()), outputDir: z.string().optional(), runId: z.string().optional(), findingId: z.string().optional() }).strict();
+export type CheckSecurityGatesInput = z.infer<typeof CheckSecurityGatesInputSchema>;
+export const VerifySemanticDiffInputSchema = z.object({ beforeGraphPath: z.string().min(1), afterGraphPath: z.string().min(1), reportPath: z.string().optional() }).strict();
+export type VerifySemanticDiffInput = z.infer<typeof VerifySemanticDiffInputSchema>;
+
 // ─── The port ─────────────────────────────────────────────────────────────────
 
 /**
@@ -283,6 +314,19 @@ export interface CodebasePort {
    * source: docs/PHASE_3_PLAN.md §4.2 — analyzeCodebase timeout
    */
   analyzeCodebase(input: AnalyzeCodebaseInput): Promise<AnalyzeCodebaseOutput>;
+
+  // source: tool_schemas.rs (commit 2cc3780)
+  extractFinding(input: ExtractFindingInput): Promise<ExtractFindingOutput>;
+  refineFinding(input: RefineFindingInput): Promise<RefineFindingOutput>;
+  startVerification(input: StartVerificationInput): Promise<StartVerificationOutput>;
+  appendClarification(input: AppendClarificationInput): Promise<AppendClarificationOutput>;
+  finalizeVerification(input: FinalizeVerificationInput): Promise<FinalizeVerificationOutput>;
+  abortVerification(input: AbortVerificationInput): Promise<AbortVerificationOutput>;
+  detectChanges(input: DetectChangesInput): Promise<DetectChangesOutput>;
+  preparePrdInput(input: PreparePrdInputInput): Promise<PreparePrdInputOutput>;
+  validatePrdAgainstGraph(input: ValidatePrdAgainstGraphInput): Promise<ValidatePrdAgainstGraphOutput>;
+  checkSecurityGates(input: CheckSecurityGatesInput): Promise<CheckSecurityGatesOutput>;
+  verifySemanticDiff(input: VerifySemanticDiffInput): Promise<VerifySemanticDiffOutput>;
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
   /**

@@ -1,0 +1,12 @@
+{
+  "_meta": {
+    "source_tool": "verify_semantic_diff (Stage 9 \u2014 tool_schemas.rs:549-564 commit 2cc3780)",
+    "purpose_one_liner": "Compare before/after graphs; return regression_score.",
+    "failure_modes_caught": [
+      "Tool missing",
+      "regressionScore absent"
+    ]
+  },
+  "before_graph_path": "<WORKTREE_ROOT>/parity-oracle/fixture-repos/small-ts/graph",
+  "after_graph_path": "<WORKTREE_ROOT>/parity-oracle/fixture-repos/small-ts/graph"
+}

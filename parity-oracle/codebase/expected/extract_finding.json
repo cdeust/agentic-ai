@@ -1,0 +1,18 @@
+{
+  "_capture_status": "TO-BE-CAPTURED",
+  "_capture_blocked_reason": "Requires compiled Rust binary (commit 2cc3780). See RUNBOOK.md \u00a73.1.",
+  "_schema_shape": {
+    "status": "string == 'ok'",
+    "run_id": "string",
+    "finding_id": "string"
+  },
+  "_critical_invariants": [
+    "status == ok",
+    "run_id non-empty",
+    "finding_id non-empty"
+  ],
+  "_masked_fields": {
+    "run_id": "<MASKED:nondeterministic>",
+    "finding_id": "<MASKED:nondeterministic>"
+  }
+}
