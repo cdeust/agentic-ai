@@ -22,6 +22,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { codebaseAnalysis } from "@agentic/memory";
+import { changeImpactHandler } from "@agentic/memory/codebase-analysis/handlers/change-impact.js";
 import { importHandler } from "@agentic/memory/import/handler.js";
 import { remember } from "@agentic/memory/remember/handlers/remember.js";
 import type { MemoryStore } from "@agentic/memory/remember/storage/memory-store.js";
@@ -233,13 +234,25 @@ export function registerIngestTools(server: McpServer, deps?: IngestDeps): void 
         apply_heat_bump: z.boolean().default(false).describe("Apply heat bump to affected memories"),
       },
     },
-    async (_args) => {
+    async (args) => {
       try {
-        // source: docs/ADR/0046-change-impact-analysis.md §Phase 3 — not yet ported.
-        throw new PortPendingError(
-          "change_impact",
-          "AP codebase graph (git diff → symbol extraction) — ADR-0046 Phase 3 not yet ported", // source: docs/ADR/0046-change-impact-analysis.md §Phase 3
+        // source: cortex@ed33435 mcp_server/handlers/change_impact.py::handler
+        // source: cortex@ed33435 mcp_server/core/change_impact_matcher.py::match_memories
+        // Real implementation: packages/memory/src/codebase-analysis/handlers/change-impact.ts
+        const store = deps?.store as unknown as MemoryStore;
+        const response = await changeImpactHandler(
+          {
+            base:            args.base,
+            head:            args.head,
+            expand_impact:   args.expand_impact,
+            apply_heat_bump: args.apply_heat_bump,
+          },
+          {
+            store,
+            mcpClientPool: deps?.mcpClientPool ?? null,
+          },
         );
+        return { content: [{ type: "text" as const, text: JSON.stringify(response) }] };
       } catch (err) {
         return errorText("change_impact", err);
       }

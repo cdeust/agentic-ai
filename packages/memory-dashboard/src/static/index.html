@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Memory Dashboard — Agentic AI</title>
+  <style>
+    /* Minimal inline styles for the fallback dashboard.
+       The full constellation map UI assets are served from /js/ and /css/
+       when the Cortex UI directory is available (see server.ts staticDir option).
+       source: cortex@ed33435 ui/unified-viz.html (theme) */
+    :root {
+      --bg: #0a0a0f;
+      --fg: #e0e0f0;
+      --accent: #6c63ff;
+      --card: #13131f;
+      --border: #2a2a3a;
+      --hot: #ff6b6b;
+      --cool: #48cae4;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    header h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: 0.02em; }
+    header .status { font-size: 0.75rem; color: var(--cool); margin-left: auto; }
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+      gap: 1rem;
+      padding: 1.5rem;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .card h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.75rem; }
+    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+    .stat { background: var(--bg); border-radius: 6px; padding: 0.6rem 0.75rem; }
+    .stat .label { font-size: 0.7rem; color: #888; text-transform: uppercase; }
+    .stat .value { font-size: 1.3rem; font-weight: 700; margin-top: 0.2rem; }
+    #graph-canvas {
+      grid-column: 1 / -1;
+      height: 400px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    #graph-canvas canvas { width: 100%; height: 100%; }
+    #build-progress {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: #aaa;
+      padding: 0.5rem 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+    .progress-bar {
+      flex: 1;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--cool));
+      transition: width 0.3s ease;
+    }
+    #memory-list { max-height: 280px; overflow-y: auto; }
+    .memory-item {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8rem;
+      line-height: 1.4;
+    }
+    .memory-item .meta { display: flex; gap: 0.5rem; margin-top: 0.25rem; }
+    .badge {
+      font-size: 0.65rem;
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+      background: var(--border);
+      color: var(--fg);
+    }
+    .badge.hot { background: rgba(255, 107, 107, 0.2); color: var(--hot); }
+  </style>
+</head>
+<body>
+  <header>
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <circle cx="10" cy="10" r="3" fill="#6c63ff"/>
+      <circle cx="3" cy="5" r="1.5" fill="#48cae4"/>
+      <circle cx="17" cy="5" r="1.5" fill="#48cae4"/>
+      <circle cx="3" cy="15" r="1.5" fill="#48cae4"/>
+      <circle cx="17" cy="15" r="1.5" fill="#48cae4"/>
+      <line x1="10" y1="10" x2="3" y2="5" stroke="#2a2a3a" stroke-width="1"/>
+      <line x1="10" y1="10" x2="17" y2="5" stroke="#2a2a3a" stroke-width="1"/>
+      <line x1="10" y1="10" x2="3" y2="15" stroke="#2a2a3a" stroke-width="1"/>
+      <line x1="10" y1="10" x2="17" y2="15" stroke="#2a2a3a" stroke-width="1"/>
+    </svg>
+    <h1>Memory Dashboard</h1>
+    <span class="status" id="status-text">connecting…</span>
+  </header>
+
+  <main>
+    <div class="card" id="stats-card">
+      <h2>Memory Stats</h2>
+      <div class="stat-grid" id="stats-grid">
+        <div class="stat"><div class="label">Total</div><div class="value" id="stat-total">—</div></div>
+        <div class="stat"><div class="label">Episodic</div><div class="value" id="stat-episodic">—</div></div>
+        <div class="stat"><div class="label">Semantic</div><div class="value" id="stat-semantic">—</div></div>
+        <div class="stat"><div class="label">Hot (&gt;0.5)</div><div class="value" id="stat-hot">—</div></div>
+        <div class="stat"><div class="label">Protected</div><div class="value" id="stat-protected">—</div></div>
+        <div class="stat"><div class="label">Domains</div><div class="value" id="stat-domains">—</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Recent Memories</h2>
+      <div id="memory-list"></div>
+    </div>
+
+    <div id="graph-canvas">
+      <canvas id="graph-canvas-el"></canvas>
+    </div>
+  </main>
+
+  <div id="build-progress">
+    <span id="progress-message">loading graph…</span>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Minimal dashboard JS — loads data from the local API.
+    // For the full 3D constellation map, serve the Cortex unified-viz.html
+    // by setting staticDir to the Cortex ui/ directory.
+
+    const api = (path) => fetch(path).then(r => r.json());
+
+    async function loadStats() {
+      try {
+        const facets = await api('/api/memories/facets');
+        document.getElementById('stat-total').textContent = facets.totals?.total ?? '—';
+        document.getElementById('stat-protected').textContent = facets.totals?.protected ?? '—';
+        document.getElementById('stat-domains').textContent = facets.by_domain?.length ?? '—';
+        document.getElementById('status-text').textContent = 'connected';
+      } catch { document.getElementById('status-text').textContent = 'offline'; }
+    }
+
+    async function loadMemories() {
+      try {
+        const data = await api('/api/memories?limit=20');
+        const list = document.getElementById('memory-list');
+        let episodic = 0, semantic = 0, hot = 0;
+        list.innerHTML = (data.memories ?? []).map(m => {
+          if (m.store_type === 'episodic') episodic++;
+          if (m.store_type === 'semantic') semantic++;
+          if (m.heat > 0.5) hot++;
+          return `<div class="memory-item">
+            ${m.content}
+            <div class="meta">
+              <span class="badge ${m.heat > 0.5 ? 'hot' : ''}">heat ${m.heat}</span>
+              <span class="badge">${m.store_type}</span>
+              <span class="badge">${m.consolidation_stage}</span>
+              ${m.domain ? `<span class="badge">${m.domain}</span>` : ''}
+            </div>
+          </div>`;
+        }).join('');
+        document.getElementById('stat-episodic').textContent = episodic;
+        document.getElementById('stat-semantic').textContent = semantic;
+        document.getElementById('stat-hot').textContent = hot;
+      } catch { /* network error */ }
+    }
+
+    async function pollGraph() {
+      try {
+        const prog = await api('/api/graph/progress');
+        const pct = Math.round((prog.pct ?? 0) * 100);
+        document.getElementById('progress-fill').style.width = pct + '%';
+        document.getElementById('progress-message').textContent = prog.message || 'loading…';
+        if (!prog.full_ready) setTimeout(pollGraph, 1500);
+        else await loadGraph();
+      } catch { setTimeout(pollGraph, 3000); }
+    }
+
+    async function loadGraph() {
+      try {
+        const data = await api('/api/graph');
+        renderGraph(data);
+      } catch { /* offline */ }
+    }
+
+    function renderGraph(data) {
+      const canvas = document.getElementById('graph-canvas-el');
+      const container = document.getElementById('graph-canvas');
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const nodes = data.nodes ?? [];
+      const edges = data.edges ?? [];
+      if (nodes.length === 0) return;
+
+      // Simple force-directed layout placeholder (polar layout by domain).
+      const cx = canvas.width / 2, cy = canvas.height / 2;
+      const domains = [...new Set(nodes.map(n => n.domain ?? ''))];
+      const positions = new Map();
+
+      // Lay out domain nodes in a circle, others around them.
+      const R = Math.min(cx, cy) * 0.7;
+      nodes.forEach(n => {
+        if (n.kind === 'domain') {
+          const idx = domains.indexOf(n.domain ?? '');
+          const angle = (2 * Math.PI * idx) / Math.max(domains.length, 1);
+          positions.set(n.id, { x: cx + R * Math.cos(angle), y: cy + R * Math.sin(angle) });
+        }
+      });
+      nodes.forEach(n => {
+        if (n.kind !== 'domain' && !positions.has(n.id)) {
+          const domPos = positions.get(n.domain_id) ?? { x: cx, y: cy };
+          const scatter = (Math.random() - 0.5) * 120;
+          positions.set(n.id, { x: domPos.x + scatter, y: domPos.y + scatter });
+        }
+      });
+
+      // Draw edges.
+      ctx.strokeStyle = 'rgba(100, 100, 180, 0.2)';
+      ctx.lineWidth = 0.5;
+      for (const e of edges.slice(0, 2000)) {
+        const s = positions.get(e.source), t = positions.get(e.target);
+        if (!s || !t) continue;
+        ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(t.x, t.y); ctx.stroke();
+      }
+
+      // Draw nodes.
+      const colorMap = { domain: '#6c63ff', memory: '#ff6b6b', entity: '#48cae4' };
+      for (const n of nodes.slice(0, 3000)) {
+        const pos = positions.get(n.id);
+        if (!pos) continue;
+        const r = n.kind === 'domain' ? 8 : 3;
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, r, 0, 2 * Math.PI);
+        ctx.fillStyle = colorMap[n.kind] ?? '#888';
+        ctx.fill();
+      }
+    }
+
+    loadStats();
+    loadMemories();
+    pollGraph();
+  </script>
+</body>
+</html>
