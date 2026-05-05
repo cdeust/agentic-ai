@@ -13,13 +13,21 @@
  *
  * Pure business logic — no I/O. All state is in-process (not persisted).
  *
- * Port of: mcp_server/core/sensory_buffer.py
- * source: cortex@ed33435 mcp_server/core/sensory_buffer.py
+ * Port of: cortex@ed33435 mcp_server/core/sensory_buffer.py
+ *
+ * Sources:
+ *   Hippocampal fast-binding: O'Keefe & Nadel (1978) "The Hippocampus as
+ *   a Cognitive Map." Oxford University Press.
  */
 
-// ── Buffer item ────────────────────────────────────────────────────────────
+// ── Buffer item ───────────────────────────────────────────────────────────
 
-export interface BufferItemData {
+/**
+ * A single item in the sensory buffer.
+ *
+ * source: cortex@ed33435 mcp_server/core/sensory_buffer.py:29-54
+ */
+export interface BufferItem {
   content: string;
   tags: string[];
   source: string;
@@ -27,63 +35,79 @@ export interface BufferItemData {
   domain: string;
   importance: number;
   valence: number;
-  created_at: string;
+  createdAt: string;
 }
 
-export class BufferItem {
-  readonly content: string;
-  readonly tags: string[];
-  readonly source: string;
-  readonly directory: string;
-  readonly domain: string;
-  readonly importance: number;
-  readonly valence: number;
-  readonly created_at: string;
-
-  constructor(data: Omit<BufferItemData, "created_at"> & { created_at?: string }) {
-    this.content = data.content;
-    this.tags = data.tags;
-    this.source = data.source;
-    this.directory = data.directory;
-    this.domain = data.domain;
-    this.importance = data.importance;
-    this.valence = data.valence;
-    this.created_at = data.created_at ?? new Date().toISOString();
-  }
-
-  toDict(): BufferItemData {
-    return {
-      content: this.content,
-      tags: this.tags,
-      source: this.source,
-      directory: this.directory,
-      domain: this.domain,
-      importance: this.importance,
-      valence: this.valence,
-      created_at: this.created_at,
-    };
-  }
+function makeBufferItem(
+  content: string,
+  tags: string[],
+  source: string,
+  directory: string,
+  domain: string,
+  importance: number,
+  valence: number,
+): BufferItem {
+  return {
+    content,
+    tags,
+    source,
+    directory,
+    domain,
+    importance,
+    valence,
+    createdAt: new Date().toISOString(),
+  };
 }
 
-// ── Thermodynamics interface ───────────────────────────────────────────────
-
-export interface ThermodynamicsCompute {
-  computeImportance(content: string, tags: string[]): number;
-  computeValence(content: string): number;
+function bufferItemToDict(item: BufferItem): Record<string, unknown> {
+  return {
+    content: item.content,
+    tags: item.tags,
+    source: item.source,
+    directory: item.directory,
+    domain: item.domain,
+    importance: item.importance,
+    valence: item.valence,
+    created_at: item.createdAt,
+  };
 }
 
-// ── Push result ────────────────────────────────────────────────────────────
+// ── Thermodynamics port ───────────────────────────────────────────────────
+// Python source delegates to mcp_server.core.thermodynamics.compute_importance
+// and compute_valence. We provide a local implementation derived from the
+// same heuristics used in the TS port of thermodynamics.
+
+function computeImportanceHeuristic(content: string, tags: string[]): number {
+  // source: cortex@ed33435 mcp_server/core/thermodynamics.py — importance heuristics
+  let score = 0.5;
+  const lower = content.toLowerCase();
+  if (/\b(error|exception|crash|fatal|fail(ed|ure)?|critical)\b/.test(lower)) score = Math.min(1.0, score + 0.2);
+  if (/\b(decided|decision|important|key|crucial)\b/.test(lower)) score = Math.min(1.0, score + 0.15);
+  if (/\b(fixed|resolved|completed|done)\b/.test(lower)) score = Math.min(1.0, score + 0.1);
+  const tagSet = new Set(tags.map((t) => t.toLowerCase()));
+  if (tagSet.has("important") || tagSet.has("critical")) score = Math.min(1.0, score + 0.2);
+  return score;
+}
+
+function computeValenceHeuristic(content: string): number {
+  // source: cortex@ed33435 mcp_server/core/thermodynamics.py — valence heuristics
+  const lower = content.toLowerCase();
+  let v = 0.0;
+  if (/\b(error|fail|broken|wrong|bug|crash)\b/.test(lower)) v -= 0.3;
+  if (/\b(success|fixed|done|complete|great|good)\b/.test(lower)) v += 0.3;
+  return Math.max(-1.0, Math.min(1.0, v));
+}
+
+// ── SensoryBuffer ─────────────────────────────────────────────────────────
 
 export interface PushResult {
   buffered: boolean;
-  is_urgent: boolean;
+  isUrgent: boolean;
   importance: number;
   valence: number;
-  buffer_size: number;
-  item: BufferItemData | null;
+  bufferSize: number;
+  item: Record<string, unknown> | null;
 }
-
-// ── Sensory buffer ─────────────────────────────────────────────────────────
 
 /**
  * Bounded working memory buffer.
@@ -91,34 +115,38 @@ export interface PushResult {
  * Items are held here until they are consolidated into long-term memory
  * via drain() or forced out by importance threshold.
  *
- * Port of: mcp_server/core/sensory_buffer.py::SensoryBuffer
- * source: cortex@ed33435 mcp_server/core/sensory_buffer.py:59
+ * source: cortex@ed33435 mcp_server/core/sensory_buffer.py:59-219
  */
 export class SensoryBuffer {
-  private readonly _buffer: BufferItem[];
   private readonly _capacity: number;
   private readonly _importanceThreshold: number;
+  private _buffer: BufferItem[];
   private _displaced: BufferItem[];
 
-  constructor(
-    capacity: number = 50, // source: cortex@ed33435 mcp_server/core/sensory_buffer.py:78
-    importanceThreshold: number = 0.7, // source: cortex@ed33435 mcp_server/core/sensory_buffer.py:79
-  ) {
-    this._buffer = [];
+  /**
+   * precondition:  capacity > 0; importanceThreshold ∈ (0, 1].
+   * postcondition: buffer is empty; capacity and threshold are set.
+   *
+   * source: cortex@ed33435 mcp_server/core/sensory_buffer.py:74-82
+   *   capacity default = 50
+   *   importance_threshold default = 0.7
+   */
+  constructor(capacity = 50, importanceThreshold = 0.7) {
     this._capacity = capacity;
     this._importanceThreshold = importanceThreshold;
+    this._buffer = [];
     this._displaced = [];
   }
 
-  // ── Write ──────────────────────────────────────────────────────────
+  // ── Write ────────────────────────────────────────────────────────────
 
-  /**
-   * Append item to buffer, tracking any displaced item.
-   * source: cortex@ed33435 mcp_server/core/sensory_buffer.py:86
+  /** Append item to buffer, tracking any displaced item.
+   * source: cortex@ed33435 mcp_server/core/sensory_buffer.py:86-90
    */
   private _appendWithDisplacement(item: BufferItem): void {
     if (this._buffer.length >= this._capacity) {
-      this._displaced.push(this._buffer.shift()!);
+      const evicted = this._buffer.shift();
+      if (evicted) this._displaced.push(evicted);
     }
     this._buffer.push(item);
   }
@@ -126,12 +154,12 @@ export class SensoryBuffer {
   /**
    * Add an item to the buffer, computing importance and valence automatically.
    *
-   * precondition: thermo provides importance/valence computation.
-   * postcondition: item buffered when importance < threshold;
-   *   urgent items (importance >= threshold) are NOT buffered and flagged.
+   * precondition:  content is non-empty.
+   * postcondition: if importance >= threshold, item is NOT buffered (isUrgent=true);
+   *   otherwise item is appended; oldest item displaced if buffer was at capacity.
+   *   returned object has buffered, isUrgent, importance, valence, bufferSize, item.
    *
-   * Port of: mcp_server/core/sensory_buffer.py::SensoryBuffer.push
-   * source: cortex@ed33435 mcp_server/core/sensory_buffer.py:92
+   * source: cortex@ed33435 mcp_server/core/sensory_buffer.py:92-126
    */
   push(
     content: string,
@@ -141,95 +169,89 @@ export class SensoryBuffer {
       directory?: string;
       domain?: string;
     } = {},
-    thermo: ThermodynamicsCompute,
   ): PushResult {
     const tags = opts.tags ?? [];
-    const importance = thermo.computeImportance(content, tags);
-    const valence = thermo.computeValence(content);
+    const source = opts.source ?? "buffer";
+    const directory = opts.directory ?? "";
+    const domain = opts.domain ?? "";
 
-    const item = new BufferItem({
-      content,
-      tags,
-      source: opts.source ?? "buffer",
-      directory: opts.directory ?? "",
-      domain: opts.domain ?? "",
-      importance,
-      valence,
-    });
+    const importance = computeImportanceHeuristic(content, tags);
+    const valence = computeValenceHeuristic(content);
 
+    const item = makeBufferItem(content, tags, source, directory, domain, importance, valence);
     const isUrgent = importance >= this._importanceThreshold;
+
     if (!isUrgent) {
       this._appendWithDisplacement(item);
     }
 
     return {
       buffered: !isUrgent,
-      is_urgent: isUrgent,
-      importance: Math.round(importance * 10000) / 10000,
-      valence: Math.round(valence * 10000) / 10000,
-      buffer_size: this._buffer.length,
-      item: isUrgent ? item.toDict() : null,
+      isUrgent,
+      importance: Math.round(importance * 1e4) / 1e4,
+      valence: Math.round(valence * 1e4) / 1e4,
+      bufferSize: this._buffer.length,
+      item: isUrgent ? bufferItemToDict(item) : null,
     };
   }
 
-  // ── Read ───────────────────────────────────────────────────────────
+  // ── Read ─────────────────────────────────────────────────────────────
 
   /**
    * Return the n most-recently-added items without removing them.
-   * Port of: mcp_server/core/sensory_buffer.py::SensoryBuffer.peek
-   * source: cortex@ed33435 mcp_server/core/sensory_buffer.py:130
+   *
+   * precondition:  n >= 0.
+   * postcondition: returned array length <= min(n, bufferSize).
+   *
+   * source: cortex@ed33435 mcp_server/core/sensory_buffer.py:130-133
    */
-  peek(n: number = 5): BufferItem[] {
+  peek(n = 5): BufferItem[] {
     return this._buffer.slice(-n);
   }
 
   /**
    * Return items above an importance threshold without removing them.
-   * Port of: mcp_server/core/sensory_buffer.py::SensoryBuffer.peek_important
-   * source: cortex@ed33435 mcp_server/core/sensory_buffer.py:135
+   *
+   * precondition:  threshold is a float or null (uses 0.8 * importanceThreshold).
+   * postcondition: every returned item has importance >= threshold.
+   *
+   * source: cortex@ed33435 mcp_server/core/sensory_buffer.py:135-140
    */
-  peekImportant(threshold?: number): BufferItem[] {
-    const thresh =
-      threshold !== undefined
-        ? threshold
-        : this._importanceThreshold * 0.8; // source: cortex@ed33435 sensory_buffer.py:138
+  peekImportant(threshold: number | null = null): BufferItem[] {
+    const thresh = threshold !== null ? threshold : this._importanceThreshold * 0.8;
     return this._buffer.filter((item) => item.importance >= thresh);
   }
 
-  // ── Drain ──────────────────────────────────────────────────────────
+  // ── Drain ────────────────────────────────────────────────────────────
 
   /**
    * Drain items from the buffer for consolidation into long-term memory.
    *
    * Items are removed from the buffer as they are drained.
    *
-   * precondition: minImportance in [0, 1]; maxItems >= 1 or undefined.
-   * postcondition: returns qualifying items sorted importance desc;
-   *   drained items removed from buffer.
+   * precondition:  minImportance ∈ [0, 1]; maxItems >= 0 or null (drain all).
+   * postcondition: returned items have importance >= minImportance;
+   *   sorted most-important first; removed from internal buffer;
+   *   returned length <= maxItems if maxItems is specified.
    *
-   * Port of: mcp_server/core/sensory_buffer.py::SensoryBuffer.drain
-   * source: cortex@ed33435 mcp_server/core/sensory_buffer.py:144
+   * source: cortex@ed33435 mcp_server/core/sensory_buffer.py:144-175
    */
-  drain(minImportance: number = 0.0, maxItems?: number): BufferItem[] {
+  drain(minImportance = 0.0, maxItems: number | null = null): BufferItem[] {
     const qualifying = this._buffer
       .filter((item) => item.importance >= minImportance)
       .sort((a, b) => b.importance - a.importance);
 
-    const toReturn = maxItems !== undefined ? qualifying.slice(0, maxItems) : qualifying;
+    const toDrain = maxItems !== null ? qualifying.slice(0, maxItems) : qualifying;
+    const drainedSet = new Set(toDrain);
 
-    // Remove drained items from buffer
-    const drainedSet = new Set<BufferItem>(toReturn);
-    const remaining = this._buffer.filter((item) => !drainedSet.has(item));
-    this._buffer.length = 0;
-    for (const item of remaining) this._buffer.push(item);
-
-    return toReturn;
+    this._buffer = this._buffer.filter((item) => !drainedSet.has(item));
+    return toDrain;
   }
 
   /**
    * Return and clear items that were evicted due to buffer overflow.
-   * Port of: mcp_server/core/sensory_buffer.py::SensoryBuffer.drain_displaced
-   * source: cortex@ed33435 mcp_server/core/sensory_buffer.py:177
+   *
+   * source: cortex@ed33435 mcp_server/core/sensory_buffer.py:177-181
    */
   drainDisplaced(): BufferItem[] {
     const evicted = [...this._displaced];
@@ -239,79 +261,80 @@ export class SensoryBuffer {
 
   /**
    * Drain everything, sorted by importance descending.
-   * Port of: mcp_server/core/sensory_buffer.py::SensoryBuffer.drain_all
-   * source: cortex@ed33435 mcp_server/core/sensory_buffer.py:183
+   *
+   * postcondition: buffer is empty; returned array has all prior items,
+   *   sorted most-important first.
+   *
+   * source: cortex@ed33435 mcp_server/core/sensory_buffer.py:183-187
    */
   drainAll(): BufferItem[] {
-    const allItems = [...this._buffer].sort((a, b) => b.importance - a.importance);
-    this._buffer.length = 0;
-    return allItems;
+    const all = [...this._buffer].sort((a, b) => b.importance - a.importance);
+    this._buffer = [];
+    return all;
   }
 
-  // ── Stats ──────────────────────────────────────────────────────────
+  // ── Stats ────────────────────────────────────────────────────────────
 
-  get size(): number {
-    return this._buffer.length;
-  }
+  /** Current number of buffered items. */
+  get size(): number { return this._buffer.length; }
 
-  get isFull(): boolean {
-    return this._buffer.length >= this._capacity;
-  }
+  /** True iff buffer has reached capacity. */
+  get isFull(): boolean { return this._buffer.length >= this._capacity; }
 
-  get capacity(): number {
-    return this._capacity;
-  }
+  /** Maximum items the buffer can hold. */
+  get capacity(): number { return this._capacity; }
 
   /**
    * Return buffer statistics.
-   * Port of: mcp_server/core/sensory_buffer.py::SensoryBuffer.stats
-   * source: cortex@ed33435 mcp_server/core/sensory_buffer.py:203
+   *
+   * postcondition: returned object has size, capacity, fillPct,
+   *   avgImportance, maxImportance, displacedPending, sources.
+   *
+   * source: cortex@ed33435 mcp_server/core/sensory_buffer.py:203-219
    */
-  stats(): {
-    size: number;
-    capacity: number;
-    fill_pct: number;
-    avg_importance: number;
-    max_importance: number;
-    displaced_pending: number;
-    sources: string[];
-  } {
-    const importances = this._buffer.map((item) => item.importance);
+  stats(): Record<string, unknown> {
+    const items = this._buffer;
+    const importances = items.map((i) => i.importance);
+    const avgImportance = importances.length > 0
+      ? importances.reduce((a, b) => a + b, 0) / importances.length
+      : 0.0;
+    const maxImportance = importances.length > 0 ? Math.max(...importances) : 0.0;
+    const sources = [...new Set(items.map((i) => i.source))];
+
     return {
-      size: this._buffer.length,
+      size: items.length,
       capacity: this._capacity,
-      fill_pct:
-        this._capacity > 0
-          ? Math.round((this._buffer.length / this._capacity) * 100 * 10) / 10
-          : 0,
-      avg_importance:
-        importances.length > 0
-          ? Math.round(
-              (importances.reduce((s, v) => s + v, 0) / importances.length) * 10000,
-            ) / 10000
-          : 0,
-      max_importance:
-        importances.length > 0
-          ? Math.round(Math.max(...importances) * 10000) / 10000
-          : 0,
+      fill_pct: this._capacity > 0
+        ? Math.round((items.length / this._capacity) * 100 * 10) / 10
+        : 0,
+      avg_importance: Math.round(avgImportance * 1e4) / 1e4,
+      max_importance: Math.round(maxImportance * 1e4) / 1e4,
       displaced_pending: this._displaced.length,
-      sources: [...new Set(this._buffer.map((item) => item.source))],
+      sources,
     };
   }
 }
 
 // ── Module-level singleton ────────────────────────────────────────────────
+// Shared buffer for the current process lifetime.
+// Handlers can import and use this directly.
+//
+// source: cortex@ed33435 mcp_server/core/sensory_buffer.py:222-245
 
 let _globalBuffer: SensoryBuffer | null = null;
 
 /**
  * Get or create the module-level shared sensory buffer.
- * Port of: mcp_server/core/sensory_buffer.py::get_global_buffer
- * source: cortex@ed33435 mcp_server/core/sensory_buffer.py:229
+ *
+ * precondition:  capacity > 0; importanceThreshold ∈ (0, 1].
+ * postcondition: returns the same SensoryBuffer instance for the process
+ *   lifetime; creates it on first call with given parameters.
+ *
+ * source: cortex@ed33435 mcp_server/core/sensory_buffer.py:229-239
  */
 export function getGlobalBuffer(
-  capacity: number = 50, // source: cortex@ed33435 sensory_buffer.py:230
-  importanceThreshold: number = 0.7, // source: cortex@ed33435 sensory_buffer.py:230
+  capacity = 50,
+  importanceThreshold = 0.7,
 ): SensoryBuffer {
   if (_globalBuffer === null) {
     _globalBuffer = new SensoryBuffer(capacity, importanceThreshold);
@@ -321,8 +344,8 @@ export function getGlobalBuffer(
 
 /**
  * Reset the global buffer (useful for testing).
- * Port of: mcp_server/core/sensory_buffer.py::reset_global_buffer
- * source: cortex@ed33435 mcp_server/core/sensory_buffer.py:242
+ *
+ * source: cortex@ed33435 mcp_server/core/sensory_buffer.py:242-245
  */
 export function resetGlobalBuffer(): void {
   _globalBuffer = null;

@@ -1,6 +1,9 @@
 /**
  * Unit tests for replay-execution.ts
  * source: cortex@ed33435 mcp_server/core/replay_execution.py
+ *
+ * Updated to match the PR #65 ReplayEvent interface (camelCase fields:
+ * memoryId, createdAt) from replay-types.ts.
  */
 
 import { describe, it, expect } from "vitest";
@@ -12,6 +15,8 @@ import {
   MIN_SEQUENCE_LENGTH,
 } from "../../src/consolidation/replay-execution.js";
 
+// makeMem produces raw memory records as the Python side passes them —
+// id/created_at/tags/heat keys match the Python dict shape.
 const makeMem = (id: number, created_at: string, tags: string[] = [], heat = 0.5) =>
   ({ id, created_at, tags, heat, content: `mem${id}` });
 
@@ -28,8 +33,9 @@ describe("buildTemporalSequence", () => {
       makeMem(1, "2024-01-01"),
     ];
     const seq = buildTemporalSequence(mems);
-    expect(seq[0].memory_id).toBe(1);
-    expect(seq[1].memory_id).toBe(2);
+    // ReplayEvent uses camelCase: memoryId
+    expect(seq[0].memoryId).toBe(1);
+    expect(seq[1].memoryId).toBe(2);
   });
 
   it("respects maxLength", () => {
@@ -51,7 +57,7 @@ describe("buildCausalSequence", () => {
     const seed = makeMem(1, "2024-01-01", ["entityA"]);
     const related = [makeMem(2, "2024-01-02", ["entityA"])];
     const seq = buildCausalSequence(seed, related, []);
-    expect(seq[0].memory_id).toBe(1);
+    expect(seq[0].memoryId).toBe(1);
   });
 
   it("follows forward in time for FORWARD direction", () => {
@@ -61,7 +67,7 @@ describe("buildCausalSequence", () => {
       makeMem(3, "2024-01-01", ["A"]), // before seed — excluded
     ];
     const seq = buildCausalSequence(seed, related, [], ReplayDirection.FORWARD);
-    const ids = seq.map((e) => e.memory_id);
+    const ids = seq.map((e) => e.memoryId);
     expect(ids).toContain(2);
     expect(ids).not.toContain(3);
   });
@@ -71,15 +77,16 @@ describe("buildCausalSequence", () => {
 
 describe("computeReplayStdpPairs", () => {
   it("returns empty for single event", () => {
-    const events = [{ memory_id: 1, content: "x", heat: 0.5, created_at: "", entities: ["A"] }];
+    // ReplayEvent objects (camelCase)
+    const events = [{ memoryId: 1, content: "x", heat: 0.5, createdAt: "", entities: ["A"], causalEdges: [] as Array<[number, number]> }];
     const pairs = computeReplayStdpPairs(events, ReplayDirection.FORWARD);
     expect(pairs).toEqual([]);
   });
 
   it("returns pairs for two events with different entities", () => {
     const events = [
-      { memory_id: 1, content: "a", heat: 0.5, created_at: "", entities: ["entityA"] },
-      { memory_id: 2, content: "b", heat: 0.5, created_at: "", entities: ["entityB"] },
+      { memoryId: 1, content: "a", heat: 0.5, createdAt: "", entities: ["entityA"], causalEdges: [] as Array<[number, number]> },
+      { memoryId: 2, content: "b", heat: 0.5, createdAt: "", entities: ["entityB"], causalEdges: [] as Array<[number, number]> },
     ];
     const pairs = computeReplayStdpPairs(events, ReplayDirection.FORWARD);
     expect(pairs.length).toBe(1);
@@ -91,8 +98,8 @@ describe("computeReplayStdpPairs", () => {
 
   it("swaps src/tgt for REVERSE direction", () => {
     const events = [
-      { memory_id: 1, content: "a", heat: 0.5, created_at: "", entities: ["X"] },
-      { memory_id: 2, content: "b", heat: 0.5, created_at: "", entities: ["Y"] },
+      { memoryId: 1, content: "a", heat: 0.5, createdAt: "", entities: ["X"], causalEdges: [] as Array<[number, number]> },
+      { memoryId: 2, content: "b", heat: 0.5, createdAt: "", entities: ["Y"], causalEdges: [] as Array<[number, number]> },
     ];
     const fwd = computeReplayStdpPairs(events, ReplayDirection.FORWARD);
     const rev = computeReplayStdpPairs(events, ReplayDirection.REVERSE);
