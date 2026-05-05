@@ -33,8 +33,8 @@ function isMechanismDisabled(mechanism: string): boolean {
   // Source: mcp_server/core/ablation.py is_mechanism_disabled
   // Only available in Node.js environments; falls back to enabled (false) elsewhere.
   try {
-    const env = (typeof process !== "undefined" && process.env["CORTEX_DISABLE_MECHANISMS"]) ?? "";
-    return env.split(",").map((s) => s.trim().toUpperCase()).includes(mechanism.toUpperCase());
+    const env: string = (typeof process !== "undefined" ? process.env["CORTEX_DISABLE_MECHANISMS"] : undefined) ?? "";
+    return env.split(",").map((s: string) => s.trim().toUpperCase()).includes(mechanism.toUpperCase());
   } catch {
     return false;
   }
