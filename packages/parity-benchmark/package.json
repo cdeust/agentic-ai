@@ -1,0 +1,26 @@
+{
+  "name": "@agentic/parity-benchmark",
+  "version": "0.1.0",
+  "private": true,
+  "description": "End-to-end benchmark parity harness — runs the same datasets the source repos use and asserts the TS port reproduces their published scores within tolerance.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "parity-benchmark": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "typecheck": "tsc --noEmit --project tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@agentic/core": "workspace:*",
+    "@agentic/memory": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "typescript": "^5.6.0",
+    "vitest": "^4.1.0"
+  },
+  "license": "MIT"
+}

@@ -26,6 +26,58 @@ The previous Phase 0–6 plan completed on 2026-05-05; the original 10–14 day 
 
 ---
 
+## Verifying the port works (benchmark parity)
+
+The acceptance test for the consolidation: **run the same benchmark datasets the source repos used and verify the TS port reproduces their published scores within ±0.5 percentage points**. If the score holds, the port works. If it drops beyond tolerance, the port has a regression.
+
+### Cortex — LoCoMo retrieval benchmark
+
+The frozen Python baseline (cortex@`1ef1376`, 2026-04-17) on LoCoMo's 1,982 QA pairs:
+
+| Metric | Python baseline |
+|---|---|
+| Recall@10 | 92.3% |
+| MRR | 0.791 |
+
+To run the same benchmark against the TS port:
+
+```bash
+# Locate the dataset (defaults to ../cortex/benchmarks/locomo/locomo10.json)
+export CORTEX_LOCOMO_PATH=/path/to/cortex/benchmarks/locomo/locomo10.json
+
+# Run the full 10-conversation benchmark (1982 questions)
+pnpm bench:cortex
+
+# Or run a small smoke test (1 conversation, ~196 questions)
+pnpm bench:cortex --limit 1
+```
+
+The CLI loads the same `locomo10.json` Python uses, drives every QA through `recallHandler` against an in-memory `SqliteMemoryStore`, computes per-category MRR + Recall@5 + Recall@10, and diffs the result against the frozen baseline at `parity-oracle/cortex/baselines/locomo.json`. Exit 0 means every metric is within tolerance; exit 1 means at least one metric regressed.
+
+The exact tolerance comes from the Cortex design doc §8: any floor failing by > 0.5 percentage points blocks the port. Improvements always pass (the gate is one-sided).
+
+LongMemEval (500 questions, baseline MRR 0.881 / R@10 97.8%) runs the same way once a `longmemeval` runner is wired — see `parity-oracle/cortex/baselines/longmemeval.json` for the frozen scores.
+
+### Codebase analysis (Rust binary parity)
+
+The Rust binary `ai-architect-mcp` is wrapped, not ported, so parity is exact-equal (zero tolerance). The TS adapter and the binary must produce byte-identical `node_count`, `edge_count`, and `files_indexed` on the same fixture.
+
+```bash
+pnpm bench:codebase
+```
+
+This invokes `vitest run packages/codebase/__tests__/parity/index_codebase.parity.test.ts` which:
+
+1. Indexes `parity-oracle/codebase/fixture-repos/small-python` once via the TS adapter.
+2. Indexes the same fixture again by running the Rust binary directly (golden reference).
+3. Asserts the three counts match exactly.
+4. Validates the TS output against `IndexCodebaseOutputSchema` (zod).
+5. Verifies `analyzeCodebase.totalElapsedMs` is provided by Rust (Lamport assertion: TS does not compute elapsed time itself — frozen `Date.now()` would still produce a positive value because the Rust binary owns the clock).
+
+The frozen reference is documented at `parity-oracle/codebase/baselines/index_codebase.json`.
+
+---
+
 ## Install
 
 ### 1. Build the workspace (one-time)

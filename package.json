@@ -15,6 +15,8 @@
     "lint": "eslint . --max-warnings=0",
     "typecheck": "pnpm -r --if-present run typecheck",
     "parity": "vitest run --config parity-oracle/vitest.parity.config.ts",
+    "bench:cortex": "node packages/parity-benchmark/dist/cli.js cortex-locomo",
+    "bench:codebase": "vitest run packages/codebase/__tests__/parity/index_codebase.parity.test.ts",
     "layer-check": "tsx scripts/check-layer-imports.ts",
     "layer-check:self-test": "tsx scripts/check-layer-imports.ts --self-test",
     "source-citation-check": "bash scripts/check-source-citations.sh",

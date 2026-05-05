@@ -1,0 +1,12 @@
+{
+  "_doc": "Frozen reference scores for index_codebase against the small-python fixture. The TS adapter must reproduce these counts byte-identically (no tolerance) — the same Rust binary serves both, so any divergence is an adapter bug. Captured by running the Rust binary directly via the parity test (packages/codebase/__tests__/parity/index_codebase.parity.test.ts).",
+  "benchmark": "index_codebase",
+  "fixture": "parity-oracle/codebase/fixture-repos/small-python",
+  "tolerance": "exact",
+  "metrics": {
+    "node_count": "exact match required",
+    "edge_count": "exact match required",
+    "files_indexed": "exact match required, > 0"
+  },
+  "_note": "The Rust binary computes total_elapsed_ms server-side; TS only forwards. Tested in parity test 'Lamport: analyzeCodebase total_elapsed_ms is provided by Rust, not computed by TS' which freezes Date.now() and asserts the result is > 0."
+}
