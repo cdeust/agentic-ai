@@ -18,7 +18,7 @@
  * source: packages/core/src/ports/embedding.ts — EmbeddingEngine contract
  */
 
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { EmbeddingEngine } from "@agentic/core";
 import {
   TransformersEmbeddingEngine,
@@ -28,6 +28,48 @@ import {
 import { ingestMemory } from "../../src/remember/memory-ingest.js";
 import { postStore } from "../../src/remember/post-store.js";
 import { SqliteMemoryStore } from "../../src/remember/storage/sqlite-store.js";
+
+// ── @xenova/transformers fake pipeline ────────────────────────────────────────
+//
+// The real package downloads ~90 MB of ONNX weights on first use (cached
+// thereafter under ~/.cache/huggingface/hub) — too costly + non-deterministic
+// for CI. We mock the module so the lazy import in TransformersEmbeddingEngine
+// resolves to a fake `pipeline` factory that returns a callable producing
+// 384-dim L2-normalised vectors derived from a stable per-text hash.
+//
+// This exercises the full production code path: dynamic import resolution,
+// pipeline construction, batched inference, .tolist() unpacking, and the
+// Float32Array conversion in embedBatch().
+
+vi.mock("@xenova/transformers", () => {
+  const dim = 384;
+
+  function deterministicVec(text: string): number[] {
+    const v = new Array<number>(dim).fill(0);
+    for (let i = 0; i < text.length; i++) {
+      const idx = (text.charCodeAt(i) * 31 + i) % dim;
+      v[idx] = (v[idx] ?? 0) + 1;
+    }
+    let n = 0;
+    for (let i = 0; i < dim; i++) n += (v[i] ?? 0) ** 2;
+    n = Math.sqrt(n);
+    if (n > 0) for (let i = 0; i < dim; i++) v[i] = (v[i] ?? 0) / n;
+    return v;
+  }
+
+  return {
+    pipeline: vi.fn(async (_task: string, _model: string) => {
+      const callable = (
+        inputs: string[],
+        _opts: { pooling: string; normalize: boolean },
+      ): Promise<{ tolist(): number[][] }> => {
+        const rows = inputs.map((t) => deterministicVec(t));
+        return Promise.resolve({ tolist: () => rows });
+      };
+      return callable;
+    }),
+  };
+});
 
 // ── Deterministic mock EmbeddingEngine ────────────────────────────────────
 
@@ -379,55 +421,41 @@ describe("toRecallEmbeddingEngine adapter", () => {
   });
 });
 
-// ── Live model smoke test (gated on AGENTIC_EMBED_LIVE) ───────────────────
+// ── End-to-end via mocked @xenova/transformers ────────────────────────────
+//
+// These exercise the full production embed()/embedBatch() code path against
+// the mocked pipeline declared at the top of this file. They run on every
+// CI invocation (no env-var gate) because the mock makes the model load
+// deterministic and free.
 
-describe("TransformersEmbeddingEngine live model", () => {
+describe("TransformersEmbeddingEngine end-to-end (mocked pipeline)", () => {
   afterEach(() => {
     _resetPipelineCache();
   });
 
-  it.todo(
-    "loads Xenova/all-MiniLM-L6-v2 and returns 384-dim vectors [live: set AGENTIC_EMBED_LIVE=1]",
-    // Gate: AGENTIC_EMBED_LIVE must be set to run this test.
-    // This prevents model download in CI (model files are ~90 MB).
-    // To run locally: AGENTIC_EMBED_LIVE=1 pnpm test --run
-  );
+  it("embed() returns 384-dim L2-normalised Float32Array", async () => {
+    const eng = new TransformersEmbeddingEngine();
+    const vec = await eng.embed("The quick brown fox jumps over the lazy dog");
 
-  it.todo(
-    "embed() output is L2-normalised (live model, AGENTIC_EMBED_LIVE=1)",
-  );
+    expect(vec).toBeInstanceOf(Float32Array);
+    expect(vec.length).toBe(384);
 
-  it.skipIf(!process.env["AGENTIC_EMBED_LIVE"])(
-    "live: embed() returns 384-dim L2-normalised Float32Array",
-    { timeout: 60_000 },
-    async () => {
-      const eng = new TransformersEmbeddingEngine();
-      const vec = await eng.embed("The quick brown fox jumps over the lazy dog");
+    // L2 norm should be ≈ 1.0 (normalised output)
+    // source: https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2
+    //   normalise_embeddings=true in the model config
+    let norm = 0;
+    for (const v of vec) norm += v ** 2;
+    expect(Math.sqrt(norm)).toBeCloseTo(1.0, 4);
+  });
 
-      expect(vec).toBeInstanceOf(Float32Array);
-      expect(vec.length).toBe(384);
+  it("embedBatch() is consistent with embed()", async () => {
+    const eng = new TransformersEmbeddingEngine();
+    const texts = ["hello world", "foo bar baz"];
+    const [b1, b2] = await eng.embedBatch(texts);
+    const s1 = await eng.embed(texts[0]!);
+    const s2 = await eng.embed(texts[1]!);
 
-      // L2 norm should be ≈ 1.0 (normalised output)
-      // source: https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2
-      //   normalise_embeddings=true in the model config
-      let norm = 0;
-      for (const v of vec) norm += v ** 2;
-      expect(Math.sqrt(norm)).toBeCloseTo(1.0, 4);
-    },
-  );
-
-  it.skipIf(!process.env["AGENTIC_EMBED_LIVE"])(
-    "live: embedBatch() is consistent with embed()",
-    { timeout: 60_000 },
-    async () => {
-      const eng = new TransformersEmbeddingEngine();
-      const texts = ["hello world", "foo bar baz"];
-      const [b1, b2] = await eng.embedBatch(texts);
-      const s1 = await eng.embed(texts[0]!);
-      const s2 = await eng.embed(texts[1]!);
-
-      expect(Array.from(b1!)).toEqual(Array.from(s1));
-      expect(Array.from(b2!)).toEqual(Array.from(s2));
-    },
-  );
+    expect(Array.from(b1!)).toEqual(Array.from(s1));
+    expect(Array.from(b2!)).toEqual(Array.from(s2));
+  });
 });
