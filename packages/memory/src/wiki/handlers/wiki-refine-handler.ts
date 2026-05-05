@@ -1,7 +1,11 @@
 /**
- * Wiki Path B: LLM-augmented draft refinement handler.
+ * Wiki Path B: LLM-augmented draft refinement — in-process handler.
  *
- * source: mcp_server/handlers/wiki_refine.py (Cortex bc0ae4f)
+ * This module contains the LLM-only in-process refinement path that
+ * does not require a DB connection. For the DB-backed MCP tool handlers
+ * (wiki_get_draft / wiki_refine_draft), see wiki-refine-db-handler.ts.
+ *
+ * source: cortex@ed33435 mcp_server/handlers/wiki_refine.py (handler_get / LLM path)
  */
 
 import type { LlmClient } from "@agentic/core";
@@ -11,11 +15,13 @@ import { WikiUnavailableError } from "./wiki-errors.js";
 const WIKI_REFINE_MAX_TOKENS = 1024;
 
 // source: https://docs.anthropic.com/en/api/messages — temperature 0.7 for creative prose
-// Reconstructed: Cortex f2b9f99 wiki_refine.py does not specify a temperature.
+// Reconstructed: cortex@ed33435 mcp_server/handlers/wiki_refine.py does not specify a temperature.
 const WIKI_REFINE_TEMPERATURE = 0.7;
 
 // source: mcp_server/handlers/wiki_refine.py:147 — lead ≤60 words ≈ 300 chars fallback cap
 const WIKI_LEAD_FALLBACK_CHARS = 300;
+
+// ── Public types ──────────────────────────────────────────────────────────────
 
 export interface WikiRefineArgs {
   readonly draft_id: number;
@@ -36,14 +42,16 @@ export interface WikiRefineResult {
   readonly note: string;
 }
 
+// ── LLM-only handler ──────────────────────────────────────────────────────────
+
 /**
- * Refine a wiki draft using the LLM client.
+ * Refine a wiki draft using the LLM client (in-process, no DB writes).
  *
  * Precondition:  args.draft_id is a positive integer; llmClient is non-null.
  * Postcondition: returns a WikiRefineResult with the LLM-refined lead and
  *                sections; when llmClient is null throws WikiUnavailableError.
  *
- * source: mcp_server/handlers/wiki_refine.py:125-200
+ * source: cortex@ed33435 mcp_server/handlers/wiki_refine.py:125-200
  */
 export async function wikiRefineHandler(
   args: WikiRefineArgs,
