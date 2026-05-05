@@ -28,12 +28,63 @@ The previous Phase 0–6 plan completed on 2026-05-05; the original 10–14 day 
 
 ## Install
 
+### 1. Build the workspace (one-time)
+
 ```bash
+git clone https://github.com/cdeust/agentic-ai.git
+cd agentic-ai
 pnpm install
 pnpm build
 ```
 
 Requires Node 20+ and pnpm 10+. The Rust binary in `packages/codebase-rust/` builds via `cargo build --release` (run automatically as part of `pnpm -F @agentic/codebase-rust build`).
+
+### 2a. Install via the Claude Code plugin marketplace (recommended)
+
+The repo carries a canonical `.claude-plugin/marketplace.json` listing all four plugins. From any Claude Code session:
+
+```text
+/plugin marketplace add cdeust/agentic-ai
+/plugin install memory@agentic-ai
+/plugin install codebase@agentic-ai
+/plugin install reasoning@agentic-ai
+/plugin install prd@agentic-ai
+```
+
+Each plugin's bundled `.mcp.json` wires the corresponding MCP server (`cortex`, `ai-architect`, `reasoning`, `prd-gen`) to the unified TS / Rust outputs under `packages/`. No additional configuration is needed — `pnpm build` produces every artifact the plugins reference.
+
+For local development against an unpublished branch, replace the `add` line with:
+
+```text
+/plugin marketplace add file:///absolute/path/to/agentic-ai
+```
+
+### 2b. Install MCP servers directly (without the marketplace)
+
+The repo also ships a project-scoped `.mcp.json` at the root. Claude Code auto-detects it when the project directory is opened, exposing all four servers:
+
+| MCP server name | Source | Description |
+|---|---|---|
+| `cortex` | `packages/mcp-servers/memory/` | Persistent memory (Cortex TS port) |
+| `ai-architect` | `packages/codebase-rust/` | Codebase intelligence (Rust binary) |
+| `reasoning` | `packages/mcp-servers/reasoning/` | Genius + team reasoning agents |
+| `prd-gen` | `packages/mcp-servers/prd/` | PRD pipeline |
+
+To register one server in a different project, follow Anthropic's official `claude mcp add` flow:
+
+```bash
+# Memory
+claude mcp add cortex -- node /path/to/agentic-ai/packages/mcp-servers/memory/dist/index.js
+
+# Codebase
+claude mcp add ai-architect -- /path/to/agentic-ai/packages/codebase-rust/target/release/ai-architect-mcp
+
+# Reasoning
+claude mcp add reasoning -- node /path/to/agentic-ai/packages/mcp-servers/reasoning/dist/index.js
+
+# PRD
+claude mcp add prd-gen -- node /path/to/agentic-ai/packages/mcp-servers/prd/dist/index.js
+```
 
 ---
 

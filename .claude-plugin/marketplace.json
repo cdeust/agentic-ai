@@ -1,0 +1,113 @@
+{
+  "name": "agentic-ai",
+  "owner": {
+    "name": "Clement Deust",
+    "email": "admin@ai-architect.tools"
+  },
+  "metadata": {
+    "description": "Agentic AI — four plugins for Claude Code: persistent memory (Cortex, ported to TS), codebase intelligence (Rust binary kept as subprocess), genius reasoning (zetetic team), and PRD generation. All four share one install / one update path.",
+    "version": "2026.05",
+    "homepage": "https://github.com/cdeust/agentic-ai",
+    "repository": "https://github.com/cdeust/agentic-ai"
+  },
+  "plugins": [
+    {
+      "name": "memory",
+      "source": "./plugins/memory/",
+      "description": "Persistent memory for Claude Code — TS port of Cortex. Thermodynamic heat/decay, intent-aware retrieval, biological plasticity, codebase intelligence integration. SQLite by default; PostgreSQL + pgvector when DATABASE_URL is set. 41 published papers as sources.",
+      "version": "0.2.0",
+      "author": {
+        "name": "Clement Deust",
+        "email": "admin@ai-architect.tools"
+      },
+      "homepage": "https://github.com/cdeust/agentic-ai",
+      "repository": "https://github.com/cdeust/agentic-ai",
+      "license": "MIT",
+      "keywords": [
+        "memory",
+        "persistent",
+        "mcp",
+        "claude-code",
+        "neuroscience",
+        "cognitive-profiling",
+        "knowledge-graph",
+        "cortex"
+      ],
+      "category": "productivity"
+    },
+    {
+      "name": "codebase",
+      "source": "./plugins/codebase/",
+      "description": "Codebase intelligence — Rust binary (ai-architect-mcp) kept as a subprocess, indexes Rust/Python/TypeScript into a LadybugDB property graph. Resolves imports + call chains, detects communities via Leiden, traces execution flows. BM25+TF-IDF+RRF hybrid search.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Clement Deust",
+        "email": "admin@ai-architect.tools"
+      },
+      "homepage": "https://github.com/cdeust/agentic-ai",
+      "repository": "https://github.com/cdeust/agentic-ai",
+      "license": "MIT",
+      "keywords": [
+        "mcp",
+        "claude-code",
+        "rust",
+        "codebase-intelligence",
+        "property-graph",
+        "call-graph",
+        "community-detection",
+        "leiden",
+        "ladybugdb"
+      ],
+      "category": "development"
+    },
+    {
+      "name": "reasoning",
+      "source": "./plugins/reasoning/",
+      "description": "97 genius reasoning patterns from history's greatest minds + 19 team specialist agents under one zetetic epistemic standard. 61 skills, 25 commands, 16 lifecycle hooks.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Clement Deust",
+        "email": "admin@ai-architect.tools"
+      },
+      "homepage": "https://github.com/cdeust/agentic-ai",
+      "repository": "https://github.com/cdeust/agentic-ai",
+      "license": "MIT",
+      "keywords": [
+        "agents",
+        "reasoning",
+        "research",
+        "zetetic",
+        "epistemic",
+        "claude-code",
+        "genius-agents",
+        "scientific-method"
+      ],
+      "category": "research"
+    },
+    {
+      "name": "prd",
+      "source": "./plugins/prd/",
+      "description": "Stateless reducer that turns a feature description into a 9-file PRD. Multi-judge verification with weighted-average + Bayesian consensus, calibrated against externally-grounded oracles (schema/math/code/spec). Phase 4 closed loop: per-judge Bayesian reliability calibration, Kaplan-Meier retry budgets, Clopper-Pearson KPI gates.",
+      "version": "0.3.0",
+      "author": {
+        "name": "Clement Deust",
+        "email": "admin@ai-architect.tools"
+      },
+      "homepage": "https://github.com/cdeust/agentic-ai",
+      "repository": "https://github.com/cdeust/agentic-ai",
+      "license": "MIT",
+      "keywords": [
+        "prd",
+        "product-requirements",
+        "mcp",
+        "claude-code",
+        "verification",
+        "validation",
+        "consensus",
+        "multi-judge",
+        "stateless-reducer"
+      ],
+      "category": "documentation"
+    }
+  ]
+}

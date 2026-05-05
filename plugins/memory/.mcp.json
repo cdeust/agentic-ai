@@ -1,15 +1,14 @@
 {
-  "_note": "CLAUDE_PLUGIN_ROOT substitution: Claude Code expands ONLY the plain ${CLAUDE_PLUGIN_ROOT} pattern. Do NOT use ${CLAUDE_PLUGIN_ROOT:-fallback} or any compound parameter expansion — the fallback is passed literally to bash, which then evaluates it with CLAUDE_PLUGIN_ROOT unset, producing the wrong path. See commit cf85cfc in cdeust/automatised-pipeline (2026-04-25) for root-cause analysis. Use a bash -c wrapper so the shell handles ${CLAUDE_PLUGIN_ROOT} at invocation time.",
+  "_note": "Wired to the unified TS MCP server at packages/mcp-servers/memory/dist/index.js. CLAUDE_PLUGIN_ROOT resolves to plugins/memory/ when installed via the agentic-ai marketplace; the relative '../../packages/mcp-servers/memory/dist/index.js' walks up to repo root then into the built MCP server. The bash -c wrapper exists because Claude Code only substitutes the plain ${CLAUDE_PLUGIN_ROOT} pattern; using bash -c lets the shell handle expansion at invocation time. See cf85cfc in cdeust/automatised-pipeline (2026-04-25) for root-cause.",
   "mcpServers": {
     "cortex": {
       "command": "bash",
       "args": [
         "-c",
-        "PY=$(command -v python3 || command -v python) && exec \"$PY\" \"${CLAUDE_PLUGIN_ROOT}/scripts/launcher.py\" mcp_server"
+        "exec node \"${CLAUDE_PLUGIN_ROOT}/../../packages/mcp-servers/memory/dist/index.js\""
       ],
       "env": {
-        "DATABASE_URL": "postgresql://localhost:5432/cortex",
-        "CORTEX_RUNTIME": "",
+        "DATABASE_URL": "",
         "CORTEX_MEMORY_AP_ENABLED": "1"
       }
     }

@@ -1,0 +1,23 @@
+{
+  "name": "reasoning",
+  "description": "97 genius reasoning patterns from history's greatest minds + 19 team specialist agents under one zetetic epistemic standard none of them can bypass. 61 skills across 7 categories, 25 commands across 9 categories, 16 lifecycle hooks. PreToolUse/PostToolUse guards for git commit provenance, layer-check, and research citation.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Clement Deust",
+    "email": "admin@ai-architect.tools"
+  },
+  "homepage": "https://github.com/cdeust/agentic-ai",
+  "repository": "https://github.com/cdeust/agentic-ai",
+  "license": "MIT",
+  "keywords": [
+    "agents",
+    "reasoning",
+    "research",
+    "zetetic",
+    "epistemic",
+    "claude-code",
+    "genius-agents",
+    "scientific-method"
+  ],
+  "mcpServers": "../.mcp.json"
+}

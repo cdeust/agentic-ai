@@ -1,11 +1,11 @@
 {
-  "_note": "Bash-wrapper pattern: uses bash -c so the shell expands ${CLAUDE_PLUGIN_ROOT}. NEVER write ${CLAUDE_PLUGIN_ROOT:-fallback} — Claude Code only substitutes the plain form. See commit cf85cfc in cdeust/automatised-pipeline (2026-04-25). The binary check + cargo fallback pattern is the canonical fix from that commit.",
+  "_note": "Wired to the unified Rust binary at packages/codebase-rust/target/release/ai-architect-mcp. CLAUDE_PLUGIN_ROOT resolves to plugins/codebase/ when installed via the agentic-ai marketplace; the relative path walks up to repo root then into the codebase-rust package. Falls back to 'cargo run --release' when the prebuilt binary is absent (first-run dev). The bash -c wrapper handles ${CLAUDE_PLUGIN_ROOT} expansion. See cf85cfc in cdeust/automatised-pipeline (2026-04-25).",
   "mcpServers": {
     "ai-architect": {
       "command": "bash",
       "args": [
         "-c",
-        "BIN=\"${CLAUDE_PLUGIN_ROOT}/target/release/ai-architect-mcp\" && if [ -x \"$BIN\" ]; then exec \"$BIN\"; else exec cargo run --quiet --release --manifest-path \"${CLAUDE_PLUGIN_ROOT}/Cargo.toml\"; fi"
+        "BIN=\"${CLAUDE_PLUGIN_ROOT}/../../packages/codebase-rust/target/release/ai-architect-mcp\" && if [ -x \"$BIN\" ]; then exec \"$BIN\"; else exec cargo run --quiet --release --manifest-path \"${CLAUDE_PLUGIN_ROOT}/../../packages/codebase-rust/Cargo.toml\"; fi"
       ]
     }
   }
