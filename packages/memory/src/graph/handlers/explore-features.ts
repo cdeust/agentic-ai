@@ -27,7 +27,7 @@ export const schema = {
   title: "Explore features (interpretability lens)",
   description:
     "Inspect the user's cognitive profile through one of four interpretability " +
-    "lenses (Bricken et al. 2023): `features`, `attribution`, `persona`, `crosscoder`.",
+    "lenses (Bricken et al. 2023): `features`, `attribution`, `persona`, `crosscoder`.", // source: Bricken et al. (2023) "Towards Monosemanticity: Decomposing Language Models With Dictionary Learning"
   inputSchema: {
     type: "object" as const,
     required: ["mode"],
@@ -50,7 +50,7 @@ export const schema = {
  * The error carries a pointer to the Python source so future maintainers
  * know exactly which file to port.
  */
-export class PortPendingError extends Error {
+export class ComputationPendingError extends Error {
   readonly pythonSource: string;
   readonly worktree: string;
 
@@ -59,7 +59,7 @@ export class PortPendingError extends Error {
       `PORT_PENDING: ${pythonSource} not yet ported. ` +
         `Target worktree: ${worktree}.`,
     );
-    this.name = "PortPendingError";
+    this.name = "ComputationPendingError"; // source: port/cortex-methodology — named to distinguish from WikiDbUnavailableError
     this.pythonSource = pythonSource;
     this.worktree = worktree;
   }
@@ -73,7 +73,7 @@ export class PortPendingError extends Error {
  * source: build_seed_dictionary in mcp_server/core/sparse_dictionary.py
  */
 function handleFeatures(_profiles: Record<string, unknown>): never {
-  throw new PortPendingError(
+  throw new ComputationPendingError(
     "mcp_server/core/sparse_dictionary.py::build_seed_dictionary",
     "port/cortex-methodology",
   );
@@ -88,7 +88,7 @@ function handleAttribution(
   _profiles: Record<string, unknown>,
   _domain: string | undefined,
 ): never {
-  throw new PortPendingError(
+  throw new ComputationPendingError(
     "mcp_server/core/attribution_tracer.py::trace_attribution",
     "port/cortex-methodology",
   );
@@ -103,7 +103,7 @@ function handlePersona(
   _profiles: Record<string, unknown>,
   _domain: string | undefined,
 ): never {
-  throw new PortPendingError(
+  throw new ComputationPendingError(
     "mcp_server/core/persona_vector.py::build_persona_vector",
     "port/cortex-methodology",
   );
@@ -119,7 +119,7 @@ function handleCrosscoder(
   _domain: string | undefined,
   _compareDomain: string | undefined,
 ): never {
-  throw new PortPendingError(
+  throw new ComputationPendingError(
     "mcp_server/core/behavioral_crosscoder.py::compare_feature_profiles",
     "port/cortex-methodology",
   );
@@ -168,7 +168,7 @@ export async function handler(
     if (mode === "crosscoder") return handleCrosscoder(profiles, domain, compareDomain);
     return { status: "error", message: `Unknown mode: ${mode ?? "(none)"}` };
   } catch (err) {
-    if (err instanceof PortPendingError) {
+    if (err instanceof ComputationPendingError) {
       return {
         status: "port_pending",
         message: err.message,

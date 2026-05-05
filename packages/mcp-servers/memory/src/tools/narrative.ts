@@ -171,7 +171,8 @@ export function registerNarrativeTools(
           }) }] };
         }
         const response = unifiedSearchHandler(
-          narrativeDeps.store,
+          // source: packages/memory/src/narrative/handlers/unified-search.ts::UnifiedSearchDeps
+          { memoryPort: narrativeDeps.store },
           {
             query:       args.query,
             domain:      args.domain,

@@ -10,7 +10,7 @@
  *   - codebase_analyze: calls real codebaseAnalyzeHandler.
  *   - ingest_codebase: calls real ingestCodebaseHandler.
  *   - ingest_prd: calls real ingestPrdHandler.
- *   - change_impact: throws PortPendingError — blocked on AP codebase graph.
+ *   - change_impact: throws MissingStoreError — blocked on AP codebase graph.
  *     source: docs/ADR/0046-change-impact-analysis.md §Phase 3 (not landed)
  *   - open_visualization: launches the HTTP dashboard via @agentic/memory-dashboard.
  *     source: docs/ADR/0014-cortex-http-server-restored.md (ADR-0011 rescinded)
@@ -47,12 +47,13 @@ export interface IngestDeps {
   mcpClientPool: codebaseAnalysis.McpClientPool | null;
 }
 
-// ── PortPendingError ──────────────────────────────────────────────────────────
+// ── MissingStoreError ─────────────────────────────────────────────────────────
+// Thrown when a tool handler is called without a live IngestDeps.store injected.
 
-class PortPendingError extends Error {
+class MissingStoreError extends Error {
   constructor(handlerName: string, blocker: string) {
     super(`${handlerName} requires ${blocker}.`);
-    this.name = "PortPendingError";
+    this.name = "MissingStoreError";
   }
 }
 
@@ -97,7 +98,7 @@ export function registerIngestTools(server: McpServer, deps?: IngestDeps): void 
     async (args) => {
       try {
         if (!deps) {
-          throw new PortPendingError("import_sessions", "IngestDeps.store — no store injected");
+          throw new MissingStoreError("import_sessions", "IngestDeps.store — no store injected");
         }
         // source: packages/memory/src/import/handler.ts::importHandler
         const store = deps.store as unknown as MemoryStore;
@@ -147,7 +148,7 @@ export function registerIngestTools(server: McpServer, deps?: IngestDeps): void 
     async (args) => {
       try {
         if (!deps) {
-          throw new PortPendingError("codebase_analyze", "IngestDeps.store — no store injected");
+          throw new MissingStoreError("codebase_analyze", "IngestDeps.store — no store injected");
         }
         const analyzeDeps: codebaseAnalysis.CodebaseAnalyzeDeps = { store: deps.store };
         const result = await codebaseAnalysis.codebaseAnalyzeHandler(args as Record<string, unknown>, analyzeDeps);
@@ -177,7 +178,7 @@ export function registerIngestTools(server: McpServer, deps?: IngestDeps): void 
     async (args) => {
       try {
         if (!deps) {
-          throw new PortPendingError("ingest_codebase", "IngestDeps.store — no store injected");
+          throw new MissingStoreError("ingest_codebase", "IngestDeps.store — no store injected");
         }
         const ingestDeps: codebaseAnalysis.IngestCodebaseDeps = {
           store:         deps.store,
@@ -209,7 +210,7 @@ export function registerIngestTools(server: McpServer, deps?: IngestDeps): void 
     async (args) => {
       try {
         if (!deps) {
-          throw new PortPendingError("ingest_prd", "IngestDeps.store — no store injected");
+          throw new MissingStoreError("ingest_prd", "IngestDeps.store — no store injected");
         }
         const prdDeps: codebaseAnalysis.IngestPrdDeps = {
           store:         deps.store,

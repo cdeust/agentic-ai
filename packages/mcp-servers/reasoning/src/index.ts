@@ -1,7 +1,8 @@
 /**
- * @agentic/mcp-server-reasoning — Composition root stub.
+ * @agentic/mcp-server-reasoning — Composition root (skeletal).
  *
- * STATUS: port-pending
+ * STATUS: skeletal — zetetic-team-subagents prompt inventory exists; MCP tool
+ * registrations (dispatch_genius, list_geniuses, run_panel) not yet wired.
  *
  * PATTERN: Stub-First Composition Root (see docs/PATTERNS.md)
  *
@@ -24,5 +25,5 @@
  * source: docs/PHASE_PLAN.md §Phase2 (zetetic-team-subagents migration)
  */
 
-// Stub export — satisfies TypeScript's "no empty module" requirement.
-export const PORT_STATUS = "pending" as const;
+// Skeletal export — MCP tool registrations will replace this.
+export const PORT_STATUS = "skeletal" as const;

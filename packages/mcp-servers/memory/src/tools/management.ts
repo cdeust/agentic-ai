@@ -8,8 +8,7 @@
  * Phase 7 Group D — DI wiring:
  *   - validate_memory: marks stale memories whose source files no longer exist.
  *     Ported from cortex@ed33435 mcp_server/handlers/validate_memory.py.
- *   - seed_project: deferred — requires full file-system scanner port.
- *     Throws PortPendingError(seed_project, "filesystem scanner not yet ported").
+ *   - seed_project: calls real seedProjectHandlerFn from @agentic/memory/codebase-analysis.
  *   - backfill_memories: calls real importHandler from @agentic/memory/import.
  *     source: packages/memory/src/import/handler.ts::importHandler
  *   - codebase_analyze: calls real codebaseAnalyzeHandler.
@@ -78,7 +77,7 @@ function errorText(tool: string, err: unknown): { content: Array<{ type: "text";
  * precondition:  deps.store is a live MemoryStore.
  * postcondition: 5 tools registered; validate_memory, backfill_memories,
  *   codebase_analyze, get_methodology_graph call real handlers;
- *   seed_project throws PortPendingError with specific blocker named.
+ *   seed_project calls the real seedProjectHandlerFn.
  *
  * source: MCP_TOOLS.md §"validate_memory", §"seed_project",
  *         §"backfill_memories", §"codebase_analyze", §"get_methodology_graph"
