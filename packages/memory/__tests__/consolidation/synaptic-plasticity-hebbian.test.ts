@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, beforeEach, describe, it, expect } from "vitest";
 import { computeBcmPhi, computeLtp, computeLtd, updateBcmThreshold, applyHebbianUpdate, computeStdpUpdate, applyStdpBatch, MAX_WEIGHT, MIN_WEIGHT } from "../../src/consolidation/synaptic-plasticity-hebbian.js";
 
 describe("computeBcmPhi — BCM 1982 Eq. 3", () => {
@@ -43,4 +43,63 @@ describe("computeStdpUpdate — Bi & Poo 1998", () => {
 describe("applyStdpBatch", () => {
   it("causal direction", () => { expect(applyStdpBatch([{source_entity_id:1,target_entity_id:2,delta_t_hours:5,current_weight:1.0}])[0]!.direction).toBe("causal"); });
   it("anti-causal direction", () => { expect(applyStdpBatch([{source_entity_id:1,target_entity_id:2,delta_t_hours:-5,current_weight:1.0}])[0]!.direction).toBe("anti-causal"); });
+});
+
+// ── D-14 regression: ablation guard ──────────────────────────────────────────
+// This test would have caught D-14: applyHebbianUpdate was returning raw edges
+// (missing weight/delta/action keys) when ablation was active, causing
+// downstream KeyError in the consolidation handler.
+// source: cortex@ed33435 mcp_server/core/synaptic_plasticity_hebbian.py:170-185
+
+describe("applyHebbianUpdate — ablation guard (D-14)", () => {
+  let originalEnv: string | undefined;
+
+  beforeEach(() => {
+    originalEnv = process.env["CORTEX_ABLATE_SYNAPTIC_PLASTICITY"];
+  });
+
+  afterEach(() => {
+    if (originalEnv === undefined) {
+      delete process.env["CORTEX_ABLATE_SYNAPTIC_PLASTICITY"];
+    } else {
+      process.env["CORTEX_ABLATE_SYNAPTIC_PLASTICITY"] = originalEnv;
+    }
+  });
+
+  it("ablated: every result has weight, delta=0, action='none' (no-op shape)", () => {
+    process.env["CORTEX_ABLATE_SYNAPTIC_PLASTICITY"] = "1";
+    const edges = [
+      { source_entity_id: 1, target_entity_id: 2, weight: 0.8 },
+      { source_entity_id: 3, target_entity_id: 4, weight: 1.2 },
+    ];
+    const result = applyHebbianUpdate(
+      edges,
+      new Set(["1,2"]),
+      new Map([[1, 0.9], [2, 0.9]]),
+      new Map([[2, 0.5]]),
+    );
+    expect(result).toHaveLength(2);
+    for (const r of result) {
+      // postcondition: weight preserved, delta=0, action="none"
+      expect(r).toHaveProperty("weight");
+      expect(r.delta).toBe(0.0);
+      expect(r.action).toBe("none");
+    }
+    // weight must be the original edge weight (unchanged)
+    expect(result[0]!.weight).toBe(0.8);
+    expect(result[1]!.weight).toBe(1.2);
+  });
+
+  it("not ablated: co-accessed edges produce LTP (non-zero delta)", () => {
+    delete process.env["CORTEX_ABLATE_SYNAPTIC_PLASTICITY"];
+    const edges = [{ source_entity_id: 1, target_entity_id: 2, weight: 0.5 }];
+    const result = applyHebbianUpdate(
+      edges,
+      new Set(["1,2"]),
+      new Map([[1, 0.9], [2, 0.9]]),
+      new Map([[2, 0.5]]),
+    );
+    expect(result[0]!.action).toBe("ltp");
+    expect(result[0]!.delta).toBeGreaterThan(0);
+  });
 });

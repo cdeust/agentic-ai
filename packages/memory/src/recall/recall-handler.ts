@@ -378,7 +378,14 @@ export async function recallHandler(
     // Build query entity set from keywords for affinity comparison.
     const queryKeywords = extractKeywords(query);
     const queryTagSet = new Set<string>(queryKeywords);
-    const queryEntitySet = new Set<number>(); // entity IDs not available at this stage
+    // D-05 fix: entitySignature is now Set<string> (entity names), not Set<number>.
+    // At this call site entity names are not available from the query, so the
+    // entity set remains empty — identical to Python's behaviour when the query
+    // has no extractable entity names. Jaccard over empty sets = 0, so the
+    // affinity score is driven entirely by the tag Jaccard (0.3 weight), which
+    // matches the Python code path for name-free queries.
+    // source: cortex@ed33435 mcp_server/core/dendritic_clusters.py:44-67
+    const queryEntitySet = new Set<string>(); // entity names not extractable from raw query text
     // Score each hot memory by how well its tags align with query keywords.
     const tagScored: Array<[number, number]> = hotMems.map((m) => {
       const memTags = new Set<string>(
@@ -389,7 +396,7 @@ export async function recallHandler(
           branchId: `m${m.id}`,
           domain: m.domain,
           memoryIds: [m.id],
-          entitySignature: new Set<number>(),
+          entitySignature: new Set<string>(), // entity names (not IDs) — empty at query time
           tagSignature: memTags,
           avgHeat: m.heat,
           plasticity: 1.0,

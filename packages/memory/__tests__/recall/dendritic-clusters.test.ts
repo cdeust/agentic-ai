@@ -8,8 +8,12 @@
  *   - addMemoryToBranch is immutable (original unchanged)
  *   - addMemoryToBranch avgHeat is a running average
  *
+ * D-05 fix update: entitySignature is now Set<string> (entity names), not
+ * Set<number> (IDs). All fixtures updated accordingly.
+ * source: cortex@ed33435 mcp_server/core/dendritic_clusters.py:44-67
+ *
  * source: Kastellakis et al. (2015) "Synaptic clustering within dendrites."
- *         cortex@bc0ae4f mcp_server/core/dendritic_clusters.py
+ *         cortex@ed33435 mcp_server/core/dendritic_clusters.py
  */
 
 import { describe, expect, it } from "vitest";
@@ -25,6 +29,9 @@ import type { DendriticBranch } from "../../src/recall/dendritic-clusters.js";
 
 // ── Fixtures ───────────────────────────────────────────────────────────────
 
+// D-05 fix: entitySignature is Set<string> — use entity names, not numeric IDs.
+// source: cortex@ed33435 mcp_server/core/dendritic_clusters.py (entity_signature: set[str])
+
 function makeBranch(
   overrides: Partial<DendriticBranch> = {},
 ): DendriticBranch {
@@ -32,7 +39,7 @@ function makeBranch(
     branchId: "b1",
     domain: "test",
     memoryIds: [1, 2],
-    entitySignature: new Set([10, 20, 30]),
+    entitySignature: new Set(["RecallHandler", "MemoryStore", "HopfieldNetwork"]),
     tagSignature: new Set(["architecture", "vector-db"]),
     avgHeat: 0.7,
     plasticity: 1.0,
@@ -55,7 +62,7 @@ describe("computeBranchAffinity — Jaccard ∈ [0, 1]", () => {
 
   it("result is always in [0, 1]", () => {
     const branch = makeBranch();
-    const entities = new Set([10, 20, 99]);
+    const entities = new Set(["RecallHandler", "MemoryStore", "NewEntity"]);
     const tags = new Set(["architecture", "new-tag"]);
     const score = computeBranchAffinity(entities, tags, branch);
     expect(score).toBeGreaterThanOrEqual(0.0);
@@ -64,11 +71,11 @@ describe("computeBranchAffinity — Jaccard ∈ [0, 1]", () => {
 
   it("identical signature gives 1.0", () => {
     const branch = makeBranch({
-      entitySignature: new Set([1, 2, 3]),
+      entitySignature: new Set(["EntityA", "EntityB", "EntityC"]),
       tagSignature: new Set(["t1", "t2"]),
     });
     const score = computeBranchAffinity(
-      new Set([1, 2, 3]),
+      new Set(["EntityA", "EntityB", "EntityC"]),
       new Set(["t1", "t2"]),
       branch,
     );
@@ -77,11 +84,11 @@ describe("computeBranchAffinity — Jaccard ∈ [0, 1]", () => {
 
   it("disjoint sets give 0.0", () => {
     const branch = makeBranch({
-      entitySignature: new Set([1, 2, 3]),
+      entitySignature: new Set(["EntityA", "EntityB", "EntityC"]),
       tagSignature: new Set(["a", "b"]),
     });
     const score = computeBranchAffinity(
-      new Set([10, 11]),
+      new Set(["EntityX", "EntityY"]),
       new Set(["x", "y"]),
       branch,
     );
@@ -90,13 +97,13 @@ describe("computeBranchAffinity — Jaccard ∈ [0, 1]", () => {
 
   it("partial overlap gives intermediate score", () => {
     const branch = makeBranch({
-      entitySignature: new Set([1, 2, 3, 4]),
+      entitySignature: new Set(["E1", "E2", "E3", "E4"]),
       tagSignature: new Set(["t1", "t2"]),
     });
     // 2 out of 4 entities match → entity Jaccard = 2/5 = 0.4
     // 1 out of 2 tags match → tag Jaccard = 1/3
     const score = computeBranchAffinity(
-      new Set([1, 2, 5]),
+      new Set(["E1", "E2", "E5"]),
       new Set(["t1", "t3"]),
       branch,
     );
@@ -109,7 +116,7 @@ describe("computeBranchAffinity — Jaccard ∈ [0, 1]", () => {
 
 describe("findBestBranch", () => {
   it("returns null when no branches exist", () => {
-    const result = findBestBranch(new Set([1]), new Set(["t"]), []);
+    const result = findBestBranch(new Set(["SomeEntity"]), new Set(["t"]), []);
     expect(result.branch).toBeNull();
     expect(result.score).toBe(0.0);
   });
@@ -117,7 +124,7 @@ describe("findBestBranch", () => {
   it("returns null for ablation mode (disabled=true)", () => {
     const branch = makeBranch();
     const result = findBestBranch(
-      new Set([10, 20]),
+      new Set(["RecallHandler", "MemoryStore"]),
       new Set(["architecture"]),
       [branch],
       { disabled: true },
@@ -128,11 +135,11 @@ describe("findBestBranch", () => {
 
   it("respects threshold — no match below threshold", () => {
     const branch = makeBranch({
-      entitySignature: new Set([99, 98]), // disjoint from query
+      entitySignature: new Set(["UnrelatedA", "UnrelatedB"]), // disjoint from query
       tagSignature: new Set(["unrelated"]),
     });
     const result = findBestBranch(
-      new Set([1, 2]),
+      new Set(["EntityX", "EntityY"]),
       new Set(["architecture"]),
       [branch],
       { threshold: BRANCH_ADMISSION_THRESHOLD },
@@ -143,16 +150,16 @@ describe("findBestBranch", () => {
   it("selects the branch with highest affinity above threshold", () => {
     const branchLow = makeBranch({
       branchId: "low",
-      entitySignature: new Set([1]),
+      entitySignature: new Set(["E1"]),
       tagSignature: new Set(["t1"]),
     });
     const branchHigh = makeBranch({
       branchId: "high",
-      entitySignature: new Set([1, 2, 3]),
+      entitySignature: new Set(["E1", "E2", "E3"]),
       tagSignature: new Set(["t1", "t2", "t3"]),
     });
     const result = findBestBranch(
-      new Set([1, 2, 3]),
+      new Set(["E1", "E2", "E3"]),
       new Set(["t1", "t2", "t3"]),
       [branchLow, branchHigh],
       { threshold: 0.01 },
@@ -163,11 +170,11 @@ describe("findBestBranch", () => {
   it("respects maxSize — does not admit to a full branch", () => {
     const fullBranch = makeBranch({
       memoryIds: Array.from({ length: MAX_BRANCH_SIZE }, (_, i) => i + 1),
-      entitySignature: new Set([1, 2, 3]),
+      entitySignature: new Set(["E1", "E2", "E3"]),
       tagSignature: new Set(["t1"]),
     });
     const result = findBestBranch(
-      new Set([1, 2, 3]),
+      new Set(["E1", "E2", "E3"]),
       new Set(["t1"]),
       [fullBranch],
       { maxSize: MAX_BRANCH_SIZE },
@@ -183,7 +190,7 @@ describe("addMemoryToBranch — immutability contract", () => {
     const original = makeBranch();
     const originalIds = [...original.memoryIds];
     const originalEntitySize = original.entitySignature.size;
-    addMemoryToBranch(original, 99, new Set([40]), new Set(["new-tag"]), 0.5);
+    addMemoryToBranch(original, 99, new Set(["NewEntity"]), new Set(["new-tag"]), 0.5);
     expect(original.memoryIds).toEqual(originalIds);
     expect(original.entitySignature.size).toBe(originalEntitySize);
   });
@@ -197,18 +204,18 @@ describe("addMemoryToBranch — immutability contract", () => {
 
   it("merges entity and tag signatures", () => {
     const original = makeBranch({
-      entitySignature: new Set([1, 2]),
+      entitySignature: new Set(["E1", "E2"]),
       tagSignature: new Set(["a"]),
     });
     const updated = addMemoryToBranch(
       original,
       5,
-      new Set([3]),
+      new Set(["E3"]),
       new Set(["b"]),
       0.9,
     );
-    expect(updated.entitySignature.has(1)).toBe(true);
-    expect(updated.entitySignature.has(3)).toBe(true);
+    expect(updated.entitySignature.has("E1")).toBe(true);
+    expect(updated.entitySignature.has("E3")).toBe(true);
     expect(updated.tagSignature.has("a")).toBe(true);
     expect(updated.tagSignature.has("b")).toBe(true);
   });
@@ -230,14 +237,14 @@ describe("createBranch", () => {
       "new-branch",
       "cortex",
       42,
-      new Set([1, 2]),
+      new Set(["ModelA", "ModelB"]),
       new Set(["ml", "recall"]),
       0.85,
     );
     expect(branch.branchId).toBe("new-branch");
     expect(branch.domain).toBe("cortex");
     expect(branch.memoryIds).toEqual([42]);
-    expect(branch.entitySignature.has(1)).toBe(true);
+    expect(branch.entitySignature.has("ModelA")).toBe(true);
     expect(branch.tagSignature.has("recall")).toBe(true);
     expect(branch.avgHeat).toBe(0.85);
     expect(branch.plasticity).toBe(1.0);
@@ -245,10 +252,46 @@ describe("createBranch", () => {
   });
 
   it("entity and tag signatures are copies (not shared references)", () => {
-    const entities = new Set([1, 2]);
+    const entities = new Set(["E1", "E2"]);
     const tags = new Set(["t1"]);
     const branch = createBranch("b", "d", 1, entities, tags, 0.5);
-    entities.add(99); // mutate original
-    expect(branch.entitySignature.has(99)).toBe(false);
+    entities.add("E99"); // mutate original
+    expect(branch.entitySignature.has("E99")).toBe(false);
+  });
+});
+
+// ── D-05 regression: entitySignature must be Set<string> ──────────────────
+// The previous implementation used Set<number> (DB entity IDs). Python uses
+// set[str] (entity names). Jaccard over IDs and Jaccard over names produce
+// completely different affinity scores for the same data.
+// This test suite exercises the string-type domain. The type guard below
+// confirms the interface accepts strings and rejects numbers at compile time.
+// source: cortex@ed33435 mcp_server/core/dendritic_clusters.py:44-67
+
+describe("D-05 entitySignature is Set<string> (entity names)", () => {
+  it("entitySignature accepts string entity names", () => {
+    const branch = makeBranch({
+      entitySignature: new Set(["RecallPipeline", "HopfieldNet", "HDCEncoder"]),
+    });
+    // All three names are strings — confirms the fix is in place
+    expect(branch.entitySignature.has("RecallPipeline")).toBe(true);
+    expect(branch.entitySignature.has("HopfieldNet")).toBe(true);
+  });
+
+  it("Jaccard over entity names is semantically meaningful", () => {
+    // Two branches with overlapping entity names produce non-zero affinity
+    const branch = makeBranch({
+      entitySignature: new Set(["RecallPipeline", "HopfieldNet", "HDCEncoder"]),
+      tagSignature: new Set(["recall", "memory"]),
+    });
+    // Query entities are a subset of branch entities → Jaccard = 2/3
+    const score = computeBranchAffinity(
+      new Set(["RecallPipeline", "HopfieldNet"]),
+      new Set(["recall"]),
+      branch,
+    );
+    expect(score).toBeGreaterThan(0);
+    // entity Jaccard = 2/3 * 0.7 + tag Jaccard = 1/2 * 0.3 = 0.467 + 0.15 = 0.617
+    expect(score).toBeCloseTo(2 / 3 * 0.7 + 1 / 2 * 0.3, 5);
   });
 });

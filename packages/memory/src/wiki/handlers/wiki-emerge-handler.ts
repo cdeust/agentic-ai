@@ -184,6 +184,9 @@ async function persistPlan(
  * Postcondition: resolved claim_events are clustered; wiki.concepts rows are
  *   inserted or updated; audit memos are written; returns real counts.
  *   When no resolved claims exist returns zeroed result.
+ *   When dry_run=false: all writes are wrapped in an explicit BEGIN/COMMIT
+ *   transaction, mirroring the Python conn.commit() at line 261.
+ *   On error the transaction is rolled back before re-throwing.
  *
  * source: mcp_server/handlers/wiki_emerge.py:201-276
  */
@@ -191,6 +194,11 @@ export async function wikiEmergeHandler(
   args: WikiEmergeArgs,
   db: WikiDbClient,
 ): Promise<WikiEmergeResult> {
+  // source: mcp_server/handlers/wiki_emerge.py:202-203
+  // The Python handler uses args.get("limit", 5000). The TS interface also
+  // supports memory_limit as a legacy alias for limit (D-13: extra branch not
+  // in Python). That alias is preserved here as it was already present and
+  // is a pure additive alias that does not change behavior when limit is set.
   const limit = typeof args.limit === "number"
     ? args.limit
     : typeof args.memory_limit === "number"
@@ -244,14 +252,40 @@ export async function wikiEmergeHandler(
   const promotedIds: number[] = [];
   const saturatingIds: number[] = [];
 
-  // Invariant: inserted + updated <= plans processed so far
-  // Termination: for loop over finite plans array
-  for (const plan of plans) {
-    const [cid, action] = await persistPlan(db, plan, dryRun);
-    if (action === "inserted") inserted++;
-    else if (action === "updated") updated++;
-    if (plan.status === "promoted") promotedIds.push(cid);
-    else if (plan.status === "saturating") saturatingIds.push(cid);
+  // Open an explicit transaction around the persist loop when not in dry-run
+  // mode. This mirrors Python conn.commit() at wiki_emerge.py:261-262.
+  // Without this, pg (node-postgres) auto-commits each statement individually,
+  // which means a mid-loop failure leaves the wiki.concepts table in a
+  // partially-written state — inconsistent with the Python behaviour that
+  // atomically commits all inserts/updates together.
+  // source: mcp_server/handlers/wiki_emerge.py:261 (conn.commit())
+  if (!dryRun) {
+    await db.query("BEGIN");
+  }
+
+  try {
+    // Invariant: inserted + updated <= plans processed so far
+    // Termination: for loop over finite plans array
+    for (const plan of plans) {
+      const [cid, action] = await persistPlan(db, plan, dryRun);
+      if (action === "inserted") inserted++;
+      else if (action === "updated") updated++;
+      if (plan.status === "promoted") promotedIds.push(cid);
+      else if (plan.status === "saturating") saturatingIds.push(cid);
+    }
+
+    // source: mcp_server/handlers/wiki_emerge.py:261-262 (if not dry_run: conn.commit())
+    if (!dryRun) {
+      await db.query("COMMIT");
+    }
+  } catch (err) {
+    // On any persist failure, roll back all concept inserts/updates in this
+    // sweep so the wiki.concepts table remains consistent.
+    // source: mcp_server/handlers/wiki_emerge.py:261 — implicit rollback on exception
+    if (!dryRun) {
+      await db.query("ROLLBACK");
+    }
+    throw err;
   }
 
   return {

@@ -13,7 +13,18 @@
  * This file ports Stage 1 (extract_entities) and provides the token
  * extraction helper used by Stage 2 in the recall pipeline.
  *
- * Port of: cortex@bc0ae4f mcp_server/core/knowledge_graph.py
+ * P2a fix (2026-05-04): ported the missing functions and constants from
+ * cortex@ed33435 mcp_server/core/knowledge_graph.py:
+ *   - VALID_REL_TYPES frozenset (13 relationship types)
+ *   - ENTITY_TYPES frozenset (16 entity types)
+ *   - findEntityPositions (private helper for detectCoOccurrences)
+ *   - minPairDistance (private helper for detectCoOccurrences)
+ *   - detectCoOccurrences (public — co-occurrence edges in knowledge graph)
+ *   - groupEntitiesByContext (private helper for inferRelationships)
+ *   - inferRelationships (public — typed edges from extracted entities)
+ * Without these the knowledge graph had no co-occurrence or inferred edges.
+ *
+ * Port of: cortex@ed33435 mcp_server/core/knowledge_graph.py
  */
 
 // ── Extraction patterns ──────────────────────────────────────────────────
@@ -205,4 +216,262 @@ export function extractKeywords(text: string): string[] {
         !NL_STOP_WORDS.has(t),
     );
   return [...new Set(tokens)];
+}
+
+// ── P2a additions (cortex@ed33435 knowledge_graph.py) ─────────────────────
+
+/**
+ * Valid relationship types in the knowledge graph.
+ * source: cortex@ed33435 mcp_server/core/knowledge_graph.py:18-34
+ */
+export const VALID_REL_TYPES: ReadonlySet<string> = new Set([
+  "co_occurrence",
+  "imports",
+  "calls",
+  "debugged_with",
+  "decided_to_use",
+  "caused_by",
+  "resolved_by",
+  "preceded_by",
+  "derived_from",
+  "defines",
+  "extends",
+  "implements",
+  "contains",
+]);
+
+/**
+ * Recognized entity types in the knowledge graph.
+ * source: cortex@ed33435 mcp_server/core/knowledge_graph.py:37-56
+ */
+export const ENTITY_TYPES: ReadonlySet<string> = new Set([
+  "function",
+  "dependency",
+  "error",
+  "decision",
+  "technology",
+  "file",
+  "variable",
+  "class",
+  "interface",
+  "type",
+  "enum",
+  "trait",
+  "protocol",
+  "constant",
+  "module",
+  "struct",
+]);
+
+/**
+ * Find all character positions for each entity name in content.
+ *
+ * pre:  entityNames is a list of strings; contentLower is the lowercased content.
+ * post: returns [(name, [positions, ...]), ...] for names that appear at
+ *   least once; names with zero occurrences are omitted.
+ *
+ * source: cortex@ed33435 mcp_server/core/knowledge_graph.py:169-184
+ *         (_find_entity_positions)
+ */
+function findEntityPositions(
+  entityNames: string[],
+  contentLower: string,
+): Array<[string, number[]]> {
+  const positions = new Map<string, number[]>();
+  for (const name of entityNames) {
+    const nameLower = name.toLowerCase();
+    const posList: number[] = [];
+    let start = 0;
+    // invariant: start advances past each found occurrence
+    // termination: indexOf returns -1 when no further match exists
+    while (true) {
+      const idx = contentLower.indexOf(nameLower, start);
+      if (idx === -1) break;
+      posList.push(idx);
+      start = idx + 1;
+    }
+    if (posList.length > 0) {
+      positions.set(name, posList);
+    }
+  }
+  return Array.from(positions.entries());
+}
+
+/**
+ * Compute minimum distance between two sets of character positions.
+ *
+ * pre:  posA and posB are non-empty integer arrays.
+ * post: returned value is the minimum absolute difference across all pairs.
+ *
+ * source: cortex@ed33435 mcp_server/core/knowledge_graph.py:187-195
+ *         (_min_pair_distance)
+ */
+function minPairDistance(posA: number[], posB: number[]): number {
+  let minDist = Infinity;
+  // invariant: minDist is the minimum distance found so far
+  // termination: both loops are bounded by posA.length and posB.length
+  for (const pa of posA) {
+    for (const pb of posB) {
+      const dist = Math.abs(pa - pb);
+      if (dist < minDist) {
+        minDist = dist;
+      }
+    }
+  }
+  return minDist;
+}
+
+const CO_OCCURRENCE_WINDOW_CHARS = 500; // source: cortex@ed33435 mcp_server/core/knowledge_graph.py:198 (default window_chars=500)
+
+// Rounding factor for 4 decimal places (round(x, 4) → x * 10^4 / 10^4).
+// source: cortex@ed33435 mcp_server/core/knowledge_graph.py:216 (round(proximity, 4))
+const ROUND_4DP = 10000; // source: cortex@ed33435 knowledge_graph.py:216
+
+/**
+ * Detect co-occurring entities within a character window.
+ *
+ * Returns (entity_a, entity_b, proximity_score) triples.
+ * Proximity score is 1 - (distance / window_chars), inversely proportional
+ * to character distance.
+ *
+ * pre:  entityNames is a list of entity name strings; content is the raw text.
+ * post: returned triples have proximity score in (0, 1]; only pairs within
+ *   windowChars characters are returned; proximity is rounded to 4dp.
+ *
+ * source: cortex@ed33435 mcp_server/core/knowledge_graph.py:198-218
+ *         (detect_co_occurrences)
+ */
+export function detectCoOccurrences(
+  entityNames: string[],
+  content: string,
+  windowChars: number = CO_OCCURRENCE_WINDOW_CHARS,
+): Array<[string, string, number]> {
+  const namesWithPos = findEntityPositions(entityNames, content.toLowerCase());
+  const results: Array<[string, string, number]> = [];
+
+  // invariant: for each pair (i, j) with i < j, results has at most one entry
+  // termination: outer loop over namesWithPos (finite), inner over rest (finite)
+  for (let i = 0; i < namesWithPos.length; i++) {
+    const entryA = namesWithPos[i];
+    if (entryA === undefined) continue;
+    const [nameA, posA] = entryA;
+    for (let j = i + 1; j < namesWithPos.length; j++) {
+      const entryB = namesWithPos[j];
+      if (entryB === undefined) continue;
+      const [nameB, posB] = entryB;
+      const minDist = minPairDistance(posA, posB);
+      if (minDist <= windowChars) {
+        const proximity = Math.round((1.0 - minDist / windowChars) * ROUND_4DP) / ROUND_4DP; // source: cortex@ed33435 knowledge_graph.py:216 (round(proximity,4))
+        results.push([nameA, nameB, proximity]);
+      }
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Group entities into importers, dependencies, resolved errors, and decisions.
+ *
+ * pre:  entities is a list of ExtractedEntity objects.
+ * post: returns four lists; each entity appears in at most one list;
+ *   an entity with relationship_context "imports" → importers; type
+ *   "dependency" → dependencies; ctx "resolved_by" → resolved; ctx
+ *   "decided_to_use" → decisions.
+ *
+ * source: cortex@ed33435 mcp_server/core/knowledge_graph.py:221-241
+ *         (_group_entities_by_context)
+ */
+function groupEntitiesByContext(entities: ExtractedEntity[]): {
+  importers: string[];
+  dependencies: string[];
+  resolved: string[];
+  decisions: string[];
+} {
+  const importers: string[] = [];
+  const dependencies: string[] = [];
+  const resolved: string[] = [];
+  const decisions: string[] = [];
+
+  for (const e of entities) {
+    const ctx = e.relationship_context;
+    if (ctx === "imports") {
+      importers.push(e.name);
+    } else if (e.type === "dependency") {
+      dependencies.push(e.name);
+    } else if (ctx === "resolved_by") {
+      resolved.push(e.name);
+    } else if (ctx === "decided_to_use") {
+      decisions.push(e.name);
+    }
+  }
+
+  return { importers, dependencies, resolved, decisions };
+}
+
+/**
+ * Typed relationship returned by inferRelationships.
+ * source: cortex@ed33435 mcp_server/core/knowledge_graph.py:244-281
+ */
+export interface KnowledgeGraphRelationship {
+  source: string;
+  target: string;
+  type: string;
+}
+
+/**
+ * Infer typed relationships between extracted entities.
+ *
+ * Uses relationship_context from extraction to create edges:
+ *   - Each (importer, dependency) pair → edge {source: dep, target: imp, type: "imports"}
+ *   - Each resolved error → edge {source: err, target: "", type: "resolved_by"}
+ *   - If >= 2 decisions → edge {source: d[0], target: d[1], type: "decided_to_use"}
+ *
+ * pre:  entities is a list of ExtractedEntity objects.
+ * post: returned list contains only edges whose type is in VALID_REL_TYPES.
+ *
+ * source: cortex@ed33435 mcp_server/core/knowledge_graph.py:244-281
+ *         (infer_relationships)
+ */
+export function inferRelationships(
+  entities: ExtractedEntity[],
+): KnowledgeGraphRelationship[] {
+  const { importers, dependencies, resolved, decisions } =
+    groupEntitiesByContext(entities);
+  const relationships: KnowledgeGraphRelationship[] = [];
+
+  // imports edges: dep → importer
+  for (const imp of importers) {
+    for (const dep of dependencies) {
+      relationships.push({
+        source: dep,
+        target: imp,
+        type: "imports",
+      });
+    }
+  }
+
+  // resolved_by edges: error → (no specific target)
+  for (const err of resolved) {
+    relationships.push({
+      source: err,
+      target: "",
+      type: "resolved_by",
+    });
+  }
+
+  // decided_to_use edge: first decision → second decision
+  if (decisions.length >= 2) {
+    const d0 = decisions[0];
+    const d1 = decisions[1];
+    if (d0 !== undefined && d1 !== undefined) {
+      relationships.push({
+        source: d0,
+        target: d1,
+        type: "decided_to_use",
+      });
+    }
+  }
+
+  return relationships;
 }

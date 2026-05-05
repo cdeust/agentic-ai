@@ -260,3 +260,38 @@ describe("computeHdcScores", () => {
     expect(results[0]![1]).toBeCloseTo(1.0, 6);
   });
 });
+
+// ── D-03 regression: 2-char word inclusion ────────────────────────────────
+// Previous MIN_WORD_LEN=2 caused w.length>2 filter, excluding 2-char words
+// like "go", "js", "ts", "db", "id", "ui".
+// Fix: MIN_WORD_LEN=1 so filter is w.length>1 (same as Python len(w)>1).
+// source: cortex@ed33435 mcp_server/core/hdc_encoder.py:171
+
+describe("encodeText — D-03 2-char word inclusion", () => {
+  it("encodes text containing only 2-char words to a non-zero vector", () => {
+    // "go js ts db" — all 2-char words. With the fix (MIN_WORD_LEN=1) these
+    // pass the filter. With the old bug (MIN_WORD_LEN=2, i.e. >2 filter) they
+    // were all excluded, producing a zero vector.
+    const v = encodeText("go js ts db", HDC_DIM);
+    const isAllZero = Array.from(v).every((x) => x === 0);
+    expect(isAllZero).toBe(false); // D-03 fix: 2-char words must be included
+  });
+
+  it("text with 2-char word has higher similarity to itself than to unrelated text", () => {
+    // Verify 2-char words contribute to similarity scoring
+    const queryWithTwoChar = encodeText("go ts database", HDC_DIM);
+    const matchingContent = encodeText("go ts database", HDC_DIM);
+    const unrelatedContent = encodeText("deep learning neural network transformer", HDC_DIM);
+    const simMatch = (function sim(a: Float32Array, b: Float32Array): number {
+      let dot = 0;
+      for (let i = 0; i < a.length; i++) dot += (a[i] ?? 0) * (b[i] ?? 0);
+      return dot / a.length;
+    })(queryWithTwoChar, matchingContent);
+    const simUnrelated = (function sim(a: Float32Array, b: Float32Array): number {
+      let dot = 0;
+      for (let i = 0; i < a.length; i++) dot += (a[i] ?? 0) * (b[i] ?? 0);
+      return dot / a.length;
+    })(queryWithTwoChar, unrelatedContent);
+    expect(simMatch).toBeGreaterThan(simUnrelated);
+  });
+});

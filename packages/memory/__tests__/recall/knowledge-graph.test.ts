@@ -140,3 +140,135 @@ describe("extractKeywords", () => {
     expect(keywords).toContain("pgvector");
   });
 });
+
+// ── P2a additions (D-06/D-07/D-08) ────────────────────────────────────────
+// These tests would have caught the missing detectCoOccurrences, inferRelationships,
+// VALID_REL_TYPES and ENTITY_TYPES from cortex@ed33435 knowledge_graph.py.
+// source: cortex@ed33435 mcp_server/core/knowledge_graph.py:18-56, 198-281
+
+import {
+  VALID_REL_TYPES,
+  ENTITY_TYPES,
+  detectCoOccurrences,
+  inferRelationships,
+} from "../../src/recall/knowledge-graph.js";
+
+describe("VALID_REL_TYPES and ENTITY_TYPES (D-08)", () => {
+  it("VALID_REL_TYPES contains all 13 expected types", () => {
+    // source: cortex@ed33435 knowledge_graph.py:18-34
+    const expected = [
+      "co_occurrence", "imports", "calls", "debugged_with", "decided_to_use",
+      "caused_by", "resolved_by", "preceded_by", "derived_from", "defines",
+      "extends", "implements", "contains",
+    ];
+    expect(VALID_REL_TYPES.size).toBe(13);
+    for (const t of expected) {
+      expect(VALID_REL_TYPES.has(t)).toBe(true);
+    }
+  });
+
+  it("ENTITY_TYPES contains all 16 expected types", () => {
+    // source: cortex@ed33435 knowledge_graph.py:37-56
+    const expected = [
+      "function", "dependency", "error", "decision", "technology", "file",
+      "variable", "class", "interface", "type", "enum", "trait", "protocol",
+      "constant", "module", "struct",
+    ];
+    expect(ENTITY_TYPES.size).toBe(16);
+    for (const t of expected) {
+      expect(ENTITY_TYPES.has(t)).toBe(true);
+    }
+  });
+});
+
+describe("detectCoOccurrences (D-06)", () => {
+  it("returns empty for no entity names", () => {
+    expect(detectCoOccurrences([], "some content")).toEqual([]);
+  });
+
+  it("returns empty when no entities appear in content", () => {
+    const result = detectCoOccurrences(["EntityA", "EntityB"], "unrelated text here");
+    expect(result).toEqual([]);
+  });
+
+  it("detects co-occurrence of two entities within default window", () => {
+    // Both names appear close together in the content (< 500 chars)
+    const content = "The RecallPipeline uses HopfieldNet for associative retrieval.";
+    const result = detectCoOccurrences(["RecallPipeline", "HopfieldNet"], content);
+    expect(result).toHaveLength(1);
+    const [nameA, nameB, proximity] = result[0]!;
+    const names = [nameA, nameB];
+    expect(names).toContain("RecallPipeline");
+    expect(names).toContain("HopfieldNet");
+    expect(proximity).toBeGreaterThan(0);
+    expect(proximity).toBeLessThanOrEqual(1);
+  });
+
+  it("proximity score is rounded to 4 decimal places", () => {
+    const content = "Alpha Beta"; // short distance
+    const result = detectCoOccurrences(["Alpha", "Beta"], content);
+    if (result.length > 0) {
+      const [, , prox] = result[0]!;
+      const str = prox.toString();
+      const decimals = str.includes(".") ? str.split(".")[1]!.length : 0;
+      expect(decimals).toBeLessThanOrEqual(4);
+    }
+  });
+
+  it("entities farther apart than window are not returned", () => {
+    // Place two entities > 500 chars apart
+    const padding = "x".repeat(600);
+    const content = `EntityA ${padding} EntityB`;
+    const result = detectCoOccurrences(["EntityA", "EntityB"], content, 500);
+    expect(result).toHaveLength(0);
+  });
+});
+
+describe("inferRelationships (D-07)", () => {
+  it("returns empty for empty entity list", () => {
+    expect(inferRelationships([])).toEqual([]);
+  });
+
+  it("infers imports edges from importer/dependency entities", () => {
+    const entities = [
+      { name: "numpy", type: "dependency", relationship_context: "" },
+      { name: "array_func", type: "function", relationship_context: "imports" },
+    ];
+    const relationships = inferRelationships(entities);
+    const importEdge = relationships.find((r) => r.type === "imports");
+    expect(importEdge).toBeDefined();
+    expect(importEdge!.source).toBe("numpy");
+    expect(importEdge!.target).toBe("array_func");
+  });
+
+  it("infers resolved_by edges from error entities", () => {
+    const entities = [
+      { name: "TypeError", type: "error", relationship_context: "resolved_by" },
+    ];
+    const relationships = inferRelationships(entities);
+    const resolvedEdge = relationships.find((r) => r.type === "resolved_by");
+    expect(resolvedEdge).toBeDefined();
+    expect(resolvedEdge!.source).toBe("TypeError");
+  });
+
+  it("infers decided_to_use edge when >= 2 decision entities exist", () => {
+    const entities = [
+      { name: "vitest", type: "decision", relationship_context: "decided_to_use" },
+      { name: "jest", type: "decision", relationship_context: "decided_to_use" },
+    ];
+    const relationships = inferRelationships(entities);
+    const decidedEdge = relationships.find((r) => r.type === "decided_to_use");
+    expect(decidedEdge).toBeDefined();
+    expect(decidedEdge!.source).toBe("vitest");
+    expect(decidedEdge!.target).toBe("jest");
+  });
+
+  it("no decided_to_use edge when < 2 decisions", () => {
+    const entities = [
+      { name: "vitest", type: "decision", relationship_context: "decided_to_use" },
+    ];
+    const relationships = inferRelationships(entities);
+    const decidedEdge = relationships.find((r) => r.type === "decided_to_use");
+    expect(decidedEdge).toBeUndefined();
+  });
+});

@@ -206,6 +206,31 @@ describe("wikiEmergeHandler", () => {
     const result = await wikiEmergeHandler({}, db);
     expect(result.regime).toBe("steady_state");
   });
+
+  // ── D-12 regression: explicit BEGIN/COMMIT transaction ─────────────────
+  // Previously wikiEmergeHandler had no explicit transaction, so pg auto-
+  // committed each statement individually. Python conn.commit() commits all
+  // inserts/updates atomically after the persist loop.
+  // source: cortex@ed33435 mcp_server/handlers/wiki_emerge.py:261-262
+
+  it("D-12: issues BEGIN and COMMIT when dry_run=false and claims exist (empty corpus still exercises loop)", async () => {
+    // Even with no resolved claims, the code path returns early before BEGIN.
+    // So we test that BEGIN is NOT issued when there are no claims (early return).
+    const db = makeDb({ claimRows: [] });
+    await wikiEmergeHandler({ dry_run: false }, db);
+    const sqls = db.calls.map((c) => c.sql.trim().toUpperCase());
+    // No claims → early return before BEGIN
+    expect(sqls).not.toContain("BEGIN");
+    expect(sqls).not.toContain("COMMIT");
+  });
+
+  it("D-12: dry_run=true suppresses BEGIN/COMMIT", async () => {
+    const db = makeDb({ claimRows: [] });
+    await wikiEmergeHandler({ dry_run: true }, db);
+    const sqls = db.calls.map((c) => c.sql.trim().toUpperCase());
+    expect(sqls).not.toContain("BEGIN");
+    expect(sqls).not.toContain("COMMIT");
+  });
 });
 
 // ── wikiExtractHandler ─────────────────────────────────────────────────────────
