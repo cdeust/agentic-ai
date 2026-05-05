@@ -22,6 +22,21 @@ import { narrativeHandler } from "../../src/narrative/handlers/narrative.js";
 import type { MemoryPort } from "../../src/narrative/handlers/narrative.js";
 import type { MemoryRecord } from "../../src/narrative/types.js";
 
+// ── @anthropic-ai/sdk mock (top-level, hoisted) ───────────────────────────────
+//
+// Hoisted so vi.mock() below can capture it before the real SDK import. Tests
+// program create.mockResolvedValueOnce(...) per-case to drive AnthropicLlmClient
+// against a deterministic SDK fake.
+const anthropicMock = vi.hoisted(() => {
+  const create = vi.fn();
+  const Anthropic = vi.fn(function (this: { messages: { create: typeof create } }) {
+    this.messages = { create };
+  });
+  return { Anthropic, create };
+});
+
+vi.mock("@anthropic-ai/sdk", () => ({ default: anthropicMock.Anthropic }));
+
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
 function makeRecord(overrides: Partial<MemoryRecord> & { content: string }): MemoryRecord {
@@ -273,12 +288,142 @@ describe("LlmClient port — contract type check", () => {
   });
 });
 
-// ── Integration (gated — real API not called in CI) ───────────────────────────
+// ── AnthropicLlmClient — mocked SDK transport ─────────────────────────────────
+//
+// Exercises the production AnthropicLlmClient class end-to-end with a mocked
+// @anthropic-ai/sdk module. Verifies:
+//   - constructor wires apiKey + model overrides through to the SDK
+//   - complete() forwards system/prompt/max_tokens/temperature correctly
+//   - the first text content block is returned
+//   - non-text content blocks raise a descriptive Error
+//
+// Replaces a prior it.todo placeholder that gated on a real ANTHROPIC_API_KEY;
+// the SDK mock keeps the test deterministic, fast, and CI-safe while still
+// exercising the adapter's transport-layer contract.
 
-describe("AnthropicLlmClient — real API integration", () => {
-  it.todo(
-    "calls the real Anthropic API (gated: ANTHROPIC_API_KEY must be set; not run in CI)",
-    // To run manually: ANTHROPIC_API_KEY=<key> pnpm test -- --reporter=verbose
-    // Expected: complete() resolves with a non-empty string.
-  );
+describe("AnthropicLlmClient — SDK transport (mocked @anthropic-ai/sdk)", () => {
+  it("complete() returns the first text block from the SDK response", async () => {
+    const sdkMockA = anthropicMock;
+    sdkMockA.create.mockResolvedValueOnce({
+      content: [{ type: "text", text: "polished prose" }],
+      stop_reason: "end_turn",
+    });
+
+    const { AnthropicLlmClient } = await import(
+      "../../src/infrastructure/anthropic-llm-client.js"
+    );
+    const client = new AnthropicLlmClient({ apiKey: "test-key", model: "claude-3-5-haiku-20241022" });
+    const out = await client.complete({
+      system: "you are a test",
+      prompt: "say hi",
+      maxTokens: 128,
+      temperature: 0.5,
+    });
+
+    expect(out).toBe("polished prose");
+    expect(sdkMockA.Anthropic).toHaveBeenCalledWith({ apiKey: "test-key" });
+    expect(sdkMockA.create).toHaveBeenCalled();
+    const lastCall = sdkMockA.create.mock.calls.at(-1) as [{
+      model: string;
+      max_tokens: number;
+      temperature: number;
+      system?: string;
+      messages: Array<{ role: string; content: string }>;
+    }];
+    const callArgs = lastCall[0];
+    expect(callArgs.model).toBe("claude-3-5-haiku-20241022");
+    expect(callArgs.max_tokens).toBe(128);
+    expect(callArgs.temperature).toBe(0.5);
+    expect(callArgs.system).toBe("you are a test");
+    expect(callArgs.messages).toEqual([{ role: "user", content: "say hi" }]);
+  });
+
+  it("complete() throws when the API response contains no text blocks", async () => {
+    const sdkMockB = anthropicMock;
+    sdkMockB.create.mockResolvedValueOnce({
+      content: [{ type: "tool_use", id: "x", name: "y", input: {} }],
+      stop_reason: "tool_use",
+    });
+
+    const { AnthropicLlmClient } = await import(
+      "../../src/infrastructure/anthropic-llm-client.js"
+    );
+    const client = new AnthropicLlmClient({ apiKey: "test-key" });
+
+    await expect(client.complete({ prompt: "hi" })).rejects.toThrow(
+      /no text content blocks/,
+    );
+  });
+
+  it("complete() throws when the API response has empty content array", async () => {
+    // source: anthropic-llm-client.ts:89-99 — the for-of loop falls through
+    // when content is empty (e.g. stop_reason:"max_tokens" with no content).
+    // Verify the descriptive error fires for content:[] just as for non-text-block
+    // responses. (Liskov P1b.)
+    const sdkMockC = anthropicMock;
+    sdkMockC.create.mockResolvedValueOnce({
+      content: [],
+      stop_reason: "max_tokens",
+    });
+
+    const { AnthropicLlmClient } = await import(
+      "../../src/infrastructure/anthropic-llm-client.js"
+    );
+    const client = new AnthropicLlmClient({ apiKey: "test-key" });
+
+    await expect(client.complete({ prompt: "hi" })).rejects.toThrow(
+      /no text content blocks/,
+    );
+  });
+
+  it("complete() returns the first text block when text follows a tool_use block", async () => {
+    // source: anthropic-llm-client.ts:89-93 — iterates content and returns the
+    // first text block found. Verify the iteration honors order, not just
+    // "any text block": a tool_use-then-text response must yield the text.
+    // (Liskov P2b.)
+    const sdkMockD = anthropicMock;
+    sdkMockD.create.mockResolvedValueOnce({
+      content: [
+        { type: "tool_use", id: "x", name: "y", input: {} },
+        { type: "text", text: "second-block text" },
+      ],
+      stop_reason: "end_turn",
+    });
+
+    const { AnthropicLlmClient } = await import(
+      "../../src/infrastructure/anthropic-llm-client.js"
+    );
+    const client = new AnthropicLlmClient({ apiKey: "test-key" });
+
+    const out = await client.complete({ prompt: "hi" });
+    expect(out).toBe("second-block text");
+  });
+
+  it("complete() forwards DEFAULT_TEMPERATURE=1.0 when caller omits temperature", async () => {
+    // source: anthropic-llm-client.ts:23 — DEFAULT_TEMPERATURE = 1.0
+    // (the API default; appropriate for the prose-polish task class).
+    // The earlier test sets temperature explicitly; if a regression dropped
+    // the field from `params`, that test would still pass because it asserts
+    // the value the caller supplied. This case asserts the default is
+    // forwarded when the caller omits it. (Feynman gap E.)
+    const sdkMockE = anthropicMock;
+    sdkMockE.create.mockResolvedValueOnce({
+      content: [{ type: "text", text: "ok" }],
+      stop_reason: "end_turn",
+    });
+
+    const { AnthropicLlmClient } = await import(
+      "../../src/infrastructure/anthropic-llm-client.js"
+    );
+    const client = new AnthropicLlmClient({ apiKey: "test-key" });
+    await client.complete({ prompt: "hi" });
+
+    const lastCall = sdkMockE.create.mock.calls.at(-1) as [{
+      temperature: number;
+      max_tokens: number;
+    }];
+    expect(lastCall[0].temperature).toBe(1.0);
+    // and DEFAULT_MAX_TOKENS = 1024 should likewise be forwarded.
+    expect(lastCall[0].max_tokens).toBe(1024);
+  });
 });

@@ -39,13 +39,11 @@ function findBinaryPath(): string | null {
   if (standard !== null) return standard;
 
   // Dev fallback: PR #18 worktree (local only; never in CI).
-  // Use import.meta.url to get a stable absolute path regardless of cwd.
-  // From __tests__/parity/, 6 levels up reaches the main repo root
-  // (agentic-ai/), then descend into the worktrees/ sibling.
-  // Path: parity → __tests__ → codebase → packages → port-codebase-ts-adapter
-  //       → worktrees → agentic-ai  (6 levels)
+  // From this file's directory (.../packages/codebase/__tests__/parity/),
+  // four "../" steps reach the monorepo root: parity → __tests__ → codebase
+  // → packages → agentic-ai/.
   const thisFileDir = new URL(".", import.meta.url).pathname;
-  const repoRoot = join(thisFileDir, "../../../../../..");
+  const repoRoot = join(thisFileDir, "../../../../");
   const pr18Path = join(
     repoRoot,
     "worktrees/port-codebase-rust/packages/codebase-rust/target/release/ai-architect-mcp",
@@ -59,8 +57,14 @@ const BINARY_PATH = findBinaryPath();
 
 // ── Fixture paths ─────────────────────────────────────────────────────────────
 
-// packages/codebase/__tests__/parity/ → 6 levels up → agentic-ai repo root
-const REPO_ROOT = new URL("../../../../../../", import.meta.url).pathname;
+// new URL(".", import.meta.url) is the directory of THIS file:
+//   .../packages/codebase/__tests__/parity/
+// Four "../" steps reach the monorepo root (agentic-ai/):
+//   parity/ → __tests__/ → codebase/ → packages/ → agentic-ai/
+// (Earlier code used six "../" which incorrectly walked up to /Users/cdeust/,
+//  breaking the FIXTURE_REPO existsSync check and triggering a spurious
+//  it.todo on every CI run.)
+const REPO_ROOT = new URL("../../../../", import.meta.url).pathname;
 
 const FIXTURE_REPO = join(
   REPO_ROOT,
@@ -230,8 +234,10 @@ describe("parity: index_codebase", () => {
     Date.now = savedDateNow;
 
     // If TS were computing elapsed from Date.now, it would be 0 with clock frozen.
-    // The Rust binary computes its own elapsed; result must be ≥ 0.
-    expect(result.totalElapsedMs).toBeGreaterThanOrEqual(0);
+    // The Rust binary computes its own elapsed and a real Python-fixture index
+    // takes non-trivial wall time — assert strictly greater than 0 to reject
+    // a hardcoded-zero / TS-computed-zero regression.
+    expect(result.totalElapsedMs).toBeGreaterThan(0);
     expect(result.graphPath).toBeTruthy();
   });
 });
