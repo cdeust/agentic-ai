@@ -1,0 +1,37 @@
+{
+  "_note": "Project-scoped .mcp.json for use without the plugin marketplace. Claude Code reads this when run inside the agentic-ai repo (or any project that copies this file and adjusts paths). All four MCP servers point to the unified TS / Rust outputs in packages/. Run `pnpm install && pnpm build` first so dist/ and target/release/ exist.",
+  "mcpServers": {
+    "cortex": {
+      "command": "node",
+      "args": [
+        "${PROJECT_DIR}/packages/mcp-servers/memory/dist/index.js"
+      ],
+      "env": {
+        "DATABASE_URL": "",
+        "CORTEX_MEMORY_AP_ENABLED": "1"
+      }
+    },
+    "ai-architect": {
+      "command": "bash",
+      "args": [
+        "-c",
+        "BIN=\"${PROJECT_DIR}/packages/codebase-rust/target/release/ai-architect-mcp\" && if [ -x \"$BIN\" ]; then exec \"$BIN\"; else exec cargo run --quiet --release --manifest-path \"${PROJECT_DIR}/packages/codebase-rust/Cargo.toml\"; fi"
+      ]
+    },
+    "reasoning": {
+      "command": "node",
+      "args": [
+        "${PROJECT_DIR}/packages/mcp-servers/reasoning/dist/index.js"
+      ]
+    },
+    "prd-gen": {
+      "command": "node",
+      "args": [
+        "${PROJECT_DIR}/packages/mcp-servers/prd/dist/index.js"
+      ],
+      "env": {
+        "PRD_GEN_EVIDENCE_DB": "${HOME}/.agentic-ai/prd-gen/evidence.db"
+      }
+    }
+  }
+}

@@ -1,15 +1,14 @@
 {
-  "_note": "Bash-wrapper pattern is mandatory here because the source repo used ${CLAUDE_PLUGIN_ROOT} directly in the 'args' array (not inside a bash -c string). It is unclear whether Claude Code expands ${CLAUDE_PLUGIN_ROOT} in plain args[] vs inside bash -c strings — the safe, tested approach is to always use bash -c so expansion happens at shell invocation time. See cf85cfc. The env values use ${CLAUDE_PLUGIN_ROOT} only — no fallback syntax.",
+  "_note": "Wired to the unified TS MCP server at packages/mcp-servers/prd/dist/index.js. CLAUDE_PLUGIN_ROOT resolves to plugins/prd/ when installed via the agentic-ai marketplace; the relative path walks up to repo root then into the built MCP server. See cf85cfc in cdeust/automatised-pipeline (2026-04-25) for the bash -c expansion pattern.",
   "mcpServers": {
     "prd-gen": {
       "command": "bash",
       "args": [
         "-c",
-        "exec node \"${CLAUDE_PLUGIN_ROOT}/mcp-server/index.js\""
+        "exec node \"${CLAUDE_PLUGIN_ROOT}/../../packages/mcp-servers/prd/dist/index.js\""
       ],
       "env": {
-        "PRD_GEN_SKILL_CONFIG": "${CLAUDE_PLUGIN_ROOT}/packages/skill/skill-config.json",
-        "PRD_GEN_EVIDENCE_DB": "${CLAUDE_PLUGIN_ROOT}/.prd-gen/evidence.db"
+        "PRD_GEN_EVIDENCE_DB": "${HOME}/.agentic-ai/prd-gen/evidence.db"
       }
     }
   }
