@@ -105,9 +105,9 @@ export class AblationConfig {
 
   /** Check if a mechanism is enabled (not in the disabled set). */
   isEnabled(mechanism: Mechanism | string): boolean {
-    const name = mechanism instanceof Object && "valueOf" in mechanism
-      ? String(mechanism)
-      : String(mechanism);
+    // Mechanism is a string-valued enum union; both branches stringify.
+    // Kept as a single String() coercion to preserve the previous shape.
+    const name = String(mechanism);
     return !this.disabled.has(name);
   }
 

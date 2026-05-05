@@ -166,6 +166,7 @@ export function personaDrift(
 
   for (let i = 0; i < PERSONA_DIMENSIONS.length; i++) {
     const dim = PERSONA_DIMENSIONS[i];
+    if (dim === undefined) continue; // unreachable: i is bounded by .length
     const diff = (newArr[i] ?? 0) - (oldArr[i] ?? 0);
     direction[dim] = Math.round(diff * 100) / 100;
     if (Math.abs(diff) > Math.abs(maxDrift)) {
@@ -224,6 +225,7 @@ export function composePersonas(
   const pv: Record<string, number> = {};
   for (let i = 0; i < PERSONA_DIMENSIONS.length; i++) {
     const dim = PERSONA_DIMENSIONS[i];
+    if (dim === undefined) continue; // unreachable: i is bounded by .length
     pv[dim] = clamp(Math.round((result[i] ?? 0) * 100) / 100);
   }
   return pv as PersonaVector;

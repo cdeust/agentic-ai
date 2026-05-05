@@ -34,7 +34,7 @@ function _which(name: string): string | null {
 
 // Resolve git binary once at module load time — never from user input.
 // source: Cortex mcp_server/infrastructure/git_diff_exec.py — _GIT_BINARY = shutil.which("git") or "git"
-const _GIT_BINARY: string = _which("git") ?? "git";
+export const _GIT_BINARY: string = _which("git") ?? "git";
 
 // source: Cortex mcp_server/infrastructure/git_diff_exec.py — _ALLOWED_SUBCOMMANDS
 const _ALLOWED_SUBCOMMANDS = new Set([

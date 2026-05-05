@@ -231,11 +231,11 @@ function mergeStructuralBridges(
       pattern: "structural-edge",
     };
 
-    if (!result[pair.fromDomain]) result[pair.fromDomain] = [];
-    result[pair.fromDomain].push({ ...shared, toDomain: pair.toDomain });
+    const fromList = (result[pair.fromDomain] ??= []);
+    fromList.push({ ...shared, toDomain: pair.toDomain });
 
-    if (!result[pair.toDomain]) result[pair.toDomain] = [];
-    result[pair.toDomain].push({ ...shared, toDomain: pair.fromDomain });
+    const toList = (result[pair.toDomain] ??= []);
+    toList.push({ ...shared, toDomain: pair.fromDomain });
   }
 }
 

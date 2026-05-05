@@ -104,7 +104,7 @@ export function computeSensoryPrediction(
     const defaultPrec = Object.fromEntries(
       Object.keys(DEFAULT_SENSORY_PREDICTIONS).map((k) => [k, 0.5]),
     );
-    return { ...DEFAULT_SENSORY_PREDICTIONS }, defaultPrec;
+    return [{ ...DEFAULT_SENSORY_PREDICTIONS }, defaultPrec];
   }
 
   const features = Object.keys(recentMemoriesFeatures[0] ?? {});
@@ -119,7 +119,7 @@ export function computeSensoryPrediction(
     precisions[feat] = Math.max(0.1, Math.min(5.0, 1.0 / Math.max(variance, 0.01)));
   }
 
-  return predictions, precisions;
+  return [predictions, precisions];
 }
 
 /**
