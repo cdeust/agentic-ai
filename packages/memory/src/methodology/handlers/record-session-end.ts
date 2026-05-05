@@ -642,12 +642,27 @@ export async function recordSessionEndHandler(
     }
   }
 
+  // Map CritiqueResult (camelCase from update-profiles) → snake_case for the
+  // shared RecordSessionEndResult interface.
+  // source: cortex@ed33435 mcp_server/handlers/record_session_end.py — critique keys
+  const critiqueRaw = result.critique;
+  const critique = critiqueRaw
+    ? {
+        overall_score: (critiqueRaw as unknown as { overallScore?: number; overall_score?: number }).overallScore
+          ?? (critiqueRaw as unknown as { overall_score?: number }).overall_score
+          ?? 0,
+        top_suggestions: (critiqueRaw as unknown as { topSuggestions?: string[]; top_suggestions?: string[] }).topSuggestions
+          ?? (critiqueRaw as unknown as { top_suggestions?: string[] }).top_suggestions
+          ?? [],
+      }
+    : null;
+
   return {
     domain: result.domain,
     profileUpdated: result.profileUpdated,
     memoryStored,
     newPatterns: [],
     confidence: result.confidence,
-    critique: result.critique,
+    critique,
   };
 }
