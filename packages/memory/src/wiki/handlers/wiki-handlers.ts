@@ -11,7 +11,7 @@
  *
  * Both wikiSynthesizeHandler and wikiPipelineHandler now accept an
  * injected WikiDbClient.  When the client is null the handler throws
- * PortPendingError with the specific missing dependency named — it does
+ * WikiUnavailableError with the specific missing dependency named — it does
  * NOT return a success-shaped lie.
  *
  * source: mcp_server/handlers/wiki_synthesize.py (Cortex bc0ae4f)
@@ -29,8 +29,8 @@ import {
 } from "../storage/pg-wiki-store-concepts.js";
 import { loadRegistry } from "../schema-loader.js";
 import { synthesizeDraft, inferKind } from "../draft-synthesizer.js";
-import { PortPendingError } from "./wiki-errors.js";
-export { PortPendingError } from "./wiki-errors.js";
+import { WikiUnavailableError } from "./wiki-errors.js";
+export { WikiUnavailableError } from "./wiki-errors.js";
 import {
   wikiExtractHandler,
   wikiResolveHandler,
@@ -68,7 +68,7 @@ const WIKI_PIPELINE_DEFAULT_LIMIT = 500;
 // Wire: WikiDbClient for DB access + optional LlmClient (not used in Path A,
 // accepted for interface symmetry with the rest of the handler suite).
 //
-// If db is null the handler throws PortPendingError naming the specific
+// If db is null the handler throws WikiUnavailableError naming the specific
 // missing dependency: "WikiDbClient (pg_store_wiki adapter)".
 
 export interface WikiSynthesizeArgs {
@@ -98,7 +98,7 @@ export interface WikiSynthesizeResult {
  *                template_v1 draft, synthesizes and persists a DraftPage;
  *                returns real counts of drafts_created, drafts_updated,
  *                memories_processed, and by_kind breakdown.
- *                When db is null throws PortPendingError.
+ *                When db is null throws WikiUnavailableError.
  *
  * source: mcp_server/handlers/wiki_synthesize.py:233-328
  */
@@ -110,7 +110,7 @@ export async function wikiSynthesizeHandler(
   db: WikiDbClient | null = null,
 ): Promise<WikiSynthesizeResult> {
   if (db === null) {
-    throw new PortPendingError(
+    throw new WikiUnavailableError(
       "wiki-synthesize",
       "mcp_server/handlers/wiki_synthesize.py:233", // source: mcp_server/handlers/wiki_synthesize.py:233
       "WikiDbClient (pg_store_wiki adapter for claim_events + drafts tables)",
@@ -277,7 +277,7 @@ export async function wikiSynthesizeHandler(
 // Per-stage errors are captured (never raised) so a failure in one phase
 // does not abort the rest.
 //
-// Stages whose handlers throw PortPendingError are captured; their
+// Stages whose handlers throw WikiUnavailableError are captured; their
 // per-stage result records the pending reason. The pipeline still
 // reports real stage counts and real stages_run.
 
@@ -291,7 +291,7 @@ export interface WikiPipelineArgs {
 }
 
 export interface WikiPipelineStageResult {
-  readonly status: "ok" | "port-pending" | "error";
+  readonly status: "ok" | "unavailable" | "error";
   readonly result?: Record<string, unknown>;
   readonly reason?: string;
 }
@@ -309,7 +309,7 @@ export interface WikiPipelineResult {
  * Full wiki pipeline (extract → resolve → emerge → synthesize → curate → compile).
  *
  * Precondition:  args passes type-guard check.
- * Postcondition: runs each stage via its handler; captures PortPendingError
+ * Postcondition: runs each stage via its handler; captures WikiUnavailableError
  *                and runtime errors per-stage without aborting the remainder;
  *                returns real stages_run (non-empty when any stage ran) plus
  *                per-stage summaries and aggregate counts.
@@ -333,7 +333,7 @@ export async function wikiPipelineHandler(
   // source: mcp_server/handlers/wiki_pipeline.py:83-88
 
   /**
-   * Run a handler; capture PortPendingError and generic errors.
+   * Run a handler; capture WikiUnavailableError and generic errors.
    *
    * Precondition:  label is a non-empty string; fn is a callable that
    *                returns a promise.
@@ -349,24 +349,39 @@ export async function wikiPipelineHandler(
       const result = await fn() as Record<string, unknown>;
       return [label, { status: "ok", result }];
     } catch (err) {
-      if (err instanceof PortPendingError || (err instanceof Error && err.name === "PortPendingError")) {
-        return [label, { status: "port-pending", reason: err.message }];
+      if (err instanceof WikiUnavailableError || (err instanceof Error && (err.name === "WikiUnavailableError"))) {
+        return [label, { status: "unavailable", reason: err.message }];
       }
       return [label, { status: "error", reason: err instanceof Error ? err.message : String(err) }];
     }
   }
 
+  // When db is null the DB-backed stages throw WikiUnavailableError which
+  // safeCall captures as { status: "unavailable" }. The pipeline still runs
+  // all stages and returns aggregate counts from those that succeeded.
+  // source: mcp_server/handlers/wiki_pipeline.py:92-98
   const stageResults: Array<[string, WikiPipelineStageResult]> = [];
 
-  // source: mcp_server/handlers/wiki_pipeline.py:92-98
   stageResults.push(
-    await safeCall("extract", () => wikiExtractHandler({ memory_id: null })),
+    await safeCall("extract", () =>
+      db !== null
+        ? wikiExtractHandler({ memory_id: null }, db)
+        : Promise.reject(new WikiUnavailableError("wiki-extract", "mcp_server/handlers/wiki_extract.py:1", "WikiDbClient required")),
+    ),
   );
   stageResults.push(
-    await safeCall("resolve", () => wikiResolveHandler({ memory_id: null })),
+    await safeCall("resolve", () =>
+      db !== null
+        ? wikiResolveHandler({ memory_id: null }, db)
+        : Promise.reject(new WikiUnavailableError("wiki-resolve", "mcp_server/handlers/wiki_resolve.py:1", "WikiDbClient required")),
+    ),
   );
   stageResults.push(
-    await safeCall("emerge", () => wikiEmergeHandler({ memory_limit: limitPerStage })),
+    await safeCall("emerge", () =>
+      db !== null
+        ? wikiEmergeHandler({ memory_limit: limitPerStage }, db)
+        : Promise.reject(new WikiUnavailableError("wiki-emerge", "mcp_server/handlers/wiki_emerge.py:1", "WikiDbClient required")),
+    ),
   );
   stageResults.push(
     await safeCall("synthesize", () =>
@@ -378,17 +393,31 @@ export async function wikiPipelineHandler(
     ),
   );
   stageResults.push(
-    await safeCall("curate", () => wikiCurateHandler({ draft_id: null })),
+    await safeCall("curate", () =>
+      db !== null
+        ? wikiCurateHandler({ draft_id: null }, db)
+        : Promise.reject(new WikiUnavailableError("wiki-curate", "mcp_server/handlers/wiki_curate.py:1", "WikiDbClient required")),
+    ),
   );
   if (!skipCompile) {
     stageResults.push(
-      await safeCall("compile", () => wikiCompileHandler({ draft_id: null })),
+      await safeCall("compile", () =>
+        db !== null
+          ? wikiCompileHandler(
+              { draft_id: null },
+              db,
+              // No-op write in pipeline context — wikiCompileHandler is called
+              // directly (not via pipeline) when callers need disk writes.
+              async (_relPath: string, _content: string) => { /* intentional no-op */ },
+            )
+          : Promise.reject(new WikiUnavailableError("wiki-compile", "mcp_server/handlers/wiki_compile.py:1", "WikiDbClient required")),
+      ),
     );
   }
 
   const stagesMap = Object.fromEntries(stageResults);
 
-  // stages_run: stages that completed without PortPendingError or error
+  // stages_run: stages that completed successfully
   const stagesRun = stageResults
     .filter(([, r]) => r.status === "ok")
     .map(([label]) => label);
