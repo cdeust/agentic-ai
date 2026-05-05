@@ -123,9 +123,31 @@ export async function searchByTagVector(
     [JSON.stringify([tag]), minHeat, domain, limit])).rows as Record<string, unknown>[];
 }
 
-// source: cortex@ed33435 mcp_server/infrastructure/pg_store_queries.py:195-202
-export async function deleteMemoriesByTag(client: PoolClient, tag: string): Promise<number> {
-  return (await client.query("DELETE FROM memories WHERE tags @> $1::jsonb", [JSON.stringify([tag])])).rowCount ?? 0;
+/**
+ * Delete memories with the given tag, optionally scoped to a domain.
+ *
+ * precondition: tag is a non-empty string; domain is undefined or non-empty.
+ * postcondition: returns the number of rows removed; rows removed iff their
+ *   tags JSONB contains [tag] AND (domain is undefined OR domain matches).
+ *   domain=undefined preserves global-purge behavior for callers that
+ *   actually want it (legacy contract). Caller is responsible for passing
+ *   domain when scope matters (e.g. seed-project, which is per-repo by
+ *   design — see issue #16).
+ *
+ * source: cortex@fdc78f7 mcp_server/infrastructure/pg_store_queries.py:195-218 (issue #16)
+ */
+export async function deleteMemoriesByTag(
+  client: PoolClient,
+  tag: string,
+  domain?: string,
+): Promise<number> {
+  if (domain === undefined) {
+    return (await client.query("DELETE FROM memories WHERE tags @> $1::jsonb", [JSON.stringify([tag])])).rowCount ?? 0;
+  }
+  return (await client.query(
+    "DELETE FROM memories WHERE tags @> $1::jsonb AND domain = $2",
+    [JSON.stringify([tag]), domain],
+  )).rowCount ?? 0;
 }
 
 // Source: docs/program/phase-5-pool-admission-design.md Phase 2 B1.
