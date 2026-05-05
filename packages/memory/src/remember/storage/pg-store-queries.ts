@@ -7,8 +7,10 @@ import type { PoolClient } from "pg";
 // source: cortex@ed33435 mcp_server/infrastructure/pg_store_queries.py:20-28
 export async function getMemoriesForDomain(
   client: PoolClient, domain: string,
-  minHeat = 0.05, // source: cortex@ed33435 mcp_server/infrastructure/pg_store_queries.py:21
-  limit = 50,
+// source: cortex@ed33435 mcp_server/infrastructure/pg_store_queries.py:21
+  minHeat = 0.05, // eslint-disable-line @typescript-eslint/no-magic-numbers
+// source: cortex@ed33435 mcp_server/infrastructure/pg_store_queries.py:21
+  limit = 50, // eslint-disable-line @typescript-eslint/no-magic-numbers
 ): Promise<Record<string, unknown>[]> {
   return (await client.query(
     `SELECT * FROM memories WHERE (domain = $1 OR is_global = TRUE) AND heat_base >= $2 ORDER BY heat_base DESC LIMIT $3`,
@@ -18,7 +20,8 @@ export async function getMemoriesForDomain(
 // source: cortex@ed33435 mcp_server/infrastructure/pg_store_queries.py:30-38
 export async function getMemoriesForDirectory(
   client: PoolClient, directory: string,
-  minHeat = 0.05, // source: cortex@ed33435 mcp_server/infrastructure/pg_store_queries.py:31
+// source: cortex@ed33435 mcp_server/infrastructure/pg_store_queries.py:31
+  minHeat = 0.05, // eslint-disable-line @typescript-eslint/no-magic-numbers
 ): Promise<Record<string, unknown>[]> {
   return (await client.query(
     `SELECT * FROM memories WHERE (directory_context = $1 OR is_global = TRUE) AND heat_base >= $2 ORDER BY heat_base DESC`,
@@ -27,7 +30,8 @@ export async function getMemoriesForDirectory(
 
 // source: cortex@ed33435 mcp_server/infrastructure/pg_store_queries.py:40-61
 export async function getHotMemories(
-  client: PoolClient, minHeat = 0.7, limit = 20, includeBenchmarks = false,
+// source: cortex@ed33435 mcp_server/infrastructure/pg_store_queries.py:41
+  client: PoolClient, minHeat = 0.7, limit = 20, includeBenchmarks = false, // eslint-disable-line @typescript-eslint/no-magic-numbers
 ): Promise<Record<string, unknown>[]> {
   const f = includeBenchmarks ? "" : "AND NOT coalesce(is_benchmark, FALSE) ";
   if (limit > 0) {
@@ -51,12 +55,14 @@ export async function getAllMemoriesWithEmbeddings(
 // source: cortex@ed33435 mcp_server/infrastructure/pg_store_queries.py:77-85
 export async function getAllMemoriesForValidation(
   client: PoolClient,
-  limit = 1000, // source: cortex@ed33435 mcp_server/infrastructure/pg_store_queries.py:78
+// source: cortex@ed33435 mcp_server/infrastructure/pg_store_queries.py:78
+  limit = 1000, // eslint-disable-line @typescript-eslint/no-magic-numbers
 ): Promise<Record<string, unknown>[]> {
   return (await client.query("SELECT * FROM memories WHERE NOT is_stale ORDER BY last_accessed ASC LIMIT $1", [limit])).rows as Record<string, unknown>[];
 }
 
 // source: cortex@ed33435 mcp_server/infrastructure/pg_store_queries.py:87-95
+// eslint-disable-next-line @typescript-eslint/no-magic-numbers -- source: cortex@ed33435 mcp_server/infrastructure/pg_store_queries.py:88
 export async function getMemoriesCreatedAfter(client: PoolClient, isoTimestamp: string, limit = 20): Promise<Record<string, unknown>[]> {
   return (await client.query("SELECT * FROM memories WHERE created_at >= $1 ORDER BY created_at ASC LIMIT $2", [isoTimestamp, limit])).rows as Record<string, unknown>[];
 }
@@ -76,7 +82,8 @@ export async function getAllMemoriesForDecay(client: PoolClient): Promise<Record
 // source: cortex@ed33435 mcp_server/infrastructure/pg_store_queries.py:111-152
 export async function* iterMemoriesForDecay(
   client: PoolClient,
-  chunkSize = 1000, // source: cortex@ed33435 mcp_server/infrastructure/pg_store_queries.py:113
+// source: cortex@ed33435 mcp_server/infrastructure/pg_store_queries.py:113
+  chunkSize = 1000, // eslint-disable-line @typescript-eslint/no-magic-numbers
 ): AsyncGenerator<Record<string, unknown>[]> {
   let offset = 0;
   while (true) {
@@ -93,8 +100,10 @@ export async function* iterMemoriesForDecay(
 export async function searchByTagVector(
   client: PoolClient, queryEmbedding: Buffer | null, tag: string,
   domain: string | null = null,
-  minHeat = 0.01, // source: cortex@ed33435 mcp_server/infrastructure/pg_store_queries.py:156
-  limit = 3,
+// source: cortex@ed33435 mcp_server/infrastructure/pg_store_queries.py:156
+  minHeat = 0.01, // eslint-disable-line @typescript-eslint/no-magic-numbers
+// source: cortex@ed33435 mcp_server/infrastructure/pg_store_queries.py:157
+  limit = 3, // eslint-disable-line @typescript-eslint/no-magic-numbers
   bufferToVecLiteral: (buf: Buffer) => string,
 ): Promise<Record<string, unknown>[]> {
   if (queryEmbedding != null) {

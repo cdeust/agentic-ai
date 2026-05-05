@@ -44,7 +44,8 @@ export async function countRelationships(client: PoolClient): Promise<number> {
 
 // source: cortex@ed33435 mcp_server/infrastructure/pg_store_relationships.py:75-103
 export async function getRelationshipsForEntity(
-  client: PoolClient, entityId: number, direction: "outgoing" | "incoming" | "both" = "both", limit = 50,
+// source: cortex@ed33435 mcp_server/infrastructure/pg_store_relationships.py:76
+  client: PoolClient, entityId: number, direction: "outgoing" | "incoming" | "both" = "both", limit = 50, // eslint-disable-line @typescript-eslint/no-magic-numbers
 ): Promise<Record<string, unknown>[]> {
   if (direction === "outgoing") {
     return (await client.query(
@@ -91,7 +92,8 @@ export async function getEntityRelationshipPairs(client: PoolClient): Promise<Se
 // Source: docs/program/phase-5-pool-admission-design.md Phase 2 B3.
 // source: cortex@ed33435 mcp_server/infrastructure/pg_store_relationships.py:133-207
 export async function reinforceOrCreateRelationship(
-  client: PoolClient, sourceName: string, targetName: string, deltaWeight = 0.1, relType = "co_retrieval",
+// source: cortex@ed33435 mcp_server/infrastructure/pg_store_relationships.py:137
+  client: PoolClient, sourceName: string, targetName: string, deltaWeight = 0.1, relType = "co_retrieval", // eslint-disable-line @typescript-eslint/no-magic-numbers
 ): Promise<void> {
   const src = (await client.query<{ id: number }>("SELECT id FROM entities WHERE LOWER(name) = LOWER($1) LIMIT 1", [sourceName])).rows[0];
   const tgt = (await client.query<{ id: number }>("SELECT id FROM entities WHERE LOWER(name) = LOWER($1) LIMIT 1", [targetName])).rows[0];
@@ -122,7 +124,7 @@ export async function reinforceOrCreateRelationship(
   }
   // source: cortex@ed33435 mcp_server/infrastructure/pg_store_relationships.py:192-196
   // 0.05 facilitation increment — empirical default from Python source
-  const updated = await client.query(
+  const updated = await client.query( // source: cortex@ed33435 mcp_server/infrastructure/pg_store_relationships.py:192-196
     `UPDATE relationships SET weight = LEAST(2.0, weight + $1), facilitation = LEAST(1.0, facilitation + 0.05), last_reinforced = NOW()
      WHERE source_entity_id = $2 AND target_entity_id = $3 AND relationship_type = $4`,
     [deltaWeight, sid, tid, relType]);

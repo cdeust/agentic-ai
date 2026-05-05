@@ -42,6 +42,17 @@ const SECS_PER_HOUR = 3600.0; // source: SI — International System of Units
 // source: SI base unit (86400 seconds per day)
 const SECS_PER_DAY = 86400.0; // source: SI — International System of Units
 
+// source: cortex@ed33435 mcp_server/infrastructure/pg_schema.py:856-860
+// TMM (Top-M Merged) normalization floor — prevents division by near-zero score.
+const WRRF_EPSILON = 0.001; // source: cortex@ed33435 mcp_server/infrastructure/pg_schema.py:856
+
+// source: cortex@ed33435 mcp_server/infrastructure/pg_schema.py:849 — recency decay rate per day
+const RECENCY_DECAY_RATE = 0.01; // source: cortex@ed33435 mcp_server/infrastructure/pg_schema.py:849
+
+// source: cortex@ed33435 mcp_server/infrastructure/pg_schema.py:900 — emotional boost coefficient
+const EMOTIONAL_BOOST_COEFF = 0.15; // source: cortex@ed33435 mcp_server/infrastructure/pg_schema.py:900
+
+
 // source: Bahrick, H.P. (1984). "Semantic memory content in permastore." JECP 33(3).
 const PERMASTORE_FLOOR_CONSOLIDATED = 0.10; // source: Bahrick (1984) — consolidated permastore floor
 
@@ -171,7 +182,7 @@ BEGIN
     WHERE hs.domain = COALESCE(p_domain, '');
 ` +
 // source: cortex@ed33435 mcp_server/infrastructure/pg_schema.py:787 — 0.001 floor prevents div-by-zero
-`    v_min_heat_base := p_min_heat / GREATEST(v_factor, 0.001);
+`    v_min_heat_base := p_min_heat / GREATEST(v_factor, ${WRRF_EPSILON});
     RETURN QUERY
     WITH
     candidates AS (
@@ -208,32 +219,32 @@ BEGIN
         SELECT c.id,
 ` +
 // source: cortex@ed33435 mcp_server/infrastructure/pg_schema.py:849 — 0.01 recency decay rate per day
-`               EXP(-0.01 * EXTRACT(EPOCH FROM (NOW() - c.created_at)) / ${SECS_PER_DAY})::REAL AS raw_score
+`               EXP(-${RECENCY_DECAY_RATE} * EXTRACT(EPOCH FROM (NOW() - c.created_at)) / ${SECS_PER_DAY})::REAL AS raw_score
         FROM candidates c
         WHERE effective_heat(c, NOW(), v_factor) >= p_min_heat
         ORDER BY c.created_at DESC LIMIT v_pool
     ),
 ` +
 // source: cortex@ed33435 mcp_server/infrastructure/pg_schema.py:856-860 — 0.001 TMM normalization floor (Bruch 2023)
-`    vec_max  AS (SELECT COALESCE(MAX(raw_score), 0.001) AS hi FROM vec),
-    fts_max  AS (SELECT COALESCE(MAX(raw_score), 0.001) AS hi FROM fts),
-    ng_max   AS (SELECT COALESCE(MAX(raw_score), 0.001) AS hi FROM ngram),
-    hot_max  AS (SELECT COALESCE(MAX(raw_score), 0.001) AS hi FROM hot),
-    rec_max  AS (SELECT COALESCE(MAX(raw_score), 0.001) AS hi FROM recency),
+`    vec_max  AS (SELECT COALESCE(MAX(raw_score), ${WRRF_EPSILON}) AS hi FROM vec),
+    fts_max  AS (SELECT COALESCE(MAX(raw_score), ${WRRF_EPSILON}) AS hi FROM fts),
+    ng_max   AS (SELECT COALESCE(MAX(raw_score), ${WRRF_EPSILON}) AS hi FROM ngram),
+    hot_max  AS (SELECT COALESCE(MAX(raw_score), ${WRRF_EPSILON}) AS hi FROM hot),
+    rec_max  AS (SELECT COALESCE(MAX(raw_score), ${WRRF_EPSILON}) AS hi FROM recency),
     fused AS (
         SELECT id, SUM(contribution) AS fused_score FROM (
 ` +
 // source: cortex@ed33435 mcp_server/infrastructure/pg_schema.py:863-883 — 0.001 WRRF denominator floor (Bruch 2023)
-`            SELECT v.id, p_w_vector * (v.raw_score - (-1.0)) / GREATEST(b.hi - (-1.0), 0.001) AS contribution
+`            SELECT v.id, p_w_vector * (v.raw_score - (-1.0)) / GREATEST(b.hi - (-1.0), ${WRRF_EPSILON}) AS contribution
             FROM vec v, vec_max b
             UNION ALL
-            SELECT f.id, p_w_fts * f.raw_score / GREATEST(b.hi, 0.001) FROM fts f, fts_max b
+            SELECT f.id, p_w_fts * f.raw_score / GREATEST(b.hi, ${WRRF_EPSILON}) FROM fts f, fts_max b
             UNION ALL
-            SELECT n.id, p_w_ngram * n.raw_score / GREATEST(b.hi, 0.001) FROM ngram n, ng_max b
+            SELECT n.id, p_w_ngram * n.raw_score / GREATEST(b.hi, ${WRRF_EPSILON}) FROM ngram n, ng_max b
             UNION ALL
-            SELECT h.id, p_w_heat * h.raw_score / GREATEST(b.hi, 0.001) FROM hot h, hot_max b
+            SELECT h.id, p_w_heat * h.raw_score / GREATEST(b.hi, ${WRRF_EPSILON}) FROM hot h, hot_max b
             UNION ALL
-            SELECT r.id, p_w_recency * r.raw_score / GREATEST(b.hi, 0.001)
+            SELECT r.id, p_w_recency * r.raw_score / GREATEST(b.hi, ${WRRF_EPSILON})
             FROM recency r, rec_max b WHERE p_w_recency > 0
         ) signals GROUP BY id
     ),
@@ -249,7 +260,7 @@ BEGIN
                ab.boosted_score * (
 ` +
 // source: cortex@ed33435 mcp_server/infrastructure/pg_schema.py:900 — 0.15 emotional boost coefficient
-`                   1.0 + ABS(COALESCE(c.emotional_valence, 0.0)) * 0.15
+`                   1.0 + ABS(COALESCE(c.emotional_valence, 0.0)) * ${EMOTIONAL_BOOST_COEFF}
                    * (1.0 - EXP(-EXTRACT(EPOCH FROM (NOW() - c.created_at)) / ${SECS_PER_HOUR}))
                ) AS emo_score
         FROM agent_boosted ab JOIN candidates c ON c.id = ab.id

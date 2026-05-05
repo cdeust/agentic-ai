@@ -32,8 +32,8 @@ export async function insertEntity(
   const existing = await client.query<{ id: number }>(
     "SELECT id FROM entities WHERE LOWER(name) = LOWER($1) LIMIT 1", [canonical]);
   // source: cortex@ed33435 infrastructure/sqlite_store_entities.py — check existing entity
-  const existingId = existing.rows[0]?.id;
-  if ((existingId ?? 0) > 0) return existingId!;
+  const existingRow = existing.rows[0];
+  if (existingRow != null) return existingRow.id;
   const result = await client.query<{ id: number }>(
     `INSERT INTO entities (name, type, domain, created_at, last_accessed, heat)
      VALUES ($1, $2, $3, COALESCE($4, NOW()), NOW(), $5) RETURNING id`,
@@ -57,7 +57,7 @@ export async function getEntityById(client: PoolClient, entityId: number): Promi
 }
 
 // source: cortex@ed33435 mcp_server/infrastructure/pg_store_entities.py:99-111
-export async function getAllEntities(client: PoolClient, minHeat = 0.05, includeArchived = false): Promise<Record<string, unknown>[]> {
+export async function getAllEntities(client: PoolClient, minHeat = 0.05, includeArchived = false): Promise<Record<string, unknown>[]> { // eslint-disable-line @typescript-eslint/no-magic-numbers
   const q = includeArchived
     ? "SELECT * FROM entities WHERE heat >= $1"
     : "SELECT * FROM entities WHERE heat >= $1 AND NOT archived";
@@ -84,6 +84,7 @@ export async function getDomainEntityCounts(client: PoolClient): Promise<Record<
 }
 
 // source: cortex@ed33435 mcp_server/infrastructure/pg_store_entities.py:130-143
+// eslint-disable-next-line @typescript-eslint/no-magic-numbers -- source: cortex@ed33435 mcp_server/infrastructure/pg_store_entities.py:130
 export async function getIsolatedEntities(client: PoolClient, limit = 20): Promise<Record<string, unknown>[]> {
   return (await client.query(
     `SELECT e.*, COALESCE(r.rel_count, 0) AS relationship_count FROM entities e
@@ -101,6 +102,7 @@ export async function getResolvedEntityIds(client: PoolClient): Promise<Set<numb
 }
 
 // source: cortex@ed33435 mcp_server/infrastructure/pg_store_entities.py:152-174
+// eslint-disable-next-line @typescript-eslint/no-magic-numbers -- source: cortex@ed33435 mcp_server/infrastructure/pg_store_entities.py:152
 export async function getMemoriesMentioningEntity(client: PoolClient, entityName: string, limit = 20): Promise<Record<string, unknown>[]> {
   let result = await client.query(
     "SELECT * FROM memories WHERE content_tsv @@ phraseto_tsquery('english', $1) ORDER BY heat_base DESC LIMIT $2",
