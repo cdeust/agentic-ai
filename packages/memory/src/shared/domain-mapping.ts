@@ -29,12 +29,39 @@ export interface RepoInfo {
   canonical: string;
 }
 
+// ── Constants ────────────────────────────────────────────────────────────────
+
+/** Length of the ".git" suffix stripped from remote URLs. */
+// source: cortex@ed33435 mcp_server/shared/domain_mapping.py:57-60 (_extract_repo_name)
+const GIT_SUFFIX_LEN = 4; // ".git"
+
+/**
+ * Minimum number of characters a shared hyphen-prefix must have to be
+ * treated as a meaningful family name.
+ * source: cortex@ed33435 mcp_server/shared/domain_mapping.py:117-120 (_shared_prefix docstring)
+ */
+const MIN_PREFIX_LEN = 4;
+
+/**
+ * Minimum fragment length included in the fragment index.
+ * source: cortex@ed33435 mcp_server/shared/domain_mapping.py:221-223 (_build_fragment_index)
+ */
+const MIN_FRAGMENT_LEN = 4;
+
+/**
+ * Minimum character length for a slug to be treated as a path-like slug
+ * (avoids false-positive slug matching on very short strings).
+ * source: cortex@ed33435 mcp_server/shared/domain_mapping.py:298 (resolve_domain)
+ */
+const MIN_SLUG_LEN = 10;
+
 // ── Step 1: Discover git repos ──────────────────────────────────────────────
 
 function getRemoteUrl(repoPath: string): string {
   try {
     return execSync(
       `git -C "${repoPath}" remote get-url origin`,
+      // source: cortex@ed33435 mcp_server/shared/domain_mapping.py:44 (timeout=3 seconds)
       { timeout: 3000, stdio: ["pipe", "pipe", "pipe"] },
     ).toString().trim();
   } catch {
@@ -45,7 +72,7 @@ function getRemoteUrl(repoPath: string): string {
 function extractRepoName(url: string): string {
   if (!url) return "";
   let name = url.replace(/\/$/, "").split("/").pop() ?? "";
-  if (name.endsWith(".git")) name = name.slice(0, -4);
+  if (name.endsWith(".git")) name = name.slice(0, -GIT_SUFFIX_LEN);
   return name.toLowerCase();
 }
 
@@ -121,8 +148,8 @@ function sharedPrefix(a: string, b: string): string {
     }
   }
   const prefix = common.join("-");
-  // Require prefix to be meaningful: at least 4 chars
-  return prefix.length >= 4 ? prefix : "";
+  // Require prefix to be meaningful: at least MIN_PREFIX_LEN chars
+  return prefix.length >= MIN_PREFIX_LEN ? prefix : "";
 }
 
 function groupRepos(repos: RepoInfo[]): Map<string, string> {
@@ -134,7 +161,10 @@ function groupRepos(repos: RepoInfo[]): Map<string, string> {
       const prefix = sharedPrefix(allNames[i] ?? "", allNames[j] ?? "");
       if (prefix) {
         if (!prefixGroups.has(prefix)) prefixGroups.set(prefix, new Set());
-        prefixGroups.get(prefix)!.add(allNames[i] ?? "").add(allNames[j] ?? "");
+        const group = prefixGroups.get(prefix);
+        if (group) {
+          group.add(allNames[i] ?? "").add(allNames[j] ?? "");
+        }
       }
     }
   }
@@ -212,7 +242,7 @@ function buildFragmentIndex(
       for (let i = 0; i < parts.length; i++) {
         for (let j = i + 1; j <= parts.length; j++) {
           const fragment = parts.slice(i, j).join("-");
-          if (fragment.length < 4) continue;
+          if (fragment.length < MIN_FRAGMENT_LEN) continue;
           const existing = fragments.get(fragment);
           if (!existing || fragment.length > existing[1]) {
             fragments.set(fragment, [canonical, fragment.length]);
@@ -235,6 +265,7 @@ function gitRoot(path: string): string | null {
   try {
     return execSync(
       `git -C "${path}" rev-parse --show-toplevel`,
+      // source: cortex@ed33435 mcp_server/shared/domain_mapping.py:236 (timeout=3 seconds)
       { timeout: 3000, stdio: ["pipe", "pipe", "pipe"] },
     ).toString().trim();
   } catch {
@@ -244,7 +275,8 @@ function gitRoot(path: string): string | null {
 
 // ── Registry (singleton cache) ───────────────────────────────────────────────
 
-interface DomainRegistry {
+// source: cortex@ed33435 mcp_server/shared/domain_mapping.py:252-258 (DomainRegistry dataclass)
+export interface DomainRegistry {
   readonly repos: RepoInfo[];
   readonly nameToCanonical: Map<string, string>;
   readonly slugIndex: Map<string, RepoInfo>;
@@ -301,7 +333,7 @@ export function resolveDomain(inputStr: string): string {
   }
 
   // 2. Is it a slug? (starts with - and looks path-like)
-  if (clean.startsWith("-") && clean.length > 10) {
+  if (clean.startsWith("-") && clean.length > MIN_SLUG_LEN) {
     const repo = matchSlug(clean, registry.slugIndex);
     if (repo) return repo.canonical;
   }
@@ -318,7 +350,7 @@ export function resolveDomain(inputStr: string): string {
   let bestFrag = "";
   let bestFragLen = 0;
   for (const [frag, canonical] of registry.fragmentIndex) {
-    if (frag.length >= 4 && lower.includes(frag) && frag.length > bestFragLen) {
+    if (frag.length >= MIN_FRAGMENT_LEN && lower.includes(frag) && frag.length > bestFragLen) {
       bestFrag = canonical;
       bestFragLen = frag.length;
     }

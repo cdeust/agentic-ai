@@ -30,7 +30,8 @@ interface ToolSchema {
 
 // Schema definitions per tool.
 // source: ADR-0045 R2/R5 (fragility sweep v3.13.0) — bounded envelopes.
-const SCHEMAS: Readonly<Record<string, ToolSchema>> = {
+// source: cortex@ed33435 mcp_server/validation/schemas.py:20-30 (SCHEMAS module-level dict)
+export const SCHEMAS: Readonly<Record<string, ToolSchema>> = {
   query_methodology: {
     properties: {
       cwd: { type: "string" },
@@ -100,46 +101,46 @@ const SCHEMAS: Readonly<Record<string, ToolSchema>> = {
   },
   remember: {
     properties: {
-      // source: ADR-0045 R2/R5 (fragility sweep v3.13.0 E3):
+      // source: ADR-0045 R2/R5 (fragility sweep v3.13.0 E3) + cortex@ed33435 mcp_server/validation/schemas.py:104
       // content maxLength tightened from 50_000 → 10_000 chars.
-      content: { type: "string", maxLength: 10000 },
+      content: { type: "string", maxLength: 10000 }, // source: ADR-0045 E3
       // source: ADR-0045 R2 (fragility sweep v3.13.0 E4):
       // Bounded tags envelope — at most 20 tags, each <= 80 chars.
       tags: { type: "array", maxItems: 20, items: { type: "string", maxLength: 80 } },
-      source: { type: "string", maxLength: 200 },
-      domain: { type: "string", maxLength: 200 },
-      directory: { type: "string", maxLength: 500 },
-      agent_topic: { type: "string", maxLength: 200 },
+      source: { type: "string", maxLength: 200 }, // source: cortex@ed33435 mcp_server/validation/schemas.py:109
+      domain: { type: "string", maxLength: 200 }, // source: cortex@ed33435 mcp_server/validation/schemas.py:110
+      directory: { type: "string", maxLength: 500 }, // source: cortex@ed33435 mcp_server/validation/schemas.py:111
+      agent_topic: { type: "string", maxLength: 200 }, // source: cortex@ed33435 mcp_server/validation/schemas.py:112
       importance: { type: "number" },
-      created_at: { type: "string", maxLength: 64 },
+      created_at: { type: "string", maxLength: 64 }, // source: cortex@ed33435 mcp_server/validation/schemas.py:114
       initial_heat: { type: "number", minimum: 0.0, maximum: 1.0 },
     },
     required: ["content"],
   },
   recall: {
     properties: {
-      query: { type: "string", maxLength: 10000 },
+      query: { type: "string", maxLength: 10000 }, // source: cortex@ed33435 mcp_server/validation/schemas.py:116
       limit: { type: "number" },
-      domain: { type: "string", maxLength: 200 },
-      directory: { type: "string", maxLength: 500 },
-      agent_topic: { type: "string", maxLength: 200 },
+      domain: { type: "string", maxLength: 200 }, // source: cortex@ed33435 mcp_server/validation/schemas.py:118
+      directory: { type: "string", maxLength: 500 }, // source: cortex@ed33435 mcp_server/validation/schemas.py:119
+      agent_topic: { type: "string", maxLength: 200 }, // source: cortex@ed33435 mcp_server/validation/schemas.py:120
     },
     required: ["query"],
   },
   wiki_write: {
     properties: {
-      path: { type: "string", maxLength: 500 },
-      content: { type: "string", maxLength: 200000 },
+      path: { type: "string", maxLength: 500 }, // source: cortex@ed33435 mcp_server/validation/schemas.py:127
+      content: { type: "string", maxLength: 200000 }, // source: cortex@ed33435 mcp_server/validation/schemas.py:128
       mode: { type: "string" },
-      title: { type: "string", maxLength: 500 },
-      summary: { type: "string", maxLength: 5000 },
-      body: { type: "string", maxLength: 200000 },
+      title: { type: "string", maxLength: 500 }, // source: cortex@ed33435 mcp_server/validation/schemas.py:130
+      summary: { type: "string", maxLength: 5000 }, // source: cortex@ed33435 mcp_server/validation/schemas.py:131
+      body: { type: "string", maxLength: 200000 }, // source: cortex@ed33435 mcp_server/validation/schemas.py:132
       tags: { type: "array" },
     },
     required: ["path"],
   },
   wiki_read: {
-    properties: { path: { type: "string", maxLength: 500 } },
+    properties: { path: { type: "string", maxLength: 500 } }, // source: cortex@ed33435 mcp_server/validation/schemas.py:139
     required: ["path"],
   },
   wiki_list: {
@@ -148,19 +149,19 @@ const SCHEMAS: Readonly<Record<string, ToolSchema>> = {
   },
   wiki_link: {
     properties: {
-      from_path: { type: "string", maxLength: 500 },
-      to_path: { type: "string", maxLength: 500 },
-      relation: { type: "string", maxLength: 40 },
+      from_path: { type: "string", maxLength: 500 }, // source: cortex@ed33435 mcp_server/validation/schemas.py:144
+      to_path: { type: "string", maxLength: 500 }, // source: cortex@ed33435 mcp_server/validation/schemas.py:145
+      relation: { type: "string", maxLength: 40 }, // source: cortex@ed33435 mcp_server/validation/schemas.py:146
     },
     required: ["from_path", "to_path", "relation"],
   },
   wiki_adr: {
     properties: {
-      title: { type: "string", maxLength: 500 },
-      context: { type: "string", maxLength: 20000 },
-      decision: { type: "string", maxLength: 20000 },
-      consequences: { type: "string", maxLength: 20000 },
-      status: { type: "string", maxLength: 40 },
+      title: { type: "string", maxLength: 500 }, // source: cortex@ed33435 mcp_server/validation/schemas.py:151
+      context: { type: "string", maxLength: 20000 }, // source: cortex@ed33435 mcp_server/validation/schemas.py:152
+      decision: { type: "string", maxLength: 20000 }, // source: cortex@ed33435 mcp_server/validation/schemas.py:153
+      consequences: { type: "string", maxLength: 20000 }, // source: cortex@ed33435 mcp_server/validation/schemas.py:154
+      status: { type: "string", maxLength: 40 }, // source: cortex@ed33435 mcp_server/validation/schemas.py:155
       tags: { type: "array" },
     },
     required: ["title", "context", "decision", "consequences"],
