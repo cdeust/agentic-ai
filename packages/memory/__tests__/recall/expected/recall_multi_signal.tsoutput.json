@@ -6,8 +6,8 @@
       {
         "memory_id": 2,
         "content": "recall regression root cause: FlashRank ONNX model cache was being invalidated on every cold start due to missing ONNX_WEIGHTS_DIR env var.",
-        "score": 0.1449,
-        "heat": 0.85,
+        "score": 0.1473,
+        "heat": 0.95,
         "domain": "cortex",
         "tags": [
           "recall",
@@ -18,13 +18,13 @@
         "created_at": "2026-05-05T00:00:00.000Z",
         "importance": 0.5,
         "surprise": 0,
-        "recency_boost": 0.2769
+        "recency_boost": 0.2988
       },
       {
         "memory_id": 1,
         "content": "We chose pgvector over Pinecone because of lower operational complexity, native PostgreSQL integration, and cost. pgvector supports HNSW indexes with m=16, ef_construction=64.",
-        "score": 0.0827,
-        "heat": 0.9,
+        "score": 0.0841,
+        "heat": 1,
         "domain": "cortex",
         "tags": [
           "architecture",
@@ -34,13 +34,13 @@
         "created_at": "2026-05-05T00:00:00.000Z",
         "importance": 0.5,
         "surprise": 0,
-        "recency_boost": 0.2769
+        "recency_boost": 0.2988
       },
       {
         "memory_id": 5,
         "content": "auth service uses JWT RS256 tokens with 15-minute expiry. Refresh tokens stored in Redis with 7-day TTL.",
-        "score": 0.0621,
-        "heat": 0.75,
+        "score": 0.0632,
+        "heat": 0.85,
         "domain": "auth-service",
         "tags": [
           "auth",
@@ -50,7 +50,7 @@
         "created_at": "2026-05-05T00:00:00.000Z",
         "importance": 0.5,
         "surprise": 0,
-        "recency_boost": 0.2769
+        "recency_boost": 0.2988
       }
     ],
     "total": 3,

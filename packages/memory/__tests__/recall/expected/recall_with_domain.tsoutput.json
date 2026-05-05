@@ -6,8 +6,8 @@
       {
         "memory_id": 3,
         "content": "consolidation decay cycle: Ebbinghaus forgetting curve applied with 30-day half-life. Stage multipliers from Kandel 2001.",
-        "score": 0.0409,
-        "heat": 0.7,
+        "score": 0.0416,
+        "heat": 0.8,
         "domain": "cortex",
         "tags": [
           "consolidation",
@@ -17,13 +17,13 @@
         "created_at": "2026-05-05T00:00:00.000Z",
         "importance": 0.5,
         "surprise": 0,
-        "recency_boost": 0.2769
+        "recency_boost": 0.2988
       },
       {
         "memory_id": 4,
         "content": "HNSW index parameters: m=16 ef_construction=64 are the pgvector defaults. These match our production config.",
-        "score": 0.0209,
-        "heat": 0.6,
+        "score": 0.0213,
+        "heat": 0.7,
         "domain": "cortex",
         "tags": [
           "pgvector",
@@ -33,13 +33,13 @@
         "created_at": "2026-05-05T00:00:00.000Z",
         "importance": 0.5,
         "surprise": 0,
-        "recency_boost": 0.2769
+        "recency_boost": 0.2988
       },
       {
         "memory_id": 2,
         "content": "recall regression root cause: FlashRank ONNX model cache was being invalidated on every cold start due to missing ONNX_WEIGHTS_DIR env var.",
-        "score": 0.0206,
-        "heat": 0.85,
+        "score": 0.0209,
+        "heat": 0.95,
         "domain": "cortex",
         "tags": [
           "recall",
@@ -50,13 +50,13 @@
         "created_at": "2026-05-05T00:00:00.000Z",
         "importance": 0.5,
         "surprise": 0,
-        "recency_boost": 0.2769
+        "recency_boost": 0.2988
       },
       {
         "memory_id": 1,
         "content": "We chose pgvector over Pinecone because of lower operational complexity, native PostgreSQL integration, and cost. pgvector supports HNSW indexes with m=16, ef_construction=64.",
-        "score": 0.0196,
-        "heat": 0.9,
+        "score": 0.02,
+        "heat": 1,
         "domain": "cortex",
         "tags": [
           "architecture",
@@ -66,7 +66,7 @@
         "created_at": "2026-05-05T00:00:00.000Z",
         "importance": 0.5,
         "surprise": 0,
-        "recency_boost": 0.2769
+        "recency_boost": 0.2988
       }
     ],
     "total": 4,
