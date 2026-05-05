@@ -310,6 +310,13 @@ export async function processEvent(event: PostToolUseEvent): Promise<void> {
             ).then(() => undefined),
           );
         },
+        updateStageEnteredAt: (memoryId, enteredAt) =>
+          cascadeStore.runAsync((c) =>
+            c.query(
+              `UPDATE memories SET stage_entered_at=$2 WHERE id=$1`,
+              [memoryId, enteredAt.toISOString()],
+            ).then(() => undefined),
+          ),
       });
       if (result.advanced > 0) {
         log(`cascade: ${result.advanced} memories advanced`);

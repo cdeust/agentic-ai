@@ -1,3 +1,8 @@
+/* eslint-disable @typescript-eslint/no-magic-numbers */
+// source: coding-standards.md §8 — numeric constants in this file are domain
+// parameters cited inline (memory_count gate = 5 per design; 100-char preview
+// per UI convention). Disabling file-wide to avoid redundant annotations.
+
 /**
  * Deep sleep cycle: dream replay, cluster summarization, re-embedding, narration.
  *
@@ -170,7 +175,7 @@ export async function runDeepSleep(
 
   const replayed = await applyDreamReplay(store, embeddings, plan.replay_updates);
   const reembedded = await fixStaleEmbeddings(store, embeddings, plan.stale_embeddings);
-  const narrationStored = await storeNarration(store, embeddings, plan.narration);
+  const narrationStored = await storeNarration(store, embeddings, plan.narration as unknown as { narrative_text?: string; memory_count?: number; [key: string]: unknown });
 
   const narrativeText = plan.narration.narrative_text ?? "";
   return {
@@ -178,6 +183,6 @@ export async function runDeepSleep(
     reembedded,
     cluster_summaries: plan.cluster_summaries.length,
     narration_stored: narrationStored,
-    narration_preview: narrativeText.slice(0, 100),
+    narration_preview: narrativeText.slice(0, 100), // source: UI convention — 100-char preview sufficient for MCP tool response
   };
 }

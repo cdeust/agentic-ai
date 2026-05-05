@@ -293,6 +293,15 @@ async function runConsolidation(turnCount: number): Promise<void> {
           ).then(() => undefined),
         );
       },
+      updateStageEnteredAt: (memoryId, enteredAt) =>
+        store.runAsync((c) =>
+          c
+            .query(
+              `UPDATE memories SET stage_entered_at=$2 WHERE id=$1`,
+              [memoryId, enteredAt.toISOString()],
+            )
+            .then(() => undefined),
+        ),
     });
 
     const advanced = result.advanced;
