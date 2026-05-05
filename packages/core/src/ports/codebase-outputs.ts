@@ -221,3 +221,72 @@ export const LspResolveOutputSchema = z
   })
   .passthrough();
 export type LspResolveOutput = z.infer<typeof LspResolveOutputSchema>;
+
+// ─── Tools 2–7: Findings pipeline (Stages 1–2) ────────────────────────────────
+// source: ai-automatised-pipeline/src/tool_schemas.rs:52–208 (commit 2cc3780)
+
+// Tool 2: extract_finding output — source: tool_schemas.rs:52–80
+export const ExtractFindingOutputSchema = z
+  .object({ status: z.string(), run_id: z.string(), finding_id: z.string(), stage: z.string().optional(), artifacts: z.array(z.string()).optional() })
+  .passthrough();
+export type ExtractFindingOutput = z.infer<typeof ExtractFindingOutputSchema>;
+
+// Tool 3: refine_finding output — source: tool_schemas.rs:82–136
+export const RefineFindingOutputSchema = z
+  .object({ status: z.string(), run_id: z.string(), finding_id: z.string(), artifact: z.string().optional() })
+  .passthrough();
+export type RefineFindingOutput = z.infer<typeof RefineFindingOutputSchema>;
+
+// Tool 4: start_verification output — source: tool_schemas.rs:138–153
+export const StartVerificationOutputSchema = z
+  .object({ status: z.string(), run_id: z.string(), finding_id: z.string(), session: z.record(z.string(), z.unknown()).optional() })
+  .passthrough();
+export type StartVerificationOutput = z.infer<typeof StartVerificationOutputSchema>;
+
+// Tool 5: append_clarification output — source: tool_schemas.rs:155–173
+export const AppendClarificationOutputSchema = z
+  .object({ status: z.string(), run_id: z.string(), finding_id: z.string(), turn_index: z.coerce.number().int().nonnegative().optional() })
+  .passthrough();
+export type AppendClarificationOutput = z.infer<typeof AppendClarificationOutputSchema>;
+
+// Tool 6: finalize_verification output — source: tool_schemas.rs:175–190
+export const FinalizeVerificationOutputSchema = z
+  .object({ status: z.string(), run_id: z.string(), finding_id: z.string(), sha256: z.string().optional(), artifact: z.string().optional() })
+  .passthrough();
+export type FinalizeVerificationOutput = z.infer<typeof FinalizeVerificationOutputSchema>;
+
+// Tool 7: abort_verification output — source: tool_schemas.rs:192–208
+export const AbortVerificationOutputSchema = z
+  .object({ status: z.string(), run_id: z.string(), finding_id: z.string(), aborted_at: z.string().optional() })
+  .passthrough();
+export type AbortVerificationOutput = z.infer<typeof AbortVerificationOutputSchema>;
+
+// ─── Tool 18: detect_changes (Stage 3e) — source: tool_schemas.rs:566–600 (commit 2cc3780)
+export const DetectChangesOutputSchema = z
+  .object({ affectedCount: z.coerce.number().int().nonnegative(), affected: z.array(z.record(z.string(), z.unknown())), riskScore: z.coerce.number().min(0).max(1), elapsedMs: z.coerce.number().nonnegative().optional() })
+  .passthrough();
+export type DetectChangesOutput = z.infer<typeof DetectChangesOutputSchema>;
+
+// ─── Tool 20: prepare_prd_input (Stage 4) — source: tool_schemas.rs:492–508 (commit 2cc3780)
+export const PreparePrdInputOutputSchema = z
+  .object({ status: z.string(), run_id: z.string(), finding_id: z.string(), artifact: z.string().optional(), symbols: z.array(z.record(z.string(), z.unknown())).optional() })
+  .passthrough();
+export type PreparePrdInputOutput = z.infer<typeof PreparePrdInputOutputSchema>;
+
+// ─── Tool 21: validate_prd_against_graph (Stage 6) — source: tool_schemas.rs:510–528 (commit 2cc3780)
+export const ValidatePrdAgainstGraphOutputSchema = z
+  .object({ status: z.string(), gatesPassed: z.boolean().optional(), hallucinations: z.array(z.record(z.string(), z.unknown())).optional(), warnings: z.array(z.record(z.string(), z.unknown())).optional(), criticalCount: z.coerce.number().int().nonnegative().optional(), warningCount: z.coerce.number().int().nonnegative().optional() })
+  .passthrough();
+export type ValidatePrdAgainstGraphOutput = z.infer<typeof ValidatePrdAgainstGraphOutputSchema>;
+
+// ─── Tool 22: check_security_gates (Stage 8) — source: tool_schemas.rs:530–547 (commit 2cc3780)
+export const CheckSecurityGatesOutputSchema = z
+  .object({ status: z.string(), gatesPassed: z.boolean(), flags: z.array(z.record(z.string(), z.unknown())).optional(), criticalCount: z.coerce.number().int().nonnegative().optional() })
+  .passthrough();
+export type CheckSecurityGatesOutput = z.infer<typeof CheckSecurityGatesOutputSchema>;
+
+// ─── Tool 23: verify_semantic_diff (Stage 9) — source: tool_schemas.rs:549–564 (commit 2cc3780)
+export const VerifySemanticDiffOutputSchema = z
+  .object({ regressionScore: z.coerce.number().nonnegative(), nodesAdded: z.coerce.number().int().nonnegative().optional(), nodesRemoved: z.coerce.number().int().nonnegative().optional(), edgesAdded: z.coerce.number().int().nonnegative().optional(), edgesRemoved: z.coerce.number().int().nonnegative().optional(), danglingRefs: z.array(z.string()).optional(), newUnresolved: z.array(z.string()).optional(), newCycles: z.array(z.array(z.string())).optional(), report: z.record(z.string(), z.unknown()).optional() })
+  .passthrough();
+export type VerifySemanticDiffOutput = z.infer<typeof VerifySemanticDiffOutputSchema>;

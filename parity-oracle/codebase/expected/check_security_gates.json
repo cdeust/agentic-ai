@@ -1,0 +1,12 @@
+{
+  "_capture_status": "TO-BE-CAPTURED",
+  "_capture_blocked_reason": "Requires Rust binary + indexed graph.",
+  "_schema_shape": {
+    "gatesPassed": "boolean",
+    "status": "string"
+  },
+  "_critical_invariants": [
+    "gatesPassed present",
+    "status present"
+  ]
+}
