@@ -1,10 +1,40 @@
 {
-  "_capture_status": "TO-BE-CAPTURED",
-  "_capture_blocked_reason": "Requires Rust binary + indexed graph.",
-  "_schema_shape": {
-    "status": "string"
+  "_capture_status": "CAPTURED",
+  "_capture_source": "ai-automatised-pipeline commit 2cc3780 v0.0.4",
+  "_capture_date": "2026-05-04",
+  "artifact_path": null,
+  "contract_missing": true,
+  "extraction_mode": "regex_fallback",
+  "report": {
+    "affected_symbol_count": 0,
+    "contract_missing": true,
+    "extraction_mode": "regex_fallback",
+    "finding_id": "",
+    "findings": [],
+    "graph_path": "<CAPTURE_TMP>/graph/graph",
+    "prd_path": "/tmp/parity-capture-eng22/test.md",
+    "run_id": "",
+    "scope_claim_count": 0,
+    "summary": {
+      "claimed_symbols": 0,
+      "communities_spanned": 0,
+      "hallucinated_symbols": 0,
+      "processes_impacted": 0,
+      "resolved_symbols": 0
+    },
+    "validated_at": "2026-05-05T16:17:21Z",
+    "validation_status": "ok"
   },
-  "_critical_invariants": [
-    "status present"
-  ]
+  "stage": 6,
+  "status": "ok",
+  "summary": {
+    "claimed_symbols": 0,
+    "communities_spanned": 0,
+    "hallucinated_symbols": 0,
+    "processes_impacted": 0,
+    "resolved_symbols": 0
+  },
+  "tool": "validate_prd_against_graph",
+  "validated_at": "2026-05-05T16:17:21Z",
+  "validation_status": "ok"
 }

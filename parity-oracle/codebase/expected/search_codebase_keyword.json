@@ -1,20 +1,61 @@
 {
-  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
-  "_capture_blocked_reason": "Requires compiled Rust binary and fixture repo indexed.",
-  "_capture_command": "AIPRD_PIPELINE_BIN=<path/to/binary> node scripts/capture_codebase_fixture.js search_codebase_keyword | node scripts/strip_nondeterministic.js > parity-oracle/codebase/expected/search_codebase_keyword.json",
-  "_schema_shape": {
-    "results": "array<object>",
-    "total": "integer >= 0"
-  },
-  "_critical_invariants": [
-    "results is an array",
-    "results contains at least src.consolidation.run_decay (contains 'decay')",
-    "results contains at least src.thermodynamics.effective_heat (Ebbinghaus decay reference)",
-    "each result has qualified_name, score, and file_path fields",
-    "REGRESSION GUARD: total != 2 (CHANGELOG 3.14.8: BM25 cap of 2 results was the bug)"
+  "_capture_status": "CAPTURED",
+  "_capture_source": "ai-automatised-pipeline commit 2cc3780 v0.0.4",
+  "_capture_date": "2026-05-04",
+  "_fixture_notes": [
+    "added required graph_path field",
+    "renamed max_results → limit (Rust schema field name)"
   ],
-  "_masked_fields": {
-    "results[*].score": "<MASKED:nondeterministic>",
-    "results[*].line_start": "<MASKED:nondeterministic>"
-  }
+  "elapsed_ms": "<MASKED:nondeterministic>",
+  "query": "decay",
+  "result_count": 4,
+  "results": [
+    {
+      "community_id": null,
+      "end_line": 27,
+      "file_path": "src/models.py",
+      "kind": "Method",
+      "name": "decay",
+      "processes": [],
+      "qualified_name": "src/models.py::Memory::decay",
+      "score": "1.0000",
+      "start_line": 20
+    },
+    {
+      "community_id": null,
+      "end_line": 14,
+      "file_path": "src/consolidation.py",
+      "kind": "Function",
+      "name": "run_decay",
+      "processes": [],
+      "qualified_name": "src/consolidation.py::run_decay",
+      "score": "0.8667",
+      "start_line": 7
+    },
+    {
+      "community_id": null,
+      "end_line": 36,
+      "file_path": "src/store.py",
+      "kind": "Method",
+      "name": "decay_all",
+      "processes": [],
+      "qualified_name": "src/store.py::MemoryStore::decay_all",
+      "score": "0.8667",
+      "start_line": 30
+    },
+    {
+      "community_id": null,
+      "end_line": null,
+      "file_path": "src/thermodynamics.py",
+      "kind": "Constant",
+      "name": "DECAY_RATE",
+      "processes": [],
+      "qualified_name": "src/thermodynamics.py::DECAY_RATE",
+      "score": "0.8500",
+      "start_line": null
+    }
+  ],
+  "stage": 3,
+  "status": "ok",
+  "tool": "search_codebase"
 }

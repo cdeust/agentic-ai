@@ -1,0 +1,11 @@
+{
+  "capture_date": "2026-05-04",
+  "source_binary": "ai-architect-mcp",
+  "source_version": "v0.0.4",
+  "source_commit": "2cc3780",
+  "source_repo": "github.com/cdeust/ai-automatised-pipeline",
+  "mcp_protocol": "2024-11-05",
+  "fixture_repo": "parity-oracle/codebase/fixture-repos/small-python (10 Python files)",
+  "invocation_protocol": "tools/call (MCP 2024-11-05 \u00a75.5)",
+  "note": "Expected outputs captured via scripts/capture_codebase_expected.js using tools/call protocol. Nondeterministic fields (elapsed_ms, run_id timestamps, sha256, artifact paths with run-id) are masked."
+}

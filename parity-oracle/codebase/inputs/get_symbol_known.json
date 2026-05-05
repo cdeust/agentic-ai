@@ -12,5 +12,6 @@
       "qualified_name overload collision: wrong symbol returned when multiple methods share name"
     ]
   },
-  "qualified_name": "src.store.MemoryStore"
+  "graph_path": "<WORKTREE_ROOT>/parity-oracle/codebase/fixture-repos/small-python/_graph_out/graph",
+  "qualified_name": "src/retrieval.py::recall"
 }

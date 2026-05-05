@@ -1,24 +1,23 @@
 {
-  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
-  "_capture_blocked_reason": "Requires compiled Rust binary and fixture repo indexed.",
-  "_capture_command": "AIPRD_PIPELINE_BIN=<path/to/binary> node scripts/capture_codebase_fixture.js get_symbol_known | node scripts/strip_nondeterministic.js > parity-oracle/codebase/expected/get_symbol_known.json",
-  "_schema_shape": {
-    "qualified_name": "string",
-    "name": "string",
-    "kind": "string (one of: Class|Function|Method|Struct)",
-    "file_path": "string",
-    "line_start": "integer",
-    "line_end": "integer"
-  },
-  "_critical_invariants": [
-    "qualified_name == 'src.store.MemoryStore'",
-    "kind == 'Class'",
-    "file_path ends with 'store.py' (file attribution from containment edges, not qn.split heuristic)",
-    "line_start is a positive integer",
-    "line_end > line_start"
+  "_capture_status": "CAPTURED",
+  "_capture_source": "ai-automatised-pipeline commit 2cc3780 v0.0.4",
+  "_capture_date": "2026-05-04",
+  "_fixture_notes": [
+    "added required graph_path field",
+    "qualified_name changed from src.store.MemoryStore (not in small-python graph) to src/retrieval.py::recall (confirmed present)"
   ],
-  "_masked_fields": {
-    "line_start": "<MASKED:nondeterministic>",
-    "line_end": "<MASKED:nondeterministic>"
-  }
+  "edges_in": [
+    {
+      "id": "src/retrieval.py",
+      "rel": "Defines_File_Function"
+    }
+  ],
+  "edges_out": [],
+  "node": {
+    "data": "Node(NodeVal { id: InternalID { offset: 9, table_id: 3 }, label: \"Function\", properties: [(\"id\", String(\"src/retrieval.py::recall\")), (\"name\", String(\"recall\")), (\"qualified_name\", String(\"src/retrieval.py::recall\")), (\"start_line\", Int64(8)), (\"end_line\", Int64(15)), (\"visibility\", String(\"\")), (\"is_async\", Bool(false))] })",
+    "label": "Function"
+  },
+  "stage": 3,
+  "status": "ok",
+  "tool": "get_symbol"
 }

@@ -11,6 +11,6 @@
       "TS subprocess framing race: response JSON split across two reads → parse error"
     ]
   },
-  "qualified_name": "src.retrieval.recall",
-  "depth": 1
+  "graph_path": "<WORKTREE_ROOT>/parity-oracle/codebase/fixture-repos/small-python/_graph_out/graph",
+  "query": "MATCH (n:Function) RETURN n.name LIMIT 5"
 }

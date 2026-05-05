@@ -1,16 +1,13 @@
 {
-  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
-  "_capture_blocked_reason": "Requires compiled Rust binary from automatised-pipeline. Run 'cargo build --release' first (see RUNBOOK.md §3.1).",
-  "_capture_command": "AIPRD_PIPELINE_BIN=<path/to/binary> node scripts/capture_codebase_fixture.js health_check | node scripts/strip_nondeterministic.js > parity-oracle/codebase/expected/health_check.json",
-  "_schema_shape": {
-    "status": "string == 'ok'",
-    "version": "string (semver)"
-  },
-  "_critical_invariants": [
-    "status == 'ok'",
-    "version is a non-empty string"
-  ],
-  "_masked_fields": {
-    "version": "<MASKED:nondeterministic>"
-  }
+  "_capture_status": "CAPTURED",
+  "_capture_source": "ai-automatised-pipeline commit 2cc3780 v0.0.4",
+  "_capture_date": "2026-05-04",
+  "name": "health_check",
+  "protocol": "2024-11-05",
+  "server": "ai-architect",
+  "stage": 0,
+  "stages_registered": 23,
+  "status": "ok",
+  "tools_count": 23,
+  "version": "0.0.4"
 }
