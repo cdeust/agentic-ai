@@ -1,12 +1,12 @@
 {
   "_status": "TS-CAPTURED-NEEDS-PYTHON-VERIFICATION",
-  "_captured_at": "2026-04-28T12:01:40.669Z",
+  "_captured_at": "2026-05-05T11:34:19.076Z",
   "output": {
     "results": [
       {
         "memory_id": 2,
         "content": "recall regression root cause: FlashRank ONNX model cache was being invalidated on every cold start due to missing ONNX_WEIGHTS_DIR env var.",
-        "score": 0.1055,
+        "score": 0.1475,
         "heat": 0.95,
         "domain": "cortex",
         "tags": [
@@ -15,7 +15,7 @@
           "flashrank"
         ],
         "store_type": "episodic",
-        "created_at": "2026-04-28T12:01:40.668Z",
+        "created_at": "2026-05-05T11:34:19.071Z",
         "importance": 0.5,
         "surprise": 0,
         "recency_boost": 0.3
@@ -23,7 +23,7 @@
       {
         "memory_id": 1,
         "content": "We chose pgvector over Pinecone because of lower operational complexity, native PostgreSQL integration, and cost. pgvector supports HNSW indexes with m=16, ef_construction=64.",
-        "score": 0.0632,
+        "score": 0.0842,
         "heat": 1,
         "domain": "cortex",
         "tags": [
@@ -31,7 +31,7 @@
           "vector-db"
         ],
         "store_type": "episodic",
-        "created_at": "2026-04-28T12:01:40.668Z",
+        "created_at": "2026-05-05T11:34:19.071Z",
         "importance": 0.5,
         "surprise": 0,
         "recency_boost": 0.3
@@ -39,7 +39,7 @@
       {
         "memory_id": 5,
         "content": "auth service uses JWT RS256 tokens with 15-minute expiry. Refresh tokens stored in Redis with 7-day TTL.",
-        "score": 0.0419,
+        "score": 0.0633,
         "heat": 0.85,
         "domain": "auth-service",
         "tags": [
@@ -47,7 +47,7 @@
           "jwt"
         ],
         "store_type": "episodic",
-        "created_at": "2026-04-28T12:01:40.668Z",
+        "created_at": "2026-05-05T11:34:19.071Z",
         "importance": 0.5,
         "surprise": 0,
         "recency_boost": 0.3
