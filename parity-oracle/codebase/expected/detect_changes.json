@@ -1,0 +1,12 @@
+{
+  "_capture_status": "TO-BE-CAPTURED",
+  "_capture_blocked_reason": "Requires Rust binary + indexed graph.",
+  "_schema_shape": {
+    "affectedCount": "integer >= 0",
+    "riskScore": "float 0..1"
+  },
+  "_critical_invariants": [
+    "affectedCount present",
+    "riskScore in [0,1]"
+  ]
+}

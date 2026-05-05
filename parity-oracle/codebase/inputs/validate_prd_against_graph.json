@@ -1,0 +1,12 @@
+{
+  "_meta": {
+    "source_tool": "validate_prd_against_graph (Stage 6 \u2014 tool_schemas.rs:510-528 commit 2cc3780)",
+    "purpose_one_liner": "Validate PRD against graph: hallucinations, community consistency, process-impact.",
+    "failure_modes_caught": [
+      "Tool missing",
+      "gatesPassed absent"
+    ]
+  },
+  "prd_path": "/tmp/parity-test.md",
+  "graph_path": "<WORKTREE_ROOT>/parity-oracle/fixture-repos/small-ts/graph"
+}

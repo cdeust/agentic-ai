@@ -5,7 +5,7 @@
  */
 
 import type { LlmClient } from "@agentic/core";
-import { PortPendingError } from "./wiki-errors.js";
+import { WikiUnavailableError } from "./wiki-errors.js";
 
 // source: https://docs.anthropic.com/en/api/messages — 1024 tokens sufficient for wiki draft rewrite
 const WIKI_REFINE_MAX_TOKENS = 1024;
@@ -41,7 +41,7 @@ export interface WikiRefineResult {
  *
  * Precondition:  args.draft_id is a positive integer; llmClient is non-null.
  * Postcondition: returns a WikiRefineResult with the LLM-refined lead and
- *                sections; when llmClient is null throws PortPendingError.
+ *                sections; when llmClient is null throws WikiUnavailableError.
  *
  * source: mcp_server/handlers/wiki_refine.py:125-200
  */
@@ -50,7 +50,7 @@ export async function wikiRefineHandler(
   llmClient: LlmClient | null = null,
 ): Promise<WikiRefineResult> {
   if (llmClient === null) {
-    throw new PortPendingError(
+    throw new WikiUnavailableError(
       "wiki-refine",
       "mcp_server/handlers/wiki_refine.py:1",
       "LLM client (Path B draft refinement)",

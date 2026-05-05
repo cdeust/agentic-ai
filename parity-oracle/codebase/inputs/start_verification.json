@@ -1,0 +1,13 @@
+{
+  "_meta": {
+    "source_tool": "start_verification (Stage 2a \u2014 tool_schemas.rs:138-153 commit 2cc3780)",
+    "purpose_one_liner": "Create clarification session, state=open.",
+    "failure_modes_caught": [
+      "Tool missing",
+      "session state not written"
+    ]
+  },
+  "run_id": "FIXTURE_RUN_001",
+  "finding_id": "FIXTURE_FINDING_001",
+  "output_dir": "/tmp/parity-test-verify"
+}

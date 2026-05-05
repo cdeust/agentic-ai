@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "source_tool": "extract_finding (Stage 1a \u2014 tool_schemas.rs:52-80 commit 2cc3780)",
+    "purpose_one_liner": "Stage 1a deterministic extraction \u2014 normalizes inline finding.",
+    "failure_modes_caught": [
+      "Tool missing from CodebasePort",
+      "camelCase/snake_case translation failure",
+      "Output schema drift"
+    ]
+  },
+  "finding": {
+    "title": "Test parity finding",
+    "severity": "low"
+  },
+  "output_dir": "/tmp/parity-test-extract"
+}

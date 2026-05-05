@@ -70,8 +70,23 @@ import {
   GetContextOutputSchema,
   AnalyzeCodebaseOutputSchema,
   LspResolveOutputSchema,
+  ExtractFindingOutputSchema, RefineFindingOutputSchema, StartVerificationOutputSchema,
+  AppendClarificationOutputSchema, FinalizeVerificationOutputSchema, AbortVerificationOutputSchema,
+  DetectChangesOutputSchema, PreparePrdInputOutputSchema, ValidatePrdAgainstGraphOutputSchema,
+  CheckSecurityGatesOutputSchema, VerifySemanticDiffOutputSchema,
   CodebaseValidationError,
   CodebaseLspError,
+  type ExtractFindingInput, type ExtractFindingOutput,
+  type RefineFindingInput, type RefineFindingOutput,
+  type StartVerificationInput, type StartVerificationOutput,
+  type AppendClarificationInput, type AppendClarificationOutput,
+  type FinalizeVerificationInput, type FinalizeVerificationOutput,
+  type AbortVerificationInput, type AbortVerificationOutput,
+  type DetectChangesInput, type DetectChangesOutput,
+  type PreparePrdInputInput, type PreparePrdInputOutput,
+  type ValidatePrdAgainstGraphInput, type ValidatePrdAgainstGraphOutput,
+  type CheckSecurityGatesInput, type CheckSecurityGatesOutput,
+  type VerifySemanticDiffInput, type VerifySemanticDiffOutput,
 } from "@agentic/core";
 import type { ZodSchema } from "zod";
 import type { JsonRpcClient } from "../internal/json-rpc-client.js";
@@ -392,6 +407,30 @@ export class RustPipelineAdapter implements CodebasePort {
       AnalyzeCodebaseOutputSchema,
     );
   }
+
+
+  // Stage 1a - source: tool_schemas.rs:52-80 (2cc3780)
+  async extractFinding(input: ExtractFindingInput): Promise<ExtractFindingOutput> { return this._call("extract_finding", input as unknown as Record<string, unknown>, ExtractFindingOutputSchema); }
+  // Stage 1b - source: tool_schemas.rs:82-136 (2cc3780)
+  async refineFinding(input: RefineFindingInput): Promise<RefineFindingOutput> { return this._call("refine_finding", input as unknown as Record<string, unknown>, RefineFindingOutputSchema); }
+  // Stage 2a - source: tool_schemas.rs:138-153 (2cc3780)
+  async startVerification(input: StartVerificationInput): Promise<StartVerificationOutput> { return this._call("start_verification", input as unknown as Record<string, unknown>, StartVerificationOutputSchema); }
+  // Stage 2b - source: tool_schemas.rs:155-173 (2cc3780)
+  async appendClarification(input: AppendClarificationInput): Promise<AppendClarificationOutput> { return this._call("append_clarification", input as unknown as Record<string, unknown>, AppendClarificationOutputSchema); }
+  // Stage 2c - source: tool_schemas.rs:175-190 (2cc3780)
+  async finalizeVerification(input: FinalizeVerificationInput): Promise<FinalizeVerificationOutput> { return this._call("finalize_verification", input as unknown as Record<string, unknown>, FinalizeVerificationOutputSchema); }
+  // Stage 2d - source: tool_schemas.rs:192-208 (2cc3780)
+  async abortVerification(input: AbortVerificationInput): Promise<AbortVerificationOutput> { return this._call("abort_verification", input as unknown as Record<string, unknown>, AbortVerificationOutputSchema); }
+  // Stage 3e - source: tool_schemas.rs:566-600 (2cc3780)
+  async detectChanges(input: DetectChangesInput): Promise<DetectChangesOutput> { return this._call("detect_changes", input as unknown as Record<string, unknown>, DetectChangesOutputSchema); }
+  // Stage 4 - source: tool_schemas.rs:492-508 (2cc3780)
+  async preparePrdInput(input: PreparePrdInputInput): Promise<PreparePrdInputOutput> { return this._call("prepare_prd_input", input as unknown as Record<string, unknown>, PreparePrdInputOutputSchema); }
+  // Stage 6 - source: tool_schemas.rs:510-528 (2cc3780)
+  async validatePrdAgainstGraph(input: ValidatePrdAgainstGraphInput): Promise<ValidatePrdAgainstGraphOutput> { return this._call("validate_prd_against_graph", input as unknown as Record<string, unknown>, ValidatePrdAgainstGraphOutputSchema); }
+  // Stage 8 - source: tool_schemas.rs:530-547 (2cc3780)
+  async checkSecurityGates(input: CheckSecurityGatesInput): Promise<CheckSecurityGatesOutput> { return this._call("check_security_gates", input as unknown as Record<string, unknown>, CheckSecurityGatesOutputSchema); }
+  // Stage 9 - source: tool_schemas.rs:549-564 (2cc3780)
+  async verifySemanticDiff(input: VerifySemanticDiffInput): Promise<VerifySemanticDiffOutput> { return this._call("verify_semantic_diff", input as unknown as Record<string, unknown>, VerifySemanticDiffOutputSchema); }
 
   // ─── Lifecycle ───────────────────────────────────────────────────────────
 

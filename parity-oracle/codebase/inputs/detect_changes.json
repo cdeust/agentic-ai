@@ -1,0 +1,12 @@
+{
+  "_meta": {
+    "source_tool": "detect_changes (Stage 3e \u2014 tool_schemas.rs:566-600 commit 2cc3780)",
+    "purpose_one_liner": "Git-diff impact analysis \u2014 map changed lines to affected symbols.",
+    "failure_modes_caught": [
+      "Tool missing",
+      "risk_score not coerced to float"
+    ]
+  },
+  "graph_path": "<WORKTREE_ROOT>/parity-oracle/fixture-repos/small-ts/graph",
+  "diff_text": "diff --git a/src/main.ts b/src/main.ts\n--- a/src/main.ts\n+++ b/src/main.ts\n@@ -1,3 +1,4 @@\n+// added\n function main() {}"
+}

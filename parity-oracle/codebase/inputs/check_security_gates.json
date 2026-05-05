@@ -1,0 +1,14 @@
+{
+  "_meta": {
+    "source_tool": "check_security_gates (Stage 8 \u2014 tool_schemas.rs:530-547 commit 2cc3780)",
+    "purpose_one_liner": "Five graph-aware security checks on changed_symbols list.",
+    "failure_modes_caught": [
+      "Tool missing",
+      "gatesPassed boolean absent"
+    ]
+  },
+  "graph_path": "<WORKTREE_ROOT>/parity-oracle/fixture-repos/small-ts/graph",
+  "changed_symbols": [
+    "src/main.ts::main"
+  ]
+}
