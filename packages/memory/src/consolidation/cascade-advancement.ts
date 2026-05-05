@@ -253,10 +253,15 @@ export function computeAdvancementReadiness(
   schemaMatch?: number,
   importance?: number,
 ): [boolean, string, number] | AdvancementReadinessResult {
-  // Determine calling convention
+  // Determine calling convention.
+  // - undefined third arg → treat as positional (Python-parity tuple return)
+  // - object third arg     → opts form (TS-idiomatic struct return)
+  // - number third arg     → positional form
+  // The tests call computeAdvancementReadiness("unknown_stage", 100) with no
+  // third arg and destructure the result as a tuple, so undefined must take
+  // the positional branch.
   const isOptsForm =
-    dopamineLevelOrOpts === undefined ||
-    (typeof dopamineLevelOrOpts === "object" && dopamineLevelOrOpts !== null);
+    typeof dopamineLevelOrOpts === "object" && dopamineLevelOrOpts !== null;
 
   let dopamine: number;
   let replay: number;
