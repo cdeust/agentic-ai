@@ -1,0 +1,26 @@
+{
+  "_doc": "Frozen Python Cortex LongMemEval benchmark baseline. The TS port must reproduce these scores within ±0.5 percentage points. Captured from cortex@1db5ee3 (A3 lazy-heat + underflow guards) on 2026-04-17 against the production PostgreSQL + pgvector retrieval pipeline. See cortex/benchmarks/results/a3_longmemeval_post_refactor.md.",
+  "benchmark": "LongMemEval",
+  "dataset": "500 questions across 6 categories",
+  "captured_from": {
+    "repo": "cortex",
+    "commit": "1db5ee3",
+    "date": "2026-04-17",
+    "branch": "main",
+    "db": "cortex_bench (PostgreSQL 15 + pgvector)"
+  },
+  "tolerance_pp": 0.5,
+  "overall": {
+    "mrr": 0.881,
+    "recall_at_10": 0.978,
+    "questions": 500
+  },
+  "by_category": {
+    "single_session_user": { "mrr": 0.808, "recall_at_10": 0.943 },
+    "single_session_assistant": { "mrr": 0.982, "recall_at_10": 1.000 },
+    "single_session_preference": { "mrr": 0.637, "recall_at_10": 0.867 },
+    "multi_session_reasoning": { "mrr": 0.940, "recall_at_10": 1.000 },
+    "temporal_reasoning": { "mrr": 0.851, "recall_at_10": 0.977 },
+    "knowledge_updates": { "mrr": 0.921, "recall_at_10": 1.000 }
+  }
+}
