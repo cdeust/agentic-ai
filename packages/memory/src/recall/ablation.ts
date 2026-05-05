@@ -76,13 +76,17 @@ export enum Mechanism {
 export function isMechanismDisabled(mechanism: Mechanism | string): boolean {
   if (typeof process === "undefined") return false;
   let name: string;
-  if (typeof mechanism === "string") {
-    name = mechanism.toUpperCase().replace(/-/g, "_");
+  // Check if mechanism is a Mechanism enum value (e.g. "hopfield_network")
+  // In that case, look up the enum KEY (e.g. "HOPFIELD") for the env var.
+  // source: cortex@ed33435 mcp_server/core/ablation.py:41-45 — uses mechanism.name
+  const enumKey = (Object.keys(Mechanism) as Array<keyof typeof Mechanism>).find(
+    (k) => Mechanism[k] === mechanism,
+  );
+  if (enumKey !== undefined) {
+    name = enumKey; // e.g. "HOPFIELD"
   } else {
-    // Enum key (e.g. Mechanism.HOPFIELD → "HOPFIELD")
-    name = (Object.keys(Mechanism) as Array<keyof typeof Mechanism>).find(
-      (k) => Mechanism[k] === mechanism,
-    ) ?? mechanism.toUpperCase().replace(/-/g, "_");
+    // Raw string like "HOPFIELD" or "hopfield_network" — normalise to upper/underscored
+    name = String(mechanism).toUpperCase().replace(/-/g, "_");
   }
   return process.env[`CORTEX_ABLATE_${name}`] === "1";
 }
