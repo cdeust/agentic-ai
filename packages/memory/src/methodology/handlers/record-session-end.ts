@@ -3,9 +3,16 @@
  *
  * Ports: handlers/record_session_end.py (390 LOC, 10 functions)
  *
- * Composition root: validates input, resolves domain, logs session,
- * applies incremental EMA update to the matching domain profile,
- * stores an episodic session summary memory, and runs session critique.
+ * Exposes two handler surfaces:
+ *   - recordSessionEnd       — self-contained handler (Eng-12 port): reads and
+ *                              writes profiles.json / session_log.json directly
+ *                              via fs I/O helpers. Used by the legacy MCP wiring.
+ *   - recordSessionEndHandler — thin composition root (Eng-15 port): delegates
+ *                              EMA logic to update-profiles.ts. Used by the
+ *                              new MCP server wiring that passes a ProfilesStore
+ *                              from outside.
+ *
+ * Both handlers share: RecordSessionEndArgs, RecordSessionEndResult, schema.
  *
  * Normally invoked automatically by the SessionEnd hook. Call manually
  * only when reconstructing offline sessions.
@@ -23,6 +30,13 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+
+import {
+  buildSessionLogEntry,
+  updateProfiles,
+  type UpdateProfilesResult,
+} from "./update-profiles.js";
+import type { ProfilesStore, SessionData } from "../types.js";
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -190,14 +204,20 @@ function buildMemoryTags(category: string, keywords: string[]): string[] {
 // ── Categorize ────────────────────────────────────────────────────────────
 // source: cortex@ed33435 mcp_server/shared/categorizer.py:categorize
 
+const CATEGORY_KEYWORDS: Record<string, readonly string[]> = {
+  debugging: ["bug", "error", "fix", "crash", "exception", "traceback"],
+  architecture: ["design", "architecture", "refactor", "structure", "pattern"],
+  performance: ["latency", "performance", "benchmark", "speed", "optimize"],
+  documentation: ["docs", "readme", "comment", "docstring", "wiki"],
+  testing: ["test", "spec", "assert", "coverage", "mock"],
+  devops: ["deploy", "ci", "cd", "docker", "kubernetes", "pipeline"],
+};
+
 function categorize(text: string): string {
   const lower = text.toLowerCase();
-  if (lower.includes("bug") || lower.includes("fix") || lower.includes("error")) return "bug-fix";
-  if (lower.includes("feature") || lower.includes("implement") || lower.includes("add")) return "feature";
-  if (lower.includes("refactor") || lower.includes("clean") || lower.includes("migrate")) return "refactor";
-  if (lower.includes("test") || lower.includes("spec") || lower.includes("assert")) return "testing";
-  if (lower.includes("doc") || lower.includes("readme") || lower.includes("comment")) return "documentation";
-  if (lower.includes("recall") || lower.includes("memory") || lower.includes("cortex")) return "memory-ops";
+  for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+    if (keywords.some((kw) => lower.includes(kw))) return category;
+  }
   return "general";
 }
 
@@ -350,7 +370,127 @@ function tryGenerateCritique(
   }
 }
 
-// ── Handler ───────────────────────────────────────────────────────────────
+// ── Schema ────────────────────────────────────────────────────────────────────
+// source: cortex@ed33435 mcp_server/handlers/record_session_end.py schema
+
+export const schema = {
+  title: "Record session end (incremental profile update)",
+  description:
+    "Record session-end signals (tools used, duration, turns, keywords) and " +
+    "apply an incremental EMA update to the matching domain's cognitive profile. " +
+    "Also stores an episodic session-summary memory, runs a session self-critique " +
+    "(overall score + top improvement suggestions), and creates prospective triggers " +
+    "from any TODO/decision keywords detected in the message stream. " +
+    "Normally invoked automatically by the SessionEnd hook — call manually only " +
+    "when reconstructing offline sessions. Distinct from `rebuild_profiles` (full " +
+    "rescan from scratch) and `query_methodology` (read-only profile retrieval). " +
+    "Mutates profiles.json + session-log.json + memories table.",
+  inputSchema: {
+    type: "object",
+    required: ["session_id"],
+    properties: {
+      session_id: {
+        type: "string",
+        description:
+          "Unique session identifier (Claude Code session UUID or similar). " +
+          "Used as the row key in the session log.",
+        examples: ["dbaca0ec-b346-464a-84b9-afe97b91d27d"],
+      },
+      domain: {
+        type: "string",
+        description: "Cognitive domain ID. Auto-detected from cwd/project if omitted.",
+        examples: ["cortex", "auth-service"],
+      },
+      tools_used: {
+        type: "array",
+        description: "Names of MCP/CLI tools used during the session.",
+        items: { type: "string" },
+        default: [],
+        examples: [["Read", "Edit", "Bash", "cortex:recall"]],
+      },
+      duration: {
+        type: "number",
+        description: "Session duration in milliseconds.",
+        minimum: 0,
+        examples: [1800000, 3600000],
+      },
+      turn_count: {
+        type: "number",
+        description: "Number of assistant turns in the session.",
+        minimum: 0,
+        examples: [12, 47],
+      },
+      keywords: {
+        type: "array",
+        description: "Key topics extracted from the session.",
+        items: { type: "string" },
+        default: [],
+        examples: [["recall", "regression", "pgvector"]],
+      },
+      cwd: {
+        type: "string",
+        description: "Working directory the session ran in.",
+        examples: ["/Users/alice/code/cortex"],
+      },
+      project: {
+        type: "string",
+        description:
+          "Claude Code project identifier (slugified path). Falls back to derivation from cwd.",
+        examples: ["-Users-alice-code-cortex"],
+      },
+    },
+  },
+} as const;
+
+// ── Session memory builder (Eng-15 composition root path) ─────────────────────
+
+interface MemoryArgs {
+  content: string;
+  tags: string[];
+  directory: string;
+  domain: string;
+  source: string;
+  force: boolean;
+}
+
+type RememberHandler = (args: MemoryArgs) => Promise<{ stored?: boolean } | undefined>;
+
+/**
+ * Build remember-handler args for an episodic session memory.
+ *
+ * source: cortex@ed33435 mcp_server/handlers/record_session_end.py:_store_session_memory
+ */
+function buildSessionMemoryArgs(
+  sessionId: string,
+  domainId: string,
+  cwd: string,
+  toolsUsed: string[],
+  keywords: string[],
+  duration: number | undefined,
+  turnCount: number | undefined,
+  category: string,
+): MemoryArgs {
+  const parts = [`Session ${sessionId} in domain '${domainId}'`];
+  if (category && category !== "general") parts.push(`category: ${category}`);
+  if (keywords.length > 0) parts.push(`topics: ${keywords.slice(0, 10).join(", ")}`);
+  if (toolsUsed.length > 0) parts.push(`tools: ${toolsUsed.slice(0, 10).join(", ")}`);
+  if (turnCount) parts.push(`${turnCount} turns`);
+  if (duration) parts.push(`${(duration / 60_000).toFixed(1)}min`);
+  const content = parts.join(" | ");
+
+  const tags = [...new Set(["session-summary", category, ...keywords.slice(0, 5)])];
+
+  return {
+    content,
+    tags,
+    directory: cwd || "",
+    domain: domainId,
+    source: "session",
+    force: false,
+  };
+}
+
+// ── Handler args + response ───────────────────────────────────────────────────
 
 export interface RecordSessionEndArgs {
   session_id: string;
@@ -372,8 +512,13 @@ export interface RecordSessionEndResult {
   critique: { overall_score: number; top_suggestions: string[] } | null;
 }
 
+// ── recordSessionEnd — self-contained handler (Eng-12 path) ──────────────
+
 /**
  * Record session-end signals and update cognitive profile.
+ *
+ * Self-contained: reads/writes profiles.json and session_log.json directly.
+ * Used by legacy MCP wiring that does not inject a ProfilesStore.
  *
  * source: cortex@ed33435 mcp_server/handlers/record_session_end.py:handler
  */
@@ -442,26 +587,82 @@ export async function recordSessionEnd(
   };
 }
 
-export const schema = {
-  title: "Record session end (incremental profile update)",
-  description:
-    "Record session-end signals (tools used, duration, turns, keywords) " +
-    "and apply an incremental EMA update to the matching domain cognitive profile. " +
-    "Also stores an episodic session-summary memory and runs a session self-critique. " +
-    "Mutates profiles.json + session-log.json + memories table. " +
-    "Returns {domain, profileUpdated, memoryStored, critique}.",
-  inputSchema: {
-    type: "object",
-    required: ["session_id"],
-    properties: {
-      session_id: { type: "string" },
-      domain: { type: "string" },
-      cwd: { type: "string" },
-      project: { type: "string" },
-      tools_used: { type: "array", items: { type: "string" } },
-      duration: { type: "number" },
-      turn_count: { type: "number" },
-      keywords: { type: "array", items: { type: "string" } },
-    },
-  },
-};
+// ── recordSessionEndHandler — composition root (Eng-15 path) ─────────────
+
+/**
+ * Record session end: EMA profile update + optional session-memory storage.
+ *
+ * Thin composition root: delegates EMA logic to update-profiles.ts.
+ * Used by new MCP server wiring that injects a ProfilesStore.
+ *
+ * Pre:  args.session_id is non-empty; profiles is the loaded profiles store.
+ * Post: the domain's EMA is updated; a session-summary memory is optionally stored.
+ *       Returns { domain, profileUpdated, memoryStored, confidence, critique }.
+ *
+ * source: cortex@ed33435 mcp_server/handlers/record_session_end.py:handler
+ */
+export async function recordSessionEndHandler(
+  args: RecordSessionEndArgs,
+  profiles: ProfilesStore,
+  rememberHandler?: RememberHandler,
+): Promise<RecordSessionEndResult> {
+  const sessionData: SessionData = {
+    sessionId: args.session_id,
+    domain: args.domain ?? undefined,
+    cwd: args.cwd ?? undefined,
+    project: args.project ?? undefined,
+    duration: args.duration ?? undefined,
+    turnCount: args.turn_count ?? undefined,
+    toolsUsed: args.tools_used ?? [],
+    keywords: args.keywords ?? [],
+  };
+
+  const result: UpdateProfilesResult = updateProfiles(sessionData, profiles);
+
+  // Store session-summary episodic memory if a remember handler is provided.
+  let memoryStored = false;
+  if (rememberHandler) {
+    const keywords = args.keywords ?? [];
+    const category = keywords.length > 0 ? categorize(keywords.join(" ")) : "general";
+    const memArgs = buildSessionMemoryArgs(
+      args.session_id,
+      result.domain,
+      args.cwd ?? "",
+      args.tools_used ?? [],
+      keywords,
+      args.duration ?? undefined,
+      args.turn_count ?? undefined,
+      category,
+    );
+    try {
+      const memResult = await rememberHandler(memArgs);
+      memoryStored = Boolean(memResult?.stored);
+    } catch {
+      // Non-fatal: session summary memory failure must not abort session end.
+    }
+  }
+
+  // Map CritiqueResult (camelCase from update-profiles) → snake_case for the
+  // shared RecordSessionEndResult interface.
+  // source: cortex@ed33435 mcp_server/handlers/record_session_end.py — critique keys
+  const critiqueRaw = result.critique;
+  const critique = critiqueRaw
+    ? {
+        overall_score: (critiqueRaw as unknown as { overallScore?: number; overall_score?: number }).overallScore
+          ?? (critiqueRaw as unknown as { overall_score?: number }).overall_score
+          ?? 0,
+        top_suggestions: (critiqueRaw as unknown as { topSuggestions?: string[]; top_suggestions?: string[] }).topSuggestions
+          ?? (critiqueRaw as unknown as { top_suggestions?: string[] }).top_suggestions
+          ?? [],
+      }
+    : null;
+
+  return {
+    domain: result.domain,
+    profileUpdated: result.profileUpdated,
+    memoryStored,
+    newPatterns: [],
+    confidence: result.confidence,
+    critique,
+  };
+}

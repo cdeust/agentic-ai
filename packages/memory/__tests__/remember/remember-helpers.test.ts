@@ -4,20 +4,22 @@
  * source: cortex@ed33435 mcp_server/handlers/remember_helpers.py
  *
  * Invariants tested:
- *   1. computeSimilarities — returns empty when embedding is null
- *   2. evaluateGate — gate_reason=="forced" when force=true
- *   3. computeGateDecision — decision-tag content bypasses gate
- *   4. isDecisionContent — detects decision markers
- *   5. classifyStoreType — episodic default, semantic for definitions
- *   6. buildInsertRecord — all fields populated
- *   7. applyModulations — heat clamped to [0,1]
- *   8. tryCuration — returns "create" when no embedding
- *   9. updateUserMoodEma — returns null for non-user sources
- *  10. estimateImportance — decision tags → 1.0
+ *   1.  approximateVaderCompound — range [-1,1], case-insensitive, empty→0
+ *   2.  computeSimilarities — returns empty when embedding is null
+ *   3.  evaluateGate — gate_reason=="forced" when force=true
+ *   4.  computeGateDecision — decision-tag content bypasses gate
+ *   5.  isDecisionContent — detects decision markers
+ *   6.  classifyStoreType — episodic default, semantic for definitions
+ *   7.  buildInsertRecord — all fields populated
+ *   8.  applyModulations — heat clamped to [0,1]
+ *   9.  tryCuration — returns "create" when no embedding
+ *  10.  updateUserMoodEma — returns null for non-user sources; EMA decay
+ *  11.  estimateImportance — decision tags → 1.0
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
+  approximateVaderCompound,
   computeSimilarities,
   evaluateGate,
   computeGateDecision,
@@ -28,6 +30,7 @@ import {
   tryCuration,
   updateUserMoodEma,
   estimateImportance,
+  type MoodStore,
 } from "../../src/remember/handlers/remember-helpers.js";
 import type { MemoryStore } from "../../src/remember/storage/memory-store.js";
 
@@ -59,7 +62,45 @@ function makeStore(overrides: Partial<MemoryStore> = {}): MemoryStore {
   } as unknown as MemoryStore;
 }
 
-// ── Test 1: computeSimilarities with null embedding ───────────────────────
+// ── Test 1: approximateVaderCompound ──────────────────────────────────────
+
+describe("approximateVaderCompound", () => {
+  it("returns 0.0 for empty text", () => {
+    expect(approximateVaderCompound("")).toBe(0.0);
+  });
+
+  it("returns positive value for clearly positive text", () => {
+    const result = approximateVaderCompound("This is excellent! The bug is fixed and works great.");
+    expect(result).toBeGreaterThan(0.0);
+  });
+
+  it("returns negative value for clearly negative text", () => {
+    const result = approximateVaderCompound("Error: crash! The bug broke everything. Problem detected.");
+    expect(result).toBeLessThan(0.0);
+  });
+
+  it("returns value in [-1, 1]", () => {
+    for (const text of [
+      "great success",
+      "error bug fail",
+      "neutral text about something",
+      "",
+      "good good good good error error",
+    ]) {
+      const v = approximateVaderCompound(text);
+      expect(v).toBeGreaterThanOrEqual(-1.0);
+      expect(v).toBeLessThanOrEqual(1.0);
+    }
+  });
+
+  it("is case-insensitive", () => {
+    const lower = approximateVaderCompound("great success");
+    const upper = approximateVaderCompound("GREAT SUCCESS");
+    expect(lower).toBeCloseTo(upper, 4);
+  });
+});
+
+// ── Test 2: computeSimilarities with null embedding ───────────────────────
 
 describe("computeSimilarities", () => {
   it("returns empty sims and vecHits when embedding is null", () => {
@@ -90,7 +131,7 @@ describe("computeSimilarities", () => {
   });
 });
 
-// ── Test 2: evaluateGate forced bypass ───────────────────────────────────
+// ── Test 3: evaluateGate forced bypass ───────────────────────────────────
 
 describe("evaluateGate", () => {
   it("returns should_store=true and gate_reason='forced' when force=true", () => {
@@ -117,7 +158,7 @@ describe("evaluateGate", () => {
   });
 });
 
-// ── Test 3: computeGateDecision decision-tag bypass ───────────────────────
+// ── Test 4: computeGateDecision decision-tag bypass ───────────────────────
 
 describe("computeGateDecision", () => {
   it("bypass_decision when 'decision' tag present", () => {
@@ -145,7 +186,7 @@ describe("computeGateDecision", () => {
   });
 });
 
-// ── Test 4: isDecisionContent ─────────────────────────────────────────────
+// ── Test 5: isDecisionContent ─────────────────────────────────────────────
 
 describe("isDecisionContent", () => {
   it("returns true for 'decided'", () => {
@@ -159,7 +200,7 @@ describe("isDecisionContent", () => {
   });
 });
 
-// ── Test 5: classifyStoreType ─────────────────────────────────────────────
+// ── Test 6: classifyStoreType ─────────────────────────────────────────────
 
 describe("classifyStoreType", () => {
   it("returns 'episodic' by default", () => {
@@ -176,7 +217,7 @@ describe("classifyStoreType", () => {
   });
 });
 
-// ── Test 6: buildInsertRecord ─────────────────────────────────────────────
+// ── Test 7: buildInsertRecord ─────────────────────────────────────────────
 
 describe("buildInsertRecord", () => {
   it("builds a fully-populated record", () => {
@@ -216,7 +257,7 @@ describe("buildInsertRecord", () => {
   });
 });
 
-// ── Test 7: applyModulations heat clamping ────────────────────────────────
+// ── Test 8: applyModulations heat clamping ────────────────────────────────
 
 describe("applyModulations", () => {
   it("clamps heat to [0,1]", () => {
@@ -237,7 +278,7 @@ describe("applyModulations", () => {
   });
 });
 
-// ── Test 8: tryCuration returns "create" with no embedding ────────────────
+// ── Test 9: tryCuration returns "create" with no embedding ────────────────
 
 describe("tryCuration", () => {
   it("returns action='create' when embedding is null", () => {
@@ -262,7 +303,7 @@ describe("tryCuration", () => {
   });
 });
 
-// ── Test 9: updateUserMoodEma non-user source ─────────────────────────────
+// ── Test 10: updateUserMoodEma ────────────────────────────────────────────
 
 describe("updateUserMoodEma", () => {
   it("returns null for non-user source", () => {
@@ -274,6 +315,19 @@ describe("updateUserMoodEma", () => {
   it("returns null when store lacks getUserMood/setUserMood", () => {
     const store = makeStore();
     const result = updateUserMoodEma("content", "user", store);
+    expect(result).toBeNull();
+  });
+
+  it("returns null when source is not 'user' (MoodStore variant)", () => {
+    const store: MoodStore = { getUserMood: vi.fn(), setUserMood: vi.fn() };
+    const result = updateUserMoodEma("great success", "tool", store);
+    expect(result).toBeNull();
+    expect(store.setUserMood).not.toHaveBeenCalled();
+  });
+
+  it("returns null when store lacks mood methods (MoodStore variant)", () => {
+    const store: MoodStore = {}; // no getUserMood / setUserMood
+    const result = updateUserMoodEma("great success", "user", store);
     expect(result).toBeNull();
   });
 
@@ -291,9 +345,55 @@ describe("updateUserMoodEma", () => {
     expect(result).toBeGreaterThanOrEqual(-1.0);
     expect(result).toBeLessThanOrEqual(1.0);
   });
+
+  it("updates mood EMA for source='user' (MoodStore variant)", () => {
+    let storedMood: number | null = null;
+    const store: MoodStore = {
+      getUserMood: () => storedMood,
+      setUserMood: (v: number) => { storedMood = v; },
+    };
+
+    const result = updateUserMoodEma("The fix works and is great!", "user", store);
+
+    expect(result).not.toBeNull();
+    expect(typeof result).toBe("number");
+    expect(storedMood).not.toBeNull();
+    expect(result!).toBeGreaterThanOrEqual(-1.0);
+    expect(result!).toBeLessThanOrEqual(1.0);
+  });
+
+  it("EMA decays from previous value (α=0.3)", () => {
+    // source: MOOD_EMA_ALPHA = 0.3 — remember_helpers.py:426
+    // With old=0.0 and compound>0, new = (1-0.3)*0 + 0.3*compound = 0.3*compound
+    let storedMood: number | null = 0.0;
+    const store: MoodStore = {
+      getUserMood: () => storedMood,
+      setUserMood: (v: number) => { storedMood = v; },
+    };
+
+    const compound = approximateVaderCompound("great success fixed works");
+    const result = updateUserMoodEma("great success fixed works", "user", store);
+
+    if (compound > 0 && result !== null) {
+      const expected = 0.3 * compound; // (1-0.3)*0 + 0.3*compound
+      expect(result).toBeCloseTo(expected, 2);
+    } else {
+      expect(result).toBeCloseTo(0.0, 4);
+    }
+  });
+
+  it("returns null (not throws) when setUserMood throws", () => {
+    const store: MoodStore = {
+      getUserMood: () => 0.5,
+      setUserMood: () => { throw new Error("DB down"); },
+    };
+
+    const result = updateUserMoodEma("great content", "user", store);
+    expect(result).toBeNull(); // Never throws — failures swallowed
+  });
 });
 
-// ── Test 10: estimateImportance ───────────────────────────────────────────
+// ── Test 11: estimateImportance ───────────────────────────────────────────
 
 describe("estimateImportance", () => {
   it("returns 1.0 for 'decision' tag", () => {

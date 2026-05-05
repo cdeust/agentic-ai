@@ -163,6 +163,61 @@ export interface InsertRecord {
   stage_entered_at?: string;
 }
 
+// ── MoodStore extension for mood EMA ──────────────────────────────────────
+//
+// The base MemoryStore interface does not include user mood methods
+// (they are optional extensions on PgMemoryStore). We use structural
+// typing with an optional-method interface to avoid a hard dependency.
+//
+// source: cortex@ed33435 mcp_server/handlers/remember_helpers.py:update_user_mood_ema
+
+export interface MoodStore {
+  getUserMood?(): number | null;
+  setUserMood?(valence: number): void;
+}
+
+// ── VADER compound approximation (pure heuristic) ──────────────────────────
+//
+// The full Python path uses vaderSentiment (Hutto & Gilbert, ICWSM 2014).
+// In the TS runtime we apply a lightweight proxy: count positive vs negative
+// sentiment keywords and normalise to [-1, +1]. This is a structural port
+// that preserves the data-flow contract (number ∈ [-1,1]) without requiring
+// a Python dependency.
+//
+// source: mcp_server/shared/vader.py — vader_compound delegates to vaderSentiment
+
+const POSITIVE_KW = new Set([
+  "good", "great", "excellent", "success", "fixed", "solved", "works",
+  "correct", "improved", "resolved", "done", "complete",
+]);
+const NEGATIVE_KW = new Set([
+  "error", "bug", "fail", "broken", "wrong", "bad", "issue", "problem",
+  "crash", "exception", "unexpected",
+]);
+
+/**
+ * Approximate VADER compound sentiment ∈ [-1, 1] from token frequencies.
+ *
+ * Pre:  text is a string (possibly empty).
+ * Post: returns a float in [-1.0, 1.0]. Pure function — no side effects.
+ *
+ * source: cortex@ed33435 mcp_server/shared/vader.py:vader_compound
+ *         (proxy — full vaderSentiment not available in TS runtime)
+ */
+export function approximateVaderCompound(text: string): number {
+  const tokens = text.toLowerCase().match(/\b\w+\b/g) ?? [];
+  let pos = 0;
+  let neg = 0;
+  for (const t of tokens) {
+    if (POSITIVE_KW.has(t)) pos += 1;
+    if (NEGATIVE_KW.has(t)) neg += 1;
+  }
+  const total = pos + neg;
+  if (total === 0) return 0.0;
+  const raw = (pos - neg) / total;
+  return Math.max(-1.0, Math.min(1.0, raw));
+}
+
 // ── compute_similarities ──────────────────────────────────────────────────
 // source: cortex@ed33435 mcp_server/handlers/remember_helpers.py:compute_similarities
 
@@ -727,47 +782,47 @@ export function classifyStoreType(
 /**
  * EMA-update the user's session-level mood from VADER on user content.
  *
- * pre:  content is a hardened, non-empty string; source is a valid source enum.
- * post: when source=="user", user_mood.valence is upserted to
- *         (1 - α) * old + α * vader_compound(content)
- *       with α = MOOD_EMA_ALPHA. Returns the new valence on update, or null
- *       when skipped (non-user source or store missing API). Never throws.
+ * pre:  content is a hardened, non-empty string; source is a valid source enum;
+ *       store optionally exposes getUserMood / setUserMood.
+ * post: when source == "user" AND the store exposes mood methods,
+ *       user_mood.valence is upserted to
+ *           (1 - α) * old + α * approximateVaderCompound(content)
+ *       with α = MOOD_EMA_ALPHA, old defaulting to 0.0 when absent.
+ *       Returns the new valence on update, or null when skipped.
+ *       Never throws — failures are swallowed and reported as null.
  *
- * source: Bower (1981) Am. Psychologist 36(2) — mood-congruent recall.
- * source: Hutto & Gilbert ICWSM 2014 — VADER compound.
- * source: MOOD_EMA_ALPHA = 0.3 (engineering default, see module comment).
+ * Source-discipline notes:
+ *   - VADER compound: Hutto & Gilbert, ICWSM 2014.
+ *   - Mood-congruent recall: Bower 1981 Am. Psychologist 36(2).
+ *   - α = 0.3: engineering default (see module-level comment above).
+ *
+ * User-side definition:
+ *   Only source == "user" updates mood. System-generated memories do NOT
+ *   mutate user_mood because their content does not reflect the user's
+ *   affective state at recall time.
+ *
+ * source: cortex@ed33435 mcp_server/handlers/remember_helpers.py:update_user_mood_ema
  */
 export function updateUserMoodEma(
   content: string,
   source: string,
-  store: MemoryStore,
+  store: MemoryStore | MoodStore,
 ): number | null {
-  if (source !== "user") return null;
-  const storeAsAny = store as unknown as Record<string, unknown>;
-  if (
-    typeof storeAsAny["getUserMood"] !== "function" ||
-    typeof storeAsAny["setUserMood"] !== "function"
-  ) {
-    return null;
-  }
-  try {
-    // Lightweight VADER-style compound: count positive/negative words
-    // source: Hutto & Gilbert ICWSM 2014 — VADER
-    const lower = content.toLowerCase();
-    const positiveWords = ["good", "success", "fixed", "resolved", "great", "excellent", "done"];
-    const negativeWords = ["bad", "error", "failed", "broken", "bug", "wrong", "terrible"];
-    const posCount = positiveWords.filter((w) => lower.includes(w)).length;
-    const negCount = negativeWords.filter((w) => lower.includes(w)).length;
-    const compound = posCount > negCount ? DEFAULT_NOVELTY : negCount > posCount ? -DEFAULT_NOVELTY : 0.0;
+  if (source !== "user") return null; // source: remember_helpers.py:464
 
-    const oldValence = ((storeAsAny["getUserMood"] as () => number | null)() ?? 0.0);
-    const newValence = Math.max(
-      -1.0,
-      Math.min(1.0, (1.0 - MOOD_EMA_ALPHA) * oldValence + MOOD_EMA_ALPHA * compound),
-    );
-    (storeAsAny["setUserMood"] as (v: number) => void)(newValence);
-    return newValence;
+  const moodStore = store as MoodStore;
+  if (!moodStore.getUserMood || !moodStore.setUserMood) return null;
+
+  try {
+    const compound = approximateVaderCompound(content);
+    const oldMood = moodStore.getUserMood();
+    const oldValence = oldMood !== null ? Number(oldMood) : 0.0;
+    const newValence = (1.0 - MOOD_EMA_ALPHA) * oldValence + MOOD_EMA_ALPHA * compound;
+    const clamped = Math.max(-1.0, Math.min(1.0, newValence));
+    moodStore.setUserMood(clamped);
+    return clamped;
   } catch {
+    // Non-load-bearing; mood is a soft signal (source: remember_helpers.py:481)
     return null;
   }
 }
