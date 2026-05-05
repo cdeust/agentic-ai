@@ -18,6 +18,16 @@
  * source: mcp_server/handlers/wiki_*.py — error contract is implicit in every
  *         handler that guards on a missing dependency.
  */
+/**
+ * Thrown when a wiki handler is not yet fully ported from Python.
+ * Used as a placeholder that surfaces a clear diagnostic rather than a
+ * silent no-op. Remove when the handler is fully implemented.
+ *
+ * source: explore-features.ts — originally defined there; re-exported here
+ * so wiki-refine-handler.ts can import from a stable module.
+ */
+export { PortPendingError } from "../../graph/handlers/explore-features.js";
+
 export class WikiUnavailableError extends Error {
   constructor(handlerName: string, pythonSource: string, reason: string) {
     super(

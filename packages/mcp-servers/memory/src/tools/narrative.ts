@@ -135,10 +135,8 @@ export function registerNarrativeTools(
         const response = getProjectStoryHandler(
           narrativeDeps.store,
           {
-            directory:    args.directory,
             domain:       args.domain,
-            period:       args.period,
-            max_chapters: args.max_chapters,
+            max_memories: args.max_chapters,
           },
         );
         return { content: [{ type: "text" as const, text: JSON.stringify(response) }] };
@@ -170,8 +168,8 @@ export function registerNarrativeTools(
             results: [], query: args.query, note: "no MemoryStore configured",
           }) }] };
         }
-        const response = unifiedSearchHandler(
-          narrativeDeps.store,
+        const response = await unifiedSearchHandler(
+          { memoryPort: narrativeDeps.store },
           {
             query:       args.query,
             domain:      args.domain,

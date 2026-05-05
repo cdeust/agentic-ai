@@ -51,9 +51,8 @@ export async function wikiRefineHandler(
 ): Promise<WikiRefineResult> {
   if (llmClient === null) {
     throw new PortPendingError(
-      "wiki-refine",
       "mcp_server/handlers/wiki_refine.py:1",
-      "LLM client (Path B draft refinement)",
+      "wiki-refine — LLM client (Path B draft refinement)",
     );
   }
 
