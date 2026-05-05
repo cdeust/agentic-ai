@@ -30,6 +30,7 @@ import type { MemoryStore } from "@agentic/memory/remember/storage/memory-store.
 import { importHandler } from "@agentic/memory/import/handler.js";
 import { remember } from "@agentic/memory/remember/handlers/remember.js";
 import { codebaseAnalysis } from "@agentic/memory";
+import { handler as seedProjectHandlerFn } from "@agentic/memory/codebase-analysis/handlers/seed-project.js";
 
 // ── Named constants ───────────────────────────────────────────────────────────
 // source: cortex@ed33435 validate_memory.py — default staleness threshold 0.5
@@ -59,15 +60,6 @@ function loadProfilesRaw(): Record<string, unknown> {
     return JSON.parse(readFileSync(profilePath, "utf-8")) as Record<string, unknown>;
   } catch {
     return { domains: {} };
-  }
-}
-
-// ── PortPendingError ──────────────────────────────────────────────────────────
-
-class PortPendingError extends Error {
-  constructor(handlerName: string, blocker: string) {
-    super(`${handlerName} requires ${blocker} — not yet ported to TypeScript.`);
-    this.name = "PortPendingError";
   }
 }
 
@@ -173,15 +165,21 @@ export function registerManagementTools(server: McpServer, deps: ManagementDeps)
         dry_run:          z.boolean().default(false).describe("Preview without writing"),
       },
     },
-    async (_args) => {
+    async (args) => {
       try {
-        // source: cortex@ed33435 mcp_server/handlers/seed_project.py::_handler_impl
-        // Blocked: requires mcp_server/core/file_scanner.py — filesystem scanner
-        // not yet ported. Use codebase_analyze instead.
-        throw new PortPendingError(
-          "seed_project",
-          "mcp_server/core/file_scanner.py — filesystem scanner not yet ported; use codebase_analyze instead",
+        // source: cortex@ed33435 mcp_server/handlers/seed_project.py::handler
+        // source: cortex@ed33435 mcp_server/handlers/seed_project_stages.py
+        // Real implementation: packages/memory/src/codebase-analysis/handlers/seed-project.ts
+        const response = await seedProjectHandlerFn(
+          {
+            directory:        args.directory,
+            domain:           args.domain,
+            max_file_size_kb: args.max_file_size_kb,
+            dry_run:          args.dry_run,
+          },
+          { store: deps.store },
         );
+        return { content: [{ type: "text" as const, text: JSON.stringify(response) }] };
       } catch (err) {
         return errorText("seed_project", err);
       }

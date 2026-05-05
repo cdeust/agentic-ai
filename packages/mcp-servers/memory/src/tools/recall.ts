@@ -28,6 +28,7 @@ import { recallHierarchicalHandler } from "@agentic/memory/recall/recall-hierarc
 import type { MemoryStore, EmbeddingEngine } from "@agentic/memory/recall/port.js";
 import { handler as navigateMemoryHandler } from "@agentic/memory/graph/handlers/navigate-memory.js";
 import type { GraphPort } from "@agentic/memory/graph/port.js";
+import { drillDownHandler } from "@agentic/memory/recall/fractal-drill-down.js";
 
 // ── Named constants ───────────────────────────────────────────────────────────
 const RECALL_MAX_RESULTS_CAP = 100; // source: MCP_TOOLS.md §recall max_results cap=100
@@ -35,15 +36,6 @@ const RECALL_DEFAULT_RESULTS = 10; // source: MCP_TOOLS.md §recall default max_
 const RECALL_MIN_HEAT_DEFAULT = 0.05; // source: MCP_TOOLS.md §recall min_heat default=0.05
 const RECALL_CLUSTER_THRESHOLD_DEFAULT = 0.6; // source: MCP_TOOLS.md §recall_hierarchical cluster_threshold default=0.6
 const NAVIGATE_MAX_DEPTH_CAP = 5; // source: MCP_TOOLS.md §navigate_memory max_depth cap=5
-
-// ── PortPendingError ──────────────────────────────────────────────────────────
-
-class PortPendingError extends Error {
-  constructor(handlerName: string, blocker: string) {
-    super(`${handlerName} requires ${blocker} — not yet ported to TypeScript.`);
-    this.name = "PortPendingError";
-  }
-}
 
 // ── Dependency bundle ─────────────────────────────────────────────────────────
 
@@ -188,15 +180,20 @@ export function registerRecallTools(server: McpServer, deps: RecallDeps): void {
         min_heat:   z.number().min(0).max(1).default(RECALL_MIN_HEAT_DEFAULT).describe("Minimum heat"),
       },
     },
-    async (_args) => {
+    async (args) => {
       try {
         // source: cortex@ed33435 mcp_server/handlers/drill_down.py::_handler_impl
-        // Blocked: requires mcp_server/core/fractal.py::drill_down — the fractal
-        // cluster tree module is not yet ported to TypeScript.
-        throw new PortPendingError(
-          "drill_down",
-          "mcp_server/core/fractal.py::drill_down — fractal cluster tree port not implemented",
+        // source: cortex@ed33435 mcp_server/core/fractal.py::drill_down
+        // Real implementation: packages/memory/src/recall/fractal-drill-down.ts
+        const response = await drillDownHandler(
+          {
+            cluster_id: args.cluster_id,
+            domain:     args.domain,
+            min_heat:   args.min_heat,
+          },
+          { store: deps.store, embedder: deps.embedder },
         );
+        return { content: [{ type: "text" as const, text: JSON.stringify(response) }] };
       } catch (err) {
         return errorText("drill_down", err);
       }
