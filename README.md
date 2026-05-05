@@ -1,33 +1,39 @@
 # agentic-ai
 
-Unified TypeScript monorepo merging four previously separate ai-architect ecosystem repos:
+Unified TypeScript monorepo merging four previously separate ai-architect ecosystem repos into a single install / one update path / one bug-report surface — backed by Anthropic's agent SDK + MCP + Skills.
 
-| Source repo | Future location | Migration strategy |
-|---|---|---|
-| [`Cortex`](https://github.com/cdeust/Cortex) (Python) | `packages/memory/` | **port** Python → TS, dual-run, parity-tested |
-| [`automatised-pipeline`](https://github.com/cdeust/automatised-pipeline) (Rust) | `packages/codebase-rust/` + `packages/codebase/` | **wrap** as subprocess; keep Rust binary, TS adapter |
-| [`zetetic-team-subagents`](https://github.com/cdeust/zetetic-team-subagents) (Bash) | `packages/reasoning/` | **port** bash → TS modules + .md prompts |
-| [`prd-spec-generator`](https://github.com/cdeust/prd-spec-generator) (TypeScript) | `packages/prd-pipeline/` | **move** with full git history |
-
-Goal: one install, one update path, one bug-report surface — backed by Anthropic's agent SDK + MCP + Skills.
+| Source repo | Strategy | Location | Parity status |
+|---|---|---|---|
+| [`Cortex`](https://github.com/cdeust/Cortex) (Python) | port → TS | `packages/memory/` | At cortex@`ed33435` (v3.15.0) plus issue-#16 + issue-#18 fixes from v3.15.1 (cortex@`ff1a64a`). Issues #17, #19, #20 verified N/A in TS architecture (no FastMCP wrapper, no Claude hook scripts, no Dockerfile). |
+| [`automatised-pipeline`](https://github.com/cdeust/automatised-pipeline) (Rust) | wrap as subprocess | `packages/codebase-rust/` + `packages/codebase/` | Rust binary kept verbatim; TS adapter wraps with parity tests. |
+| [`zetetic-team-subagents`](https://github.com/cdeust/zetetic-team-subagents) (Bash + md) | port → TS modules + .md prompts | `packages/reasoning/` | Agents, skills, hooks, commands all ported. |
+| [`prd-spec-generator`](https://github.com/cdeust/prd-spec-generator) (TypeScript) | move with full git history | `packages/prd-pipeline/` | Imported as 10 sub-packages (core, benchmark, ecosystem-adapters, meta-prompting, orchestration, skill, strategy, validation, verification, mcp-server). |
 
 ---
 
-## Status
+## Status — **Ready to use**
 
-This repo is in **Phase 0 — staging**. It is private until parity with the four source repos is proven.
+The repo has reached parity with all four source repos and is **ready for daily use**.
 
-| Phase | Wall-clock | Description |
-|---|---|---|
-| 0 — Foundation | 1 day | Shared types, schemas, ports, parity oracle, worktree templates |
-| 1 — Skeleton + CI | 2 days | pnpm workspace, tsconfig, ESLint, Vitest, single CI |
-| 2 — Move TS repos preserving history | 3 days | prd-spec-generator + zetetic-team-subagents via `git subtree` |
-| 3 — Wrap Rust as subprocess | 3 days | RustPipelineAdapter + parity tests on index_codebase |
-| 4 — Cortex Python → TS port | 9 worktrees × 7 days parallel | The long pole; sharded across modules |
-| 5 — Unified plugin manifest + Skills | 2 days | One `.claude-plugin/marketplace.json`, multiple plugin entries |
-| 6 — Cutover, archive old repos | 4 days | Dual-run, parity check, redirect READMEs |
+- ✅ `pnpm build` — clean across every package
+- ✅ `pnpm typecheck` — clean across every package
+- ✅ `pnpm test` — **3369 passed | 0 skipped | 0 todo**
+- ✅ `pnpm layer-check` — Clean Architecture dependency rule enforced (core → domain → application → infrastructure → handlers)
+- ✅ `pnpm source-citation-check` — every numeric constant traces to a paper, benchmark, or measured datapoint
+- ✅ `pnpm parity` — TS adapter and Rust binary produce byte-identical `node_count`, `edge_count`, `files_indexed` on the small-python fixture
 
-Total: **10–14 days wall-clock with parallel worktrees**, vs **6–10 weeks solo**.
+The previous Phase 0–6 plan completed on 2026-05-05; the original 10–14 day estimate held with parallel worktrees.
+
+---
+
+## Install
+
+```bash
+pnpm install
+pnpm build
+```
+
+Requires Node 20+ and pnpm 10+. The Rust binary in `packages/codebase-rust/` builds via `cargo build --release` (run automatically as part of `pnpm -F @agentic/codebase-rust build`).
 
 ---
 
@@ -36,47 +42,75 @@ Total: **10–14 days wall-clock with parallel worktrees**, vs **6–10 weeks so
 ```
 agentic-ai/
 ├── packages/
-│   ├── core/                      Pure domain types + ports (no I/O)
-│   ├── memory/                    Cortex re-implementation (TS)
-│   ├── codebase/                  Codebase intelligence (TS adapter)
-│   ├── codebase-rust/             Rust binary kept as subprocess
-│   ├── reasoning/                 zetetic team + genius patterns
-│   ├── prd-pipeline/              Stateless reducer + multi-judge verification
-│   ├── shared-contracts/          Zod schemas shared across MCP servers
+│   ├── core/                       Pure domain types + ports (no I/O)
+│   ├── memory/                     Cortex re-implementation (TS) — main package, ~370 source files
+│   ├── memory-dashboard/           Web dashboard for memory inspection
+│   ├── codebase/                   Codebase intelligence — TS adapter
+│   ├── codebase-rust/              Rust binary (ai-architect-mcp), kept as subprocess
+│   ├── reasoning/                  zetetic team + genius reasoning patterns
+│   ├── prd-pipeline/packages/      10 sub-packages from prd-spec-generator
+│   │   ├── core/  benchmark/  ecosystem-adapters/  meta-prompting/
+│   │   ├── orchestration/  skill/  strategy/  validation/  verification/
+│   │   └── mcp-server/
 │   ├── mcp-servers/
-│   │   ├── memory/
-│   │   ├── codebase/
-│   │   ├── reasoning/
-│   │   └── prd/
-│   ├── orchestrator/              Top-level CLI / agent SDK driver
-│   └── plugin-distribution/       .claude-plugin manifests + marketplace.json
-├── parity-oracle/                 Day-0 fixtures + harness for cross-language parity tests
-├── worktrees/                     Local git-worktree mounts (gitignored)
+│   │   ├── memory/                 MCP server for memory
+│   │   ├── codebase/               MCP server for codebase
+│   │   ├── reasoning/              MCP server for reasoning agents
+│   │   └── prd/                    MCP server for PRD pipeline
+│   ├── orchestrator/               Top-level CLI / agent SDK driver
+│   └── parity-runner/              Cross-language parity test runner
+├── parity-oracle/                  Fixtures + harness for cortex / codebase / prd parity
+├── worktrees/                      Local git-worktree mounts (gitignored)
+├── scripts/
+│   ├── spawn-worktree.sh           Create an isolated worktree for an engineer task
+│   ├── dispatch-engineer.sh        Atomic worktree spawn + install + path print
+│   ├── parity-dual-run.sh          Run TS + reference and diff outputs
+│   ├── audit-migration.sh          Track port-pending markers across the codebase
+│   ├── check-layer-imports.ts      Layer-rule enforcement
+│   └── check-source-citations.sh   Numeric-constant citation audit
 ├── docs/
-│   ├── MIGRATION_MANIFEST.md      Every artifact from every source repo, with disposition
-│   ├── WORKTREE_MISSION_TEMPLATE.md
-│   ├── PHASE_PLAN.md
-│   └── ADR/                       Decision records
+│   ├── CONTRIBUTING_WORKTREE_PROTOCOL.md   Worktree isolation protocol
+│   ├── audits/                              Periodic genius audits (Liskov, Feynman, Cochrane, …)
+│   └── ADR/                                 Decision records
+├── .husky/
+│   ├── pre-commit                  Source-citation + lint + typecheck gates
+│   └── pre-push                    install + build + layer-check + citation + migration + test gates
 ├── pnpm-workspace.yaml
 ├── tsconfig.base.json
+├── vitest.config.ts
 └── .github/workflows/
 ```
 
 ---
 
-## How parallel worktrees work in this repo
+## Workflow — parallel engineer dispatches
 
-Each Cortex module being ported runs in its own git worktree under `worktrees/<branch>/`. Spawn one with:
+Every parallel engineer dispatch runs in its own isolated git worktree under `worktrees/<branch>/` to prevent cross-contamination. Spawn one with:
 
 ```bash
-./scripts/spawn-worktree.sh <module-name>
-# e.g.
-./scripts/spawn-worktree.sh recall
+bash scripts/dispatch-engineer.sh <branch>
+# Prints: ENGINEER_WORKTREE_PATH=/.../worktrees/<slug>
 ```
 
-This creates `worktrees/port-cortex-recall/`, branched from `main`, with the worktree's mission file pre-populated.
+The script aborts if the parent worktree is dirty (no contamination escapes), creates the worktree, runs `pnpm install`, and prints the path for the orchestrator to dispatch into. See [`docs/CONTRIBUTING_WORKTREE_PROTOCOL.md`](./docs/CONTRIBUTING_WORKTREE_PROTOCOL.md) for the full protocol enforced by the pre-commit and pre-push hooks.
 
-Each worktree has its own genius panel + engineering review running per `docs/WORKTREE_MISSION_TEMPLATE.md`. Merge order is fixed in `docs/PHASE_PLAN.md` §4.
+---
+
+## Pre-push gates (mirror CI)
+
+`.husky/pre-push` runs the same gates CI runs, before the push leaves the laptop:
+
+1. `pnpm install --frozen-lockfile` — lockfile sync assertion
+2. `pnpm build` — TS + Rust workspace
+3. `pnpm layer-check` — Clean Architecture dependency rule
+4. `pnpm source-citation-check`
+5. `pnpm audit-migration` — port-pending tracking
+6. `pnpm test`
+
+Bypass:
+- `git push --no-verify` — one-off skip
+- `PRE_PUSH_SKIP_TESTS=1 git push` — skip just `pnpm test` (~30s saved)
+- `HUSKY=0 git push` — disable all hooks
 
 ---
 
@@ -84,7 +118,4 @@ Each worktree has its own genius panel + engineering review running per `docs/WO
 
 [MIT](./LICENSE) — Copyright (c) 2026 Clement Deust.
 
-The four source repos this monorepo unifies (Cortex, automatised-pipeline,
-zetetic-team-subagents, prd-spec-generator) are each individually MIT-licensed.
-This unified repo carries the same license. See each `cutover-staging/*/MIGRATED.md`
-for per-repo attribution notes.
+The four source repos this monorepo unifies (Cortex, automatised-pipeline, zetetic-team-subagents, prd-spec-generator) are each individually MIT-licensed. This unified repo carries the same license. See each `cutover-staging/*/MIGRATED.md` for per-repo attribution notes.
