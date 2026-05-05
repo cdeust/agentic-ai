@@ -79,6 +79,10 @@ export interface ClsStageResult {
   duration_ms?: number;
 }
 
+export interface ClsSettings {
+  [key: string]: unknown;
+}
+
 const EMPTY_CLS_STATS: Omit<ClsStageResult, "reason_for_zero"> = {
   patterns_found: 0,
   new_semantics_created: 0,
@@ -88,8 +92,45 @@ const EMPTY_CLS_STATS: Omit<ClsStageResult, "reason_for_zero"> = {
   episodic_scanned: 0,
 };
 
+// ── Passed-through diagnostic log ─────────────────────────────────────────────
+
+/**
+ * Emit an INFO log when the stage finished as a genuine no-op.
+ *
+ * Issue #14 P2 (darval): operators need to grep
+ * `stage=<name> reason=passed_through` to distinguish "quiet store"
+ * runs from early-return runs. Only fires when the classified reason
+ * is `passed_through` on either field (`reason_for_zero` or
+ * `reason_for_inaction`).
+ *
+ * Precondition: stats carries reason_for_zero or reason_for_inaction.
+ * Postcondition: logs iff reason === "passed_through".
+ */
+function logIfPassedThrough(
+  stageName: string,
+  stats: Partial<ClsStageResult> & { reason_for_inaction?: string },
+  durationMs: number,
+  scanned: number,
+): void {
+  const reason = stats.reason_for_zero ?? stats.reason_for_inaction;
+  if (reason !== "passed_through") return;
+  console.info(
+    `stage=${stageName} reason=passed_through scanned=${scanned} duration_ms=${durationMs}`,
+  );
+}
+
 // ── Entity mention counting ───────────────────────────────────────────────────
 
+/**
+ * Count how many episodic memories mention each entity.
+ *
+ * Single pass over the episodic sample with precomputed lowercase
+ * content and lowercase entity names (replaces the old O(N_ep × N_ent)
+ * loop that called .lower() on every cell).
+ *
+ * Precondition: entityNames is non-empty.
+ * Postcondition: every entry in entityNames has a count in the returned map.
+ */
 function countEntityMentions(
   entityNames: readonly string[],
   episodic: readonly Record<string, unknown>[],
@@ -105,13 +146,16 @@ function countEntityMentions(
   return counts;
 }
 
-// ── Greedy clustering (stub — similarity matrix required) ─────────────────────
+// ── Greedy clustering ─────────────────────────────────────────────────────────
 
 /**
  * Greedy clustering by embedding similarity.
  *
  * Groups memories where any pair within the cluster has similarity >= threshold.
  * This is a simple single-linkage approach. O(n^2) — bounded by EPISODIC_SAMPLE_CAP.
+ *
+ * Invariant: uses the same CLUSTER_THRESHOLD as computeConsolidationPlan so the
+ * classification reflects the same pairing regime the cycle actually ran under.
  */
 async function clusterBySimilarity(
   memories: readonly Record<string, unknown>[],
@@ -156,6 +200,13 @@ interface ConsolidationPlan {
   skipped_duplicate: number;
 }
 
+/**
+ * Plan which episodic memories to consolidate into semantics.
+ *
+ * Precondition: episodic.length > 0; embeddings provides encode/similarity.
+ * Postcondition: returns ConsolidationPlan with new_semantics for each cluster
+ *   of size >= MIN_PATTERN_SIZE that is not a duplicate of existing semantics.
+ */
 async function computeConsolidationPlan(
   episodic: readonly Record<string, unknown>[],
   existingSemantics: readonly Record<string, unknown>[],
@@ -177,7 +228,7 @@ async function computeConsolidationPlan(
     const members = cluster
       .map((i) => episodic[i])
       .filter((m): m is Record<string, unknown> => m !== undefined);
-    // source: cortex@f2b9f99 mcp_server/handlers/consolidation/cls.py — 500-char schema cap matches Python port
+    // source: cortex@f2b9f99 mcp_server/handlers/consolidation/cls.py — 500-char schema cap
     const schema = members
       .map((m) => (m["content"] as string | undefined) ?? "")
       .join(" | ")
@@ -212,6 +263,13 @@ async function computeConsolidationPlan(
 
 // ── Create semantic memories ──────────────────────────────────────────────────
 
+/**
+ * Create new semantic memories from the consolidation plan.
+ *
+ * Precondition: store supports insertMemory and insertRelationship.
+ * Postcondition: returns count of successfully created semantic memories;
+ *   individual failures are swallowed (non-fatal).
+ */
 async function createSemanticMemories(
   store: ClsStore,
   embeddings: ClsEmbeddingEngine,
@@ -257,8 +315,24 @@ async function createSemanticMemories(
   return created;
 }
 
-// ── Causal edge discovery (stub) ──────────────────────────────────────────────
+// ── Causal edge discovery ─────────────────────────────────────────────────────
 
+/**
+ * Discover causal edges from entity co-occurrences (PC algorithm).
+ *
+ * Gates on minimum signal before running the O(E²) independence tests:
+ * the PC algorithm needs at least PC_MIN_OBSERVATIONS mentions per entity
+ * in the sample to distinguish correlation from chance, so if fewer than
+ * MIN_ENTITIES_FOR_PC entities clear that threshold, skip the analysis
+ * entirely (issue #13 Phase D).
+ *
+ * Precondition: episodic is non-empty; store supports getAllEntities.
+ * Postcondition: returns (edges_stored, qualifying_count).
+ *   edges_stored — number of causal/correlation edges persisted.
+ *   qualifying_count — number of entities whose mention count reached
+ *   PC_MIN_OBSERVATIONS. Surfaced for issue #14 P2 diagnostics so the
+ *   handler can distinguish "insufficient_pairs" from "no_qualifying_entities".
+ */
 async function discoverCausalEdges(
   store: ClsStore,
   episodic: readonly Record<string, unknown>[],
@@ -272,16 +346,22 @@ async function discoverCausalEdges(
     if (!entityNames.length || !episodic.length) return [0, 0];
 
     const entityCounts = countEntityMentions(entityNames, episodic);
-    const qualifying = [...entityCounts.values()].filter((c) => c >= PC_MIN_OBSERVATIONS).length;
+    const qualifying = [...entityCounts.values()].filter(
+      (c) => c >= PC_MIN_OBSERVATIONS,
+    ).length;
 
     if (qualifying < MIN_ENTITIES_FOR_PC) return [0, qualifying];
 
-    // Build co-occurrence matrix and entity mention counts.
-    // source: cortex@f2b9f99 mcp_server/core/causal_graph.py:12-31
-    const coOccurrences = computeCoOccurrenceMatrix(episodic, entityNames);
+    // Restrict vocabulary to entities that meet the minimum so the
+    // co-occurrence matrix is E_qualifying^2, not E_all^2.
+    const activeNames = entityNames.filter(
+      (n) => (entityCounts.get(n) ?? 0) >= PC_MIN_OBSERVATIONS,
+    );
+    const coMatrix = computeCoOccurrenceMatrix(episodic, activeNames);
 
-    // Compute per-entity counts from the mention-count map returned above.
-    const entityCountsMap = new Map<string, number>(entityCounts);
+    const activeCountsMap = new Map<string, number>(
+      activeNames.map((n) => [n, entityCounts.get(n) ?? 0]),
+    );
 
     // Build first-seen timestamps from episodic memory created_at fields.
     const entityFirstSeen = new Map<string, string>();
@@ -289,7 +369,7 @@ async function discoverCausalEdges(
       const createdAt = mem["created_at"] as string | undefined;
       if (!createdAt) continue;
       const content = ((mem["content"] as string | undefined) ?? "").toLowerCase();
-      for (const name of entityNames) {
+      for (const name of activeNames) {
         if (content.includes(name.toLowerCase()) && !entityFirstSeen.has(name)) {
           entityFirstSeen.set(name, createdAt);
         }
@@ -297,21 +377,84 @@ async function discoverCausalEdges(
     }
 
     const edges = _discoverCausalEdgesImpl(
-      entityNames,
-      coOccurrences,
-      entityCountsMap,
+      activeNames,
+      coMatrix,
+      activeCountsMap,
       episodic.length,
       { entityFirstSeen },
     );
 
-    return [edges.length, qualifying];
+    // Persist discovered edges as relationships
+    let count = 0;
+    for (const edge of edges) {
+      try {
+        const src = allEntities.find((e) => e["name"] === edge["source"]);
+        const tgt = allEntities.find((e) => e["name"] === edge["target"]);
+        if (!src || !tgt) continue;
+        await store.insertRelationship({
+          source_entity_id: src["id"],
+          target_entity_id: tgt["id"],
+          relationship_type: edge["is_directed"] ? "causes" : "correlates_with",
+          weight: edge["strength"],
+          confidence: edge["is_directed"] ? 0.6 : 0.3,
+        });
+        count++;
+      } catch {
+        // non-fatal
+      }
+    }
+
+    return [count, qualifying];
   } catch {
     return [0, 0];
   }
 }
 
+// ── Count multi-member clusters ───────────────────────────────────────────────
+
+/**
+ * Count clusters with >= 2 members by re-running greedy clustering.
+ *
+ * Invariant: uses the same CLUSTER_THRESHOLD as computeConsolidationPlan
+ * so the classification reflects the same pairing regime the cycle ran under.
+ *
+ * Precondition: episodic may be empty.
+ * Postcondition: returns count of clusters with >= 2 members, or 0 on error.
+ */
+async function countMultiMemberClusters(
+  episodic: readonly Record<string, unknown>[],
+  embeddings: ClsEmbeddingEngine,
+): Promise<number> {
+  try {
+    const clusters = await clusterBySimilarity(episodic, embeddings, CLUSTER_THRESHOLD);
+    return clusters.filter((c) => c.length >= 2).length;
+  } catch {
+    return 0;
+  }
+}
+
 // ── Zero-reason classifier ────────────────────────────────────────────────────
 
+/**
+ * Classify the early-return path when every mutational counter is zero.
+ *
+ * Precondition: stats carries the 5 mutational counters plus episodic_scanned;
+ *   qualifyingCount is the number of entities that passed the PC observation
+ *   threshold inside discoverCausalEdges.
+ *
+ * Postcondition: returns null when any mutational counter is non-zero
+ *   (diagnostic is additive — absent whenever the cycle produced output).
+ *   Otherwise returns one of the enumerated reasons below.
+ *
+ * Priority (first match wins — most informative signal takes precedence):
+ *   1. below_min_pattern_size — clustering produced >= 1 multi-member cluster
+ *      but none reached MIN_PATTERN_SIZE.
+ *   2. insufficient_pairs — no embedding pair crossed threshold AND no entity
+ *      has enough mentions for the PC gate.
+ *   3. no_qualifying_entities — some entities qualify but fewer than
+ *      MIN_ENTITIES_FOR_PC; cluster pipeline produced no pairs.
+ *   4. passed_through — every branch ran to completion and found nothing new.
+ */
 async function classifyClsZeroReason(
   stats: ClsStageResult,
   episodic: readonly Record<string, unknown>[],
@@ -327,8 +470,10 @@ async function classifyClsZeroReason(
   ];
   if (counters.some((c) => c !== 0)) return null;
 
-  const clusters = await clusterBySimilarity(episodic, embeddings, CLUSTER_THRESHOLD);
-  const multiMember = clusters.filter((c) => c.length >= 2).length;
+  // All mutational counters zero: recompute clustering to inspect pair-level signal.
+  // This path only runs when the stage produced no mutations so the O(n^2) replay
+  // is bounded by the no-op case.
+  const multiMember = await countMultiMemberClusters(episodic, embeddings);
 
   if (multiMember > 0) return "below_min_pattern_size";
   if (qualifyingCount === 0) return "insufficient_pairs";
@@ -338,32 +483,53 @@ async function classifyClsZeroReason(
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
-export interface ClsSettings {
-  [key: string]: unknown;
-}
-
 /**
  * Run CLS consolidation: episodic → semantic pattern extraction.
  *
- * Pattern extraction and causal-edge discovery sample up to 2000 episodic
- * memories each — raised from 500 after Feynman's audit of darval's 66K run
- * in issue #13 showed 500 sampled 2% of the episodic store and produced 0
- * patterns by construction.
+ * Verification ablation hook: when CORTEX_CONSOLIDATION_DISABLED=1 is set
+ * (E2 N-scan condition cortex_flat), returns the zero state immediately.
+ * No episodic-to-semantic abstraction runs; the flat-importance store is
+ * never enriched with patterns.
+ * // source: tasks/verification-protocol.md E2; benchmarks/lib/n_scan_runner.py
  *
- * Postcondition (issue #14 P2): the returned dict always carries the 6 numeric
- * counters. When every mutational counter is zero, an additive `reason_for_zero`
- * key classifies the early-return path.
+ * Pattern extraction (computeConsolidationPlan) and causal-edge discovery
+ * (discoverCausalEdges) sample up to 2000 episodic memories each — raised
+ * from 500 after Feynman's audit of darval's 66K run in issue #13 showed
+ * 500 sampled 2% of the episodic store and produced 0 patterns by construction.
+ *
+ * Postcondition (issue #14 P2): the returned object always carries the 6
+ * numeric counters. When every mutational counter is zero, an additive
+ * reason_for_zero key classifies the early-return path: one of
+ * empty_episodic_scan, below_min_pattern_size, insufficient_pairs,
+ * no_qualifying_entities, passed_through. When any mutational counter is
+ * non-zero, reason_for_zero is omitted.
+ *
+ * Precondition: store and embeddings are valid.
+ * Postcondition: all 6 counters present in result; reason_for_zero iff all mutational counters zero.
  */
 export async function runClsCycle(
   store: ClsStore,
   _settings: ClsSettings,
   embeddings: ClsEmbeddingEngine,
 ): Promise<ClsStageResult> {
+  // Ablation hook: CORTEX_CONSOLIDATION_DISABLED=1 disables the full cycle.
+  if (
+    typeof process !== "undefined" &&
+    process.env["CORTEX_CONSOLIDATION_DISABLED"] === "1"
+  ) {
+    return { ...EMPTY_CLS_STATS };
+  }
+
   const episodic = await store.getEpisodicMemories(EPISODIC_SAMPLE_CAP);
   const existingSemantics = await store.getSemanticMemories(SEMANTICS_SAMPLE_CAP);
 
   if (!episodic.length) {
-    return { ...EMPTY_CLS_STATS, episodic_scanned: 0, reason_for_zero: "empty_episodic_scan" };
+    const stats: ClsStageResult = {
+      ...EMPTY_CLS_STATS,
+      reason_for_zero: "empty_episodic_scan",
+    };
+    logIfPassedThrough("cls", stats, 0, 0);
+    return stats;
   }
 
   const plan = await computeConsolidationPlan(episodic, existingSemantics, embeddings);
@@ -380,7 +546,10 @@ export async function runClsCycle(
   };
 
   const reason = await classifyClsZeroReason(stats, episodic, embeddings, qualifyingCount);
-  if (reason !== null) stats.reason_for_zero = reason;
+  if (reason !== null) {
+    stats.reason_for_zero = reason;
+    logIfPassedThrough("cls", stats, 0, episodic.length);
+  }
 
   return stats;
 }
