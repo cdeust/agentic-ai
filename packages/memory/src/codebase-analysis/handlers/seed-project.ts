@@ -199,14 +199,17 @@ export async function handler(
     };
   }
 
-  // Purge prior seeded memories before re-seeding
-  // source: cortex@ed33435 mcp_server/handlers/seed_project.py:179-180
+  // Purge prior seeded memories before re-seeding.
+  // Scope purge to this domain (issue #16): seeding repo-A must not
+  // wipe out repo-B's seeded memories. Domain authority ends at the
+  // project boundary; cross-domain effects are an externality.
+  // source: cortex@fdc78f7 mcp_server/handlers/seed_project.py:181-186 (issue #16)
   let purgedStale = 0;
   const storeExt = deps.store as unknown as {
-    deleteMemoriesByTag?: (tag: string) => number;
+    deleteMemoriesByTag?: (tag: string, domain?: string) => number;
   };
   if (typeof storeExt.deleteMemoriesByTag === "function") {
-    purgedStale = storeExt.deleteMemoriesByTag("seeded");
+    purgedStale = storeExt.deleteMemoriesByTag("seeded", domain);
   }
 
   const { stored, skipped, memoryIds } = storeDiscoveries(

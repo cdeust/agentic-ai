@@ -166,16 +166,27 @@ export class SqliteQueryMixin {
   }
 
   /**
-   * Delete all memories containing the given tag.
+   * Delete memories with the given tag, optionally scoped to a domain.
    *
-   * SQLite lacks jsonb operators — filter in Python then delete by ID.
+   * precondition: tag is a non-empty string; domain is undefined or non-empty.
+   * postcondition: returns the number of memory rows removed; rows removed iff
+   *   their tags list contains tag AND (domain is undefined OR row.domain
+   *   matches). domain=undefined preserves the legacy global-purge behavior
+   *   for callers that intentionally want it. Caller is responsible for
+   *   passing domain when scope matters (e.g. seed-project, which is
+   *   per-repo by design — issue #16).
    *
-   * source: cortex@ed33435 mcp_server/infrastructure/sqlite_store_queries.py:114-152
+   * SQLite lacks jsonb operators — filter in JS then delete by ID.
+   *
+   * source: cortex@fdc78f7 mcp_server/infrastructure/sqlite_store_queries.py:114-152 (issue #16)
    */
-  deleteMemoriesByTag(tag: string): number {
-    const rows = this._rawConn
-      .prepare("SELECT id, tags FROM memories")
-      .all() as Array<{ id: number; tags: string }>;
+  deleteMemoriesByTag(tag: string, domain?: string): number {
+    const rows = (domain === undefined
+      ? this._rawConn.prepare("SELECT id, tags FROM memories").all()
+      : this._rawConn
+          .prepare("SELECT id, tags FROM memories WHERE domain = ?")
+          .all(domain)
+    ) as Array<{ id: number; tags: string }>;
 
     const idsToDelete: number[] = [];
     for (const r of rows) {
