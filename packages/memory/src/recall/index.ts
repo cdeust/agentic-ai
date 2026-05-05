@@ -27,6 +27,14 @@ export {
   computeLevelWeights,
   recallHierarchicalHandler,
 } from "./recall-hierarchical-handler.js";
+export {
+  drillDownHandler,
+  type DrillDownDeps,
+  type DrillDownArgs,
+  type DrillDownResponse,
+  type DrillDownLeafChild,
+  type DrillDownClusterChild,
+} from "./fractal-drill-down.js";
 export { applyRules } from "./rules.js";
 export { DEFAULT_RRF_K, rrfFuseIds, rrfFuseScorePairs, rrfFuseSignals } from "./rrf.js";
 export * from "./types.js";
