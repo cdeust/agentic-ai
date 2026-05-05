@@ -5,13 +5,13 @@
  * credentials are required.
  *
  * Contracts verified per wiki-handlers.ts pre-/postconditions:
- *   - wikiSynthesizeHandler throws PortPendingError when db is null
+ *   - wikiSynthesizeHandler throws WikiUnavailableError when db is null
  *   - wikiSynthesizeHandler calls db.query (candidate enumeration)
  *   - wikiSynthesizeHandler calls insertDraft / updateDraft with real shapes
  *   - wikiSynthesizeHandler returns real counts (NOT zeros on non-empty input)
- *   - wikiPipelineHandler returns stages_run = [] when all sub-handlers are port-pending
- *   - wikiPipelineHandler captures per-stage PortPendingError without throwing
- *   - wikiPipelineHandler returns real stages with "port-pending" status
+ *   - wikiPipelineHandler returns stages_run = [] when all sub-handlers are unavailable
+ *   - wikiPipelineHandler captures per-stage WikiUnavailableError without throwing
+ *   - wikiPipelineHandler returns real stages with "unavailable" status
  *   - wikiRefineHandler calls llmClient.complete with required fields
  */
 
@@ -21,7 +21,7 @@ import {
   wikiSynthesizeHandler,
   wikiPipelineHandler,
   wikiRefineHandler,
-  PortPendingError,
+  WikiUnavailableError,
 } from "../../src/wiki/handlers/wiki-handlers.js";
 
 // ── DB stub factory ───────────────────────────────────────────────────────
@@ -121,15 +121,15 @@ function makeLlmClient(returnValue: string = '{"lead":"Refined lead.","sections"
 // ── wikiSynthesizeHandler tests ───────────────────────────────────────────
 
 describe("wikiSynthesizeHandler", () => {
-  it("throws PortPendingError when db is null", async () => {
+  it("throws WikiUnavailableError when db is null", async () => {
     await expect(
       wikiSynthesizeHandler({}, null, null),
-    ).rejects.toThrow(PortPendingError);
+    ).rejects.toThrow(WikiUnavailableError);
   });
 
-  it("PortPendingError names the specific missing dependency", async () => {
+  it("WikiUnavailableError names the specific missing dependency", async () => {
     const err = await wikiSynthesizeHandler({}, null, null).catch((e) => e);
-    expect(err).toBeInstanceOf(PortPendingError);
+    expect(err).toBeInstanceOf(WikiUnavailableError);
     expect(err.message).toContain("WikiDbClient");
     expect(err.message).toContain("pg_store_wiki");
   });
@@ -222,31 +222,30 @@ describe("wikiSynthesizeHandler", () => {
 
 describe("wikiPipelineHandler", () => {
   it("never returns stages_run: [] as a hardcoded constant", async () => {
-    // stages_run reflects real run outcomes; may be [] only when all are port-pending
+    // stages_run reflects real run outcomes; may be [] only when all are unavailable
     const result = await wikiPipelineHandler({}, null, null);
-    // All sub-handlers except synthesize throw PortPendingError;
-    // synthesize also throws (db is null). So stages_run = [].
-    // But the pipeline must NOT hardcode []; it must derive it from stage outcomes.
+    // All sub-handlers except synthesize throw WikiUnavailableError (db is null).
+    // But the pipeline must NOT hardcode []; it must derive from stage outcomes.
     expect(Array.isArray(result.stages_run)).toBe(true);
   });
 
-  it("captures PortPendingError per stage without throwing", async () => {
-    // All stages will throw PortPendingError (db is null, other handlers are stubs)
+  it("captures WikiUnavailableError per stage without throwing", async () => {
+    // All stages will throw WikiUnavailableError (db is null)
     const result = await wikiPipelineHandler({}, null, null);
     expect(result.stages).toBeDefined();
     const stageNames = Object.keys(result.stages);
     expect(stageNames.length).toBeGreaterThanOrEqual(5); // at least extract/resolve/emerge/synthesize/curate
   });
 
-  it("marks port-pending stages with status 'port-pending'", async () => {
+  it("marks unavailable stages with status 'unavailable'", async () => {
     const result = await wikiPipelineHandler({}, null, null);
-    // extract is PortPending
-    expect(result.stages["extract"]?.status).toBe("port-pending");
-    // synthesize is PortPending when db is null
-    expect(result.stages["synthesize"]?.status).toBe("port-pending");
+    // extract is unavailable (db is null)
+    expect(result.stages["extract"]?.status).toBe("unavailable");
+    // synthesize is unavailable when db is null
+    expect(result.stages["synthesize"]?.status).toBe("unavailable");
   });
 
-  it("includes reason string for port-pending stages", async () => {
+  it("includes reason string for unavailable stages", async () => {
     const result = await wikiPipelineHandler({}, null, null);
     const extractStage = result.stages["extract"];
     expect(extractStage?.reason).toBeDefined();
@@ -276,7 +275,7 @@ describe("wikiPipelineHandler", () => {
     expect(result.stages["compile"]).toBeDefined();
   });
 
-  it("returns pages_published = 0 when compile is port-pending", async () => {
+  it("returns pages_published = 0 when compile is unavailable", async () => {
     const result = await wikiPipelineHandler({}, null, null);
     expect(result.pages_published).toBe(0);
   });
@@ -285,10 +284,10 @@ describe("wikiPipelineHandler", () => {
 // ── wikiRefineHandler tests ───────────────────────────────────────────────
 
 describe("wikiRefineHandler", () => {
-  it("throws PortPendingError when llmClient is null", async () => {
+  it("throws WikiUnavailableError when llmClient is null", async () => {
     await expect(
       wikiRefineHandler({ draft_id: 1 }, null),
-    ).rejects.toThrow(PortPendingError);
+    ).rejects.toThrow(WikiUnavailableError);
   });
 
   it("calls llmClient.complete with system and prompt fields", async () => {

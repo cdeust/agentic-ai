@@ -149,13 +149,13 @@ describe("narrativeHandler — LlmClient injection", () => {
 // ── Tests: wikiRefineHandler with LLM client ──────────────────────────────────
 
 describe("wikiRefineHandler — LlmClient injection", () => {
-  it("throws PortPendingError when llmClient is null", async () => {
-    const { wikiRefineHandler, PortPendingError } = await import(
+  it("throws WikiUnavailableError when llmClient is null", async () => {
+    const { wikiRefineHandler, WikiUnavailableError } = await import(
       "../../src/wiki/handlers/wiki-stubs.js"
     );
     await expect(
       wikiRefineHandler({ draft_id: 1 }, null)
-    ).rejects.toBeInstanceOf(PortPendingError);
+    ).rejects.toBeInstanceOf(WikiUnavailableError);
   });
 
   it("calls llmClient.complete() when client is provided", async () => {
@@ -193,18 +193,18 @@ describe("wikiRefineHandler — LlmClient injection", () => {
 // ── Tests: wikiSynthesizeHandler real implementation (CRIT-B fix) ─────────────
 //
 // CRIT-B Phase 7: wikiSynthesizeHandler is now a real implementation.
-// Without a WikiDbClient it throws PortPendingError (NOT returns stub zeros).
+// Without a WikiDbClient it throws WikiUnavailableError (NOT returns stub zeros).
 
 describe("wikiSynthesizeHandler — CRIT-B real implementation", () => {
-  it("throws PortPendingError when db is null (correct contract)", async () => {
-    const { wikiSynthesizeHandler, PortPendingError } = await import("../../src/wiki/handlers/wiki-handlers.js");
-    await expect(wikiSynthesizeHandler({}, null, null)).rejects.toThrow(PortPendingError);
+  it("throws WikiUnavailableError when db is null (correct contract)", async () => {
+    const { wikiSynthesizeHandler, WikiUnavailableError } = await import("../../src/wiki/handlers/wiki-handlers.js");
+    await expect(wikiSynthesizeHandler({}, null, null)).rejects.toThrow(WikiUnavailableError);
   });
 
-  it("PortPendingError names WikiDbClient as the missing dependency", async () => {
-    const { wikiSynthesizeHandler, PortPendingError } = await import("../../src/wiki/handlers/wiki-handlers.js");
+  it("WikiUnavailableError names WikiDbClient as the missing dependency", async () => {
+    const { wikiSynthesizeHandler, WikiUnavailableError } = await import("../../src/wiki/handlers/wiki-handlers.js");
     const err = await wikiSynthesizeHandler({}, null, null).catch((e) => e);
-    expect(err).toBeInstanceOf(PortPendingError);
+    expect(err).toBeInstanceOf(WikiUnavailableError);
     expect(err.message).toContain("WikiDbClient");
   });
 
@@ -229,7 +229,7 @@ describe("wikiSynthesizeHandler — CRIT-B real implementation", () => {
 // ── Tests: wikiPipelineHandler real implementation (CRIT-B fix) ───────────────
 //
 // CRIT-B Phase 7: wikiPipelineHandler now returns real stages + stages_run,
-// capturing PortPendingError per stage rather than returning a fake success.
+// capturing WikiUnavailableError per stage rather than returning a fake success.
 
 describe("wikiPipelineHandler — CRIT-B real implementation", () => {
   it("returns stages object with per-stage results (not a note string)", async () => {
@@ -239,22 +239,22 @@ describe("wikiPipelineHandler — CRIT-B real implementation", () => {
     expect(typeof result.stages).toBe("object");
   });
 
-  it("stages_run is an array (empty when all are port-pending)", async () => {
+  it("stages_run is an array (empty when all stages are unavailable)", async () => {
     const { wikiPipelineHandler } = await import("../../src/wiki/handlers/wiki-handlers.js");
     const result = await wikiPipelineHandler({}, null, null);
     expect(Array.isArray(result.stages_run)).toBe(true);
   });
 
-  it("extract stage shows port-pending status", async () => {
+  it("extract stage shows unavailable status when db is null", async () => {
     const { wikiPipelineHandler } = await import("../../src/wiki/handlers/wiki-handlers.js");
     const result = await wikiPipelineHandler({}, null, null);
-    expect(result.stages["extract"]?.status).toBe("port-pending");
+    expect(result.stages["extract"]?.status).toBe("unavailable");
   });
 
-  it("synthesize stage shows port-pending when db is null", async () => {
+  it("synthesize stage shows unavailable when db is null", async () => {
     const { wikiPipelineHandler } = await import("../../src/wiki/handlers/wiki-handlers.js");
     const result = await wikiPipelineHandler({}, null, null);
-    expect(result.stages["synthesize"]?.status).toBe("port-pending");
+    expect(result.stages["synthesize"]?.status).toBe("unavailable");
   });
 });
 

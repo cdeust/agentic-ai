@@ -6,20 +6,24 @@
  */
 
 /**
- * Thrown when a handler's dependency (pg_store_wiki, LLM client, etc.)
- * is not yet wired.  Carries the specific missing dependency name so the
- * caller can distinguish "real error" from "not implemented yet".
+ * Thrown when a wiki handler cannot execute because a required runtime
+ * dependency is unavailable (DB connection failed, LLM client not wired,
+ * Pandoc not installed, etc.).  Carries the handler name, python source
+ * citation, and reason so the caller can surface a diagnostic.
  *
  * Precondition:  handlerName, pythonSource, and reason are non-empty strings.
- * Postcondition: this.name === "PortPendingError"; this.message contains all
- *                three arguments.
+ * Postcondition: this.name === "WikiUnavailableError"; this.message contains
+ *                all three arguments.
+ *
+ * source: mcp_server/handlers/wiki_*.py — error contract is implicit in every
+ *         handler that guards on a missing dependency.
  */
-export class PortPendingError extends Error {
+export class WikiUnavailableError extends Error {
   constructor(handlerName: string, pythonSource: string, reason: string) {
     super(
-      `port-pending: ${handlerName} requires ${reason}. ` +
+      `wiki-unavailable: ${handlerName} — ${reason}. ` +
       `Python source: ${pythonSource}`,
     );
-    this.name = "PortPendingError";
+    this.name = "WikiUnavailableError";
   }
 }
