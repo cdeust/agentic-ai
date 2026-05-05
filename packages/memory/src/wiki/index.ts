@@ -96,7 +96,6 @@ export * as wikiView from "./handlers/wiki-view.js";
 // Handlers (real implementations)
 export * from "./handlers/wiki-errors.js";
 export * from "./handlers/wiki-handlers.js";
-export * from "./handlers/wiki-pending-handlers.js";
 
 // Draft synthesizer (pure logic, no I/O)
 export * from "./draft-synthesizer.js";

@@ -1,7 +1,8 @@
 /**
- * @agentic/mcp-server-prd — Composition root stub.
+ * @agentic/mcp-server-prd — Composition root (skeletal).
  *
- * STATUS: port-pending
+ * STATUS: skeletal — @agentic/prd-pipeline migration approach defined (ADR-0005,
+ * ADR-0006); MCP tool registrations not yet wired.
  *
  * PATTERN: Stub-First Composition Root (see docs/PATTERNS.md)
  *
@@ -24,5 +25,5 @@
  * source: docs/ADR/0006-prd-bundle-preserve-vs-regenerate.md
  */
 
-// Stub export — satisfies TypeScript's "no empty module" requirement.
-export const PORT_STATUS = "pending" as const;
+// Skeletal export — MCP tool registrations will replace this.
+export const PORT_STATUS = "skeletal" as const;

@@ -1,21 +1,17 @@
 /**
- * @agentic/mcp-server-codebase — Composition root stub.
+ * @agentic/mcp-server-codebase — Composition root (skeletal).
  *
- * STATUS: port-pending
- *
- * PATTERN: Stub-First Composition Root (see docs/PATTERNS.md)
+ * STATUS: skeletal — Rust subprocess adapter wired (PR #19 + #39); MCP tool
+ * registrations are deferred to a dedicated codebase-server worktree.
  *
  * This package exposes the codebase intelligence subsystem as an MCP server.
- * The actual tool implementations depend on:
- *   1. The Rust subprocess adapter (packages/codebase/src/adapters/rust-pipeline-adapter.ts)
- *      defined in ADR-0001 (docs/ADR/0001-lsp-resolve-subprocess-chain.md)
- *      and ADR-0002 (docs/ADR/0002-analyze-codebase-serial-vs-parallel.md).
- *   2. The @agentic/codebase workspace package (packages/codebase/) which wraps
- *      the Rust binary via the CodebasePort interface.
+ * The adapter layer is live:
+ *   1. Rust subprocess adapter: packages/codebase/src/adapters/rust-pipeline-adapter.ts
+ *      (ADR-0001, ADR-0002)
+ *   2. @agentic/codebase wraps the Rust binary via CodebasePort.
  *
- * Phase 3 (port/inventory-automatised-pipeline) defined the contract.
- * Phase 5 lands this stub so the workspace topology is stable.
- * Phase 6 (or a dedicated codebase-server worktree) will wire the real adapter.
+ * Next step: register MCP tools (analyze_codebase, get_symbol, search_codebase, etc.)
+ * using the wired adapter.
  *
  * Design ADRs:
  *   ADR-0001 — LSP resolve subprocess chain
@@ -27,6 +23,5 @@
  * source: docs/ADR/0002-analyze-codebase-serial-vs-parallel.md
  */
 
-// Stub export — satisfies TypeScript's "no empty module" requirement.
-// The real composition root replaces this file.
-export const PORT_STATUS = "pending" as const;
+// Skeletal export — MCP tool registrations will replace this.
+export const PORT_STATUS = "skeletal" as const;

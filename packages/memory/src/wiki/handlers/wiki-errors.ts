@@ -2,7 +2,7 @@
  * Shared error types for wiki handlers.
  *
  * Kept in a separate module to avoid circular imports between
- * wiki-handlers.ts and wiki-pending-handlers.ts.
+ * wiki-handlers.ts and individual handler files.
  */
 
 /**

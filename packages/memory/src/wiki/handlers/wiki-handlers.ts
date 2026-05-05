@@ -31,13 +31,11 @@ import { loadRegistry } from "../schema-loader.js";
 import { synthesizeDraft, inferKind } from "../draft-synthesizer.js";
 import { WikiUnavailableError } from "./wiki-errors.js";
 export { WikiUnavailableError } from "./wiki-errors.js";
-import {
-  wikiExtractHandler,
-  wikiResolveHandler,
-  wikiEmergeHandler,
-  wikiCurateHandler,
-  wikiCompileHandler,
-} from "./wiki-pending-handlers.js";
+import { wikiExtractHandler } from "./wiki-extract-handler.js";
+import { wikiResolveHandler } from "./wiki-resolve-handler.js";
+import { wikiEmergeHandler } from "./wiki-emerge-handler.js";
+import { wikiCurateHandler } from "./wiki-curate-handler.js";
+import { wikiCompileHandler } from "./wiki-compile-handler.js";
 
 // ── wiki-refine (Path B: LLM-augmented) ──────────────────────────────────────
 // Implemented in wiki-refine-handler.ts (SRP: separate LLM-path from DB-path)
@@ -439,29 +437,55 @@ export async function wikiPipelineHandler(
   };
 }
 
-// ── Port-pending handlers (pg_store_wiki / other Phase 7 Group D+ deps) ──────
-// Re-exported from wiki-pending-handlers.ts to keep this file under 500 lines.
+// ── Remaining wiki handlers (real implementations) ────────────────────────────
 export {
   wikiEmergeHandler,
+  type WikiEmergeArgs,
+  type WikiEmergeResult,
+} from "./wiki-emerge-handler.js";
+export {
   wikiExtractHandler,
+  type WikiExtractArgs,
+  type WikiExtractResult,
+} from "./wiki-extract-handler.js";
+export {
   wikiCurateHandler,
+  type WikiCurateArgs,
+  type WikiCurateResult,
+} from "./wiki-curate-handler.js";
+export {
   wikiConsolidateHandler,
+  type WikiConsolidateArgs,
+  type WikiConsolidateResult,
+} from "./wiki-consolidate-handler.js";
+export {
   wikiResolveHandler,
+  type WikiResolveArgs,
+  type WikiResolveResult,
+} from "./wiki-resolve-handler.js";
+export {
   wikiSeedCodebaseHandler,
+  type WikiSeedCodebaseArgs,
+  type WikiSeedCodebaseResult,
+  type SeedImportPayload,
+} from "./wiki-seed-codebase-handler.js";
+export {
   wikiExportHandler,
+  type WikiExportArgs,
+  type WikiExportResult,
+} from "./wiki-export-handler.js";
+export {
   wikiCompileHandler,
+  type WikiCompileArgs,
+  type WikiCompileResult,
+} from "./wiki-compile-handler.js";
+export {
   wikiMigrateHandler,
+  type WikiMigrateArgs,
+  type WikiMigrateResult,
+} from "./wiki-migrate-handler.js";
+export {
   wikiApiHandler,
-} from "./wiki-pending-handlers.js";
-export type {
-  WikiEmergeArgs,
-  WikiExtractArgs,
-  WikiCurateArgs,
-  WikiConsolidateArgs,
-  WikiResolveArgs,
-  WikiSeedCodebaseArgs,
-  WikiExportArgs,
-  WikiCompileArgs,
-  WikiMigrateArgs,
-  WikiApiArgs,
-} from "./wiki-pending-handlers.js";
+  type WikiApiArgs,
+  type WikiApiResult,
+} from "./wiki-api-handler.js";

@@ -11,8 +11,7 @@
  *   - recall: calls real recallHandler with MemoryStore + EmbeddingEngine.
  *   - recall_hierarchical: calls real recallHierarchicalHandler.
  *   - navigate_memory: calls real graph navigate handler via GraphPort.
- *   - drill_down: throws PortPendingError — blocked on fractal port.
- *     Blocker: mcp_server/core/fractal.py::drill_down not yet ported to TS.
+ *   - drill_down: calls real drillDownHandler from @agentic/memory/recall/fractal-drill-down.js.
  *
  * source: worktrees/port-inventory-cortex/inventory/MCP_TOOLS.md §Tier1Memory §Nav
  * source: packages/memory/src/recall/recall-handler.ts (recallHandler)
@@ -59,7 +58,7 @@ function errorText(tool: string, err: unknown): { content: Array<{ type: "text";
  *
  * precondition:  deps.store is a live MemoryStore; deps.embedder may be null.
  * postcondition: 4 tools registered; recall/recall_hierarchical/navigate_memory
- *   call real handlers; drill_down throws PortPendingError with specific blocker.
+ *   call real handlers; drill_down calls the real drillDownHandler.
  *
  * source: MCP_TOOLS.md §"recall", §"recall_hierarchical", §"navigate_memory",
  *         §"drill_down"
