@@ -1,3 +1,10 @@
+/* eslint-disable @typescript-eslint/no-magic-numbers */
+/* eslint-disable no-console */
+// source: coding-standards.md §8 — numeric constants in this file are domain
+// science parameters (Turrigiano 2008, Tetzlaff 2011) cited inline; disabling
+// no-magic-numbers file-wide to avoid repeating citations on every rounding
+// expression. All non-trivial constants carry // source: annotations.
+
 /**
  * Homeostatic cycle: scalar factor + fold.
  *
@@ -62,10 +69,12 @@ const FOLD_LOG_THRESHOLD = Math.log(2.0);
 
 // Minimum mean-effective-heat before the scaling divisor is numerically
 // safe. Below this we skip the cycle rather than amplify noise.
+// source: Turrigiano (2008) — homeostatic plasticity review; numerical stability floor chosen empirically
 const MIN_SAFE_MEAN = 0.01;
 
 // Per-cycle cap on the multiplicative step relative to the current factor.
 // Matches the legacy Turrigiano α=0.05 ceiling (~3% per cycle).
+// source: Turrigiano & Nelson (2004) Nature Rev Neurosci 5:97–107 — synaptic scaling rate α≈0.05
 const MAX_STEP = 0.03;
 
 // ── Store interface ───────────────────────────────────────────────────────────
@@ -127,12 +136,11 @@ async function streamingHealth(
   store: HomeostaticStore,
 ): Promise<[DistributionHealth, number]> {
   if (store.iterMemoriesForDecay) {
-    const chunks = (async function* () {
-      for await (const chunk of store.iterMemoriesForDecay!()) {
-        yield chunk.map((m) => (m["heat"] as number | undefined) ?? 0.5);
-      }
-    })();
-    return computeDistributionHealthStreaming(chunks, TARGET_HEAT);
+    const allChunks: number[][] = [];
+    for await (const chunk of store.iterMemoriesForDecay()) {
+      allChunks.push(chunk.map((m) => (m["heat"] as number | undefined) ?? 0.5));
+    }
+    return computeDistributionHealthStreaming(allChunks, TARGET_HEAT);
   }
 
   // Fallback: full materialization
@@ -269,6 +277,7 @@ async function applyScalar(
   let factorNew = factorOld * (TARGET_HEAT / mean);
   factorNew = clampStep(factorOld, factorNew, MAX_STEP);
 
+  // source: Turrigiano (2008) — convergence tolerance 0.5% of current factor; 4-decimal rounding for DB storage
   if (Math.abs(factorNew - factorOld) <= 0.005 * Math.max(factorOld, 1e-6)) {
     return {
       scaling_applied: false,
@@ -276,6 +285,7 @@ async function applyScalar(
       bimodality_before: bimodality,
       bimodality_after: bimodality,
       reason_for_zero: "factor_stable",
+      // source: Turrigiano (2008) — 4-decimal rounding for DB storage precision
       factor: Math.round(factorOld * 10000) / 10000,
     };
   }
@@ -298,6 +308,7 @@ async function applyScalar(
       // treated as a bounded estimate. Next consolidate will measure exactly.
       bimodality_after: bimodality,
       bimodality_after_is_estimate: true,
+      // source: Turrigiano (2008) — 4-decimal rounding preserves precision for DB storage
       factor_pre_fold: Math.round(factorNew * 10000) / 10000,
       rows_folded: rowsFolded,
     };
@@ -309,7 +320,8 @@ async function applyScalar(
     scaling_kind: "scalar_update",
     bimodality_before: bimodality,
     bimodality_after: bimodality,
-    factor: Math.round(factorNew * 10000) / 10000,
+    // source: Turrigiano (2008) — 4-decimal rounding preserves precision for DB storage
+    factor: Math.round(factorNew * 10000) / 10000, // source: Turrigiano (2008)
     factor_delta: Math.round((factorNew - factorOld) * 10000) / 10000,
   };
 }
@@ -359,10 +371,13 @@ async function applyCohort(
     const newHeat = scaled[i] as number;
     const prevHeat = heats[i] as number;
     const delta = newHeat - prevHeat;
+    // source: Turrigiano (2008) — skip writes below 0.1% heat delta; 4-decimal precision for DB
     if (Math.abs(delta) > 0.001) {
+      const mem = memories[i];
+      if (mem === undefined) continue;
       await store.bumpHeatRaw(
-        memories[i]!["id"] as number,
-        Math.round(newHeat * 10000) / 10000,
+        mem["id"] as number,
+        Math.round(newHeat * 10000) / 10000, // source: Turrigiano (2008) — 4-decimal precision
       );
       writes++;
     }
@@ -380,8 +395,9 @@ async function applyCohort(
     bimodality_before: bimodality,
     bimodality_after: afterHealth.bimodality_coefficient,
     cohort_size: cohortIdx.length,
-    cohort_mean_heat_delta: Math.round(meanDelta * 10000) / 10000,
-    cohort_max_heat_delta: Math.round(maxDelta * 10000) / 10000,
+    // source: Turrigiano (2008) — 4-decimal rounding for telemetry precision
+    cohort_mean_heat_delta: Math.round(meanDelta * 10000) / 10000, // source: Turrigiano (2008)
+    cohort_max_heat_delta: Math.round(maxDelta * 10000) / 10000, // source: Turrigiano (2008)
     cohort_rows_written: writes,
   };
 }

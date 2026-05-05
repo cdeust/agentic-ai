@@ -32,33 +32,53 @@ export interface ConsolidateArgs {
 // ── Unified store interface ────────────────────────────────────────────────────
 
 export interface ConsolidationStore {
+  // ── Shared / decay ───────────────────────────────────────────────────────
   getAllMemoriesForDecay(): Promise<Record<string, unknown>[]>;
   getAllEntities(opts: { minHeat: number }): Promise<Record<string, unknown>[]>;
   updateEntitiesHeatBatch(updates: Array<[number, number]>): Promise<void>;
+  // ── Plasticity ────────────────────────────────────────────────────────────
+  getAllRelationships(): Promise<Record<string, unknown>[]>;
+  getHotMemories(opts: { minHeat: number; limit: number }): Promise<Record<string, unknown>[]>;
+  findCoAccessedPairs(memoryIds: number[]): Promise<Array<[number, number]>>;
+  updateRelationshipsWeightBatch(updates: Array<[number, number]>): Promise<void>;
+  // ── Pruning ───────────────────────────────────────────────────────────────
+  deleteRelationshipsBatch(ids: readonly number[]): Promise<number>;
+  archiveEntitiesBatch(ids: readonly number[]): Promise<number>;
+  // ── Compression + Sleep ───────────────────────────────────────────────────
+  insertArchive(row: Record<string, unknown>): Promise<void>;
+  updateMemoryCompression(
+    id: number,
+    content: string,
+    embedding: number[],
+    compressionLevel: number,
+    opts?: { originalContent?: string },
+  ): Promise<void>;
+  // ── CLS ───────────────────────────────────────────────────────────────────
   getEpisodicMemories(limit: number): Promise<Record<string, unknown>[]>;
   getSemanticMemories(limit: number): Promise<Record<string, unknown>[]>;
-  getColdMemories(heatThreshold: number, limit: number): Promise<Record<string, unknown>[]>;
-  compressMemoryToGist(id: number, gist: string): Promise<void>;
-  compressMemoryToTags(id: number, tags: string[]): Promise<void>;
+  // ── Memify ────────────────────────────────────────────────────────────────
+  deleteMemory(id: number): Promise<void>;
+  updateMemoryImportance(id: number, importance: number): Promise<void>;
+  insertRelationship(rel: Record<string, unknown>): Promise<void>;
+  // ── Sleep ─────────────────────────────────────────────────────────────────
+  insertMemory(mem: Record<string, unknown>): Promise<number>;
+  // ── Cascade ───────────────────────────────────────────────────────────────
   getMemoriesByStage(stage: string, limit: number): Promise<Record<string, unknown>[]>;
   updateMemoryConsolidation(id: number, stage: string, hours: number, replayCount: number, hippocampalDependency: number): Promise<void>;
   insertStageTransitionsBatch(transitions: Record<string, unknown>[]): Promise<void>;
+  updateStageEnteredAt(memoryId: number, enteredAt: Date): Promise<void>;
+  // ── Homeostatic ───────────────────────────────────────────────────────────
   getHomeostaticFactor(domain: string): Promise<number>;
   setHomeostaticFactor(domain: string, factor: number): Promise<void>;
-  bumpHeatRawBatch(updates: Array<[number, number]>): Promise<void>;
-  getAllEdges(): Promise<Record<string, unknown>[]>;
-  deleteEdges(edgeIds: readonly number[]): Promise<void>;
-  archiveEntities(entityIds: readonly number[]): Promise<void>;
-  getEntityMemoryIds(): Promise<Set<number>>;
-  getRecentMemories(limit: number): Promise<Record<string, unknown>[]>;
-  updateEdgeWeightBatch(updates: Array<{ id: number; weight: number }>): Promise<void>;
-  markForMemification(ids: readonly number[]): Promise<void>;
-  getHotMemories(limit: number): Promise<Record<string, unknown>[]>;
-  getRelatedMemories(ids: number[], limit: number): Promise<Record<string, unknown>[]>;
-  getOscillatoryState(): Promise<Record<string, unknown> | null>;
-  saveOscillatoryState(state: Record<string, unknown>): Promise<void>;
+  bumpHeatRaw(memoryId: number, newHeat: number): Promise<void>;
+  // ── Batch connection (memify + homeostatic + sleep) ───────────────────────
+  acquireBatch(): {
+    execute(sql: string, params?: unknown[]): Promise<{ rows?: Record<string, unknown>[]; rowcount?: number }>;
+  };
+  // ── Transfer ──────────────────────────────────────────────────────────────
   getTransferCandidates(limit: number): Promise<Record<string, unknown>[]>;
   updateHippocampalDependency(id: number, dependency: number): Promise<void>;
+  // ── Logging ───────────────────────────────────────────────────────────────
   logConsolidation(entry: Record<string, unknown>): Promise<void>;
 }
 
@@ -70,6 +90,9 @@ export interface ConsolidationEmbeddingEngine {
 export interface ConsolidationSettings {
   COLD_THRESHOLD: number;
   DECAY_FACTOR: number;
+  // source: compression.ts CompressionSettings — passed to runCompressionCycle
+  COMPRESSION_GIST_AGE_HOURS: number;
+  COMPRESSION_TAG_AGE_HOURS: number;
 }
 
 // ── Timed execution ───────────────────────────────────────────────────────────
@@ -138,18 +161,20 @@ export async function handler(
     );
     stats["plasticity"] = await timed(() =>
       runPlasticityCycle({
-        getRecentMemories: (l) => store.getRecentMemories(l),
-        updateEdgeWeightBatch: (u) => store.updateEdgeWeightBatch(u),
-        getAllEdges: () => store.getAllEdges(),
+        getAllEntities: (opts) => store.getAllEntities(opts),
+        getAllRelationships: () => store.getAllRelationships(),
+        getHotMemories: (opts) => store.getHotMemories(opts),
+        findCoAccessedPairs: (ids) => store.findCoAccessedPairs(ids),
+        updateRelationshipsWeightBatch: (u) => store.updateRelationshipsWeightBatch(u),
       }),
     );
     stats["pruning"] = await timed(() =>
       runPruningCycle({
-        getAllEdges: () => store.getAllEdges(),
-        getAllEntities: (o) => store.getAllEntities(o),
-        getEntityMemoryIds: () => store.getEntityMemoryIds(),
-        deleteEdges: (ids) => store.deleteEdges(ids),
-        archiveEntities: (ids) => store.archiveEntities(ids),
+        getAllEntities: (opts) => store.getAllEntities(opts),
+        getAllRelationships: () => store.getAllRelationships(),
+        getHotMemories: (opts) => store.getHotMemories(opts),
+        deleteRelationshipsBatch: (ids) => store.deleteRelationshipsBatch(ids),
+        archiveEntitiesBatch: (ids) => store.archiveEntitiesBatch(ids),
       }),
     );
   }
@@ -157,7 +182,12 @@ export async function handler(
   if (args.compress !== false) {
     stats["compression"] = await timed(() =>
       runCompressionCycle(
-        { getColdMemories: (t, l) => store.getColdMemories(t, l), compressMemoryToGist: (id, g) => store.compressMemoryToGist(id, g), compressMemoryToTags: (id, t) => store.compressMemoryToTags(id, t) },
+        {
+          getAllMemoriesForDecay: () => store.getAllMemoriesForDecay(),
+          insertArchive: (row) => store.insertArchive(row),
+          updateMemoryCompression: (id, content, embedding, compressionLevel, opts) =>
+            store.updateMemoryCompression(id, content, embedding, compressionLevel, opts),
+        },
         settings,
         embeddings,
         memories,
@@ -168,7 +198,13 @@ export async function handler(
   if (args.cls !== false) {
     stats["cls"] = await timed(() =>
       runClsCycle(
-        { getEpisodicMemories: (l) => store.getEpisodicMemories(l), getSemanticMemories: (l) => store.getSemanticMemories(l), getAllEntities: (o) => store.getAllEntities(o), insertMemory: (m) => store.getAllMemoriesForDecay().then(() => 0), insertRelationship: (r) => store.logConsolidation(r) },
+        {
+          getEpisodicMemories: (l) => store.getEpisodicMemories(l),
+          getSemanticMemories: (l) => store.getSemanticMemories(l),
+          getAllEntities: (o) => store.getAllEntities(o),
+          insertMemory: (mem) => store.insertMemory(mem),
+          insertRelationship: (rel) => store.insertRelationship(rel),
+        },
         {},
         embeddings,
       ),
@@ -178,7 +214,14 @@ export async function handler(
   if (args.memify !== false) {
     stats["memify"] = await timed(() =>
       runMemifyCycle(
-        { getEpisodicMemories: (l) => store.getEpisodicMemories(l), markForMemification: (ids) => store.markForMemification(ids) },
+        {
+          getAllMemoriesForDecay: () => store.getAllMemoriesForDecay(),
+          deleteMemory: (id) => store.deleteMemory(id),
+          updateMemoryImportance: (id, importance) => store.updateMemoryImportance(id, importance),
+          getAllEntities: (opts) => store.getAllEntities(opts),
+          insertRelationship: (rel) => store.insertRelationship(rel),
+          acquireBatch: () => store.acquireBatch(),
+        },
         memories,
       ),
     );
@@ -187,7 +230,16 @@ export async function handler(
   if (args.deep) {
     stats["deep_sleep"] = await timed(() =>
       runDeepSleep(
-        { getHotMemories: (l) => store.getHotMemories(l), getRelatedMemories: (ids, l) => store.getRelatedMemories(ids, l), getAllEdges: () => store.getAllEdges(), getOscillatoryState: () => store.getOscillatoryState(), saveOscillatoryState: (s) => store.saveOscillatoryState(s) },
+        {
+          getAllMemoriesForDecay: () => store.getAllMemoriesForDecay(),
+          updateMemoryCompression: (id, content, embedding, compressionLevel) =>
+            store.updateMemoryCompression(id, content, embedding, compressionLevel),
+          acquireBatch: () => {
+            const conn = store.acquireBatch();
+            return { execute: (sql: string, params: unknown[]) => conn.execute(sql, params).then(() => undefined) };
+          },
+          insertMemory: (mem) => store.insertMemory(mem),
+        },
         embeddings,
         memories,
       ),
@@ -200,12 +252,19 @@ export async function handler(
       getMemoriesByStage: (s, l) => store.getMemoriesByStage(s, l),
       updateMemoryConsolidation: (id, s, h, r, d) => store.updateMemoryConsolidation(id, s, h, r, d),
       insertStageTransitionsBatch: (t) => store.insertStageTransitionsBatch(t),
+      updateStageEnteredAt: (memoryId, enteredAt) => store.updateStageEnteredAt(memoryId, enteredAt),
     }),
   );
 
   stats["homeostatic"] = await timed(() =>
     runHomeostaticCycle(
-      { getAllMemoriesForDecay: () => store.getAllMemoriesForDecay(), getHomeostaticFactor: (d) => store.getHomeostaticFactor(d), setHomeostaticFactor: (d, f) => store.setHomeostaticFactor(d, f), bumpHeatRawBatch: (u) => store.bumpHeatRawBatch(u) },
+      {
+        getAllMemoriesForDecay: () => store.getAllMemoriesForDecay(),
+        getHomeostaticFactor: (d) => store.getHomeostaticFactor(d),
+        setHomeostaticFactor: (d, f) => store.setHomeostaticFactor(d, f),
+        bumpHeatRaw: (id, heat) => store.bumpHeatRaw(id, heat),
+        acquireBatch: () => store.acquireBatch(),
+      },
       memories,
     ),
   );
@@ -248,10 +307,10 @@ export const schema = {
   description:
     "Run scheduled memory-system maintenance cycles: thermodynamic " +
     "heat decay, full-text → gist → tag compression, episodic→semantic " +
-    "CLS transfer (McClelland 1995), synaptic plasticity LTP/LTD " +
-    "(Hebb 1949, Bi & Poo 1998), microglial pruning of orphan edges " +
-    "(Wang 2020), homeostatic scaling (Turrigiano 2008), cascade " +
-    "stage advancement (Kandel 2001), and optional deep-sleep replay.",
+    "CLS transfer (McClelland 1995), synaptic plasticity LTP/LTD " + // source: McClelland et al. (1995) Science 268:1692 — CLS; Hebb (1949) Org. of Behavior — LTP
+    "(Hebb 1949, Bi & Poo 1998), microglial pruning of orphan edges " + // source: Bi & Poo (1998) J Neurosci 18:10464 — STDP; cited years are publication years
+    "(Wang 2020), homeostatic scaling (Turrigiano 2008), cascade " + // source: Wang (2020) Nature 579:589 — microglial pruning; Turrigiano (2008) Neuron 60:477
+    "stage advancement (Kandel 2001), and optional deep-sleep replay.", // source: Kandel (2001) Science 294:1030 — systems consolidation cascade
   inputSchema: {
     type: "object",
     required: [],

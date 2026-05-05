@@ -109,6 +109,13 @@ async function saveCheckpointAndCascade(
           ).then(() => undefined),
         );
       },
+      updateStageEnteredAt: (memoryId, enteredAt) =>
+        store.runAsync((c) =>
+          c.query(
+            `UPDATE memories SET stage_entered_at=$2 WHERE id=$1`,
+            [memoryId, enteredAt.toISOString()],
+          ).then(() => undefined),
+        ),
     });
 
     if (result.advanced > 0) {
