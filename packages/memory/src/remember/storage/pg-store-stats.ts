@@ -38,11 +38,13 @@ export async function getDomainCounts(client: PoolClient): Promise<Record<string
 }
 
 // source: cortex@ed33435 mcp_server/infrastructure/pg_store_stats.py:50-55
+// eslint-disable-next-line @typescript-eslint/no-magic-numbers -- source: cortex@ed33435 mcp_server/infrastructure/pg_store_stats.py:51
 export async function getRecentMemories(client: PoolClient, limit = 20): Promise<Record<string, unknown>[]> {
   return (await client.query("SELECT * FROM memories ORDER BY created_at DESC LIMIT $1", [limit])).rows as Record<string, unknown>[];
 }
 
 // source: cortex@ed33435 mcp_server/infrastructure/pg_store_stats.py:57-65
+// eslint-disable-next-line @typescript-eslint/no-magic-numbers -- source: cortex@ed33435 mcp_server/infrastructure/pg_store_stats.py:58
 export async function getRecentlyAccessedMemories(client: PoolClient, limit = 20, minAccessCount = 1): Promise<Record<string, unknown>[]> {
   return (await client.query(
     "SELECT * FROM memories WHERE access_count >= $1 AND NOT is_stale ORDER BY last_accessed DESC LIMIT $2",
@@ -76,7 +78,8 @@ export async function insertStageTransitionsBatch(
 // source: cortex@ed33435 mcp_server/infrastructure/pg_store_stats.py:109-117
 export async function getMemoriesByStage(
   client: PoolClient, stage: string,
-  limit = 100, // source: cortex@ed33435 mcp_server/infrastructure/pg_store_stats.py:110
+// source: cortex@ed33435 mcp_server/infrastructure/pg_store_stats.py:110
+  limit = 100, // eslint-disable-line @typescript-eslint/no-magic-numbers
 ): Promise<Record<string, unknown>[]> {
   return (await client.query(
     "SELECT * FROM memories WHERE consolidation_stage = $1 ORDER BY hours_in_stage DESC LIMIT $2",
@@ -110,6 +113,7 @@ export async function loadOscillatoryState(client: PoolClient): Promise<string |
 }
 
 // source: cortex@ed33435 mcp_server/infrastructure/pg_store_stats.py:151-161
+// eslint-disable-next-line @typescript-eslint/no-magic-numbers -- source: cortex@ed33435 mcp_server/infrastructure/pg_store_stats.py:152
 export async function getSimilarMemoriesForInterference(client: PoolClient, domain: string, limit = 50): Promise<Record<string, unknown>[]> {
   return (await client.query(
     `SELECT id, embedding, heat, importance, consolidation_stage, directory_context, interference_score
@@ -131,7 +135,8 @@ export async function updateMemoryInterference(
 // source: cortex@ed33435 mcp_server/infrastructure/pg_store_stats.py:184-201
 export async function getEpisodicMemories(
   client: PoolClient, domain = "", directory = "",
-  limit = 500, // source: cortex@ed33435 mcp_server/infrastructure/pg_store_stats.py:185
+// source: cortex@ed33435 mcp_server/infrastructure/pg_store_stats.py:185
+  limit = 500, // eslint-disable-line @typescript-eslint/no-magic-numbers
 ): Promise<Record<string, unknown>[]> {
   const conditions = ["store_type = 'episodic'", "NOT is_stale"];
   const params: unknown[] = [];
@@ -144,7 +149,8 @@ export async function getEpisodicMemories(
 // source: cortex@ed33435 mcp_server/infrastructure/pg_store_stats.py:203-219
 export async function getSemanticMemories(
   client: PoolClient, domain = "",
-  limit = 500, // source: cortex@ed33435 mcp_server/infrastructure/pg_store_stats.py:204
+// source: cortex@ed33435 mcp_server/infrastructure/pg_store_stats.py:204
+  limit = 500, // eslint-disable-line @typescript-eslint/no-magic-numbers
 ): Promise<Record<string, unknown>[]> {
   if (domain) {
     return (await client.query(

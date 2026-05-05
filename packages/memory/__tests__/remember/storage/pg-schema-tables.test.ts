@@ -39,6 +39,14 @@ describe("MEMORIES_DDL", () => {
   });
 });
 
+describe("ENTITIES_DDL", () => {
+  it("creates entities table with heat and archived columns", () => {
+    expect(ENTITIES_DDL).toContain("CREATE TABLE IF NOT EXISTS entities");
+    expect(ENTITIES_DDL).toContain("heat");
+    expect(ENTITIES_DDL).toContain("archived");
+  });
+});
+
 describe("HOMEOSTATIC_STATE_DDL", () => {
   it("has domain TEXT PRIMARY KEY with factor CHECK", () => {
     expect(HOMEOSTATIC_STATE_DDL).toContain("domain     TEXT PRIMARY KEY");

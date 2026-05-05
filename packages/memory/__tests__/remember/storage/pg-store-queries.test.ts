@@ -123,7 +123,6 @@ describe("iterMemoriesForDecay", () => {
   });
   it("uses ORDER BY id for stable pagination", async () => {
     const client = { query: vi.fn().mockResolvedValue({ rows: [] }) } as unknown as PoolClient;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for await (const _ of iterMemoriesForDecay(client, 100)) { /* exhaust */ }
     expect((client.query as ReturnType<typeof vi.fn>).mock.calls[0][0]).toContain("ORDER BY id");
     expect((client.query as ReturnType<typeof vi.fn>).mock.calls[0][0]).toContain("OFFSET $2");

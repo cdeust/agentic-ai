@@ -196,7 +196,8 @@ export async function insertSchema(client: PoolClient, data: SchemaData): Promis
         data.schema_id, data.domain ?? "", data.label ?? "",
         JSON.stringify(data.entity_signature ?? {}), JSON.stringify(data.relationship_types ?? []),
         JSON.stringify(data.tag_signature ?? {}),
-        data.consistency_threshold ?? 0.7, data.formation_count ?? 0,
+// source: cortex@ed33435 mcp_server/infrastructure/pg_store_auxiliary.py:240
+        data.consistency_threshold ?? 0.7, data.formation_count ?? 0, // eslint-disable-line @typescript-eslint/no-magic-numbers
         data.assimilation_count ?? 0, data.violation_count ?? 0,
       ],
     );
@@ -208,9 +209,8 @@ export async function insertSchema(client: PoolClient, data: SchemaData): Promis
     // source: PostgreSQL error codes appendix — code 23505 = unique_violation
     // https://www.postgresql.org/docs/current/errcodes-appendix.html
     const code = (err as { code?: string }).code;
-    // source: PostgreSQL error codes appendix — 23505 = unique_violation
-    // https://www.postgresql.org/docs/current/errcodes-appendix.html
-    if (code === "23505") return _updateExistingSchema(client, data);
+    // source: PostgreSQL error codes appendix — https://www.postgresql.org/docs/current/errcodes-appendix.html
+    if (code === "23505") return _updateExistingSchema(client, data); // source: 23505 = unique_violation
     throw err;
   }
 }
@@ -225,7 +225,8 @@ async function _updateExistingSchema(client: PoolClient, data: SchemaData): Prom
       data.domain ?? "", data.label ?? "",
       JSON.stringify(data.entity_signature ?? {}), JSON.stringify(data.relationship_types ?? []),
       JSON.stringify(data.tag_signature ?? {}),
-      data.consistency_threshold ?? 0.7, data.formation_count ?? 0,
+// source: cortex@ed33435 mcp_server/infrastructure/pg_store_auxiliary.py:265
+      data.consistency_threshold ?? 0.7, data.formation_count ?? 0, // eslint-disable-line @typescript-eslint/no-magic-numbers
       data.assimilation_count ?? 0, data.violation_count ?? 0, data.schema_id,
     ],
   );

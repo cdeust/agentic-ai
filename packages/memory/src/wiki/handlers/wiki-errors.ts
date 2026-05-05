@@ -18,6 +18,17 @@
  * source: mcp_server/handlers/wiki_*.py — error contract is implicit in every
  *         handler that guards on a missing dependency.
  */
+/**
+ * Thrown when a wiki handler requires a port not yet ported to TS.
+ * source: cortex@ed33435 mcp_server/handlers/wiki_*.py — port-pending pattern
+ */
+export class PortPendingError extends Error {
+  constructor(handlerName: string, pythonSource: string, blocker?: string) {
+    super(`${handlerName} requires ${blocker ?? pythonSource}. Python source: ${pythonSource}`);
+    this.name = "PortPendingError";
+  }
+}
+
 export class WikiUnavailableError extends Error {
   constructor(handlerName: string, pythonSource: string, reason: string) {
     super(
