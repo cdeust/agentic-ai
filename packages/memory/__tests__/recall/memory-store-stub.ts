@@ -18,6 +18,13 @@ import { cosineSimilarity } from "../../src/recall/vector-similarity.js";
 
 // ── Seed data factory ──────────────────────────────────────────────────────
 
+// Stable created_at sentinel — using new Date().toISOString() here makes every
+// captured fixture diff against itself across runs (the value is embedded in
+// the recall handler's output). Frozen at the day this fixture set was first
+// captured to keep recall_*.tsoutput.json deterministic under git.
+// source: 2026-05-05 — recall fixture stabilization
+export const SEED_MEMORY_CREATED_AT = "2026-05-05T00:00:00.000Z";
+
 export function makeSeedMemory(
   id: number,
   content: string,
@@ -30,7 +37,7 @@ export function makeSeedMemory(
     domain: overrides.domain ?? "cortex",
     tags: overrides.tags ?? ["test"],
     store_type: overrides.store_type ?? "episodic",
-    created_at: overrides.created_at ?? new Date().toISOString(),
+    created_at: overrides.created_at ?? SEED_MEMORY_CREATED_AT,
     importance: overrides.importance ?? 0.5,
     surprise_score: overrides.surprise_score ?? 0.0,
     embedding: overrides.embedding ?? null,

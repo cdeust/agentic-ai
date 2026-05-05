@@ -115,6 +115,14 @@ function buildSeededStore(): InMemoryStore {
 
 // ── Capture helper ─────────────────────────────────────────────────────────
 
+// Stable capture-timestamp sentinel — `new Date().toISOString()` here causes
+// every CI run to rewrite the fixture and produce a meaningless diff. The
+// metadata stays human-readable; the date the fixtures were first frozen is
+// the only useful semantic. If a real re-capture is ever needed, bump this
+// constant and check in the resulting goldens together.
+// source: 2026-05-05 — recall fixture stabilization
+const FIXTURE_CAPTURED_AT = "2026-05-05T00:00:00.000Z";
+
 function captureExpected(name: string, output: unknown): void {
   const path = `${EXPECTED_DIR}/${name}.tsoutput.json`;
   mkdirSync(EXPECTED_DIR, { recursive: true });
@@ -123,7 +131,7 @@ function captureExpected(name: string, output: unknown): void {
     JSON.stringify(
       {
         _status: "TS-CAPTURED-NEEDS-PYTHON-VERIFICATION",
-        _captured_at: new Date().toISOString(),
+        _captured_at: FIXTURE_CAPTURED_AT,
         output,
       },
       null,
