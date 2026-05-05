@@ -14,7 +14,7 @@
  * Port of: mcp_server/handlers/consolidation/cascade.py
  */
 
-import { computeAdvancementReadiness } from "../cascade-advancement.js";
+import { computeAdvancementReadiness, type AdvancementReadinessResult } from "../cascade-advancement.js";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -110,12 +110,15 @@ async function tryAdvance(
 ): Promise<[Record<string, unknown> | null, HeartbeatStatus]> {
   const hours = computeRealHours(mem, now);
 
+  // computeAdvancementReadiness returns a union (tuple | struct) for backwards
+  // compatibility with positional callers. The opts-object form always returns
+  // the struct shape; cast narrows the union for downstream destructuring.
   const { ready, nextStage } = computeAdvancementReadiness(stageName, hours, {
     dopamineLevel: 1.0,
     replayCount: (mem["replay_count"] as number | undefined) ?? 0,
     schemaMatch: (mem["schema_match_score"] as number | undefined) ?? 0.0,
     importance: (mem["importance"] as number | undefined) ?? 0.5,
-  });
+  }) as AdvancementReadinessResult;
 
   if (ready && nextStage !== stageName) {
     // Compute stage_entered_at for the new stage:

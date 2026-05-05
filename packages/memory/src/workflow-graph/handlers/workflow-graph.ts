@@ -179,8 +179,13 @@ export async function buildWorkflowGraph(
     }
     const nativeSource = new WorkflowGraphNativeASTSource();
     if (nativeSource.enabled() && knownPaths.size > 0) {
-      const nativeSymbols = nativeSource.loadSymbols(knownPaths);
-      const nativeEdges = nativeSource.loadAstEdges(knownPaths);
+      // SymbolRow/AstEdgeRow are concrete interfaces; the aggregator stores
+      // both AP and native rows under the same Record<string, unknown>[] type.
+      // The cast is safe at runtime — every interface field is a plain
+      // string-keyed property — and required because TS does not implicitly
+      // widen typed interfaces to index-signature shapes.
+      const nativeSymbols = nativeSource.loadSymbols(knownPaths) as unknown as Record<string, unknown>[];
+      const nativeEdges = nativeSource.loadAstEdges(knownPaths) as unknown as Record<string, unknown>[];
       inputs.ast_symbols = [...inputs.ast_symbols, ...nativeSymbols];
       inputs.ast_edges = [...inputs.ast_edges, ...nativeEdges];
     }

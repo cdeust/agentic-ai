@@ -107,25 +107,29 @@ export function computeTemporalProximity(
  * source: cortex@ed33435 mcp_server/core/temporal.py:103-127
  */
 function tryParseNamedDate(dateStr: string): Date | null {
+  // Each regex's captures are required by its anchor pattern, so a match
+  // implies all groups are present. The `?? ""` / `?? "0"` fallbacks satisfy
+  // strict `noUncheckedIndexedAccess` without changing observable behavior:
+  // an unparseable input fails the isNaN() guard and returns null below.
   let m = dateStr.match(DD_MONTH_YYYY_RE);
   if (m) {
-    const monthNum = MONTH_NAMES[m[2].toLowerCase()];
+    const monthNum = MONTH_NAMES[(m[2] ?? "").toLowerCase()];
     if (monthNum) {
-      const d = new Date(parseInt(m[3], 10), monthNum - 1, parseInt(m[1], 10));
+      const d = new Date(parseInt(m[3] ?? "0", 10), monthNum - 1, parseInt(m[1] ?? "0", 10));
       if (!isNaN(d.getTime())) return d;
     }
   }
   m = dateStr.match(MONTH_DD_YYYY_RE);
   if (m) {
-    const monthNum = MONTH_NAMES[m[1].toLowerCase()];
+    const monthNum = MONTH_NAMES[(m[1] ?? "").toLowerCase()];
     if (monthNum) {
-      const d = new Date(parseInt(m[3], 10), monthNum - 1, parseInt(m[2], 10));
+      const d = new Date(parseInt(m[3] ?? "0", 10), monthNum - 1, parseInt(m[2] ?? "0", 10));
       if (!isNaN(d.getTime())) return d;
     }
   }
   const em = dateStr.match(EMBEDDED_ISO_RE);
   if (em) {
-    const d = new Date(parseInt(em[1], 10), parseInt(em[2], 10) - 1, parseInt(em[3], 10));
+    const d = new Date(parseInt(em[1] ?? "0", 10), parseInt(em[2] ?? "0", 10) - 1, parseInt(em[3] ?? "0", 10));
     if (!isNaN(d.getTime())) return d;
   }
   return null;
@@ -141,8 +145,10 @@ function tryParseNamedDate(dateStr: string): Date | null {
 export function parseDate(dateStr: string): Date | null {
   if (!dateStr) return null;
   const s = dateStr.trim();
-  // Try ISO 8601 (date-only portion)
-  const isoDate = s.replace("Z", "+00:00").split("T")[0];
+  // Try ISO 8601 (date-only portion). split("T")[0] is always defined (split on
+  // any non-empty string yields a non-empty array) but TS's noUncheckedIndexedAccess
+  // narrows it to string|undefined; fall back to the original string.
+  const isoDate = s.replace("Z", "+00:00").split("T")[0] ?? s;
   const isoAttempt = new Date(isoDate);
   if (!isNaN(isoAttempt.getTime())) return isoAttempt;
   return tryParseNamedDate(s);
