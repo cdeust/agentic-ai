@@ -1,18 +1,13 @@
 {
-  "_capture_status": "TO-BE-CAPTURED",
-  "_capture_blocked_reason": "Requires compiled Rust binary (commit 2cc3780). See RUNBOOK.md \u00a73.1.",
-  "_schema_shape": {
-    "status": "string == 'ok'",
-    "run_id": "string",
-    "finding_id": "string"
-  },
-  "_critical_invariants": [
-    "status == ok",
-    "run_id non-empty",
-    "finding_id non-empty"
-  ],
-  "_masked_fields": {
-    "run_id": "<MASKED:nondeterministic>",
-    "finding_id": "<MASKED:nondeterministic>"
-  }
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_source": "ai-automatised-pipeline commit 2cc3780 v0.0.4",
+  "_capture_date": "2026-05-04",
+  "_shape_source": "shape verified from live capture 2026-05-04 \u2014 stateful tool (run_id dependent)",
+  "_required_keys": [
+    "status",
+    "run_id",
+    "finding_id",
+    "stage",
+    "artifact_path"
+  ]
 }

@@ -1,20 +1,34 @@
 {
-  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
-  "_capture_blocked_reason": "Requires compiled Rust binary and fixture repo already indexed.",
-  "_capture_command": "AIPRD_PIPELINE_BIN=<path/to/binary> node scripts/capture_codebase_fixture.js query_graph_simple | node scripts/strip_nondeterministic.js > parity-oracle/codebase/expected/query_graph_simple.json",
-  "_schema_shape": {
-    "symbol": "object",
-    "callers": "array<object>",
-    "callees": "array<object>"
-  },
-  "_critical_invariants": [
-    "symbol.qualified_name == 'src.retrieval.recall'",
-    "callers is an array",
-    "callees is an array",
-    "callees contains at least src.store.MemoryStore (recall calls store.get_hot)"
+  "_capture_status": "CAPTURED",
+  "_capture_source": "ai-automatised-pipeline commit 2cc3780 v0.0.4",
+  "_capture_date": "2026-05-04",
+  "_fixture_notes": [
+    "added required graph_path field",
+    "replaced non-schema qualified_name+depth fields with Cypher query"
   ],
-  "_masked_fields": {
-    "symbol.line_start": "<MASKED:nondeterministic>",
-    "symbol.line_end": "<MASKED:nondeterministic>"
-  }
+  "columns": [
+    "n.name"
+  ],
+  "elapsed_ms": "<MASKED:nondeterministic>",
+  "result": "n.name\nrun_decay\nrun_compression\nrun_full_cycle\ndetect_domain\nresolve_domain",
+  "rows": [
+    [
+      "run_decay"
+    ],
+    [
+      "run_compression"
+    ],
+    [
+      "run_full_cycle"
+    ],
+    [
+      "detect_domain"
+    ],
+    [
+      "resolve_domain"
+    ]
+  ],
+  "stage": 3,
+  "status": "ok",
+  "tool": "query_graph"
 }

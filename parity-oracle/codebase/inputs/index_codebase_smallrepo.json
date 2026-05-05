@@ -15,6 +15,5 @@
   },
   "path": "<WORKTREE_ROOT>/parity-oracle/codebase/fixture-repos/small-python",
   "language": "python",
-  "top_symbols": null,
-  "top_processes": null
+  "output_dir": "<WORKTREE_ROOT>/parity-oracle/codebase/fixture-repos/small-python/_graph_out"
 }

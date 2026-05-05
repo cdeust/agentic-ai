@@ -1,12 +1,16 @@
 {
-  "_capture_status": "TO-BE-CAPTURED",
-  "_capture_blocked_reason": "Requires Rust binary + indexed graph.",
-  "_schema_shape": {
-    "affectedCount": "integer >= 0",
-    "riskScore": "float 0..1"
-  },
-  "_critical_invariants": [
-    "affectedCount present",
-    "riskScore in [0,1]"
-  ]
+  "_capture_status": "CAPTURED",
+  "_capture_source": "ai-automatised-pipeline commit 2cc3780 v0.0.4",
+  "_capture_date": "2026-05-04",
+  "communities_affected": [],
+  "communities_affected_count": 0,
+  "files_changed": 1,
+  "processes_affected": [],
+  "processes_affected_count": 0,
+  "risk_score": "0.0000",
+  "stage": 3,
+  "status": "ok",
+  "symbols_affected": [],
+  "symbols_affected_count": 0,
+  "tool": "detect_changes"
 }

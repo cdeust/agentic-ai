@@ -1,12 +1,54 @@
 {
-  "_capture_status": "TO-BE-CAPTURED",
-  "_capture_blocked_reason": "Requires Rust binary + indexed graph.",
-  "_schema_shape": {
-    "gatesPassed": "boolean",
-    "status": "string"
+  "_capture_status": "CAPTURED",
+  "_capture_source": "ai-automatised-pipeline commit 2cc3780 v0.0.4",
+  "_capture_date": "2026-05-04",
+  "artifact_path": null,
+  "checked_at": "<MASKED:nondeterministic>",
+  "gates_passed": true,
+  "report": {
+    "changed_symbols": [
+      "src/retrieval.py::recall"
+    ],
+    "checked_at": "<MASKED:nondeterministic>",
+    "finding_id": "",
+    "flags": [
+      {
+        "details": {
+          "reason": "parser_missing_is_unsafe",
+          "skipped": true
+        },
+        "gate": "unsafe_symbol",
+        "message": "unsafe detection unavailable: rust_parser does not record is_unsafe (see stages/stage-8.md §7 Q1; unblocks when stage 3a-v2 ships)",
+        "severity": "info",
+        "symbol": "src/retrieval.py::recall"
+      },
+      {
+        "details": {
+          "test_processes_reaching_symbol": 0
+        },
+        "gate": "test_coverage_gap",
+        "message": "no ParticipatesIn path from any test-entry process — structural coverage gap",
+        "severity": "warning",
+        "symbol": "src/retrieval.py::recall"
+      }
+    ],
+    "gates_passed": true,
+    "graph_path": "<CAPTURE_TMP>/graph/graph",
+    "run_id": "",
+    "summary": {
+      "changed_symbols": 1,
+      "critical_count": 0,
+      "info_count": 1,
+      "warning_count": 1
+    }
   },
-  "_critical_invariants": [
-    "gatesPassed present",
-    "status present"
-  ]
+  "stage": 8,
+  "status": "ok",
+  "summary": {
+    "changed_symbols": 1,
+    "critical_count": 0,
+    "info_count": 1,
+    "warning_count": 1
+  },
+  "tool": "check_security_gates"
 }

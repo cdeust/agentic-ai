@@ -1,11 +1,45 @@
 {
-  "_capture_status": "TO-BE-CAPTURED",
-  "_capture_blocked_reason": "Requires Rust binary + two indexed graphs.",
-  "_schema_shape": {
-    "regressionScore": "float >= 0"
+  "_capture_status": "CAPTURED",
+  "_capture_source": "ai-automatised-pipeline commit 2cc3780 v0.0.4",
+  "_capture_date": "2026-05-04",
+  "regression_score": 0,
+  "report": {
+    "after_graph_path": "/tmp/parity-capture-eng22/graph/graph",
+    "before_graph_path": "/tmp/parity-capture-eng22/graph/graph",
+    "details": {
+      "dangling_references": [],
+      "edges_added": [],
+      "edges_removed": [],
+      "new_cycles": [],
+      "nodes_added": [],
+      "nodes_removed": []
+    },
+    "regression_score": 0,
+    "summary": {
+      "dangling_references": 0,
+      "edges_added": 0,
+      "edges_removed": 0,
+      "new_cycles": 0,
+      "new_unresolved_delta": 0,
+      "nodes_added": 0,
+      "nodes_removed": 0
+    },
+    "verdict": "clean",
+    "verified_at": "2026-05-05T16:17:21Z"
   },
-  "_critical_invariants": [
-    "regressionScore present",
-    "regressionScore >= 0"
-  ]
+  "report_path": null,
+  "stage": 9,
+  "status": "ok",
+  "summary": {
+    "dangling_references": 0,
+    "edges_added": 0,
+    "edges_removed": 0,
+    "new_cycles": 0,
+    "new_unresolved_delta": 0,
+    "nodes_added": 0,
+    "nodes_removed": 0
+  },
+  "tool": "verify_semantic_diff",
+  "verdict": "clean",
+  "verified_at": "2026-05-05T16:17:21Z"
 }

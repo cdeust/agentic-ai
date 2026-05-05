@@ -1,10 +1,13 @@
 {
-  "_capture_status": "TO-BE-CAPTURED",
-  "_capture_blocked_reason": "Requires Rust binary.",
-  "_schema_shape": {
-    "status": "string"
-  },
-  "_critical_invariants": [
-    "status present"
+  "_capture_status": "TO-BE-CAPTURED-IN-PHASE-0-DAY-1",
+  "_capture_source": "ai-automatised-pipeline commit 2cc3780 v0.0.4",
+  "_capture_date": "2026-05-04",
+  "_shape_source": "shape verified from live capture 2026-05-04 \u2014 stateful tool (run_id dependent)",
+  "_required_keys": [
+    "status",
+    "run_id",
+    "finding_id",
+    "stage",
+    "turn_index"
   ]
 }

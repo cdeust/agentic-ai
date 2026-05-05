@@ -9,8 +9,12 @@
     ]
   },
   "finding": {
-    "title": "Test parity finding",
-    "severity": "low"
+    "id": "PARITY-FINDING-001",
+    "title": "Parity test finding",
+    "severity": "low",
+    "relevance_category": "bug",
+    "description": "Parity capture fixture — deterministic content.",
+    "source": "parity-oracle/eng22"
   },
   "output_dir": "/tmp/parity-test-extract"
 }

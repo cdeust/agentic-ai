@@ -11,6 +11,7 @@
       "search with no matches returning null instead of empty array"
     ]
   },
+  "graph_path": "<WORKTREE_ROOT>/parity-oracle/codebase/fixture-repos/small-python/_graph_out/graph",
   "query": "decay",
-  "max_results": 20
+  "limit": 20
 }

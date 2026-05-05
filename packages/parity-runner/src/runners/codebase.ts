@@ -71,11 +71,14 @@ function runLiveRust(
       typeof v === "string" ? v.replace("<WORKTREE_ROOT>", repoRoot) : v;
   }
 
+  // MCP protocol 2024-11-05 — binary requires tools/call with name + arguments.
+  // source: measured binary invocation — method: toolName returns "Method not found"
+  // source: MCP spec 2024-11-05 §5.5 — tools/call is the canonical tool invocation method
   const request = JSON.stringify({
     jsonrpc: "2.0",
     id: 1,
-    method: toolName,
-    params: processedInput,
+    method: "tools/call",
+    params: { name: toolName, arguments: processedInput },
   });
 
   const result = spawnSync(binaryPath, [], {
@@ -93,8 +96,27 @@ function runLiveRust(
   }
 
   try {
-    const parsed = JSON.parse(result.stdout) as { result?: unknown };
-    return parsed["result"] ?? parsed;
+    // MCP envelope: { result: { content: [{ type: "text", text: "<json>" }] } }
+    // source: measured binary output — tools/call wraps result in content array
+    const envelope = JSON.parse(result.stdout) as {
+      result?: { content?: Array<{ type: string; text: string }> };
+      error?: { code: number; message: string };
+    };
+    if (envelope.error) {
+      process.stderr.write(
+        `[parity:codebase] binary returned error for "${toolName}": ${envelope.error.message}\n`,
+      );
+      return null;
+    }
+    const text = envelope.result?.content?.[0]?.text;
+    if (text) {
+      try {
+        return JSON.parse(text) as unknown;
+      } catch {
+        return text as unknown;
+      }
+    }
+    return envelope.result ?? envelope;
   } catch {
     process.stderr.write(
       `[parity:codebase] failed to parse rust output for "${toolName}"\n`,
@@ -178,6 +200,28 @@ function validatePairWellFormedness(
   };
 }
 
+// ── Fixture-to-tool-name mapping ─────────────────────────────────────────────
+//
+// Fixture filenames are descriptive (e.g. get_symbol_known, index_codebase_smallrepo).
+// Tool names are the exact MCP tool names (e.g. get_symbol, index_codebase).
+// When a fixture name differs from the tool name, map it here.
+//
+// source: parity-oracle/codebase/inputs/ filenames vs tool_schemas.rs tool names (commit 2cc3780)
+const FIXTURE_TO_TOOL_NAME: Readonly<Record<string, string>> = {
+  get_symbol_known: "get_symbol",
+  index_codebase_smallrepo: "index_codebase",
+  query_graph_simple: "query_graph",
+  search_codebase_keyword: "search_codebase",
+};
+
+/**
+ * Resolve the MCP tool name from a fixture filename stem.
+ * Falls back to the fixture name itself when no mapping exists.
+ */
+function resolveToolName(fixtureBase: string): string {
+  return FIXTURE_TO_TOOL_NAME[fixtureBase] ?? fixtureBase;
+}
+
 // ── Fixture discovery ─────────────────────────────────────────────────────────
 
 interface FixtureFile {
@@ -209,7 +253,7 @@ function discoverFixtures(codebaseOracleDir: string): readonly FixtureFile[] {
             relPath: rel,
             absInputPath: abs,
             absExpectedPath: absExpected,
-            toolName: fixtureBase,
+            toolName: resolveToolName(fixtureBase),
           });
         }
       }
