@@ -20,7 +20,7 @@
 import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it, beforeAll } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import {
   DEFAULT_RECALL_SETTINGS,
@@ -122,6 +122,24 @@ function buildSeededStore(): InMemoryStore {
 // constant and check in the resulting goldens together.
 // source: 2026-05-05 — recall fixture stabilization
 const FIXTURE_CAPTURED_AT = "2026-05-05T00:00:00.000Z";
+
+// Pin the test clock so any recall-side computation that reads "now"
+// (e.g. recency_boost = exp(-age_days / halflife)) produces deterministic
+// values against the frozen seed `created_at`. Without this, recency_boost
+// drifts every run as wall-clock advances past the seed timestamp.
+// Anchor 1 hour after seeds so the formula evaluates at a non-trivial,
+// reproducible offset.
+// source: 2026-05-05 — recall fixture stabilization (round 2: recency drift)
+const PINNED_NOW = new Date("2026-05-05T01:00:00.000Z");
+
+beforeAll(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(PINNED_NOW);
+});
+
+afterAll(() => {
+  vi.useRealTimers();
+});
 
 function captureExpected(name: string, output: unknown): void {
   const path = `${EXPECTED_DIR}/${name}.tsoutput.json`;
