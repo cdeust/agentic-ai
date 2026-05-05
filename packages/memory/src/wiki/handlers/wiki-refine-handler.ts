@@ -53,7 +53,7 @@ export async function wikiRefineHandler(
     throw new WikiUnavailableError(
       "wiki-refine",
       "mcp_server/handlers/wiki_refine.py:1",
-      "LLM client (Path B draft refinement)",
+      "LLM client (Path B draft refinement) not wired",
     );
   }
 
