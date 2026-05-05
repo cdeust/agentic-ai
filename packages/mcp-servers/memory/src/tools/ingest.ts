@@ -12,8 +12,8 @@
  *   - ingest_prd: calls real ingestPrdHandler.
  *   - change_impact: throws PortPendingError — blocked on AP codebase graph.
  *     source: docs/ADR/0046-change-impact-analysis.md §Phase 3 (not landed)
- *   - open_visualization: throws PortPendingError — deferred per ADR-0011.
- *     source: docs/ADR/0011-cortex-http-server-defer.md
+ *   - open_visualization: launches the HTTP dashboard via @agentic/memory-dashboard.
+ *     source: docs/ADR/0014-cortex-http-server-restored.md (ADR-0011 rescinded)
  *
  * source: worktrees/port-inventory-cortex/inventory/MCP_TOOLS.md
  *         §UpstreamIngest, §Tier1Memory (import_sessions), §Tier1Core (open_viz)
@@ -26,6 +26,7 @@ import { changeImpactHandler } from "@agentic/memory/codebase-analysis/handlers/
 import { importHandler } from "@agentic/memory/import/handler.js";
 import { remember } from "@agentic/memory/remember/handlers/remember.js";
 import type { MemoryStore } from "@agentic/memory/remember/storage/memory-store.js";
+import { launchDashboard } from "@agentic/memory-dashboard/launcher";
 
 // ── Schema constants ──────────────────────────────────────────────────────────
 // source: MCP_TOOLS.md §import_sessions, §ingest_codebase, §codebase_analyze
@@ -69,12 +70,13 @@ function errorText(tool: string, err: unknown): { content: Array<{ type: "text";
  *
  * precondition:  deps is provided with a live store and wikiRoot.
  * postcondition: 6 tools registered; import_sessions/codebase_analyze/
- *   ingest_codebase/ingest_prd call real handlers; change_impact and
- *   open_visualization throw PortPendingError with specific blockers named.
+ *   ingest_codebase/ingest_prd/change_impact call real handlers;
+ *   open_visualization launches @agentic/memory-dashboard and returns the URL.
  *
  * source: MCP_TOOLS.md §"import_sessions", §"codebase_analyze",
  *         §"ingest_codebase", §"ingest_prd", §"change_impact",
  *         §"open_visualization"
+ * source: docs/ADR/0014-cortex-http-server-restored.md
  */
 export function registerIngestTools(server: McpServer, deps?: IngestDeps): void {
   // ── import_sessions ───────────────────────────────────────────────────────
@@ -268,13 +270,22 @@ export function registerIngestTools(server: McpServer, deps?: IngestDeps): void 
         domain: z.string().optional().describe("Domain to visualise"),
       },
     },
-    async (_args) => {
+    async (args) => {
       try {
-        // source: docs/ADR/0011-cortex-http-server-defer.md — HTTP dashboard deferred.
-        throw new PortPendingError(
-          "open_visualization",
-          "HTTP dashboard server for 3D constellation map — deferred per ADR-0011", // source: docs/ADR/0011-cortex-http-server-defer.md
-        );
+        // Launch or reuse the memory-dashboard HTTP server.
+        // ADR-0011 is rescinded — source: docs/ADR/0014-cortex-http-server-restored.md
+        // source: cortex@ed33435 mcp_server/server/http_launcher.py:255-325 (launch_server)
+        const url = await launchDashboard({ openBrowser: true });
+        const domain = (args as { domain?: string }).domain;
+        const finalUrl = domain ? `${url}?domain=${encodeURIComponent(domain)}` : url;
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({ url: finalUrl, message: `Dashboard launched at ${finalUrl}` }),
+            },
+          ],
+        };
       } catch (err) {
         return errorText("open_visualization", err);
       }
