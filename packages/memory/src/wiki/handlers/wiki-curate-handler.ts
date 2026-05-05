@@ -22,6 +22,7 @@ import {
   insertMemo,
 } from "../storage/pg-wiki-store-concepts.js";
 import type { KindDefinition } from "../schema-loader.js";
+import { loadRegistry } from "../schema-loader.js";
 
 // source: mcp_server/core/draft_curator.py:28 — approval confidence floor
 const APPROVAL_CONFIDENCE_FLOOR = 0.55;
@@ -76,6 +77,7 @@ export interface WikiCurateArgs {
   readonly reason?: string | null;
   readonly limit?: number | null;
   readonly kind?: string | null;
+  readonly wiki_root?: string | null;
   [key: string]: unknown;
 }
 
@@ -214,6 +216,15 @@ export async function wikiCurateHandler(
   const limit = typeof args.limit === "number" ? args.limit : CURATE_DEFAULT_LIMIT;
   const pending = await listDrafts(db, "pending", kind ?? null, limit);
 
+  // Load kind registry once per sweep so each draft gets its kind-specific gate.
+  // source: mcp_server/handlers/wiki_curate.py:147 -- kdef = registry.kinds.get(d["kind"])
+  // Liskov fix: was evaluateDraft(d, undefined) -- kind-specific gates were silently skipped.
+  const wikiRoot =
+    typeof args.wiki_root === "string"
+      ? args.wiki_root
+      : (process.env["WIKI_ROOT"] ?? "");
+  const registry = wikiRoot ? loadRegistry(wikiRoot) : null;
+
   const counts = { approved: 0, rejected: 0, hold: 0 };
   const errors: string[] = [];
   const sampleHolds: Array<{ id: number; score: number; reasons: string[] }> = [];
@@ -222,7 +233,11 @@ export async function wikiCurateHandler(
   // Termination: for loop over finite pending array
   for (const d of pending) {
     try {
-      const verdict = evaluateDraft(d, undefined);
+      // Mirror Python: kdef = registry.kinds.get(d["kind"])
+      // source: mcp_server/handlers/wiki_curate.py:147
+      const draftKind = typeof d["kind"] === "string" ? d["kind"] : undefined;
+      const kindDef = registry && draftKind ? (registry.kinds[draftKind] ?? null) : null;
+      const verdict = evaluateDraft(d, kindDef);
 
       if (verdict.verdict === "hold") {
         counts.hold++;
