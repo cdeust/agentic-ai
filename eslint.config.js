@@ -61,6 +61,10 @@ const config = [
             "packages/*/__tests__/*/*.ts",
             "packages/*/__tests__/*/*/*.ts",
             "packages/*/vitest.config.ts",
+            // source: packages/mcp-servers/memory/vitest.config.ts + src/__tests__/ added for Eng-17 doctor tests
+            "packages/mcp-servers/*/vitest.config.ts",
+            "packages/mcp-servers/*/src/__tests__/*.ts",
+            "packages/mcp-servers/*/src/__tests__/*/*.ts",
           ],
         },
         tsconfigRootDir: import.meta.dirname,
