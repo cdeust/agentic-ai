@@ -22,6 +22,7 @@ export interface DiffResult {
   diff_type: string;
   lines: DiffLine[];
   truncated: boolean;
+  reason?: string;
 }
 
 /**
@@ -49,7 +50,9 @@ export function parseDiffLines(raw: string): DiffLine[] {
       result.push({ text: line, type: "add" });
     } else if (line.startsWith("-")) {
       result.push({ text: line, type: "del" });
-    } else {
+    } else if (line !== "") {
+      // Skip the trailing empty string from split("\n") on newline-terminated
+      // inputs — Python's splitlines() does not emit it.
       result.push({ text: line, type: "ctx" });
     }
   }
