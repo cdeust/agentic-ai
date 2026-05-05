@@ -77,6 +77,75 @@ export {
 // Attribution pipeline
 export { traceAttribution, SIGNAL_NAMES, D } from "./attribution-pipeline.js";
 
+// Blindspot detection (standalone modules)
+export { detectBlindSpotsFull, ALL_CATEGORIES, COMMON_TOOLS, TOOL_CATEGORY_RELEVANCE } from "./blindspot-detector.js";
+export type { ConversationRecord as BlindspotConversationRecord, WorkCategory } from "./blindspot-detector.js";
+export { checkExplorationGap, countDurationBuckets, checkDurationGaps } from "./blindspot-patterns.js";
+
+// Cognitive map (Successor Representation)
+export {
+  buildCoAccessGraph,
+  buildTemporalCoAccess,
+  computeSrScores,
+  navigateFrom,
+  projectTo2d,
+} from "./cognitive-map.js";
+export type { SrGraph, NavigationResult, MemoryWithAccess } from "./cognitive-map.js";
+
+// Metacognition — gap detection
+export {
+  detectIsolatedEntities,
+  detectStaleRegions,
+  detectLowConfidence,
+  detectMissingConnections,
+  detectUnresolvedErrors,
+  detectAllGaps,
+} from "./metacognition.js";
+export type { KnowledgeGap } from "./metacognition.js";
+
+// Metacognition analysis — coverage + chunking + context management
+export {
+  computeCoverage,
+  chunkMemories,
+  manageContext,
+  summarizeOverflow,
+  DEFAULT_MAX_CHUNKS,
+} from "./metacognition-analysis.js";
+export type { CoverageResult, ChunkableMemory } from "./metacognition-analysis.js";
+
+// Style classifier (Felder-Silverman full scoring)
+export {
+  classifyStyle,
+  ABSTRACT_KEYWORDS,
+  CONCRETE_KEYWORDS,
+  PLANNING_KEYWORDS,
+  TRIAL_KEYWORDS,
+} from "./style-classifier.js";
+export type { StyleConversationRecord } from "./style-classifier.js";
+
+// Emergence tracker + metrics
+export {
+  computeSpacingBenefit,
+  computeTestingBenefit,
+  computeSchemaAccelerationMetric,
+  computePhaseLockingBenefit,
+} from "./emergence-tracker.js";
+export type {
+  MemoryEvent,
+  TestingBenefitResult,
+  SchemaAccelerationResult,
+  PhaseLockingResult,
+} from "./emergence-tracker.js";
+export {
+  computeForgettingCurve,
+  generateEmergenceReport,
+} from "./emergence-metrics.js";
+export type { ForgettingCurveResult, EmergenceReport } from "./emergence-metrics.js";
+
+// Profile assembler (Level-2 orchestration)
+export { buildDomainProfiles } from "./profile-assembler.js";
+export type { BuildDomainProfilesInput } from "./profile-assembler.js";
+
 // Session critique
 export { generateCritique } from "./session-critique.js";
 
