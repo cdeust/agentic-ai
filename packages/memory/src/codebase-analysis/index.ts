@@ -62,3 +62,29 @@ export {
   type IngestPrdDeps,
   schema as ingestPrdSchema,
 } from "./handlers/ingest-prd.js";
+export {
+  handler as seedProjectHandler,
+  type SeedProjectDeps,
+  type SeedProjectArgs,
+  type SeedProjectResponse,
+  schema as seedProjectSchema,
+} from "./handlers/seed-project.js";
+export {
+  changeImpactHandler,
+  type ChangeImpactDeps,
+  type ChangeImpactArgs,
+  type ChangeImpactResponse,
+  type ImpactMatchResult,
+  schema as changeImpactSchema,
+} from "./handlers/change-impact.js";
+export {
+  collectAllDiscoveries,
+  stageConfigs,
+  stageDocs,
+  stageEntryPoints,
+  stageCicd,
+  stageStructuralSummary,
+  heatForTags,
+  HEAT_BY_TYPE,
+  type Discovery,
+} from "./file-scanner.js";

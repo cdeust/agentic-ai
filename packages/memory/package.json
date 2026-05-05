@@ -182,6 +182,18 @@
     "./codebase-analysis/handlers/codebase-analyze.js": {
       "import": "./dist/codebase-analysis/handlers/codebase-analyze.js",
       "types": "./dist/codebase-analysis/handlers/codebase-analyze.d.ts"
+    },
+    "./codebase-analysis/handlers/seed-project.js": {
+      "import": "./dist/codebase-analysis/handlers/seed-project.js",
+      "types": "./dist/codebase-analysis/handlers/seed-project.d.ts"
+    },
+    "./codebase-analysis/handlers/change-impact.js": {
+      "import": "./dist/codebase-analysis/handlers/change-impact.js",
+      "types": "./dist/codebase-analysis/handlers/change-impact.d.ts"
+    },
+    "./recall/fractal-drill-down.js": {
+      "import": "./dist/recall/fractal-drill-down.js",
+      "types": "./dist/recall/fractal-drill-down.d.ts"
     }
   },
   "scripts": {
