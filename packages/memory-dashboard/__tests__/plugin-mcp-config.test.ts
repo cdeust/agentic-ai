@@ -1,8 +1,8 @@
 /**
  * plugin-mcp-config.test.ts — SEC-006 regression test.
  *
- * SEC-006: bash -c re-evaluation of ${CLAUDE_PLUGIN_ROOT} in plugin
- * .mcp.json files. Previously each plugin used:
+ * SEC-006: bash -c re-evaluation of ${CLAUDE_PLUGIN_ROOT} in plugin MCP
+ * configs. Previously each plugin used:
  *
  *   "command": "bash",
  *   "args": ["-c", "exec node \"${CLAUDE_PLUGIN_ROOT}/.../index.js\""]
@@ -17,42 +17,54 @@
  * element, which the OS passes to the target binary verbatim — bytes,
  * not source code.
  *
- * For the codebase plugin (which has fallback logic to `cargo run`), we
- * keep `bash` as the launcher but call a hand-written launch.sh whose
- * own arguments come from argv (never re-evaluated as source).
+ * Source of truth (post #86): mcpServers is declared inline in each
+ * plugin's .claude-plugin/plugin.json. The reasoning plugin lives at
+ * packages/reasoning/.claude-plugin/plugin.json (its source root in the
+ * marketplace.json). Older .mcp.json side-files were deleted in #86.
  *
  * This test asserts:
- *   1. No plugin .mcp.json invokes `bash -c "..."` with a CLAUDE_PLUGIN_ROOT
+ *   1. No plugin manifest invokes `bash -c "..."` with a CLAUDE_PLUGIN_ROOT
  *      substitution embedded in the -c string.
  *   2. Each plugin's command + args[0] is either a direct binary or a
  *      launcher script — never `-c`.
  */
 
 import { describe, it, expect } from "vitest";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, "..", "..", "..");
-const PLUGINS_DIR = join(REPO_ROOT, "plugins");
+
+// source: .claude-plugin/marketplace.json — each plugin's source root holds
+// .claude-plugin/plugin.json with the inline mcpServers block. The four
+// plugin source roots are listed here directly so the test is independent of
+// fs traversal order and stays meaningful even if new top-level dirs appear.
+const PLUGIN_SOURCE_ROOTS: Array<{ name: string; root: string }> = [
+  { name: "memory",    root: join(REPO_ROOT, "plugins", "memory") },
+  { name: "codebase",  root: join(REPO_ROOT, "plugins", "codebase") },
+  { name: "prd",       root: join(REPO_ROOT, "plugins", "prd") },
+  { name: "reasoning", root: join(REPO_ROOT, "packages", "reasoning") },
+];
 
 interface McpConfig {
   mcpServers?: Record<string, { command?: string; args?: string[]; env?: Record<string, string> }>;
 }
 
+interface PluginManifest extends McpConfig {
+  name?: string;
+  version?: string;
+}
+
 function listPluginConfigs(): Array<{ name: string; config: McpConfig; raw: string }> {
   const out: Array<{ name: string; config: McpConfig; raw: string }> = [];
-  for (const entry of readdirSync(PLUGINS_DIR)) {
-    const full = join(PLUGINS_DIR, entry);
-    let stat;
-    try { stat = statSync(full); } catch { continue; }
-    if (!stat.isDirectory()) continue;
-    const mcpJson = join(full, ".mcp.json");
+  for (const { name, root } of PLUGIN_SOURCE_ROOTS) {
+    const manifestPath = join(root, ".claude-plugin", "plugin.json");
     let raw: string;
-    try { raw = readFileSync(mcpJson, "utf-8"); } catch { continue; }
-    const config = JSON.parse(raw) as McpConfig;
-    out.push({ name: entry, config, raw });
+    try { raw = readFileSync(manifestPath, "utf-8"); } catch { continue; }
+    const manifest = JSON.parse(raw) as PluginManifest;
+    out.push({ name, config: { mcpServers: manifest.mcpServers }, raw });
   }
   return out;
 }
