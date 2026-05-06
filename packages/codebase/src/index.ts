@@ -31,7 +31,7 @@ export {
   GetContextInputSchema,
   AnalyzeCodebaseInputSchema,
   LspResolveInputSchema,
-  // Output schemas
+  // Output schemas — graph tools
   HealthCheckOutputSchema,
   IndexCodebaseOutputSchema,
   QueryGraphOutputSchema,
@@ -45,6 +45,18 @@ export {
   GetContextOutputSchema,
   AnalyzeCodebaseOutputSchema,
   LspResolveOutputSchema,
+  // Output schemas — pipeline stage tools (2-7, 18, 20-23)
+  ExtractFindingOutputSchema,
+  RefineFindingOutputSchema,
+  StartVerificationOutputSchema,
+  AppendClarificationOutputSchema,
+  FinalizeVerificationOutputSchema,
+  AbortVerificationOutputSchema,
+  DetectChangesOutputSchema,
+  PreparePrdInputOutputSchema,
+  ValidatePrdAgainstGraphOutputSchema,
+  CheckSecurityGatesOutputSchema,
+  VerifySemanticDiffOutputSchema,
   // Errors
   CodebaseValidationError,
   CodebaseTimeoutError,

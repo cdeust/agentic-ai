@@ -217,9 +217,28 @@ export const DetectChangesInputSchema = z.object({ graphPath: z.string().min(1),
 export type DetectChangesInput = z.infer<typeof DetectChangesInputSchema>;
 export const PreparePrdInputInputSchema = z.object({ runId: z.string().min(1), findingId: z.string().min(1), outputDir: z.string().min(1), graphPath: z.string().min(1) }).strict();
 export type PreparePrdInputInput = z.infer<typeof PreparePrdInputInputSchema>;
-export const ValidatePrdAgainstGraphInputSchema = z.object({ prdPath: z.string().min(1), graphPath: z.string().min(1), affectedSymbolsPath: z.string().optional(), outputDir: z.string().optional(), runId: z.string().optional(), findingId: z.string().optional() }).strict();
+// ADR-0004: the optional (run_id, finding_id, output_dir) triple is encoded as
+// a single optional bundle, NOT three independent optional fields. Three
+// independent optionals admit partial state (e.g. run_id set, output_dir absent)
+// that the Rust binary silently ignores — a contract defect where the caller
+// believes artifact writes were requested but no files appear.
+// source: docs/ADR/0004-validation-tool-optional-triple.md
+export const ValidatePrdAgainstGraphInputSchema = z.object({
+  prdPath: z.string().min(1),
+  graphPath: z.string().min(1),
+  affectedSymbolsPath: z.string().optional(),
+  // artifacts: all-or-nothing bundle; absence = dry-run (no artifact writes)
+  artifacts: ArtifactWriteSpecSchema.optional(),
+}).strict();
 export type ValidatePrdAgainstGraphInput = z.infer<typeof ValidatePrdAgainstGraphInputSchema>;
-export const CheckSecurityGatesInputSchema = z.object({ graphPath: z.string().min(1), changedSymbols: z.array(z.string()), outputDir: z.string().optional(), runId: z.string().optional(), findingId: z.string().optional() }).strict();
+// ADR-0004: same all-or-nothing encoding for check_security_gates.
+// source: docs/ADR/0004-validation-tool-optional-triple.md
+export const CheckSecurityGatesInputSchema = z.object({
+  graphPath: z.string().min(1),
+  changedSymbols: z.array(z.string()),
+  // artifacts: all-or-nothing bundle; absence = dry-run (no artifact writes)
+  artifacts: ArtifactWriteSpecSchema.optional(),
+}).strict();
 export type CheckSecurityGatesInput = z.infer<typeof CheckSecurityGatesInputSchema>;
 export const VerifySemanticDiffInputSchema = z.object({ beforeGraphPath: z.string().min(1), afterGraphPath: z.string().min(1), reportPath: z.string().optional() }).strict();
 export type VerifySemanticDiffInput = z.infer<typeof VerifySemanticDiffInputSchema>;
