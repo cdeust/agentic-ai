@@ -1,0 +1,9 @@
+{
+  "name": "@agentic/plugin-reasoning",
+  "version": "2.13.1",
+  "private": true,
+  "description": "Self-contained reasoning plugin: 97 genius patterns + 19 specialists + skills + commands + hooks + MCP server bundle. Pure-JS deps inlined via esbuild.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "license": "MIT"
+}

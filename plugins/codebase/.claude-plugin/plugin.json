@@ -20,5 +20,13 @@
     "leiden",
     "ladybugdb"
   ],
-  "mcpServers": "../.mcp.json"
+  "mcpServers": {
+    "ai-architect": {
+      "command": "bash",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/scripts/launch.sh",
+        "${CLAUDE_PLUGIN_ROOT}"
+      ]
+    }
+  }
 }

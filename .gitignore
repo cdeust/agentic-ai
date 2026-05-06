@@ -8,6 +8,14 @@ build/
 *.tsbuildinfo
 target/                    # Rust build dir (codebase-rust)
 
+# Exceptions: plugin distribution bundles MUST be tracked so end-users get a
+# self-contained artifact when they run `claude plugin install <name>`.
+# Each plugin's dist/ is built by `pnpm bundle` and committed.
+!plugins/*/dist/
+!plugins/*/dist/**
+!packages/reasoning/dist/
+!packages/reasoning/dist/**
+
 # Worktrees — local-only, never committed
 worktrees/
 

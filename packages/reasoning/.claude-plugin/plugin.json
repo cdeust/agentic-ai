@@ -1,6 +1,6 @@
 {
-  "name": "zetetic-reasoning",
-  "description": "98 genius reasoning patterns from history's greatest minds. One epistemic standard none of them can bypass.",
+  "name": "reasoning",
+  "description": "97 genius reasoning patterns from history's greatest minds + 19 team specialist agents under one zetetic epistemic standard none of them can bypass. 61 skills, 25 commands, 16 lifecycle hooks. PreToolUse/PostToolUse guards for git commit provenance, layer-check, and research citation. Includes a stdio MCP server.",
   "version": "2.13.1",
   "author": {
     "name": "Clement Deust",
@@ -18,6 +18,14 @@
     "scientific-method",
     "claude-code"
   ],
+  "mcpServers": {
+    "reasoning": {
+      "command": "node",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/dist/index.js"
+      ]
+    }
+  },
   "postInstall": {
     "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/setup.sh install",
     "message": "Installing zetetic agents, skills, commands, and hooks to ~/.claude/ ..."

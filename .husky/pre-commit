@@ -37,7 +37,11 @@ STAGED_TS=$(git diff --cached --name-only --diff-filter=ACM | grep '\.ts$' | gre
 if [[ -n "$STAGED_TS" ]]; then
   # shellcheck disable=SC2086
   # word-splitting is intentional: each file is a separate argument.
-  cd "$REPO_ROOT" && pnpm exec eslint --max-warnings=0 $STAGED_TS
+  # --no-warn-ignored: when a staged .ts happens to match an eslint ignore
+  # pattern (Rust crate fixtures, esbuild bundles, plugin-shipped crate src),
+  # do not emit the "File ignored because of a matching ignore pattern"
+  # warning that would otherwise trip --max-warnings=0.
+  cd "$REPO_ROOT" && pnpm exec eslint --max-warnings=0 --no-warn-ignored $STAGED_TS
 else
   echo "pre-commit: no staged .ts files — skipping lint." >&2
 fi

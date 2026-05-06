@@ -38,6 +38,12 @@ const config = [
       // Rust test fixture — TypeScript file inside a Cargo workspace; not part of
       // any TS project. source: codebase-rust is a Rust crate, not a TS package.
       "packages/codebase-rust/tests/**",
+      // Same Rust crate, copied into the codebase plugin so launch.sh can
+      // build the binary at install time. source: plugins/codebase/scripts/launch.sh.
+      "plugins/codebase/src-rust/**",
+      // Plugin distribution bundles — esbuild output committed for shipping.
+      "plugins/*/dist/**",
+      "packages/reasoning/dist/**",
     ],
   },
 

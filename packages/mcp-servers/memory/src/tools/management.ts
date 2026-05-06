@@ -1,9 +1,11 @@
 /**
  * management.ts — MCP tool adapters for the memory management topic.
  *
- * Tools registered (5):
- *   validate_memory, seed_project, backfill_memories, codebase_analyze,
- *   get_methodology_graph
+ * Tools registered (4):
+ *   validate_memory, seed_project, backfill_memories, get_methodology_graph
+ *
+ * codebase_analyze is registered by registerIngestTools (ingest.ts) — single
+ * owner per MCP_TOOLS.md §"codebase_analyze" Tier1Ingest topic.
  *
  * Phase 7 Group D — DI wiring:
  *   - validate_memory: marks stale memories whose source files no longer exist.
@@ -11,8 +13,6 @@
  *   - seed_project: calls real seedProjectHandlerFn from @agentic/memory/codebase-analysis.
  *   - backfill_memories: calls real importHandler from @agentic/memory/import.
  *     source: packages/memory/src/import/handler.ts::importHandler
- *   - codebase_analyze: calls real codebaseAnalyzeHandler.
- *     source: packages/memory/src/codebase-analysis/handlers/codebase-analyze.ts
  *   - get_methodology_graph: builds graph from profiles.json.
  *     Ported from cortex@ed33435 mcp_server/handlers/get_methodology_graph.py.
  *
@@ -28,7 +28,6 @@ import { z } from "zod";
 import type { MemoryStore } from "@agentic/memory/remember/storage/memory-store.js";
 import { importHandler } from "@agentic/memory/import/handler.js";
 import { remember } from "@agentic/memory/remember/handlers/remember.js";
-import { codebaseAnalysis } from "@agentic/memory";
 import { handler as seedProjectHandlerFn } from "@agentic/memory/codebase-analysis/handlers/seed-project.js";
 
 // ── Named constants ───────────────────────────────────────────────────────────
@@ -41,9 +40,6 @@ const SEED_MAX_FILE_SIZE_KB = 64;
 // source: MCP_TOOLS.md §backfill_memories max_files default=20
 const BACKFILL_MAX_FILES_DEFAULT = 20;
 const BACKFILL_MIN_IMPORTANCE = 0.35; // source: Ebbinghaus retention curve — min_importance threshold of 0.35 per MCP_TOOLS.md §backfill_memories
-const CODEBASE_MAX_FILES = 500; // source: cortex@ed33435 codebase_analyze.py max_files default
-const CODEBASE_MAX_FILE_SIZE_KB = 100; // source: cortex@ed33435 codebase_analyze.py max_file_size_kb default
-
 // ── Dependency bundle ─────────────────────────────────────────────────────────
 
 export interface ManagementDeps {
@@ -75,12 +71,12 @@ function errorText(tool: string, err: unknown): { content: Array<{ type: "text";
  * Registers memory management MCP tools.
  *
  * precondition:  deps.store is a live MemoryStore.
- * postcondition: 5 tools registered; validate_memory, backfill_memories,
- *   codebase_analyze, get_methodology_graph call real handlers;
+ * postcondition: 4 tools registered; validate_memory, backfill_memories,
+ *   get_methodology_graph call real handlers;
  *   seed_project calls the real seedProjectHandlerFn.
  *
  * source: MCP_TOOLS.md §"validate_memory", §"seed_project",
- *         §"backfill_memories", §"codebase_analyze", §"get_methodology_graph"
+ *         §"backfill_memories", §"get_methodology_graph"
  */
 export function registerManagementTools(server: McpServer, deps: ManagementDeps): void {
   // ── validate_memory ───────────────────────────────────────────────────────
@@ -230,35 +226,8 @@ export function registerManagementTools(server: McpServer, deps: ManagementDeps)
     },
   );
 
-  // ── codebase_analyze ──────────────────────────────────────────────────────
-  server.registerTool(
-    "codebase_analyze",
-    {
-      description: "Analyze codebase and store structural memories (functions, classes, imports, relationships).",
-      inputSchema: {
-        directory:        z.string().default("").describe("Directory to analyze"),
-        languages:        z.array(z.string()).optional().describe("Languages to analyze (null = auto)"),
-        max_files:        z.number().int().min(1).default(CODEBASE_MAX_FILES).describe("Max files to analyze"),
-        max_file_size_kb: z.number().int().min(1).default(CODEBASE_MAX_FILE_SIZE_KB).describe("Max file size in KB"),
-        incremental:      z.boolean().default(true).describe("Incremental analysis (skip unchanged)"),
-        dry_run:          z.boolean().default(false).describe("Preview without storing"),
-        domain:           z.string().default("").describe("Domain to assign"),
-      },
-    },
-    async (args) => {
-      try {
-        // source: packages/memory/src/codebase-analysis/handlers/codebase-analyze.ts
-        const analyzeDeps: codebaseAnalysis.CodebaseAnalyzeDeps = { store: deps.store };
-        const result = await codebaseAnalysis.codebaseAnalyzeHandler(
-          args as Record<string, unknown>,
-          analyzeDeps,
-        );
-        return { content: [{ type: "text" as const, text: JSON.stringify(result) }] };
-      } catch (err) {
-        return errorText("codebase_analyze", err);
-      }
-    },
-  );
+  // codebase_analyze: registered by registerIngestTools (ingest.ts) — single
+  // owner per MCP_TOOLS.md §"codebase_analyze" (Tier1Ingest topic).
 
   // ── get_methodology_graph ─────────────────────────────────────────────────
   server.registerTool(
