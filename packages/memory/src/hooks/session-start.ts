@@ -56,6 +56,25 @@ import { loadHookConfig } from "./types.js";
 
 const LOG_PREFIX = "[session-start-hook]";
 
+// ── Python binary resolution ──────────────────────────────────────────────
+/**
+ * Resolve the Python 3 interpreter binary name, cross-platform.
+ *
+ * Resolution order:
+ *   1. CORTEX_PYTHON_BIN env var — explicit override for CI / venv usage.
+ *   2. "python3" — the standard POSIX name (macOS, Linux).
+ *   3. "python" — Windows ships only "python" in the Microsoft Store launcher;
+ *      also covers virtualenvs and conda envs that shadow the name.
+ *
+ * Invariant: the returned string is a name resolvable by the OS PATH at the
+ * time of spawn. If neither candidate is present the spawn will fail with
+ * ENOENT, which all callers already handle by returning null or 0.
+ *
+ * source: CPython docs — on Windows the launcher is "python", not "python3"
+ * source: cortex@ed33435 mcp_server/infrastructure/pipeline_install_rust.py — _whichBin pattern
+ */
+const PYTHON_BIN = process.env["CORTEX_PYTHON_BIN"] ?? (process.platform === "win32" ? "python" : "python3");
+
 function log(msg: string): void {
   process.stderr.write(`${LOG_PREFIX} ${msg}\n`);
 }
@@ -100,7 +119,7 @@ export function trySetupDb(): SetupResult | null {
 
   try {
     const result = spawnSync(
-      "python3",
+      PYTHON_BIN,
       [scriptPath],
       {
         encoding: "utf-8",
@@ -144,7 +163,7 @@ export function autoBackfill(): number {
 
   try {
     const result = spawnSync(
-      "python3",
+      PYTHON_BIN,
       [
         "-c",
         `import asyncio, json
@@ -195,7 +214,7 @@ export function autoWirePipeline(): void {
 
   try {
     const result = spawnSync(
-      "python3",
+      PYTHON_BIN,
       [
         "-c",
         `
@@ -309,7 +328,7 @@ function maybeBackgroundReanalyze(): void {
 
     // Detach: fire-and-forget. The spawned process connects to DB independently.
     const child = spawn(
-      "python3",
+      PYTHON_BIN,
       [launcherPath, "mcp_server.hooks.ingest_codebase_background", config.projectRoot],
       {
         detached: true,
