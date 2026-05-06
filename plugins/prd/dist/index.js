@@ -79656,8 +79656,22 @@ async function invokeOracle(input) {
 }
 
 // packages/benchmark/dist/calibration/index.js
-await init_calibrate_gates_production();
-await init_calibrate_gates_production_cli();
+// PATCH(prd-mcp-startup): wrap eager init in fire-and-forget IIFE.
+// The barrel re-exports `runProductionCalibration`/`runProductionFromCli`,
+// which are CLI-only entry points, but esbuild forces their __esm bodies
+// to run at module load. One of the inner awaits never settles in the
+// MCP-server runtime context, blocking JSON-RPC handshake and tripping
+// Claude Code's 30s connect timeout. Decoupling startup from these inits
+// is safe because no MCP tool path depends on them.
+// Tracking issue: rebuild bundle with split barrels (mcp-runtime vs cli).
+(async () => {
+  try {
+    await init_calibrate_gates_production();
+    await init_calibrate_gates_production_cli();
+  } catch (err) {
+    console.error("[prd-mcp] deferred calibration init failed:", err);
+  }
+})();
 
 // packages/mcp-server/dist/reliability-wiring.js
 await init_dist();
