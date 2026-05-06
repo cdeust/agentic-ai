@@ -44,7 +44,10 @@ const DEFAULT_IMPORTANCE = 0.5;
 
 // ── Chunking helpers ────────────────────────────────────────────────────────
 
-const SPEAKER_TURN_RE = /^(Human|Assistant|User|AI):/m;
+// source: cortex@82b15b3 mcp_server/core/memory_decomposer.py:139
+//   _SPEAKER_LINE_RE = re.compile(r"^\[([^\]]+)\]:\s*", re.MULTILINE)
+// Matches both "[Caroline]: text" (LoCoMo) and "Human: text" / "Assistant: text" styles.
+const SPEAKER_TURN_RE = /^(\[([^\]]+)\]:|(?:Human|Assistant|User|AI):)/m;
 
 interface Chunk {
   content: string;
@@ -118,7 +121,7 @@ function decomposeMarkdown(content: string): Chunk[] {
 // (knowledge_graph.extract_entities) is invoked via store post-insert
 // in the remember handler.
 
-function detectEntityFlags(content: string): Record<string, boolean> {
+export function detectEntityFlags(content: string): Record<string, boolean> {
   const lower = content.toLowerCase();
   return {
     has_preference:
@@ -262,6 +265,18 @@ export async function ingestMemory(
       is_global: isGlobal,
       is_benchmark: isBenchmark,
     });
+
+    // If the store exposes upsertEmbedding (SQLite path), call it explicitly.
+    // insertMemory stores the embedding field in the row but SQLite's vec table
+    // requires a separate upsertEmbedding call.  The Python source stores
+    // embeddings inline in insert_memory (PG column) but for the SQLite adapter
+    // we must call upsertEmbedding after insert.
+    // source: cortex@82b15b3 mcp_server/core/memory_ingest.py:119 (embed stored inline)
+    // source: packages/memory/src/remember/storage/sqlite-store.ts:insertMemory (no vec upsert)
+    if (emb !== null && typeof (store as unknown as Record<string, unknown>)["upsertEmbedding"] === "function") {
+      (store as unknown as { upsertEmbedding(id: number, emb: Buffer): void }).upsertEmbedding(mid, emb);
+    }
+
     ids.push(mid);
   }
 

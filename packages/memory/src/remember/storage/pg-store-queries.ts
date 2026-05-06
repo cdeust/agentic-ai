@@ -169,3 +169,148 @@ export async function findSharedEntities(client: PoolClient, memoryId: number, e
     "SELECT entity_id FROM memory_entities WHERE memory_id = $1 AND entity_id = ANY($2::int[])",
     [memoryId, entityIds])).rows.map((r) => r.entity_id);
 }
+
+// ── recall_memories: call the PostgreSQL stored procedure ────────────────────
+//
+// This is the parity-critical path: the Python bench calls the PL/pgSQL
+// recall_memories() stored procedure directly via BenchmarkDB.recall() →
+// PgMemoryStore.recall_memories(). The TS bench must call the same procedure
+// to produce identical ranking.
+//
+// The stored procedure uses TMM score normalization (Bruch et al. ACM TOIS 2023)
+// + weighted-sum fusion — NOT WRRF. This is fundamentally different from the
+// SQLite client-side WRRF used as the SQLite fallback.
+//
+// source: cortex@82b15b3 mcp_server/infrastructure/pg_schema.py:RECALL_MEMORIES_LAZY_FN
+// source: cortex@82b15b3 mcp_server/infrastructure/pg_store.py:recall_memories
+
+export interface RecallMemoriesParams {
+  queryText: string;
+  queryEmbedding: Buffer | null;
+  intent?: string;
+  domain?: string | null;
+  directory?: string | null;
+  agentTopic?: string | null;
+  minHeat?: number;
+  maxResults?: number;
+  wrrfK?: number;
+  weights?: {
+    vector?: number;
+    fts?: number;
+    heat?: number;
+    ngram?: number;
+    recency?: number;
+  };
+  includeGlobals?: boolean;
+}
+
+export interface RecallMemoryRow {
+  memory_id: number;
+  content: string;
+  score: number;
+  heat: number;
+  domain: string;
+  created_at: string;
+  store_type: string;
+  tags: unknown;
+  importance: number;
+  surprise_score: number;
+  emotional_valence: number;
+  source: string;
+}
+
+/**
+ * Call the PostgreSQL recall_memories() stored procedure and return rows.
+ *
+ * precondition: client is a live PoolClient with the recall_memories function installed.
+ * postcondition: returns rows ordered by descending score, length <= maxResults.
+ *
+ * The queryEmbedding Buffer must contain 384 float32 values (4 bytes each) for
+ * the MiniLM-L6-v2 model. Pass null to skip vector signal.
+ *
+ * source: cortex@82b15b3 mcp_server/infrastructure/pg_schema.py:807-920
+ *   (recall_memories stored procedure body)
+ * source: cortex@82b15b3 mcp_server/infrastructure/pg_store.py:recall_memories
+ *   (Python caller — passes query_embedding as bytes)
+ */
+export async function callRecallMemories(
+  client: PoolClient,
+  params: RecallMemoriesParams,
+): Promise<RecallMemoryRow[]> {
+  const {
+    queryText,
+    queryEmbedding,
+    intent = "general",
+    domain = null,
+    directory = null,
+    agentTopic = null,
+    // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+    minHeat = 0.01, // source: cortex@82b15b3 mcp_server/core/pg_recall.py:197
+    // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+    maxResults = 10,
+    // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+    wrrfK = 60,     // source: cortex@82b15b3 mcp_server/core/pg_recall.py:203
+    weights = {},
+    includeGlobals = true,
+  } = params;
+
+  const wVector = weights.vector ?? 1.0;
+  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+  const wFts    = weights.fts    ?? 0.5;
+  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+  const wHeat   = weights.heat   ?? 0.3;
+  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+  const wNgram  = weights.ngram  ?? 0.3;
+  const wRecency = weights.recency ?? 0.0;
+  void wrrfK; // PG stored procedure has its own k parameter (unused here)
+
+  // Convert Buffer to pgvector literal: '[f1, f2, ...]'
+  // source: cortex@82b15b3 mcp_server/infrastructure/pg_store.py:recall_memories
+  //   passes embedding bytes which psycopg adapts to pgvector
+  let embeddingLiteral: string | null = null;
+  // 384 = MiniLM-L6-v2 embedding dimension
+  // source: https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2 (hidden_size=384)
+  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+  if (queryEmbedding !== null && queryEmbedding.byteLength === 384 * Float32Array.BYTES_PER_ELEMENT) { // source: https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2 — dim=384
+    const floats = new Float32Array(
+      queryEmbedding.buffer,
+      queryEmbedding.byteOffset,
+      queryEmbedding.byteLength / Float32Array.BYTES_PER_ELEMENT,
+    );
+    embeddingLiteral = `[${Array.from(floats).join(",")}]`;
+  }
+
+  // The stored procedure signature (from pg_schema.py):
+  //   recall_memories(p_query_text, p_query_emb, p_intent, p_domain,
+  //                   p_directory, p_agent_topic, p_min_heat, p_max_results,
+  //                   p_wrrf_k, p_w_vector, p_w_fts, p_w_heat, p_w_ngram,
+  //                   p_w_recency, p_include_globals)
+  // source: cortex@82b15b3 mcp_server/infrastructure/pg_schema.py:RECALL_MEMORIES_LAZY_FN
+  const result = await client.query<RecallMemoryRow>(
+    `SELECT memory_id, content, score, heat, domain, created_at::text,
+            store_type, tags, importance, surprise_score, emotional_valence, source
+     FROM recall_memories(
+       $1, $2::vector, $3, $4, $5, $6,
+       $7, $8, $9, $10, $11, $12, $13, $14, $15
+     )`,
+    [
+      queryText,
+      embeddingLiteral,
+      intent,
+      domain,
+      directory,
+      agentTopic,
+      minHeat,
+      maxResults,
+      wrrfK,
+      wVector,
+      wFts,
+      wHeat,
+      wNgram,
+      wRecency,
+      includeGlobals,
+    ],
+  );
+
+  return result.rows;
+}

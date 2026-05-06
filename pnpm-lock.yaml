@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      sharp:
+        specifier: 0.32.6
+        version: 0.32.6
     devDependencies:
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.0.0
