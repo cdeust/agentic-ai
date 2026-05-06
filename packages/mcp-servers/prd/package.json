@@ -19,9 +19,7 @@
     "build": "tsc --project tsconfig.json",
     "typecheck": "tsc --noEmit --project tsconfig.json"
   },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "^25.6.0",
     "typescript": "^5.6.0"

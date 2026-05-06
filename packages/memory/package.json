@@ -95,6 +95,14 @@
       "import": "./dist/recall/recall-handler.js",
       "types": "./dist/recall/recall-handler.d.ts"
     },
+    "./recall/pg-recall.js": {
+      "import": "./dist/recall/pg-recall.js",
+      "types": "./dist/recall/pg-recall.d.ts"
+    },
+    "./recall/recall-pipeline-stages.js": {
+      "import": "./dist/recall/recall-pipeline-stages.js",
+      "types": "./dist/recall/recall-pipeline-stages.d.ts"
+    },
     "./recall/recall-hierarchical-handler.js": {
       "import": "./dist/recall/recall-hierarchical-handler.js",
       "types": "./dist/recall/recall-hierarchical-handler.d.ts"
@@ -226,7 +234,6 @@
     "minimatch": "^10.0.1",
     "pg": "^8.13.0",
     "sqlite-vec": "^0.1.9",
-    "yaml": "^2.4.0",
     "zod": "^3.23.0"
   },
   "optionalDependencies": {
