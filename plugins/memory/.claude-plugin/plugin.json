@@ -1,7 +1,7 @@
 {
   "name": "memory",
   "description": "Persistent memory for Claude Code — TS port of Cortex. Remembers across sessions automatically. Thermodynamic heat/decay model, intent-aware retrieval, biological plasticity, codebase intelligence integration. SQLite by default; PostgreSQL + pgvector when DATABASE_URL is set. 41 published papers as sources.",
-  "version": "0.2.0",
+  "version": "0.0.1",
   "author": {
     "name": "Clement Deust",
     "email": "admin@ai-architect.tools"
