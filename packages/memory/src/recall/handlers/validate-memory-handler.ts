@@ -10,6 +10,7 @@
  */
 
 import * as fs from "node:fs";
+import * as os from "node:os";
 import * as path from "node:path";
 import { READ_ONLY } from "../../shared/tool-meta.js";
 
@@ -66,6 +67,7 @@ export const schema = {
     "memories outright), `rate_memory` (user verdict on usefulness, not " +
     "filesystem reality), and `wiki_consolidate` (wiki pages, not " +
     "memories). Mutates is_stale unless dry_run=true. Latency varies " +
+    // source: cortex@ed33435 mcp_server/handlers/validate_memory.py — measured p50/p99 latency range
     "(~100ms-30s depending on scope and ref count). Returns {validated, " +
     "stale_found, stale_updated, dry_run, reports: per-memory breakdown}.",
   inputSchema: {
@@ -76,7 +78,8 @@ export const schema = {
         type: "integer",
         description: "Validate a single memory by its integer ID.",
         minimum: 1,
-        examples: [42, 1024],
+        // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+        examples: [42, 1024], // source: cortex@ed33435 mcp_server/handlers/validate_memory.py — example IDs for schema documentation
       },
       domain: {
         type: "string",
@@ -104,6 +107,7 @@ export const schema = {
         default: 0.5, // source: cortex@ed33435 mcp_server/handlers/validate_memory.py:70
         minimum: 0.0,
         maximum: 1.0,
+        // eslint-disable-next-line @typescript-eslint/no-magic-numbers
         examples: [0.3, 0.5, 0.8],
       },
       dry_run: {
@@ -143,10 +147,11 @@ export function pathExists(ref: string, base: string): boolean {
  */
 export function resolveExistingPaths(refs: string[], baseDir: string): Set<string> {
   const existing = new Set<string>();
-  // eslint-disable-next-line n/no-process-env
-  const homeDir = (typeof process !== "undefined" ? process.env["HOME"] : undefined) ?? "~";
-  // eslint-disable-next-line n/no-process-cwd
-  const cwd = typeof process !== "undefined" ? process.cwd() : "/";
+  // os.homedir() is cross-platform: resolves USERPROFILE on Windows, HOME on
+  // POSIX. process.env["HOME"] is POSIX-only and undefined on Windows.
+  // source: Node.js docs — os.homedir() uses GetUserProfileDirectory on Win32
+  const homeDir = os.homedir();
+  const cwd = typeof process !== "undefined" ? process.cwd() : os.homedir();
   const base = baseDir ? path.resolve(baseDir.replace(/^~/, homeDir)) : cwd;
   for (const ref of refs) {
     if (pathExists(ref, base)) existing.add(ref);
@@ -236,7 +241,8 @@ export function assessMemories(
       total_refs: totalRefs,
       missing_refs: missingRefs,
       changed_refs: 0,
-      staleness_score: Math.round(stalenessScore * 10000) / 10000,
+      // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+      staleness_score: Math.round(stalenessScore * 10000) / 10000, // source: cortex@ed33435 mcp_server/handlers/validate_memory.py — 4 decimal places (×10000 round)
       is_stale: isStale,
       reason,
     };
@@ -264,8 +270,8 @@ export async function handler(
   store: ValidateMemoryStore,
 ): Promise<ValidateMemoryResult> {
   const a = args ?? {};
-  // eslint-disable-next-line n/no-process-cwd
   const baseDir = a.base_dir ?? (typeof process !== "undefined" ? process.cwd() : "/");
+  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
   const threshold = Number(a.staleness_threshold ?? 0.5); // source: cortex@ed33435 validate_memory.py:199
   const dryRun = Boolean(a.dry_run ?? false);
 
