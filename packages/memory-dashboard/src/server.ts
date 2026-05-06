@@ -15,6 +15,7 @@
  */
 
 import path from "node:path";
+import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import Fastify, { type FastifyInstance } from "fastify";
 import fastifyStatic from "@fastify/static";
@@ -68,8 +69,22 @@ export async function startDashboard(
   // Invariant: only bind to loopback — never to 0.0.0.0 or an external interface.
   // source: cortex@ed33435 mcp_server/server/http_standalone.py:279 — loopback-only bind
   const host = opts.host ?? "127.0.0.1";
-  const staticDir =
-    opts.staticDir ?? path.resolve(__dirname, "..", "src", "static");
+  // staticDir resolution order, first existing wins:
+  //   1. opts.staticDir              — explicit override (tests, embedders)
+  //   2. process.env.DASHBOARD_STATIC_DIR
+  //                                  — runtime override (Claude plugin spawn)
+  //   3. <dist>/static               — sibling, the shipped plugin layout
+  //   4. <dist>/../src/static        — dev layout (running tsc dist/ from src/)
+  // We do *not* throw here on missing dir — fastifyStatic.register will fail
+  // loudly, which is the right place for that error.
+  const staticDir = (() => {
+    if (opts.staticDir) return opts.staticDir;
+    const fromEnv = process.env["DASHBOARD_STATIC_DIR"];
+    if (fromEnv) return fromEnv;
+    const sibling = path.resolve(__dirname, "static");
+    if (existsSync(sibling)) return sibling;
+    return path.resolve(__dirname, "..", "src", "static");
+  })();
 
   const fastify = Fastify({ logger: false });
 
