@@ -28,6 +28,16 @@ const config = [
       "pnpm-lock.yaml",
       // Generated / auto-built artefacts — do not lint.
       "mcp-server/index.js",
+      // Compiled bundle — 80 K-line esbuild output; not source.
+      // source: §4.1 auto-generated exemption: this file has no // auto-generated
+      // marker but is a binary-equivalent output of `esbuild` — treating it as
+      // auto-generated and excluding from lint to avoid false rule-not-found errors.
+      "packages/prd-pipeline/mcp-server/index.js",
+      // Template file — sits outside every tsconfig; used as docs scaffolding only.
+      "docs/vitest.config.template.ts",
+      // Rust test fixture — TypeScript file inside a Cargo workspace; not part of
+      // any TS project. source: codebase-rust is a Rust crate, not a TS package.
+      "packages/codebase-rust/tests/**",
     ],
   },
 
@@ -65,13 +75,53 @@ const config = [
             "packages/mcp-servers/*/vitest.config.ts",
             "packages/mcp-servers/*/src/__tests__/*.ts",
             "packages/mcp-servers/*/src/__tests__/*/*.ts",
+            // Nested prd-pipeline sub-packages — tests excluded from their tsconfig
+            // (benchmark, ecosystem-adapters, orchestration, verification) need
+            // allowDefaultProject because their tsconfig has explicit excludes.
+            // Packages whose tsconfig does NOT exclude test files (mcp-server, core,
+            // meta-prompting, validation, strategy) must NOT be listed here — they
+            // are already found by the project service and double-registration errors.
+            //
+            // benchmark: "exclude": ["src/**/__tests__/**", "calibration/**/__tests__/**"]
+            "packages/prd-pipeline/packages/benchmark/src/__tests__/*.ts",
+            "packages/prd-pipeline/packages/benchmark/calibration/__tests__/*.ts",
+            "packages/prd-pipeline/packages/benchmark/vitest.config.ts",
+            // ecosystem-adapters: "exclude": ["src/**/__tests__/**"]
+            "packages/prd-pipeline/packages/ecosystem-adapters/src/__tests__/*.ts",
+            "packages/prd-pipeline/packages/ecosystem-adapters/vitest.config.ts",
+            // orchestration: "exclude": ["src/**/__tests__/**"]
+            "packages/prd-pipeline/packages/orchestration/src/__tests__/*.ts",
+            "packages/prd-pipeline/packages/orchestration/vitest.config.ts",
+            // verification: "exclude": ["src/**/__tests__/**"]
+            "packages/prd-pipeline/packages/verification/src/__tests__/*.ts",
+            "packages/prd-pipeline/packages/verification/vitest.config.ts",
+            // Remaining vitest configs (not tests) for packages whose tests are in tsconfig
+            "packages/prd-pipeline/packages/mcp-server/vitest.config.ts",
+            "packages/prd-pipeline/packages/core/vitest.config.ts",
+            "packages/prd-pipeline/packages/meta-prompting/vitest.config.ts",
+            "packages/prd-pipeline/packages/validation/vitest.config.ts",
+            "packages/prd-pipeline/packages/strategy/vitest.config.ts",
+            // memory-dashboard and parity-runner test files added in PR #77 / #79.
+            "packages/memory-dashboard/__tests__/*.ts",
+            "packages/parity-runner/src/__tests__/*.ts",
+            // Root-level config and script files — outside all package tsconfigs.
+            // Note: allowDefaultProject does not support '**' glob — only flat patterns.
+            // source: @typescript-eslint docs §allowDefaultProject restrictions.
+            "vitest.config.ts",
+            "scripts/*.ts",
+            // Parity oracle test and config files — live outside packages/.
+            "parity-oracle/*.ts",
+            "parity-oracle/cortex/*.ts",
+            "parity-oracle/codebase/*.ts",
+            "parity-oracle/prd/*.ts",
           ],
-          // Raised from default 8 to accommodate the 18 new parity test files
-          // added in ap-tool-test-coverage-2026-05-06. These are genuine test
-          // files, not a glob overreach. Performance impact is bounded by the
-          // test directory size (packages/codebase/__tests__/).
+          // Raised from 25 to 400 to accommodate the full test suite:
+          //   198 files matched existing globs + ~100 from new prd-pipeline globs
+          //   above + headroom for further test additions.
+          // Measured count: ~300 files across all glob patterns (2026-05-06).
           // source: @typescript-eslint docs §maximumDefaultProjectFileMatchCount
-          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 25,
+          // source: measured glob count 2026-05-06, worktree lint-and-standards-2026-05-06
+          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 400,
         },
         tsconfigRootDir: import.meta.dirname,
         ecmaVersion: 2022,
