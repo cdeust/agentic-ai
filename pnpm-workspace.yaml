@@ -1,4 +1,0 @@
-packages:
-  - "packages/*"
-  - "packages/mcp-servers/*"
-  - "packages/prd-pipeline/packages/*"
