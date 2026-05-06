@@ -47,7 +47,16 @@ Claude Code is powerful in one session and amnesiac the next. It can reason abou
 
 That's it. Restart your Claude Code session and the four MCP servers (`cortex`, `ai-architect`, `reasoning`, `prd-gen`) are available. Install one or all four — they work independently.
 
-The marketplace's `.claude-plugin/marketplace.json` is at the repo root, so the standard Anthropic plugin protocol resolves the four plugins automatically. Each plugin's bundled `.mcp.json` points at the unified TS / Rust outputs in `packages/`; no additional configuration is needed.
+Each plugin ships **self-contained** under its install path: an esbuild bundle (`dist/index.js`) for the JS plugins, the Cargo source (`src-rust/`) for the codebase plugin, and a `scripts/launch.sh` that resolves native deps on first launch. No monorepo checkout required client-side.
+
+| Plugin | First launch behavior |
+|---|---|
+| `memory` | `npm install --omit=dev` runs once for native deps (better-sqlite3, onnxruntime-node, @xenova/transformers, pg, sqlite-vec) — then exec `node dist/index.js` |
+| `codebase` | Tries `ai-architect-mcp` from PATH → plugin `bin/` → `src-rust/target/release/` → `cargo build --release` from `src-rust/` (requires Rust toolchain on the host) |
+| `reasoning` | exec `node dist/index.js` directly — no native deps |
+| `prd` | `npm install --omit=dev` runs once for `ajv`, then exec `node dist/index.js` |
+
+The marketplace's `.claude-plugin/marketplace.json` is at the repo root, so the standard Anthropic plugin protocol resolves the four plugins automatically. `mcpServers` is declared inline in each plugin's `.claude-plugin/plugin.json`; no additional client-side configuration is needed.
 
 ---
 
@@ -94,20 +103,20 @@ Stateless reducer that turns a feature description into a 9-file PRD. Multi-judg
 The core idea: every plugin's MCP server is a thin composition root over a domain layer that's pure logic. The four plugins share infrastructure (SqliteMemoryStore, recall pipeline, EmbeddingEngine, reasoning patterns) without depending on each other's MCP boundaries.
 
 ```
-plugins/<name>/.claude-plugin/plugin.json      ← Anthropic plugin manifest
-plugins/<name>/.mcp.json                        ← MCP server wiring
+<plugin-root>/.claude-plugin/plugin.json   ← Anthropic plugin manifest (mcpServers inline)
+<plugin-root>/scripts/launch.sh            ← First-launch native-dep installer (memory, prd, codebase)
+<plugin-root>/dist/index.js                ← esbuild bundle (committed; ships with `git clone`)
        │
        ▼
-packages/mcp-servers/<name>/dist/index.js       ← MCP composition root
+packages/<domain>/src/...                  ← Domain logic, bundled into dist/ (pure, no I/O)
        │
        ▼
-packages/<domain>/src/...                       ← Domain logic (pure)
-       │
-       ▼
-packages/core/src/ports/...                     ← Ports/adapters interfaces
+packages/core/src/ports/...                ← Ports/adapters interfaces
 ```
 
-When you `/plugin install`, Claude Code reads the marketplace manifest, resolves the plugin's `mcpServers` field, and starts the matching MCP server as a stdio JSON-RPC subprocess. The MCP server wires SQLite (or PostgreSQL when configured) + the embedding engine + the LLM client + the reasoning patterns through dependency injection at startup. Tool calls land in the same domain code paths a unit test exercises.
+`<plugin-root>` is `plugins/memory/`, `plugins/codebase/`, `plugins/prd/`, or `packages/reasoning/` (the reasoning plugin's source root is the workspace package itself, since it ships agents/, skills/, commands/, hooks/, scripts/setup.sh alongside the MCP bundle).
+
+When you `/plugin install`, Claude Code reads the marketplace manifest, resolves the plugin's inline `mcpServers` field, and starts the matching MCP server as a stdio JSON-RPC subprocess. The MCP server wires SQLite (or PostgreSQL when configured) + the embedding engine + the LLM client + the reasoning patterns through dependency injection at startup. Tool calls land in the same domain code paths a unit test exercises.
 
 ---
 
@@ -142,19 +151,18 @@ Every port was verified against its source repo via **real-subprocess execution*
 agentic-ai/
 ├── .claude-plugin/marketplace.json  Canonical Anthropic marketplace manifest (4 plugins)
 ├── plugins/
-│   ├── memory/                      Cortex plugin
-│   ├── codebase/                    automatised-pipeline plugin
-│   ├── reasoning/                   zetetic-team-subagents plugin
-│   └── prd/                         prd-spec-generator plugin
+│   ├── memory/                      Cortex plugin: dist/index.js + scripts/launch.sh + package.json (native deps)
+│   ├── codebase/                    automatised-pipeline plugin: src-rust/ (Cargo source) + scripts/launch.sh
+│   └── prd/                         prd-spec-generator plugin: dist/index.js + scripts/launch.sh + package.json (ajv)
 ├── packages/
 │   ├── core/                        Pure domain types + ports (no I/O)
 │   ├── memory/                      Cortex re-implementation in TS
 │   ├── memory-dashboard/            Web dashboard (Graph / Knowledge / Board views)
 │   ├── codebase/                    TS adapter wrapping the Rust binary
-│   ├── codebase-rust/               The Rust binary (kept verbatim)
-│   ├── reasoning/                   Genius + team agents, skills, commands, hooks
+│   ├── codebase-rust/               The Rust binary (workspace dev source — also copied into plugins/codebase/src-rust/ for shipping)
+│   ├── reasoning/                   reasoning plugin: agents/, skills/, commands/, hooks/, dist/index.js (this dir IS the plugin install root)
 │   ├── prd-pipeline/packages/       10 sub-packages from prd-spec-generator
-│   ├── mcp-servers/{memory,codebase,reasoning,prd}/   MCP composition roots
+│   ├── mcp-servers/{memory,codebase,reasoning,prd}/   MCP composition roots (TS source bundled into plugin dist/)
 │   ├── orchestrator/                Top-level CLI / agent SDK driver
 │   ├── parity-runner/               Cross-language fixture parity test runner
 │   └── parity-benchmark/            End-to-end LoCoMo benchmark harness
