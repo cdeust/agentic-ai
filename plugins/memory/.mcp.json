@@ -1,11 +1,10 @@
 {
-  "_note": "Wired to the unified TS MCP server at packages/mcp-servers/memory/dist/index.js. CLAUDE_PLUGIN_ROOT resolves to plugins/memory/ when installed via the agentic-ai marketplace; the relative '../../packages/mcp-servers/memory/dist/index.js' walks up to repo root then into the built MCP server. The bash -c wrapper exists because Claude Code only substitutes the plain ${CLAUDE_PLUGIN_ROOT} pattern; using bash -c lets the shell handle expansion at invocation time. See cf85cfc in cdeust/automatised-pipeline (2026-04-25) for root-cause.",
+  "_note": "Wired to the unified TS MCP server at packages/mcp-servers/memory/dist/index.js. CLAUDE_PLUGIN_ROOT resolves to plugins/memory/ when installed via the agentic-ai marketplace; the relative '../../packages/mcp-servers/memory/dist/index.js' walks up to repo root then into the built MCP server. SEC-006 fix: Claude Code's substitution of ${CLAUDE_PLUGIN_ROOT} now produces an argv string for `node` directly, instead of being re-evaluated by `bash -c` (defense in depth against shell metacharacter injection if the install path ever contained $(), backticks, or quotes).",
   "mcpServers": {
     "cortex": {
-      "command": "bash",
+      "command": "node",
       "args": [
-        "-c",
-        "exec node \"${CLAUDE_PLUGIN_ROOT}/../../packages/mcp-servers/memory/dist/index.js\""
+        "${CLAUDE_PLUGIN_ROOT}/../../packages/mcp-servers/memory/dist/index.js"
       ],
       "env": {
         "DATABASE_URL": "",
