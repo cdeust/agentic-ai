@@ -95,3 +95,61 @@ export function rrfFuseSignals(
   ).filter(([, pairs]) => pairs.length > 0);
   return rrfFuseScorePairs(lists, k);
 }
+
+/**
+ * Weighted Reciprocal Rank Fusion across multiple signals.
+ *
+ *   score(d) = Σ_signal weight[signal] / (k + rank_signal(d) + 1)
+ *
+ * Weighted variant of RRF where each signal contributes proportionally
+ * to its weight rather than each contributing equally. Required for
+ * parity with the Python recall pipeline, which fuses
+ * vector/fts/heat/hopfield/hdc/sr/sa/bm25/ngram with intent-specific
+ * weights from BASE_WEIGHTS + INTENT_WEIGHT_OVERRIDES.
+ *
+ * Without this weighting, signal mixtures collapse to unweighted RRF —
+ * for LoCoMo-style literal-retrieval queries that produces a 21pp
+ * regression on MRR vs the Python baseline because every signal counts
+ * equally regardless of its informativeness for the query intent.
+ *
+ * precondition: weights[name] is finite for every name present in signals.
+ *   Missing-from-weights signals get weight 1.0; non-positive weights skip
+ *   the signal entirely.
+ * postcondition: returned list is sorted by descending fused score; ties
+ *   broken by source count then ascending id (matches rrfFuseIds).
+ *
+ * source: cortex@ed33435 mcp_server/core/retrieval_dispatch.py:wrrf_fuse:43-56
+ * source: Cormack, Clarke, Büttcher (2009) "Reciprocal Rank Fusion ..."
+ *   SIGIR — RRF as the canonical heterogeneous-signal merger; weighting
+ *   per signal is the standard extension when signal informativeness varies.
+ */
+export function wrrfFuseSignals(
+  signals: Record<string, Array<[number, number]>>,
+  weights: Record<string, number>,
+  k: number = DEFAULT_RRF_K,
+): Array<[number, number]> {
+  const scores = new Map<number, number>();
+  const sourceCounts = new Map<number, number>();
+  for (const [name, pairs] of Object.entries(signals)) {
+    if (pairs.length === 0) continue;
+    const w = weights[name] ?? 1.0;
+    if (w <= 0) continue;
+    for (let rank = 0; rank < pairs.length; rank++) {
+      const entry = pairs[rank];
+      if (!entry) continue;
+      const id = entry[0];
+      const delta = w / (k + rank + 1);
+      scores.set(id, (scores.get(id) ?? 0) + delta);
+      sourceCounts.set(id, (sourceCounts.get(id) ?? 0) + 1);
+    }
+  }
+  const entries = Array.from(scores.entries());
+  entries.sort(([idA, scoreA], [idB, scoreB]) => {
+    if (scoreB !== scoreA) return scoreB - scoreA;
+    const cA = sourceCounts.get(idA) ?? 0;
+    const cB = sourceCounts.get(idB) ?? 0;
+    if (cB !== cA) return cB - cA;
+    return idA - idB;
+  });
+  return entries;
+}

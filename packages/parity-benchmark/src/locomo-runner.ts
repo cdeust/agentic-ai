@@ -14,10 +14,19 @@
  * source: packages/mcp-servers/memory/src/index.ts:92-177 (recall port adapter pattern)
  */
 
-import { recallHandler } from "@agentic/memory/recall/recall-handler.js";
+import {
+  DEFAULT_RECALL_SETTINGS,
+  recallHandler,
+} from "@agentic/memory/recall/recall-handler.js";
 import type { MemoryStore as RecallMemoryStore } from "@agentic/memory/recall/port.js";
 import type { MemoryItem } from "@agentic/memory/recall/types.js";
 import { SqliteMemoryStore } from "@agentic/memory/remember/storage/sqlite-store.js";
+import {
+  TransformersEmbeddingEngine,
+  toRecallEmbeddingEngine,
+  _resetPipelineCache,
+} from "@agentic/memory/infrastructure/transformers-embedding-engine.js";
+import type { EmbeddingEngine as CoreEmbeddingEngine } from "@agentic/core";
 import {
   CATEGORY_NAMES,
   extractSessions,
@@ -28,6 +37,22 @@ import type { QuestionResult } from "./scoring.js";
 
 // source: cortex@1ef1376 run_benchmark.py:73 — same top_k passed to recall.
 const TOP_K = 10;
+
+// Bench-time recall settings: disable strategic reordering and session
+// coherence boosts so the response order is exactly the multi-signal
+// relevance ranking. Both behaviors are on by default in production for
+// "Lost in the Middle" mitigation (Liu et al. 2023) and conversation
+// grouping, but they reorder the top-K such that the n-th array slot is
+// no longer the n-th best-relevance result. The benchmark assigns hit_rank
+// from array position, which mirrors the Python LoCoMo runner — Python
+// fetches db.recall(...) which is the pre-strategic-ordering ranking.
+// source: cortex@1ef1376 benchmarks/locomo/run_benchmark.py:73
+//   (BenchmarkDB.recall returns raw multi-signal order, no strategic shuffle)
+const BENCH_RECALL_SETTINGS = {
+  ...DEFAULT_RECALL_SETTINGS,
+  STRATEGIC_ORDERING_ENABLED: false,
+  SESSION_COHERENCE_BONUS: 0,
+};
 
 // Cap conversations seeded per run when --limit is given.
 // Each conversation gets a fresh store, so this controls total runtime linearly.
@@ -53,8 +78,17 @@ function makeRecallStore(memoryStore: SqliteMemoryStore): RecallMemoryStore {
       return hits.map(([memory_id, distance]) => ({ memory_id, distance }));
     },
     searchByFts: async (query, limit) => {
-      const raw = (ext["searchFts"]?.(query, limit) ?? ext["ftsSearch"]?.(query, limit) ?? []) as Array<Record<string, unknown>>;
-      return raw.map((r) => ({
+      // SqliteMemoryStore.searchFts returns Array<[memoryId, score]>; the
+      // legacy ftsSearch fallback returns Array<{id, rank}>. Detect both shapes.
+      const raw = (memoryStore as unknown as {
+        searchFts?: (q: string, l: number) => Array<[number, number]>;
+        ftsSearch?: (q: string, l: number) => Array<Record<string, unknown>>;
+      }).searchFts?.(query, limit);
+      if (raw) {
+        return raw.map(([memory_id, score]) => ({ memory_id, score }));
+      }
+      const legacy = (ext["ftsSearch"]?.(query, limit) ?? []) as Array<Record<string, unknown>>;
+      return legacy.map((r) => ({
         memory_id: r["id"] as number,
         score: ((r["rank"] as number) ?? (r["score"] as number)) ?? 0,
       }));
@@ -85,12 +119,16 @@ function makeRecallStore(memoryStore: SqliteMemoryStore): RecallMemoryStore {
   };
 }
 
-function seedConversation(
+async function seedConversation(
   store: SqliteMemoryStore,
   conv: LocomoConversation,
-): SeededState {
+  embedder: CoreEmbeddingEngine | null,
+): Promise<SeededState> {
   const sessions = extractSessions(conv.conversation);
   const midToSidx = new Map<number, number>();
+  // Two passes: first insert all rows (cheap), then compute embeddings in
+  // one batched call (the bottleneck — model inference dominates wall time).
+  const ids: Array<{ id: number; content: string; sidx: number }> = [];
   for (const s of sessions) {
     const id = store.insertMemory({
       content: s.content,
@@ -99,7 +137,19 @@ function seedConversation(
       source: `session_${s.session_idx}`,
       created_at: s.date,
     });
-    if (id > 0) midToSidx.set(id, s.session_idx);
+    if (id > 0) {
+      ids.push({ id, content: s.content, sidx: s.session_idx });
+      midToSidx.set(id, s.session_idx);
+    }
+  }
+  if (embedder !== null && ids.length > 0 && store.hasVec) {
+    const vectors = await embedder.embedBatch(ids.map((r) => r.content));
+    for (let i = 0; i < ids.length; i++) {
+      const idEntry = ids[i];
+      const vec = vectors[i];
+      if (!idEntry || !vec) continue;
+      store.upsertEmbedding(idEntry.id, Buffer.from(vec.buffer, vec.byteOffset, vec.byteLength));
+    }
   }
   return { midToSidx };
 }
@@ -108,6 +158,7 @@ async function evaluateQuestion(
   recallStore: RecallMemoryStore,
   state: SeededState,
   qa: LocomoConversation["qa"][number],
+  embedder: ReturnType<typeof toRecallEmbeddingEngine> | null,
 ): Promise<QuestionResult | null> {
   const refs = parseEvidenceRefs(qa.evidence);
   const targetSessions = new Set(refs.map(([sidx]) => sidx));
@@ -120,6 +171,8 @@ async function evaluateQuestion(
   const response = await recallHandler(
     { query: qa.question, max_results: TOP_K, domain: "locomo", min_heat: 0 },
     recallStore,
+    embedder,
+    BENCH_RECALL_SETTINGS,
   );
   let hitRank: number | null = null;
   for (let i = 0; i < response.results.length; i++) {
@@ -136,14 +189,16 @@ async function evaluateQuestion(
 
 async function evaluateConversation(
   conv: LocomoConversation,
+  coreEmbedder: CoreEmbeddingEngine | null,
+  recallEmbedder: ReturnType<typeof toRecallEmbeddingEngine> | null,
 ): Promise<QuestionResult[]> {
   const store = new SqliteMemoryStore(":memory:");
   const recallStore = makeRecallStore(store);
   try {
-    const state = seedConversation(store, conv);
+    const state = await seedConversation(store, conv, coreEmbedder);
     const results: QuestionResult[] = [];
     for (const qa of conv.qa) {
-      const r = await evaluateQuestion(recallStore, state, qa);
+      const r = await evaluateQuestion(recallStore, state, qa, recallEmbedder);
       if (r) results.push(r);
     }
     return results;
@@ -155,6 +210,16 @@ async function evaluateConversation(
 export interface RunOptions {
   readonly limit?: number | null;
   readonly onProgress?: (current: number, total: number) => void;
+  /**
+   * When true, instantiates TransformersEmbeddingEngine (Xenova/all-MiniLM-L6-v2,
+   * ~90 MB one-time download to ~/.cache/huggingface/hub) and uses it for
+   * vector search. The Python LoCoMo baseline was captured with real
+   * embeddings, so reaching parity requires this path. Default true.
+   *
+   * Set false for an FTS-only smoke run (faster, no model download, but
+   * top-rank metrics will lag the Python baseline).
+   */
+  readonly useEmbeddings?: boolean;
 }
 
 /**
@@ -170,13 +235,32 @@ export async function runLocomo(
 ): Promise<QuestionResult[]> {
   const limit = options.limit ?? DEFAULT_LIMIT;
   const slice = limit !== null && limit > 0 ? conversations.slice(0, limit) : conversations;
-  const all: QuestionResult[] = [];
-  for (let i = 0; i < slice.length; i++) {
-    const conv = slice[i];
-    if (!conv) continue;
-    const convResults = await evaluateConversation(conv);
-    all.push(...convResults);
-    options.onProgress?.(i + 1, slice.length);
+  // Build the embedding engine lazily once and reuse it across every
+  // conversation; the model load is expensive but the same instance
+  // survives across SqliteMemoryStore lifecycles. The recall handler wants
+  // the core EmbeddingEngine port; we adapt to recall-port shape inside
+  // recallHandler itself (it accepts CoreEmbeddingEngine directly).
+  const useEmbeddings = options.useEmbeddings ?? true;
+  let coreEmbedder: CoreEmbeddingEngine | null = null;
+  let recallEmbedder: ReturnType<typeof toRecallEmbeddingEngine> | null = null;
+  if (useEmbeddings) {
+    coreEmbedder = new TransformersEmbeddingEngine();
+    recallEmbedder = toRecallEmbeddingEngine(coreEmbedder);
+    // Force a one-shot warm-up so the heavy load is reported by the first
+    // onProgress call rather than charged silently to conversation #1.
+    await coreEmbedder.embed("warmup");
   }
-  return all;
+  try {
+    const all: QuestionResult[] = [];
+    for (let i = 0; i < slice.length; i++) {
+      const conv = slice[i];
+      if (!conv) continue;
+      const convResults = await evaluateConversation(conv, coreEmbedder, recallEmbedder);
+      all.push(...convResults);
+      options.onProgress?.(i + 1, slice.length);
+    }
+    return all;
+  } finally {
+    if (useEmbeddings) _resetPipelineCache();
+  }
 }

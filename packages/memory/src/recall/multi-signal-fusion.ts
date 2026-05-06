@@ -18,7 +18,7 @@
 
 import { computeBm25Scores, computeNgramScore } from "./bm25.js";
 import { computeRecencyBoost, computeSessionCoherence } from "./heat.js";
-import { rrfFuseSignals } from "./rrf.js";
+import { rrfFuseSignals, wrrfFuseSignals } from "./rrf.js";
 import type { MemoryItem, MultiSignalSignals, RecallResult } from "./types.js";
 import type { QueryIntentValue } from "./types.js";
 import { QueryIntent } from "./types.js";
@@ -158,21 +158,27 @@ export function buildRecallResult(
  * Accepts pre-computed signals (from the MemoryStore port) alongside
  * locally-computed BM25 + n-gram + heat signals.
  *
- * This is the pure-logic core of the multi-signal retrieval pipeline.
- * The handler wraps this with store reads and result building.
+ * Per-signal weights match the Python recall pipeline (BASE_WEIGHTS +
+ * INTENT_WEIGHT_OVERRIDES). When omitted, every signal weight defaults
+ * to 1.0 — equivalent to plain RRF — to preserve the previous contract
+ * for callers that don't yet pass weights.
  *
  * Port of: the fusion step in mcp_server/handlers/recall_helpers.py::collect_signals
- *          plus mcp_server/core/unified_search_fusion.py::fuse
+ *          plus mcp_server/core/retrieval_dispatch.py::wrrf_fuse (weighted variant)
  */
 export function fuseSignals(
   signals: MultiSignalSignals,
   rrfK = 60,
+  weights?: Record<string, number>,
 ): Array<[number, number]> {
   const activeSignals: Record<string, Array<[number, number]>> = {};
   for (const [name, pairs] of Object.entries(signals)) {
     if (pairs.length > 0) {
       activeSignals[name] = pairs;
     }
+  }
+  if (weights) {
+    return wrrfFuseSignals(activeSignals, weights, rrfK);
   }
   return rrfFuseSignals(activeSignals, rrfK);
 }

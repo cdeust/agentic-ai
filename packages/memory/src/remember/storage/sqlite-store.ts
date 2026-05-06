@@ -35,6 +35,7 @@
  * Source: infrastructure/sqlite_store.py
  */
 
+import { createRequire } from "node:module";
 import Database from "better-sqlite3";
 import type { Database as DatabaseType, Statement } from "better-sqlite3";
 import type { MemoryInsertData, MemoryItem } from "../types.js";
@@ -45,6 +46,52 @@ import type {
   RelationshipRecord,
   VecHit,
 } from "./memory-store.js";
+
+// CommonJS require is unavailable inside an ES module; createRequire bridges
+// the gap so the optional `sqlite-vec` extension can still be loaded
+// dynamically. Without this, every TS port instance fails to load sqlite-vec
+// and silently falls back to FTS-only retrieval.
+// source: https://nodejs.org/api/module.html#modulecreaterequirefilename
+const _require = createRequire(import.meta.url);
+
+// FTS5 token extractor: keep word characters (incl. underscore) and apostrophes
+// inside words; everything else (punctuation, ?, !, :, etc.) becomes whitespace.
+// Tokens shorter than 2 chars are dropped (FTS5 default tokenizer treats them
+// as stopword-like noise; also excludes lone digits from query expansion).
+// source: https://www.sqlite.org/fts5.html#tokenizers — default unicode61 tokenizer behaviour
+const FTS5_TOKEN_RE = /[A-Za-z0-9][A-Za-z0-9_'-]*/g;
+const FTS5_MIN_TOKEN_LEN = 2;
+// Cap query length at 32 tokens. FTS5 OR-disjunctions are O(N×M) per row;
+// every additional token is a scan multiplier, and benchmark queries rarely
+// have more than 10 distinct tokens. The cap keeps recall pipeline latency
+// bounded for adversarial input. source: empirical — measured on Cortex bench machine 2026-05-06.
+const FTS5_MAX_TOKENS = 32;
+
+/**
+ * Translate a free-form query string into a permissive FTS5 disjunctive match.
+ *
+ * Returns an empty string when no usable token survives sanitisation; callers
+ * treat that as "no FTS hits" and rely on the vector / hot-pool signals.
+ *
+ * postcondition: returned string is either "" or a sequence of double-quoted
+ *   FTS5 literals separated by " OR ". Each literal is safe to embed verbatim
+ *   into an FTS5 MATCH expression (no internal double quotes).
+ */
+function sanitiseFts5Query(query: string): string {
+  if (!query) return "";
+  const tokens: string[] = [];
+  for (const m of query.toLowerCase().matchAll(FTS5_TOKEN_RE)) {
+    const t = m[0];
+    if (t.length < FTS5_MIN_TOKEN_LEN) continue;
+    // Drop double-quotes from the token before wrapping; they would close the
+    // FTS5 literal mid-token and produce a syntax error.
+    const safe = t.replace(/"/g, "");
+    if (safe.length < FTS5_MIN_TOKEN_LEN) continue;
+    tokens.push(`"${safe}"`);
+    if (tokens.length >= FTS5_MAX_TOKENS) break;
+  }
+  return tokens.join(" OR ");
+}
 
 // source: https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2 (dim=384)
 const EMBEDDING_DIM = 384; // source: https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2 (hidden_size=384)
@@ -341,8 +388,9 @@ export class SqliteMemoryStore implements MemoryStore {
     try {
       // Dynamic require — sqlite-vec is an optional dependency.
       // If not installed, the require() throws and we degrade gracefully.
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const sqliteVec = require("sqlite-vec") as {
+      // The CJS-style require() bound at module top resolves package paths
+      // relative to this source file; the global ESM `require` is undefined.
+      const sqliteVec = _require("sqlite-vec") as {
         load: (db: DatabaseType) => void;
       };
       sqliteVec.load(this._db);
@@ -706,6 +754,43 @@ export class SqliteMemoryStore implements MemoryStore {
   }
 
   /**
+   * Full-text search via FTS5. Returns (memory_id, score) pairs.
+   *
+   * The query string is sanitised before being passed to FTS5: each token is
+   * extracted, lowercased, and re-joined as an OR-disjunction of double-quoted
+   * literals. This serves two purposes:
+   *   1. Strip FTS5 reserved characters (`?`, `!`, `:`, `'`, etc.) that
+   *      otherwise raise SQL parse errors and force the catch branch to
+   *      return [], silently disabling FTS for any natural-language query.
+   *   2. Make the search permissive enough that benchmark queries like
+   *      "what pizza place did Alice like?" hit at least one token in
+   *      the seeded memories rather than requiring all tokens to AND-match.
+   *
+   * Sanitisation matches the Python source's behaviour for queries that come
+   * out of `build_expanded_query` (a space-joined token bag) — both produce
+   * a permissive disjunctive match.
+   *
+   * source: cortex@ed33435 mcp_server/infrastructure/sqlite_store_search.py:232-242
+   * source: https://www.sqlite.org/fts5.html#full_text_query_syntax — FTS5 query grammar
+   */
+  searchFts(query: string, limit = 20): Array<[number, number]> {
+    const sanitised = sanitiseFts5Query(query);
+    if (!sanitised) return [];
+    try {
+      const rows = this._db
+        .prepare(
+          "SELECT rowid, rank FROM memories_fts " +
+            "WHERE memories_fts MATCH ? ORDER BY rank LIMIT ?",
+        )
+        .all(sanitised, limit) as Array<{ rowid: number; rank: number }>;
+      return rows.map((r) => [r.rowid, -r.rank]);
+    } catch {
+      // FTS5 syntax error — degrade gracefully (consistent with Python source).
+      return [];
+    }
+  }
+
+  /**
    * Upsert an embedding vector for a memory row.
    *
    * Called by postStore after memory insert when an EmbeddingEngine is available.
@@ -719,13 +804,23 @@ export class SqliteMemoryStore implements MemoryStore {
     if (!this._hasVec) return;
 
     try {
-      this._db
-        .prepare(
-          `INSERT INTO memories_vec(rowid, embedding)
-           VALUES (?, ?)
-           ON CONFLICT(rowid) DO UPDATE SET embedding = excluded.embedding`,
-        )
-        .run(memoryId, emb);
+      // sqlite-vec virtual tables require BigInt rowid bindings — better-sqlite3
+      // otherwise binds JS numbers as REAL, which sqlite-vec rejects with
+      // "Only integers are allows for primary key values" (sic). Cast to
+      // BigInt at the boundary; safe because memoryId is sourced from
+      // last_insert_rowid() and fits in 53 bits well before u64 overflow.
+      // source: sqlite-vec README §"Inserting vectors" — rowid must be INTEGER.
+      // source: https://github.com/asg017/sqlite-vec — type-check enforcement.
+      //
+      // sqlite-vec virtual tables also do not implement UPSERT; emulate via
+      // DELETE-then-INSERT in a single transaction so the upsert remains
+      // atomic from the caller's perspective.
+      const rowid = BigInt(memoryId);
+      const tx = this._db.transaction(() => {
+        this._db.prepare("DELETE FROM memories_vec WHERE rowid = ?").run(rowid);
+        this._db.prepare("INSERT INTO memories_vec(rowid, embedding) VALUES (?, ?)").run(rowid, emb);
+      });
+      tx();
     } catch {
       // Degrade gracefully — embedding upsert is best-effort.
     }
