@@ -59,17 +59,41 @@ async function probePort(port: number): Promise<string | null> {
 
 /**
  * Kill any process listening on `port`.  Best-effort.
+ *
+ * Platform strategy (invariant: function always resolves, never rejects):
+ *   - Windows: `netstat -ano` + parse PID column; taskkill by PID.
+ *   - POSIX (macOS, Linux): `lsof -t -i :<port>` + SIGTERM.
+ *
  * source: cortex@ed33435 mcp_server/server/http_launcher.py:26-48 (_kill_port)
+ * source: Node.js docs — process.platform === "win32" for Windows detection
  */
 function killPort(port: number): Promise<void> {
   return new Promise((resolve) => {
-    exec(`lsof -t -i :${port}`, (_err, stdout) => {
-      const pids = stdout.trim().split("\n").filter(Boolean);
-      for (const pid of pids) {
-        try { process.kill(parseInt(pid, 10), "SIGTERM"); } catch { /* best-effort */ }
-      }
-      resolve();
-    });
+    if (process.platform === "win32") {
+      // Windows: `netstat -ano -p TCP` lists `  TCP  0.0.0.0:<port>  ... <pid>`
+      // source: Windows netstat docs — column 5 is the PID for TCP rows
+      exec(`netstat -ano -p TCP`, (_err, stdout) => {
+        const portStr = `:${port} `;
+        for (const line of stdout.split("\n")) {
+          if (!line.includes(portStr)) continue;
+          const parts = line.trim().split(/\s+/);
+          const pid = parseInt(parts[parts.length - 1] ?? "", 10);
+          if (!isNaN(pid) && pid > 0) {
+            try { process.kill(pid, "SIGTERM"); } catch { /* best-effort */ }
+          }
+        }
+        resolve();
+      });
+    } else {
+      // POSIX: lsof is available on macOS and most Linux distributions.
+      exec(`lsof -t -i :${port}`, (_err, stdout) => {
+        const pids = stdout.trim().split("\n").filter(Boolean);
+        for (const pid of pids) {
+          try { process.kill(parseInt(pid, 10), "SIGTERM"); } catch { /* best-effort */ }
+        }
+        resolve();
+      });
+    }
   });
 }
 
@@ -144,8 +168,23 @@ async function spawnServer(port: number): Promise<string> {
 function openInBrowser(url: string): void {
   // source: cortex@ed33435 mcp_server/server/http_launcher.py:338 — same regex pattern
   if (!/^https?:\/\/127\.0\.0\.1:\d{1,5}(\/.*)?$/.test(url)) return;
-  const cmd = process.platform === "darwin" ? "open" : "xdg-open";
-  spawn(cmd, [url], { stdio: "ignore", detached: true }).unref();
+  // Cross-platform browser open:
+  //   macOS: open <url>   — source: macOS man open(1)
+  //   Windows: cmd /c start <url>  — source: Windows docs, cmd /? start command
+  //   Linux/other: xdg-open <url> — source: freedesktop.org xdg-open(1)
+  let cmd: string;
+  let args: string[];
+  if (process.platform === "darwin") {
+    cmd = "open";
+    args = [url];
+  } else if (process.platform === "win32") {
+    cmd = "cmd";
+    args = ["/c", "start", "", url];
+  } else {
+    cmd = "xdg-open";
+    args = [url];
+  }
+  spawn(cmd, args, { stdio: "ignore", detached: true }).unref();
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────

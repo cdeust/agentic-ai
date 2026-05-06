@@ -42,7 +42,7 @@
 
 import { existsSync } from "fs";
 import { join } from "path";
-import { homedir } from "os";
+import { tmpdir } from "os";
 
 // ── Platt calibration interface ───────────────────────────────────────────
 // source: cortex@ed33435 mcp_server/core/platt_calibration.py
@@ -200,8 +200,20 @@ function blendScores(
 // source: flashrank.Config.default_cache_dir = /tmp (flashrank.Config module)
 // source: Nogueira & Cho (2019) "Passage Re-ranking with BERT" — CE rerank pattern
 
-/** FlashRank model cache directory. Mirrors Python's flashrank.Config.default_cache_dir */
-const FLASHRANK_CACHE_DIR = "/tmp";
+/**
+ * FlashRank model cache directory.
+ *
+ * Resolution order (Lamport invariant: the directory returned is always an
+ * absolute, platform-legal path writable by the current user):
+ *   1. FLASHRANK_CACHE_DIR env var — explicit override for CI / non-default installs.
+ *   2. os.tmpdir() — the OS-provided temporary directory; resolves to
+ *      %TEMP% on Windows, /tmp on POSIX. This mirrors Python flashrank's
+ *      behaviour: flashrank.Config.default_cache_dir = tempfile.gettempdir().
+ *
+ * source: flashrank.Config module — default_cache_dir = tempfile.gettempdir()
+ * source: Python docs — tempfile.gettempdir() → os.tmpdir() equivalent
+ */
+const FLASHRANK_CACHE_DIR = process.env["FLASHRANK_CACHE_DIR"] ?? tmpdir();
 /** FlashRank model name. Mirrors Python: Ranker(model_name="ms-marco-MiniLM-L-12-v2") */
 const FLASHRANK_MODEL_NAME = "ms-marco-MiniLM-L-12-v2";
 /** ONNX quantized model file inside the model dir. source: flashrank.Config.model_file_map */
