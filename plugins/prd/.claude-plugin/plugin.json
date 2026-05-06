@@ -1,7 +1,7 @@
 {
   "name": "prd",
   "description": "Stateless reducer that turns a feature description into a 9-file PRD. Multi-judge verification with weighted-average + Bayesian consensus, calibrated against externally-grounded oracles (schema/math/code/spec). Phase 4 closed loop: per-judge Bayesian reliability calibration, Kaplan-Meier retry budgets, Clopper-Pearson KPI gates, mechanically-sealed held-out partitions, paired-bootstrap cross-arm comparisons. Deterministic Hard Output Rules validation. 17 MCP tools.",
-  "version": "0.3.1",
+  "version": "0.0.1",
   "author": {
     "name": "Clement Deust",
     "email": "admin@ai-architect.tools"

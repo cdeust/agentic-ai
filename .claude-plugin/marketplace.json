@@ -15,7 +15,7 @@
       "name": "memory",
       "source": "./plugins/memory/",
       "description": "Persistent memory for Claude Code — TS port of Cortex. Thermodynamic heat/decay, intent-aware retrieval, biological plasticity, codebase intelligence integration. SQLite by default; PostgreSQL + pgvector when DATABASE_URL is set. 41 published papers as sources.",
-      "version": "0.2.0",
+      "version": "0.0.1",
       "author": {
         "name": "Clement Deust",
         "email": "admin@ai-architect.tools"
@@ -39,7 +39,7 @@
       "name": "codebase",
       "source": "./plugins/codebase/",
       "description": "Codebase intelligence — Rust binary (ai-architect-mcp) kept as a subprocess, indexes Rust/Python/TypeScript into a LadybugDB property graph. Resolves imports + call chains, detects communities via Leiden, traces execution flows. BM25+TF-IDF+RRF hybrid search.",
-      "version": "0.1.1",
+      "version": "0.0.1",
       "author": {
         "name": "Clement Deust",
         "email": "admin@ai-architect.tools"
@@ -64,7 +64,7 @@
       "name": "reasoning",
       "source": "./packages/reasoning/",
       "description": "97 genius reasoning patterns from history's greatest minds + 19 team specialist agents under one zetetic epistemic standard. 61 skills, 25 commands, 16 lifecycle hooks.",
-      "version": "2.13.1",
+      "version": "0.0.1",
       "author": {
         "name": "Clement Deust",
         "email": "admin@ai-architect.tools"
@@ -88,7 +88,7 @@
       "name": "prd",
       "source": "./plugins/prd/",
       "description": "Stateless reducer that turns a feature description into a 9-file PRD. Multi-judge verification with weighted-average + Bayesian consensus, calibrated against externally-grounded oracles (schema/math/code/spec). Phase 4 closed loop: per-judge Bayesian reliability calibration, Kaplan-Meier retry budgets, Clopper-Pearson KPI gates.",
-      "version": "0.3.1",
+      "version": "0.0.1",
       "author": {
         "name": "Clement Deust",
         "email": "admin@ai-architect.tools"

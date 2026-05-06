@@ -1,7 +1,7 @@
 {
   "name": "codebase",
   "description": "Codebase intelligence — Rust binary (ai-architect-mcp) kept as a subprocess, indexes Rust/Python/TypeScript into a LadybugDB property graph. Resolves imports + call chains, detects communities via Leiden, traces execution flows from entry points. BM25+TF-IDF+RRF hybrid search. 23 MCP tools.",
-  "version": "0.1.1",
+  "version": "0.0.1",
   "author": {
     "name": "Clement Deust",
     "email": "admin@ai-architect.tools"
