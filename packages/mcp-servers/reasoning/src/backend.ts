@@ -31,12 +31,37 @@ const _SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 // MEMORY_BACKEND_CMD env override is read lazily at each call to runBackend,
 // so test fixtures that set process.env after import take effect correctly.
 // source: zetetic@HEAD tools/memory-mcp-server.py:39
+// Path from dist/ to memory-tool.sh in the sibling zetetic-team-subagents repo.
+// Computed via: os.path.relpath(
+//   '/Users/cdeust/Developments/zetetic-team-subagents/tools/memory-tool.sh',
+//   '/Users/cdeust/Developments/agentic-ai/worktrees/port-fix/
+//    zetetic-mcp-server-port-2026-05-06/packages/mcp-servers/reasoning/dist'
+// ) == '../../../../../../../../zetetic-team-subagents/tools/memory-tool.sh'
+//
+// source: zetetic@HEAD tools/memory-mcp-server.py:38-39 (_SCRIPT_DIR, BACKEND_CMD)
+// source: measured on 2026-05-06 in worktree
+//   dist/ is 8 levels above Developments/; memory-tool.sh is in
+//   Developments/zetetic-team-subagents/tools/
 const DEFAULT_BACKEND_CMD: string =
-  `${_SCRIPT_DIR}/../../../../../zetetic-team-subagents/tools/memory-tool.sh`;
+  `${_SCRIPT_DIR}/../../../../../../../../zetetic-team-subagents/tools/memory-tool.sh`;
 
-/** Return the effective backend command, respecting runtime env overrides. */
+/**
+ * Return the effective backend command.
+ *
+ * Python source never reads MEMORY_BACKEND_CMD — it uses the filesystem path
+ * computed at module load from _SCRIPT_DIR (memory-mcp-server.py:39).
+ * The TS port adds MEMORY_BACKEND_CMD as a test-isolation escape hatch, but
+ * only when the value is a non-empty string.  An empty string is treated as
+ * "not set" so that callers who set MEMORY_BACKEND_CMD="" do not accidentally
+ * pass "" to bash (which fails with "bash: : No such file or directory").
+ *
+ * source: zetetic@HEAD tools/memory-mcp-server.py:38-39 (_SCRIPT_DIR, BACKEND_CMD)
+ * fix: empty-string guard — mirrors Python's absence of this env-var entirely.
+ */
 function resolveBackendCmd(): string {
-  return process.env["MEMORY_BACKEND_CMD"] ?? DEFAULT_BACKEND_CMD;
+  const override = process.env["MEMORY_BACKEND_CMD"];
+  // Only honour the override if it is a non-empty string.
+  return (override !== undefined && override !== "") ? override : DEFAULT_BACKEND_CMD;
 }
 
 // ── Environment inheritance ───────────────────────────────────────────────────
