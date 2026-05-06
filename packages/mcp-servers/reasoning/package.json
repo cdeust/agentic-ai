@@ -2,7 +2,7 @@
   "name": "@agentic/mcp-server-reasoning",
   "version": "0.1.0",
   "private": true,
-  "description": "Composition root for zetetic genius/team agent dispatcher. PORT-PENDING: zetetic prompt inventory not yet ported.",
+  "description": "MCP stdio server exposing memory and memory_extensions tools. TypeScript port of zetetic-team-subagents/tools/memory-mcp-server.py.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -17,14 +17,18 @@
   },
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "typecheck": "tsc --noEmit --project tsconfig.json"
+    "typecheck": "tsc --noEmit --project tsconfig.json",
+    "test": "vitest run",
+    "start": "node dist/index.js"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0"
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.23.0"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "vitest": "^4.1.0"
   },
   "license": "MIT"
 }
