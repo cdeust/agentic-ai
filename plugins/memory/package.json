@@ -1,0 +1,16 @@
+{
+  "name": "@agentic/plugin-memory",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Self-contained memory MCP server plugin. Pure-JS deps are inlined via esbuild; native deps are declared here and installed on first launch by scripts/launch.sh.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^12.0.0",
+    "onnxruntime-node": "^1.25.1",
+    "@xenova/transformers": "^2.17.2",
+    "pg": "^8.13.0",
+    "sqlite-vec": "^0.1.9"
+  }
+}

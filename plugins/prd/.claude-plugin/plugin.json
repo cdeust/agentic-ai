@@ -20,5 +20,16 @@
     "multi-judge",
     "stateless-reducer"
   ],
-  "mcpServers": "../.mcp.json"
+  "mcpServers": {
+    "prd-gen": {
+      "command": "bash",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/scripts/launch.sh",
+        "${CLAUDE_PLUGIN_ROOT}"
+      ],
+      "env": {
+        "PRD_GEN_EVIDENCE_DB": "${HOME}/.agentic-ai/prd-gen/evidence.db"
+      }
+    }
+  }
 }

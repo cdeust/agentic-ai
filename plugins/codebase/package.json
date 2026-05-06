@@ -1,0 +1,7 @@
+{
+  "name": "@agentic/plugin-codebase",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Codebase intelligence plugin. Wraps the ai-architect-mcp Rust binary; scripts/launch.sh resolves a binary from $PATH, plugin-shipped pre-built artifact, or cargo build from src-rust/.",
+  "license": "MIT"
+}

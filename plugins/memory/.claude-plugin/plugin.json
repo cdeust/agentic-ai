@@ -18,5 +18,17 @@
     "cognitive-profiling",
     "knowledge-graph"
   ],
-  "mcpServers": "../.mcp.json"
+  "mcpServers": {
+    "cortex": {
+      "command": "bash",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/scripts/launch.sh",
+        "${CLAUDE_PLUGIN_ROOT}"
+      ],
+      "env": {
+        "DATABASE_URL": "",
+        "CORTEX_MEMORY_AP_ENABLED": "1"
+      }
+    }
+  }
 }
