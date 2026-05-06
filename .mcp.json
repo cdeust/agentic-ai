@@ -1,10 +1,11 @@
 {
-  "_note": "Project-scoped .mcp.json for use without the plugin marketplace. Claude Code reads this when run inside the agentic-ai repo (or any project that copies this file and adjusts paths). All four MCP servers point to the unified TS / Rust outputs in packages/. Run `pnpm install && pnpm build` first so dist/ and target/release/ exist.",
+  "_note": "Project-scoped .mcp.json for dev work in the agentic-ai repo without the plugin marketplace. Servers are anchored on $PWD because Claude Code launches MCP servers with cwd = the directory containing .mcp.json (the project root). The bash wrapper exists so the shell expands $PWD at invocation time — Claude Code's own ${VAR} substitution is reserved for shell environment variables, not for the project directory. Run `pnpm install && pnpm build` (and `cargo build --release -p ai-architect-mcp` for the codebase server) before first launch.",
   "mcpServers": {
     "cortex": {
-      "command": "node",
+      "command": "bash",
       "args": [
-        "${PROJECT_DIR}/packages/mcp-servers/memory/dist/index.js"
+        "-c",
+        "exec node \"$PWD/packages/mcp-servers/memory/dist/index.js\""
       ],
       "env": {
         "DATABASE_URL": "",
@@ -15,19 +16,21 @@
       "command": "bash",
       "args": [
         "-c",
-        "BIN=\"${PROJECT_DIR}/packages/codebase-rust/target/release/ai-architect-mcp\" && if [ -x \"$BIN\" ]; then exec \"$BIN\"; else exec cargo run --quiet --release --manifest-path \"${PROJECT_DIR}/packages/codebase-rust/Cargo.toml\"; fi"
+        "BIN=\"$PWD/packages/codebase-rust/target/release/ai-architect-mcp\"; if [ -x \"$BIN\" ]; then exec \"$BIN\"; else exec cargo run --quiet --release --manifest-path \"$PWD/packages/codebase-rust/Cargo.toml\"; fi"
       ]
     },
     "reasoning": {
-      "command": "node",
+      "command": "bash",
       "args": [
-        "${PROJECT_DIR}/packages/mcp-servers/reasoning/dist/index.js"
+        "-c",
+        "exec node \"$PWD/packages/mcp-servers/reasoning/dist/index.js\""
       ]
     },
     "prd-gen": {
-      "command": "node",
+      "command": "bash",
       "args": [
-        "${PROJECT_DIR}/packages/mcp-servers/prd/dist/index.js"
+        "-c",
+        "exec node \"$PWD/packages/mcp-servers/prd/dist/index.js\""
       ],
       "env": {
         "PRD_GEN_EVIDENCE_DB": "${HOME}/.agentic-ai/prd-gen/evidence.db"
