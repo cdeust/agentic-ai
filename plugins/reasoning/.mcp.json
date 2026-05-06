@@ -1,11 +1,10 @@
 {
-  "_note": "Wired to the unified TS MCP server at packages/mcp-servers/reasoning/dist/index.js. CLAUDE_PLUGIN_ROOT resolves to plugins/reasoning/ when installed via the agentic-ai marketplace; the relative path walks up to repo root then into the built MCP server. See cf85cfc in cdeust/automatised-pipeline (2026-04-25) for the bash -c expansion pattern.",
+  "_note": "Wired to the unified TS MCP server at packages/mcp-servers/reasoning/dist/index.js. SEC-006 fix: argv form (no bash -c re-evaluation) prevents shell-metacharacter injection if CLAUDE_PLUGIN_ROOT ever contained $() or backticks.",
   "mcpServers": {
     "reasoning": {
-      "command": "bash",
+      "command": "node",
       "args": [
-        "-c",
-        "exec node \"${CLAUDE_PLUGIN_ROOT}/../../packages/mcp-servers/reasoning/dist/index.js\""
+        "${CLAUDE_PLUGIN_ROOT}/../../packages/mcp-servers/reasoning/dist/index.js"
       ]
     }
   }

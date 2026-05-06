@@ -1,11 +1,11 @@
 {
-  "_note": "Wired to the unified Rust binary at packages/codebase-rust/target/release/ai-architect-mcp. CLAUDE_PLUGIN_ROOT resolves to plugins/codebase/ when installed via the agentic-ai marketplace; the relative path walks up to repo root then into the codebase-rust package. Falls back to 'cargo run --release' when the prebuilt binary is absent (first-run dev). The bash -c wrapper handles ${CLAUDE_PLUGIN_ROOT} expansion. See cf85cfc in cdeust/automatised-pipeline (2026-04-25).",
+  "_note": "Wired to the unified Rust binary at packages/codebase-rust/target/release/ai-architect-mcp. CLAUDE_PLUGIN_ROOT resolves to plugins/codebase/ when installed via the agentic-ai marketplace. SEC-006 fix: replaced inline `bash -c \"...\"` (which re-evaluated ${CLAUDE_PLUGIN_ROOT} as part of a shell-source string) with argv invocation of a hand-written launch.sh that receives the plugin root as $1 — argv values are never re-evaluated as shell source. The script falls back to `cargo run --release` when the prebuilt binary is absent.",
   "mcpServers": {
     "ai-architect": {
       "command": "bash",
       "args": [
-        "-c",
-        "BIN=\"${CLAUDE_PLUGIN_ROOT}/../../packages/codebase-rust/target/release/ai-architect-mcp\" && if [ -x \"$BIN\" ]; then exec \"$BIN\"; else exec cargo run --quiet --release --manifest-path \"${CLAUDE_PLUGIN_ROOT}/../../packages/codebase-rust/Cargo.toml\"; fi"
+        "${CLAUDE_PLUGIN_ROOT}/scripts/launch.sh",
+        "${CLAUDE_PLUGIN_ROOT}"
       ]
     }
   }

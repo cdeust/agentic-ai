@@ -17,7 +17,7 @@
  * Port of: mcp_server/shared/domain_mapping.py
  */
 
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -58,11 +58,17 @@ const MIN_SLUG_LEN = 10;
 // ── Step 1: Discover git repos ──────────────────────────────────────────────
 
 function getRemoteUrl(repoPath: string): string {
+  // SEC-002 fix: argv-style invocation (shell:false). Previously interpolated
+  // ${repoPath} into a shell string, which permitted command injection if a
+  // discovered directory name contained shell metacharacters (the filesystem
+  // legitimately allows ;, $, `, \n in directory names).
+  // source: packages/memory/src/infrastructure/git-diff-exec.ts (canonical pattern)
   try {
-    return execSync(
-      `git -C "${repoPath}" remote get-url origin`,
+    return execFileSync(
+      "git",
+      ["-C", repoPath, "remote", "get-url", "origin"],
       // source: cortex@ed33435 mcp_server/shared/domain_mapping.py:44 (timeout=3 seconds)
-      { timeout: 3000, stdio: ["pipe", "pipe", "pipe"] },
+      { timeout: 3000, stdio: ["pipe", "pipe", "pipe"], encoding: "utf-8", shell: false },
     ).toString().trim();
   } catch {
     return "";
@@ -262,11 +268,13 @@ function buildFragmentIndex(
 // ── Step 5: Git root resolution ──────────────────────────────────────────────
 
 function gitRoot(path: string): string | null {
+  // SEC-002 fix: argv-style invocation (shell:false). See getRemoteUrl above.
   try {
-    return execSync(
-      `git -C "${path}" rev-parse --show-toplevel`,
+    return execFileSync(
+      "git",
+      ["-C", path, "rev-parse", "--show-toplevel"],
       // source: cortex@ed33435 mcp_server/shared/domain_mapping.py:236 (timeout=3 seconds)
-      { timeout: 3000, stdio: ["pipe", "pipe", "pipe"] },
+      { timeout: 3000, stdio: ["pipe", "pipe", "pipe"], encoding: "utf-8", shell: false },
     ).toString().trim();
   } catch {
     return null;
@@ -398,3 +406,11 @@ export function resolveCwd(cwd: string): string {
   }
   return "";
 }
+
+// ── Test-only internals export ──────────────────────────────────────────────
+// Exposed for SEC-002 regression tests (file-level, not part of the public API).
+// source: packages/memory/__tests__/shared/domain-mapping-security.test.ts
+export const _internalsForTest = {
+  getRemoteUrl,
+  gitRoot,
+};

@@ -449,8 +449,11 @@
 
         // Knowledge tab: facet chips
         const chips = document.getElementById('knowledge-facets');
+        // SEC-005 residual: d.domain is attacker-controllable — escape in
+        // both the attribute and text-content positions.
+        // source: OWASP DOM-based XSS Prevention §"Output encoding".
         chips.innerHTML = (_facets.by_domain ?? []).map(d =>
-          `<span class="facet-chip" data-domain="${d.domain}">${d.domain} <strong>${d.count}</strong></span>`
+          `<span class="facet-chip" data-domain="${escHtml(d.domain)}">${escHtml(d.domain)} <strong>${escHtml(String(d.count))}</strong></span>`
         ).join('');
         chips.querySelectorAll('.facet-chip').forEach(chip => {
           chip.addEventListener('click', () => {

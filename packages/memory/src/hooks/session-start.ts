@@ -212,23 +212,33 @@ export function autoWirePipeline(): void {
   const { pluginRoot } = loadHookConfig();
   if (!pluginRoot) return;
 
+  // SEC-003 fix: pluginRoot is passed as argv[1] — NEVER interpolated into
+  // the Python source. argv values are read by Python as opaque sys.argv
+  // strings, never evaluated as code. Previously the code did:
+  //   sys.path.insert(0, r"${pluginRoot.replace(/\\/g, "/")}")
+  // which permitted Python code injection via CLAUDE_PLUGIN_ROOT env (an
+  // attacker-settable env var on a low-trust host could embed Python that
+  // escapes the raw-string literal — e.g. a value containing `")\nimport
+  // os;os.system(...)\nx=("` would close the literal and execute.).
+  // The static script below is constant; only argv carries variable data.
+  // source: CWE-95 (Eval Injection); fix pattern: argv-only data conveyance.
+  const PYTHON_AUTOWIRE_SCRIPT = [
+    "import json, sys",
+    "sys.path.insert(0, sys.argv[1])",
+    "from mcp_server.infrastructure.pipeline_discovery import ensure_pipeline_connection",
+    "r = ensure_pipeline_connection()",
+    "print(json.dumps(r))",
+  ].join("\n");
+
   try {
     const result = spawnSync(
       PYTHON_BIN,
-      [
-        "-c",
-        `
-import json, sys
-sys.path.insert(0, r"${pluginRoot.replace(/\\/g, "/")}")
-from mcp_server.infrastructure.pipeline_discovery import ensure_pipeline_connection
-r = ensure_pipeline_connection()
-print(json.dumps(r))
-`,
-      ],
+      ["-c", PYTHON_AUTOWIRE_SCRIPT, pluginRoot],
       {
         encoding: "utf-8",
         timeout: 5_000, // source: cortex@ed33435 mcp_server/hooks/session_start.py:482-503 — pipeline auto-wire is fast (config file write only)
         env: { ...process.env, PYTHONPATH: pluginRoot },
+        shell: false,
       },
     );
     const stdout = result.stdout?.trim();
