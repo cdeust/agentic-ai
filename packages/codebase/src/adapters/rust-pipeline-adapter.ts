@@ -426,9 +426,34 @@ export class RustPipelineAdapter implements CodebasePort {
   // Stage 4 - source: tool_schemas.rs:492-508 (2cc3780)
   async preparePrdInput(input: PreparePrdInputInput): Promise<PreparePrdInputOutput> { return this._call("prepare_prd_input", input as unknown as Record<string, unknown>, PreparePrdInputOutputSchema); }
   // Stage 6 - source: tool_schemas.rs:510-528 (2cc3780)
-  async validatePrdAgainstGraph(input: ValidatePrdAgainstGraphInput): Promise<ValidatePrdAgainstGraphOutput> { return this._call("validate_prd_against_graph", input as unknown as Record<string, unknown>, ValidatePrdAgainstGraphOutputSchema); }
+  // ADR-0004: unpack the optional artifacts bundle into top-level snake_case
+  // fields that the Rust binary expects. When artifacts is absent, the three
+  // fields are omitted — binary skips artifact writes (dry-run mode).
+  // source: docs/ADR/0004-validation-tool-optional-triple.md
+  async validatePrdAgainstGraph(input: ValidatePrdAgainstGraphInput): Promise<ValidatePrdAgainstGraphOutput> {
+    const { artifacts, ...rest } = input;
+    const rustInput: Record<string, unknown> = rest as unknown as Record<string, unknown>;
+    if (artifacts !== undefined) {
+      rustInput["runId"] = artifacts.runId;
+      rustInput["findingId"] = artifacts.findingId;
+      rustInput["outputDir"] = artifacts.outputDir;
+    }
+    return this._call("validate_prd_against_graph", rustInput, ValidatePrdAgainstGraphOutputSchema);
+  }
+
   // Stage 8 - source: tool_schemas.rs:530-547 (2cc3780)
-  async checkSecurityGates(input: CheckSecurityGatesInput): Promise<CheckSecurityGatesOutput> { return this._call("check_security_gates", input as unknown as Record<string, unknown>, CheckSecurityGatesOutputSchema); }
+  // ADR-0004: same unpack pattern as validatePrdAgainstGraph.
+  // source: docs/ADR/0004-validation-tool-optional-triple.md
+  async checkSecurityGates(input: CheckSecurityGatesInput): Promise<CheckSecurityGatesOutput> {
+    const { artifacts, ...rest } = input;
+    const rustInput: Record<string, unknown> = rest as unknown as Record<string, unknown>;
+    if (artifacts !== undefined) {
+      rustInput["runId"] = artifacts.runId;
+      rustInput["findingId"] = artifacts.findingId;
+      rustInput["outputDir"] = artifacts.outputDir;
+    }
+    return this._call("check_security_gates", rustInput, CheckSecurityGatesOutputSchema);
+  }
   // Stage 9 - source: tool_schemas.rs:549-564 (2cc3780)
   async verifySemanticDiff(input: VerifySemanticDiffInput): Promise<VerifySemanticDiffOutput> { return this._call("verify_semantic_diff", input as unknown as Record<string, unknown>, VerifySemanticDiffOutputSchema); }
 

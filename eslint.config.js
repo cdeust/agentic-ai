@@ -66,6 +66,12 @@ const config = [
             "packages/mcp-servers/*/src/__tests__/*.ts",
             "packages/mcp-servers/*/src/__tests__/*/*.ts",
           ],
+          // Raised from default 8 to accommodate the 18 new parity test files
+          // added in ap-tool-test-coverage-2026-05-06. These are genuine test
+          // files, not a glob overreach. Performance impact is bounded by the
+          // test directory size (packages/codebase/__tests__/).
+          // source: @typescript-eslint docs §maximumDefaultProjectFileMatchCount
+          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 25,
         },
         tsconfigRootDir: import.meta.dirname,
         ecmaVersion: 2022,

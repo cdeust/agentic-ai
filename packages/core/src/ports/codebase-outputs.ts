@@ -133,12 +133,16 @@ export const GetProcessesOutputSchema = z
 export type GetProcessesOutput = z.infer<typeof GetProcessesOutputSchema>;
 
 // Tool 14: get_impact output
-// source: inventory/MCP_TOOLS.md tool #14
+// source: packages/codebase-rust/src/main.rs:2337-2346 — do_get_impact
+// communities is an array of STRINGS (community_id strings), not objects.
+// processes is an array of STRINGS (process names), not objects.
+// source: packages/codebase-rust/src/main.rs:2337 — json!({ "communities": impact.communities, ... })
+// where impact.communities is Vec<String> (community_id list)
 export const GetImpactOutputSchema = z
   .object({
-    communities: z.array(z.record(z.string(), z.unknown())),
+    communities: z.array(z.string()),
     communitiesAffected: z.coerce.number().int().nonnegative(),
-    processes: z.array(z.record(z.string(), z.unknown())),
+    processes: z.array(z.string()),
     processesAffected: z.coerce.number().int().nonnegative(),
   })
   .passthrough();
@@ -156,11 +160,29 @@ export const SearchCodebaseOutputSchema = z
 export type SearchCodebaseOutput = z.infer<typeof SearchCodebaseOutputSchema>;
 
 // Tool 16: get_context output (success branch)
-// source: inventory/MCP_TOOLS.md tool #16
+// source: packages/codebase-rust/src/main.rs:2481-2506 — do_get_context
+// relationships is a nested OBJECT mapping kind → array<{name, qualified_name, kind}>,
+// NOT an array. Keys: imports, imported_by, calls, called_by, implements,
+// implemented_by, uses, used_by.
+// source: packages/codebase-rust/src/main.rs:2494-2503
+export const GetContextRelationshipsSchema = z
+  .object({
+    imports: z.array(z.record(z.string(), z.unknown())),
+    importedBy: z.array(z.record(z.string(), z.unknown())),
+    calls: z.array(z.record(z.string(), z.unknown())),
+    calledBy: z.array(z.record(z.string(), z.unknown())),
+    implements: z.array(z.record(z.string(), z.unknown())),
+    implementedBy: z.array(z.record(z.string(), z.unknown())),
+    uses: z.array(z.record(z.string(), z.unknown())),
+    usedBy: z.array(z.record(z.string(), z.unknown())),
+  })
+  .passthrough();
+export type GetContextRelationships = z.infer<typeof GetContextRelationshipsSchema>;
+
 export const GetContextOutputSchema = z
   .object({
     symbol: z.record(z.string(), z.unknown()),
-    relationships: z.array(z.record(z.string(), z.unknown())),
+    relationships: GetContextRelationshipsSchema,
     community: z.record(z.string(), z.unknown()).nullable(),
     processes: z.array(z.record(z.string(), z.unknown())),
   })
@@ -224,21 +246,115 @@ export type LspResolveOutput = z.infer<typeof LspResolveOutputSchema>;
 
 // Tools 2-7, 18, 20-23 output schemas
 // source: ai-automatised-pipeline/src/tool_schemas.rs (commit 2cc3780)
-export const ExtractFindingOutputSchema = z.object({ status: z.string(), run_id: z.string(), finding_id: z.string(), stage: z.string().optional(), artifacts: z.array(z.string()).optional() }).passthrough();
+//
+// SCHEMA POLICY (consistent with ADR-0003 and the deepToCamel() translation):
+// All output schema field names are camelCase because the adapter applies
+// deepToCamel() to Rust's snake_case output before Zod validation.
+// Rust fields run_id → runId, finding_id → findingId, aborted_at → abortedAt,
+// turn_index → turnIndex; all other single-word fields are unchanged.
+//
+// BUG FIX (ap-tool-test-coverage-2026-05-06): the original schemas used
+// snake_case keys (run_id, finding_id, aborted_at, turn_index) which could
+// never match the camelCase payload produced by deepToCamel. Every happy-path
+// call to these tools failed Zod validation. Corrected to camelCase below.
+// source: packages/codebase-rust/src/main.rs:886-894 — do_extract_finding
+// Rust response: { stage: 1 (number), status, finding_id, artifact_path, run_id, ... }
+// stage is a NUMBER (integer 1), not a string.
+export const ExtractFindingOutputSchema = z.object({
+  status: z.string(),
+  runId: z.string(),
+  findingId: z.string(),
+  stage: z.coerce.number().int().optional(),
+  artifactPath: z.string().optional(),
+}).passthrough();
 export type ExtractFindingOutput = z.infer<typeof ExtractFindingOutputSchema>;
-export const RefineFindingOutputSchema = z.object({ status: z.string(), run_id: z.string(), finding_id: z.string(), artifact: z.string().optional() }).passthrough();
+
+export const RefineFindingOutputSchema = z.object({
+  status: z.string(),
+  runId: z.string(),
+  findingId: z.string(),
+  artifact: z.string().optional(),
+}).passthrough();
 export type RefineFindingOutput = z.infer<typeof RefineFindingOutputSchema>;
-export const StartVerificationOutputSchema = z.object({ status: z.string(), run_id: z.string(), finding_id: z.string(), session: z.record(z.string(), z.unknown()).optional() }).passthrough();
+
+export const StartVerificationOutputSchema = z.object({
+  status: z.string(),
+  runId: z.string(),
+  findingId: z.string(),
+  session: z.record(z.string(), z.unknown()).optional(),
+}).passthrough();
 export type StartVerificationOutput = z.infer<typeof StartVerificationOutputSchema>;
-export const AppendClarificationOutputSchema = z.object({ status: z.string(), run_id: z.string(), finding_id: z.string(), turn_index: z.coerce.number().int().nonnegative().optional() }).passthrough();
+
+// source: packages/codebase-rust/src/main.rs:1538-1544 — do_append_clarification
+// Rust response: { stage, status, state, seq, turn_count }
+// runId and findingId are NOT echoed back — they are caller-owned context.
+export const AppendClarificationOutputSchema = z.object({
+  status: z.string(),
+  state: z.string().optional(),
+  seq: z.coerce.number().int().nonnegative().optional(),
+  turnCount: z.coerce.number().int().nonnegative().optional(),
+}).passthrough();
 export type AppendClarificationOutput = z.infer<typeof AppendClarificationOutputSchema>;
-export const FinalizeVerificationOutputSchema = z.object({ status: z.string(), run_id: z.string(), finding_id: z.string(), sha256: z.string().optional(), artifact: z.string().optional() }).passthrough();
+
+// source: packages/codebase-rust/src/main.rs:1697-1714 — do_finalize_verification
+// Rust response: { stage, status, state, verified, verified_kind, verified_path,
+//   turn_count, transcript_digest, digest_algorithm, transcript_bytes_at_finalize,
+//   bytes_written, verifier_version }
+// runId and findingId are NOT echoed back.
+// transcript_digest → transcriptDigest (deepToCamel)
+// verified_path → verifiedPath (deepToCamel)
+export const FinalizeVerificationOutputSchema = z.object({
+  status: z.string(),
+  state: z.string().optional(),
+  verified: z.boolean().optional(),
+  verifiedKind: z.record(z.string(), z.unknown()).optional(),
+  verifiedPath: z.string().optional(),
+  turnCount: z.coerce.number().int().nonnegative().optional(),
+  transcriptDigest: z.string().optional(),
+  digestAlgorithm: z.string().optional(),
+  transcriptBytesAtFinalize: z.coerce.number().int().nonnegative().optional(),
+}).passthrough();
 export type FinalizeVerificationOutput = z.infer<typeof FinalizeVerificationOutputSchema>;
-export const AbortVerificationOutputSchema = z.object({ status: z.string(), run_id: z.string(), finding_id: z.string(), aborted_at: z.string().optional() }).passthrough();
+
+export const AbortVerificationOutputSchema = z.object({
+  status: z.string(),
+  runId: z.string(),
+  findingId: z.string(),
+  // aborted_at → abortedAt after deepToCamel
+  abortedAt: z.string().optional(),
+}).passthrough();
 export type AbortVerificationOutput = z.infer<typeof AbortVerificationOutputSchema>;
-export const DetectChangesOutputSchema = z.object({ affectedCount: z.coerce.number().int().nonnegative(), affected: z.array(z.record(z.string(), z.unknown())), riskScore: z.coerce.number().min(0).max(1), elapsedMs: z.coerce.number().nonnegative().optional() }).passthrough();
+
+// source: packages/codebase-rust/src/main.rs:2792-2804 — do_detect_changes
+// Rust response fields (snake_case → camelCase after deepToCamel):
+//   files_changed → filesChanged (int)
+//   symbols_affected → symbolsAffected (array<object>)
+//   symbols_affected_count → symbolsAffectedCount (int)
+//   communities_affected → communitiesAffected (array<object>)
+//   communities_affected_count → communitiesAffectedCount (int)
+//   processes_affected → processesAffected (array<object>)
+//   processes_affected_count → processesAffectedCount (int)
+//   risk_score → riskScore (string "0.0000", coerced to number)
+// Previous schema used affectedCount/affected — completely wrong key names.
+export const DetectChangesOutputSchema = z.object({
+  filesChanged: z.coerce.number().int().nonnegative().optional(),
+  symbolsAffected: z.array(z.record(z.string(), z.unknown())),
+  symbolsAffectedCount: z.coerce.number().int().nonnegative(),
+  communitiesAffected: z.array(z.record(z.string(), z.unknown())),
+  communitiesAffectedCount: z.coerce.number().int().nonnegative(),
+  processesAffected: z.array(z.record(z.string(), z.unknown())),
+  processesAffectedCount: z.coerce.number().int().nonnegative(),
+  riskScore: z.coerce.number().min(0).max(1),
+}).passthrough();
 export type DetectChangesOutput = z.infer<typeof DetectChangesOutputSchema>;
-export const PreparePrdInputOutputSchema = z.object({ status: z.string(), run_id: z.string(), finding_id: z.string(), artifact: z.string().optional(), symbols: z.array(z.record(z.string(), z.unknown())).optional() }).passthrough();
+
+export const PreparePrdInputOutputSchema = z.object({
+  status: z.string(),
+  runId: z.string(),
+  findingId: z.string(),
+  artifact: z.string().optional(),
+  symbols: z.array(z.record(z.string(), z.unknown())).optional(),
+}).passthrough();
 export type PreparePrdInputOutput = z.infer<typeof PreparePrdInputOutputSchema>;
 export const ValidatePrdAgainstGraphOutputSchema = z.object({ status: z.string(), gatesPassed: z.boolean().optional(), hallucinations: z.array(z.record(z.string(), z.unknown())).optional(), warnings: z.array(z.record(z.string(), z.unknown())).optional(), criticalCount: z.coerce.number().int().nonnegative().optional(), warningCount: z.coerce.number().int().nonnegative().optional() }).passthrough();
 export type ValidatePrdAgainstGraphOutput = z.infer<typeof ValidatePrdAgainstGraphOutputSchema>;
