@@ -300,7 +300,7 @@ export interface DispatchRetrievalArgs {
  * postcondition: results are ranked (id, score) pairs; tier is one of
  *   "simple" | "mixed" | "deep"
  */
-export function dispatchRetrieval({
+export async function dispatchRetrieval({
   query,
   signals,
   intentInfo,
@@ -311,7 +311,7 @@ export function dispatchRetrieval({
   baseHeatW = 0.3,
   maxResults = 10,
   hopFn = null,
-}: DispatchRetrievalArgs): [Array<[number, number]>, string] {
+}: DispatchRetrievalArgs): Promise<[Array<[number, number]>, string]> {
   const intent = intentInfo.intent;
   const tier = classifyTier(intent);
   const weights = computeSignalWeights(
@@ -341,7 +341,7 @@ export function dispatchRetrieval({
   const rerankPool = fused.slice(0, maxResults * 3);
   if (contentLookup.size > 0) {
     try {
-      const reranked = rerankResults(
+      const reranked = await rerankResults(
         query,
         rerankPool,
         Object.fromEntries(contentLookup),

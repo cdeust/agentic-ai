@@ -174,22 +174,87 @@ function blendScores(
   return reranked;
 }
 
-// ── FlashRank singleton (lazy) ─────────────────────────────────────────────
-// In TS we cannot load the Python flashrank ONNX model directly.
-// rerankResults degrades gracefully to returning candidates unchanged
-// (same as the Python fallback on flashrank import failure).
-// A native ONNX adapter may be wired in future via the EmbeddingEngine port.
+// ── Cross-encoder reranker via @xenova/transformers ───────────────────────
+//
+// FlashRank's ONNX model (ms-marco-MiniLM-L-12-v2) is a cross-encoder
+// trained on MS-MARCO. The same model is published on HuggingFace as
+// `Xenova/ms-marco-MiniLM-L-12-v2` (community ONNX export of the
+// `cross-encoder/ms-marco-MiniLM-L-12-v2` checkpoint) and runs natively
+// in transformers.js. We use it via the `text-classification` pipeline
+// which evaluates (query, passage) pairs and returns relevance logits.
+//
+// The previous TS port asserted "FlashRank ONNX is a Python-only
+// dependency" and short-circuited to identity — that was wrong: the
+// model is fully runnable in Node via transformers.js + onnxruntime-node.
+// Removing the short-circuit closes the largest remaining bench gap
+// per Feynman's audit (~38% of LoCoMo rank mismatches were attributable
+// to the missing CE rerank).
+//
+// source: cortex@ed33435 mcp_server/core/reranker.py:50-63 — flashrank.Ranker singleton
+// source: https://huggingface.co/Xenova/ms-marco-MiniLM-L-12-v2 — ONNX export
+// source: https://huggingface.co/cross-encoder/ms-marco-MiniLM-L-12-v2 — original checkpoint
+// source: Nogueira & Cho (2019) "Passage Re-ranking with BERT" — CE rerank pattern
 
-let _flashrankFailed = false;
+// source: same model as Python's flashrank.Ranker(model_name=...)
+const RERANKER_MODEL_ID = "Xenova/ms-marco-MiniLM-L-12-v2";
 
-function ensureReranker(): null {
-  // FlashRank ONNX is a Python-only dependency.
-  // In TS we always use the identity fallback (return candidates unchanged).
-  // source: cortex@ed33435 mcp_server/core/reranker.py:56-63
-  if (!_flashrankFailed) {
-    _flashrankFailed = true; // Mark once so the flag is consistent
+// Pipeline cache: one shared instance per process. The model load is
+// expensive (~30 MB download to ~/.cache/huggingface/hub on first use).
+type CrossEncoderInput = string | { text: string; text_pair: string };
+type CrossEncoderOutput = { label: string; score: number };
+type CrossEncoderPipe = (
+  inputs: CrossEncoderInput | CrossEncoderInput[],
+  options?: { topk?: number },
+) => Promise<CrossEncoderOutput | CrossEncoderOutput[]>;
+let _rerankerPipe: CrossEncoderPipe | null = null;
+let _rerankerFailed = false;
+
+async function ensureReranker(): Promise<CrossEncoderPipe | null> {
+  if (_rerankerPipe !== null) return _rerankerPipe;
+  if (_rerankerFailed) return null;
+  try {
+    // Dynamic import — the @xenova/transformers package is heavy
+    // (loads ONNX runtime + tokenizer). Defer until first rerank call.
+    const transformers = (await import("@xenova/transformers")) as unknown as {
+      pipeline: (task: string, model: string) => Promise<CrossEncoderPipe>;
+    };
+    _rerankerPipe = await transformers.pipeline(
+      "text-classification",
+      RERANKER_MODEL_ID,
+    );
+    return _rerankerPipe;
+  } catch {
+    // Model unavailable (no network on first run, no disk cache, etc.).
+    // Mirror Python's flashrank fallback: identity rerank.
+    // source: cortex@ed33435 mcp_server/core/reranker.py:60-63
+    _rerankerFailed = true;
+    return null;
   }
-  return null;
+}
+
+/** Test/bench hook: clear the cached pipeline. */
+export function _resetRerankerCache(): void {
+  _rerankerPipe = null;
+  _rerankerFailed = false;
+}
+
+async function scorePairs(
+  pipe: CrossEncoderPipe,
+  query: string,
+  passages: string[],
+): Promise<number[]> {
+  // The text-classification pipeline accepts (text, text_pair) form per
+  // input. Passing the array runs them as a batch.
+  // source: https://huggingface.co/docs/transformers.js — text-classification pipeline
+  const inputs: CrossEncoderInput[] = passages.map((p) => ({
+    text: query,
+    text_pair: p,
+  }));
+  const out = await pipe(inputs, { topk: 1 });
+  // The pipeline returns either a single record (when one input) or an
+  // array of records (when batch). Normalise to array.
+  const arr: CrossEncoderOutput[] = Array.isArray(out) ? out : [out];
+  return arr.map((r) => Number(r.score) || 0);
 }
 
 // ── Public API ────────────────────────────────────────────────────────────
@@ -201,7 +266,7 @@ function ensureReranker(): null {
  *
  * precondition: candidates is a ranked list of (memory_id, wrrf_score)
  * postcondition: returns list of same or fewer length, sorted by blended score;
- *   returns input unchanged when FlashRank is unavailable (graceful degradation)
+ *   returns input unchanged when the cross-encoder is unavailable (graceful degradation)
  *
  * Constants — source: cortex@ed33435 mcp_server/core/reranker.py:167-172
  *   alpha         = 0.70 (BEAM ablation optimum)
@@ -209,20 +274,32 @@ function ensureReranker(): null {
  *   adaptive      = false (disabled by default pending ablation validation)
  *   apply_platt   = false (disabled by default until benchmark re-validation)
  */
-export function rerankResults(
-  _query: string,
+export async function rerankResults(
+  query: string,
   candidates: Array<[number, number]>,
-  _contentLookup: Record<number, string>,
+  contentLookup: Record<number, string>,
   alpha = 0.70,           // source: cortex@ed33435 mcp_server/core/reranker.py:168
-  _maxContentLen = 1200,  // source: cortex@ed33435 mcp_server/core/reranker.py:169 — max_content_len
+  maxContentLen = 1200,   // source: cortex@ed33435 mcp_server/core/reranker.py:169 — max_content_len
   adaptive = false,       // source: cortex@ed33435 mcp_server/core/reranker.py:170
   applyPlatt = false,     // source: cortex@ed33435 mcp_server/core/reranker.py:171
-): Array<[number, number]> {
-  const ranker = ensureReranker();
-  if (ranker === null || candidates.length === 0) return candidates;
-  // Unreachable: ranker is always null in TS.
-  // The shape matches Python's fallback exactly.
-  return blendScores(candidates, new Map(), alpha, adaptive, applyPlatt, null);
+): Promise<Array<[number, number]>> {
+  if (candidates.length === 0) return candidates;
+  const pipe = await ensureReranker();
+  if (pipe === null) return candidates; // Python's flashrank-unavailable fallback
+  try {
+    const passages = candidates.map(
+      ([mid]) => (contentLookup[mid] ?? "").slice(0, maxContentLen),
+    );
+    const ceScores = await scorePairs(pipe, query, passages);
+    const ceMap = new Map<number, number>();
+    ceScores.forEach((s, i) => ceMap.set(i, s));
+    return blendScores(candidates, ceMap, alpha, adaptive, applyPlatt, null);
+  } catch {
+    // Per-call failure (ONNX runtime error, OOM, etc.) — mirror Python's
+    // try/except fallback to first-stage ranking.
+    // source: cortex@ed33435 mcp_server/core/reranker.py:201-202
+    return candidates;
+  }
 }
 
 /**
@@ -230,16 +307,22 @@ export function rerankResults(
  *
  * Port of: cortex@ed33435 mcp_server/core/reranker.py:209-226
  *
- * Returns null if FlashRank is unavailable or encoding fails.
+ * Returns null if the cross-encoder is unavailable or encoding fails.
  */
-export function getRawCeScore(
-  _query: string,
-  _content: string,
-  _maxContentLen = 1200, // source: cortex@ed33435 mcp_server/core/reranker.py:221 — max content length for CE
-): number | null {
-  // FlashRank is a Python-only dependency — always unavailable in TS.
-  // source: cortex@ed33435 mcp_server/core/reranker.py:214-215
-  return null;
+export async function getRawCeScore(
+  query: string,
+  content: string,
+  maxContentLen = 1200, // source: cortex@ed33435 mcp_server/core/reranker.py:221
+): Promise<number | null> {
+  if (!query || !content) return null;
+  const pipe = await ensureReranker();
+  if (pipe === null) return null;
+  try {
+    const scores = await scorePairs(pipe, query, [content.slice(0, maxContentLen)]);
+    return scores.length > 0 ? (scores[0] ?? null) : null;
+  } catch {
+    return null;
+  }
 }
 
 export type { PlattParams };

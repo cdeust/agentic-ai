@@ -271,7 +271,7 @@ export async function recall(
     ]);
     const contentMap: Record<number, string> = {};
     for (const c of candidates) contentMap[c.memory_id] = c.content ?? "";
-    const reranked = rerankResults(query, rankedPairs, contentMap, rerankAlpha);
+    const reranked = await rerankResults(query, rankedPairs, contentMap, rerankAlpha);
     const candMap = new Map(candidates.map((c) => [c.memory_id, c]));
     candidates = reranked
       .map(([mid, score]): Candidate | undefined => {
