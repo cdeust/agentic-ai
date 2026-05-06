@@ -26,8 +26,23 @@
  *   - gate_threshold=0.15: source: cortex@ed33435 mcp_server/core/reranker.py:47
  *   - suppression=0.1: source: cortex@ed33435 mcp_server/core/reranker.py:48
  *
+ * Implementation note — onnxruntime version:
+ *   @xenova/transformers@2.17.2 bundles onnxruntime-node@1.14.0, which produces
+ *   wrong logits for the FlashRank INT8 quantized ONNX model (verified 2026-05-06:
+ *   diff ~0.14 on pair 4 vs Python). onnxruntime-node@1.25.1 produces identical
+ *   results to Python ort@1.24.4 (diff < 1e-7 on 5 pairs). The reranker
+ *   therefore loads onnxruntime-node DIRECTLY (not via @xenova/transformers),
+ *   and uses @xenova/transformers ONLY for tokenization (tokenizer is correct in
+ *   both versions — same token IDs verified). The FlashRank model file is loaded
+ *   from its standard cache dir (same path Python uses).
+ *   source: benchmark 2026-05-06 /tmp/ts_ort125_test.mjs — all 5 pairs < 1e-7 diff
+ *
  * Pure business logic -- lazy-loaded singleton, no persistent I/O.
  */
+
+import { existsSync } from "fs";
+import { join } from "path";
+import { homedir } from "os";
 
 // ── Platt calibration interface ───────────────────────────────────────────
 // source: cortex@ed33435 mcp_server/core/platt_calibration.py
@@ -69,12 +84,6 @@ function calibrateScore(
  * considered sufficient (confidence=1.0). Otherwise, all scores are
  * suppressed by a fixed multiplier.
  *
- * Platt sigmoid was attempted (2026-04-03) and rejected — see module
- * docstring for ablation data showing regression on all benchmarks.
- *
- * precondition: ceScores is a list of raw CE floats
- * postcondition: returns 1.0 or suppression value (never negative)
- *
  * Constants — source: cortex@ed33435 mcp_server/core/reranker.py:83-86
  *   gate_threshold = 0.15
  *   suppression    = 0.1
@@ -96,17 +105,6 @@ function computeRetrievalConfidence(
  * Compute per-query alpha from CE score distribution.
  *
  * Port of: cortex@ed33435 mcp_server/core/reranker.py:90-129
- *
- * Based on post-retrieval QPP (Shtok et al., TOIS 2012): the standard
- * deviation / spread of retrieval scores predicts whether the retrieval
- * system can discriminate relevant from non-relevant documents.
- *
- * IMPORTANT: alpha never drops BELOW base_alpha. Ablation on BEAM shows
- * lower alpha hurts (0.30→0.511, 0.50→0.529, 0.70→0.542). And higher
- * fixed alpha also hurts (0.80→0.476, 0.90→0.469, 1.00→0.465).
- *
- * precondition: ceScores has at least 2 elements for meaningful spread
- * postcondition: result in [baseAlpha, baseAlpha + 0.15]
  *
  * Constants — source: cortex@ed33435 mcp_server/core/reranker.py:124-127
  *   max_boost  = 0.15
@@ -174,22 +172,178 @@ function blendScores(
   return reranked;
 }
 
-// ── FlashRank singleton (lazy) ─────────────────────────────────────────────
-// In TS we cannot load the Python flashrank ONNX model directly.
-// rerankResults degrades gracefully to returning candidates unchanged
-// (same as the Python fallback on flashrank import failure).
-// A native ONNX adapter may be wired in future via the EmbeddingEngine port.
+// ── FlashRank ONNX via onnxruntime-node (direct) ──────────────────────────
+//
+// Root cause of previous null-return bug (2026-05-06):
+//
+//   The previous implementation used @xenova/transformers text-classification
+//   pipeline with { text, text_pair } object inputs. This failed for two
+//   independent reasons:
+//
+//   (1) PIPELINE-DIFF: The TextClassificationPipeline in @xenova/transformers
+//   v2 passes its inputs argument directly to this.tokenizer(inputs), which
+//   expects strings, not { text, text_pair } objects. This caused
+//   "text.split is not a function" error → silent null return.
+//
+//   (2) MODEL-DIFF: @xenova/transformers@2.17.2 bundles onnxruntime-node@1.14.0,
+//   which produces wrong logits for the FlashRank INT8 quantized ONNX model.
+//   Verified 2026-05-06: pair 4 gives 0.259 (Node 1.14.0) vs 0.399 (Python
+//   ort@1.24.4). onnxruntime-node@1.25.1 gives 0.399 (diff < 1e-7).
+//   source: benchmark /tmp/ts_ort125_test.mjs, 2026-05-06
+//
+// Fix: Load onnxruntime-node directly. Use @xenova/transformers for tokenization
+// only (tokenizer produces identical token IDs to Python's flashrank Tokenizer —
+// verified 2026-05-06 for all 5 pairs). Load the FlashRank model file from the
+// standard flashrank cache dir (same path Python's flashrank.Ranker uses).
+//
+// source: cortex@ed33435 mcp_server/core/reranker.py:50-63 — flashrank.Ranker singleton
+// source: flashrank.Config.default_cache_dir = /tmp (flashrank.Config module)
+// source: Nogueira & Cho (2019) "Passage Re-ranking with BERT" — CE rerank pattern
 
-let _flashrankFailed = false;
+/** FlashRank model cache directory. Mirrors Python's flashrank.Config.default_cache_dir */
+const FLASHRANK_CACHE_DIR = "/tmp";
+/** FlashRank model name. Mirrors Python: Ranker(model_name="ms-marco-MiniLM-L-12-v2") */
+const FLASHRANK_MODEL_NAME = "ms-marco-MiniLM-L-12-v2";
+/** ONNX quantized model file inside the model dir. source: flashrank.Config.model_file_map */
+const FLASHRANK_ONNX_FILE = "flashrank-MiniLM-L-12-v2_Q.onnx";
+/** Xenova model ID for tokenizer (same vocab as FlashRank model). */
+const XENOVA_TOKENIZER_MODEL_ID = "Xenova/ms-marco-MiniLM-L-12-v2";
 
-function ensureReranker(): null {
-  // FlashRank ONNX is a Python-only dependency.
-  // In TS we always use the identity fallback (return candidates unchanged).
-  // source: cortex@ed33435 mcp_server/core/reranker.py:56-63
-  if (!_flashrankFailed) {
-    _flashrankFailed = true; // Mark once so the flag is consistent
+// Typed stubs for onnxruntime-node (no @types/onnxruntime-node in devDeps)
+interface OrtTensor {
+  data: Float32Array | Int32Array | BigInt64Array;
+}
+interface OrtSession {
+  run(feeds: Record<string, OrtTensorInstance>): Promise<Record<string, OrtTensor>>;
+  inputNames: string[];
+}
+interface OrtTensorConstructor {
+  new (type: string, data: BigInt64Array, dims: number[]): OrtTensorInstance;
+}
+interface OrtTensorInstance {
+  data: BigInt64Array;
+}
+interface OrtModule {
+  InferenceSession: { create(path: string): Promise<OrtSession> };
+  Tensor: OrtTensorConstructor;
+}
+
+// Tokenizer interface from @xenova/transformers
+interface XenovaTokenizerOutput {
+  input_ids: number[] | ArrayLike<number>;
+  attention_mask: number[] | ArrayLike<number>;
+  token_type_ids?: number[] | ArrayLike<number>;
+}
+interface XenovaTokenizer {
+  (text: string, opts: {
+    text_pair: string;
+    padding: boolean;
+    truncation: boolean;
+    return_tensor: boolean;
+  }): XenovaTokenizerOutput;
+}
+
+// Cached singletons
+let _ortSession: OrtSession | null = null;
+let _ortModule: OrtModule | null = null;
+let _tokenizer: XenovaTokenizer | null = null;
+let _rerankerFailed = false;
+
+async function ensureReranker(): Promise<{ session: OrtSession; tokenizer: XenovaTokenizer; ort: OrtModule } | null> {
+  if (_ortSession !== null && _tokenizer !== null && _ortModule !== null) {
+    return { session: _ortSession, tokenizer: _tokenizer, ort: _ortModule };
   }
-  return null;
+  if (_rerankerFailed) return null;
+  try {
+    const modelPath = join(FLASHRANK_CACHE_DIR, FLASHRANK_MODEL_NAME, FLASHRANK_ONNX_FILE);
+    if (!existsSync(modelPath)) {
+      // Model not downloaded — mirror Python's flashrank graceful fallback.
+      // source: cortex@ed33435 mcp_server/core/reranker.py:60-63
+      _rerankerFailed = true;
+      return null;
+    }
+
+    // Dynamic import of onnxruntime-node (heavy binary).
+    // Must be ≥1.21 to correctly run INT8 quantized FlashRank model.
+    // source: benchmark 2026-05-06 showing ort@1.14.0 produces wrong logits.
+    const ortMod = (await import("onnxruntime-node")) as unknown as { default: OrtModule };
+    const ort = ortMod.default;
+
+    const session = await ort.InferenceSession.create(modelPath);
+
+    // Tokenizer from @xenova/transformers — tokenizer.json is identical to
+    // FlashRank's bundled tokenizer.json (same HuggingFace checkpoint).
+    const transformersMod = (await import("@xenova/transformers")) as unknown as {
+      AutoTokenizer: { from_pretrained(id: string): Promise<XenovaTokenizer> };
+    };
+    const tokenizer = await transformersMod.AutoTokenizer.from_pretrained(XENOVA_TOKENIZER_MODEL_ID);
+
+    _ortSession = session;
+    _tokenizer = tokenizer;
+    _ortModule = ort;
+    return { session, tokenizer, ort };
+  } catch {
+    _rerankerFailed = true;
+    return null;
+  }
+}
+
+/** Test/bench hook: clear the cached pipeline. */
+export function _resetRerankerCache(): void {
+  _ortSession = null;
+  _tokenizer = null;
+  _ortModule = null;
+  _rerankerFailed = false;
+}
+
+/**
+ * Score a batch of (query, passage) pairs using the FlashRank ONNX model.
+ *
+ * Port of: cortex@ed33435 mcp_server/core/reranker.py:219-243 (encode_batch path)
+ *
+ * Tokenization: Xenova tokenizer with text_pair option (equivalent to
+ * FlashRank's tokenizer.encode_batch([[query, passage], ...]) invocation).
+ * Logit→score: sigmoid (1 / (1 + exp(-logit))).
+ * source: flashrank.Ranker._call — logits.shape[1] == 1 → sigmoid branch
+ */
+async function scorePairs(
+  { session, tokenizer, ort }: { session: OrtSession; tokenizer: XenovaTokenizer; ort: OrtModule },
+  query: string,
+  passages: string[],
+): Promise<number[]> {
+  const scores: number[] = [];
+  for (const passage of passages) {
+    // Tokenize without padding (variable-length sequences, one at a time).
+    // FlashRank uses encode_batch without forced padding to max_length —
+    // it lets the ONNX runtime handle variable-length inputs.
+    const enc = tokenizer(query, {
+      text_pair: passage,
+      padding: false,
+      truncation: true,
+      return_tensor: false,
+    });
+
+    const rawIds = Array.isArray(enc.input_ids) ? enc.input_ids : Array.from(enc.input_ids as ArrayLike<number>);
+    const rawMask = Array.isArray(enc.attention_mask) ? enc.attention_mask : Array.from(enc.attention_mask as ArrayLike<number>);
+    const rawTypeIds = enc.token_type_ids
+      ? (Array.isArray(enc.token_type_ids) ? enc.token_type_ids : Array.from(enc.token_type_ids as ArrayLike<number>))
+      : new Array(rawIds.length).fill(0);
+
+    const seqLen = rawIds.length;
+
+    const feeds: Record<string, OrtTensorInstance> = {
+      // source: flashrank.Ranker.rerank — onnx_input keys: input_ids, attention_mask, token_type_ids
+      input_ids: new ort.Tensor("int64", BigInt64Array.from(rawIds.map((x: number) => BigInt(x))), [1, seqLen]),
+      attention_mask: new ort.Tensor("int64", BigInt64Array.from(rawMask.map((x: number) => BigInt(x))), [1, seqLen]),
+      token_type_ids: new ort.Tensor("int64", BigInt64Array.from(rawTypeIds.map((x: number) => BigInt(x))), [1, seqLen]),
+    };
+
+    const result = await session.run(feeds);
+    const logit = Number(result["logits"]?.data[0] ?? 0);
+    // source: flashrank.Ranker.rerank — sigmoid for single-logit output
+    scores.push(1 / (1 + Math.exp(-logit)));
+  }
+  return scores;
 }
 
 // ── Public API ────────────────────────────────────────────────────────────
@@ -201,7 +355,7 @@ function ensureReranker(): null {
  *
  * precondition: candidates is a ranked list of (memory_id, wrrf_score)
  * postcondition: returns list of same or fewer length, sorted by blended score;
- *   returns input unchanged when FlashRank is unavailable (graceful degradation)
+ *   returns input unchanged when the cross-encoder is unavailable (graceful degradation)
  *
  * Constants — source: cortex@ed33435 mcp_server/core/reranker.py:167-172
  *   alpha         = 0.70 (BEAM ablation optimum)
@@ -209,20 +363,32 @@ function ensureReranker(): null {
  *   adaptive      = false (disabled by default pending ablation validation)
  *   apply_platt   = false (disabled by default until benchmark re-validation)
  */
-export function rerankResults(
-  _query: string,
+export async function rerankResults(
+  query: string,
   candidates: Array<[number, number]>,
-  _contentLookup: Record<number, string>,
+  contentLookup: Record<number, string>,
   alpha = 0.70,           // source: cortex@ed33435 mcp_server/core/reranker.py:168
-  _maxContentLen = 1200,  // source: cortex@ed33435 mcp_server/core/reranker.py:169 — max_content_len
+  maxContentLen = 1200,   // source: cortex@ed33435 mcp_server/core/reranker.py:169 — max_content_len
   adaptive = false,       // source: cortex@ed33435 mcp_server/core/reranker.py:170
   applyPlatt = false,     // source: cortex@ed33435 mcp_server/core/reranker.py:171
-): Array<[number, number]> {
-  const ranker = ensureReranker();
-  if (ranker === null || candidates.length === 0) return candidates;
-  // Unreachable: ranker is always null in TS.
-  // The shape matches Python's fallback exactly.
-  return blendScores(candidates, new Map(), alpha, adaptive, applyPlatt, null);
+): Promise<Array<[number, number]>> {
+  if (candidates.length === 0) return candidates;
+  const ctx = await ensureReranker();
+  if (ctx === null) return candidates; // Python's flashrank-unavailable fallback
+  try {
+    const passages = candidates.map(
+      ([mid]) => (contentLookup[mid] ?? "").slice(0, maxContentLen),
+    );
+    const ceScores = await scorePairs(ctx, query, passages);
+    const ceMap = new Map<number, number>();
+    ceScores.forEach((s, i) => ceMap.set(i, s));
+    return blendScores(candidates, ceMap, alpha, adaptive, applyPlatt, null);
+  } catch {
+    // Per-call failure (ONNX runtime error, OOM, etc.) — mirror Python's
+    // try/except fallback to first-stage ranking.
+    // source: cortex@ed33435 mcp_server/core/reranker.py:201-202
+    return candidates;
+  }
 }
 
 /**
@@ -230,16 +396,22 @@ export function rerankResults(
  *
  * Port of: cortex@ed33435 mcp_server/core/reranker.py:209-226
  *
- * Returns null if FlashRank is unavailable or encoding fails.
+ * Returns null if the cross-encoder is unavailable or encoding fails.
  */
-export function getRawCeScore(
-  _query: string,
-  _content: string,
-  _maxContentLen = 1200, // source: cortex@ed33435 mcp_server/core/reranker.py:221 — max content length for CE
-): number | null {
-  // FlashRank is a Python-only dependency — always unavailable in TS.
-  // source: cortex@ed33435 mcp_server/core/reranker.py:214-215
-  return null;
+export async function getRawCeScore(
+  query: string,
+  content: string,
+  maxContentLen = 1200, // source: cortex@ed33435 mcp_server/core/reranker.py:221
+): Promise<number | null> {
+  if (!query || !content) return null;
+  const ctx = await ensureReranker();
+  if (ctx === null) return null;
+  try {
+    const scores = await scorePairs(ctx, query, [content.slice(0, maxContentLen)]);
+    return scores.length > 0 ? (scores[0] ?? null) : null;
+  } catch {
+    return null;
+  }
 }
 
 export type { PlattParams };

@@ -42,95 +42,39 @@ const DECISION_IMPORTANCE_BOOST = 1.5;
 // source: Cortex mcp_server/infrastructure/sqlite_store.py default importance = 0.5
 const DEFAULT_IMPORTANCE = 0.5;
 
-// ── Chunking helpers ────────────────────────────────────────────────────────
+// ── Decomposition + entity extraction (delegated to 1:1 port) ──────────────
+//
+// The earlier in-file `decomposeContent` + `detectEntityFlags` + local
+// `buildEntitySummary` were stub TS versions that diverged from the Python
+// source: they returned empty entities (no persons/quoted_terms), only
+// flag-style booleans, and produced a different summary format
+// ("[decision, instruction]" instead of "People: X | Topics: Y | Type: Z").
+//
+// The full 1:1 port lives in memory-decomposer.ts and is now used directly
+// here. Removing the stubs eliminates the drift Feynman traced as one of
+// two structural causes for the cortex-bench MRR gap.
+//
+// source: cortex@ed33435 mcp_server/core/memory_decomposer.py:decompose_memory
+//   + extract_conversational_entities + build_entity_summary
+import {
+  decomposeMemory,
+  extractConversationalEntities,
+  buildEntitySummary as buildEntitySummaryFromEntities,
+  type ConversationalEntities,
+  type MemoryChunk,
+} from "./memory-decomposer.js";
 
-const SPEAKER_TURN_RE = /^(Human|Assistant|User|AI):/m;
-
-interface Chunk {
-  content: string;
-  entities: Record<string, boolean>;
-}
-
-/**
- * Decompose content into structural chunks.
- *
- * Uses speaker-turn boundaries for conversation content,
- * heading boundaries for markdown. Returns the whole content as a
- * single chunk when no structural boundary is detected.
- *
- * precondition:  content is non-empty.
- * postcondition: every chunk.content is a non-empty string; ∑len(chunks) ≈ len(content).
- * source: core/memory_decomposer.py (decompose_memory)
- */
-function decomposeContent(
-  content: string,
-  turnsPerChunk: number,
-): Chunk[] {
-  // Detect if content is a conversation transcript.
-  if (SPEAKER_TURN_RE.test(content)) {
-    return decomposeConversation(content, turnsPerChunk);
-  }
-  // Detect markdown headings.
-  if (/^#{1,6}\s+\S/m.test(content)) {
-    return decomposeMarkdown(content);
-  }
-  // No structural signal: treat as single chunk.
-  return [{ content, entities: {} }];
-}
-
-function decomposeConversation(content: string, turnsPerChunk: number): Chunk[] {
-  const lines = content.split("\n");
-  const chunks: Chunk[] = [];
-  let buffer: string[] = [];
-  let turnCount = 0;
-
-  for (const line of lines) {
-    if (SPEAKER_TURN_RE.test(line)) {
-      turnCount++;
-      if (turnCount > turnsPerChunk && buffer.length > 0) {
-        chunks.push({ content: buffer.join("\n").trim(), entities: {} });
-        buffer = [];
-        turnCount = 1;
-      }
-    }
-    buffer.push(line);
-  }
-
-  if (buffer.length > 0) {
-    const remaining = buffer.join("\n").trim();
-    if (remaining) chunks.push({ content: remaining, entities: {} });
-  }
-
-  return chunks.length > 0 ? chunks : [{ content, entities: {} }];
-}
-
-function decomposeMarkdown(content: string): Chunk[] {
-  const sections = content.split(/(?=^#{1,6}\s+\S)/m).filter(Boolean);
-  const chunks = sections
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0)
-    .map((s) => ({ content: s, entities: {} }));
-  return chunks.length > 0 ? chunks : [{ content, entities: {} }];
-}
-
-// ── Entity detection heuristics ─────────────────────────────────────────────
-// Lightweight client-side heuristics. The full entity-extraction pipeline
-// (knowledge_graph.extract_entities) is invoked via store post-insert
-// in the remember handler.
-
-function detectEntityFlags(content: string): Record<string, boolean> {
-  const lower = content.toLowerCase();
-  return {
-    has_preference:
-      /\b(prefer|recommend|suggest|better to|should use)\b/.test(lower),
-    has_instruction:
-      /\b(always|never|make sure|ensure|remember to|don't forget)\b/.test(lower),
-    has_decision: /\b(decided|decision|chose|choosing|going with|selected)\b/.test(
-      lower,
-    ),
-    has_activity:
-      /\b(working on|implementing|refactoring|debugging|reviewing)\b/.test(lower),
-  };
+// Backwards-compatibility shim: existing callers that imported
+// `detectEntityFlags(content) -> Record<string, boolean>` get the same
+// flag map but now derived from the full extractor so persons and
+// quoted_terms are also available downstream when needed.
+//
+// postcondition: returned object has the four `has_*` keys plus the
+//   per-call dynamic keys produced by extractConversationalEntities.
+//
+// source: cortex@ed33435 mcp_server/core/memory_decomposer.py:147 (extract_conversational_entities)
+export function detectEntityFlags(content: string): ConversationalEntities {
+  return extractConversationalEntities(content);
 }
 
 // ── Main ingestion function ─────────────────────────────────────────────────
@@ -182,19 +126,28 @@ export async function ingestMemory(
   const rawContent = memory.content ?? "";
   if (!rawContent.trim()) return [];
 
-  const chunks: Chunk[] = decompose
-    ? decomposeContent(rawContent, turnsPerChunk)
-    : [{ content: rawContent, entities: {} }];
+  // source: cortex@ed33435 mcp_server/core/memory_decomposer.py:decompose_memory
+  //   The Python ingest path always calls decompose_memory which returns
+  //   MemoryChunk objects with full ConversationalEntities (persons,
+  //   quoted_terms, has_*). The TS port now uses the same code path.
+  const chunks: MemoryChunk[] = decompose
+    ? decomposeMemory(rawContent, turnsPerChunk)
+    : [{ content: rawContent, entities: extractConversationalEntities(rawContent) }];
 
   const ids: number[] = [];
 
   for (const chunk of chunks) {
     const chunkContent = chunk.content;
-    // Detect entity flags for this chunk.
-    const entities = detectEntityFlags(chunkContent);
+    // Use the entities the decomposer already extracted — they include
+    // persons + quoted_terms + flags. The previous code threw these away
+    // and re-ran a flag-only regex pass, dropping all named-entity signal
+    // before the embedding was computed.
+    const entities = chunk.entities;
 
     // Build embedding text: entity-summary prefix improves targeting.
-    const entitySummary = buildEntitySummary(entities);
+    // Format matches Python: "People: ... | Topics: ... | Type: ..."
+    // source: cortex@ed33435 mcp_server/core/memory_decomposer.py:build_entity_summary
+    const entitySummary = buildEntitySummaryFromEntities(entities);
     const embedText = entitySummary
       ? `${entitySummary}\n${chunkContent}`
       : chunkContent;
@@ -210,10 +163,10 @@ export async function ingestMemory(
 
     // Build tag list, extending with entity-derived tags.
     const tags = [...(memory.tags ?? [])];
-    if (entities["has_preference"]) tags.push("preference");
-    if (entities["has_instruction"]) tags.push("instruction");
-    if (entities["has_decision"]) tags.push("decision");
-    if (entities["has_activity"]) tags.push("activity");
+    if (entities.has_preference) tags.push("preference");
+    if (entities.has_instruction) tags.push("instruction");
+    if (entities.has_decision) tags.push("decision");
+    if (entities.has_activity) tags.push("activity");
 
     // ── Decision auto-protection ──────────────────────────────────────────
     // Decisions carry resolved prediction error (dopamine burst),
@@ -229,7 +182,7 @@ export async function ingestMemory(
     //
     // Protection: is_protected=True survives decay (Frey & Morris 1997
     // synaptic tagging — strong events promote weak traces).
-    const isDecision = Boolean(entities["has_decision"]);
+    const isDecision = Boolean(entities.has_decision);
     const autoProtect = isDecision && !isBenchmark;
     const importanceBoost = isDecision ? DECISION_IMPORTANCE_BOOST : 1.0;
 
@@ -262,6 +215,18 @@ export async function ingestMemory(
       is_global: isGlobal,
       is_benchmark: isBenchmark,
     });
+
+    // If the store exposes upsertEmbedding (SQLite path), call it explicitly.
+    // insertMemory stores the embedding field in the row but SQLite's vec table
+    // requires a separate upsertEmbedding call.  The Python source stores
+    // embeddings inline in insert_memory (PG column) but for the SQLite adapter
+    // we must call upsertEmbedding after insert.
+    // source: cortex@82b15b3 mcp_server/core/memory_ingest.py:119 (embed stored inline)
+    // source: packages/memory/src/remember/storage/sqlite-store.ts:insertMemory (no vec upsert)
+    if (emb !== null && typeof (store as unknown as Record<string, unknown>)["upsertEmbedding"] === "function") {
+      (store as unknown as { upsertEmbedding(id: number, emb: Buffer): void }).upsertEmbedding(mid, emb);
+    }
+
     ids.push(mid);
   }
 
@@ -304,18 +269,12 @@ export async function ingestMemoriesBatch(
 // ── Entity summary helper ───────────────────────────────────────────────────
 
 /**
- * Build a short prefix summarising detected entity categories.
+ * Re-export the canonical 1:1 port of build_entity_summary from
+ * memory-decomposer.ts. The previous local implementation diverged from
+ * Python: it returned "[decision, instruction]" instead of the
+ * Python-format "People: ... | Topics: ... | Type: ...". Backwards-compat
+ * for any caller that imported `buildEntitySummary` from this module.
  *
- * postcondition: returns "" iff no flags are true.
- * source: core/memory_decomposer.py:build_entity_summary
+ * source: cortex@ed33435 mcp_server/core/memory_decomposer.py:build_entity_summary
  */
-export function buildEntitySummary(
-  entities: Record<string, boolean>,
-): string {
-  const parts: string[] = [];
-  if (entities["has_decision"]) parts.push("decision");
-  if (entities["has_instruction"]) parts.push("instruction");
-  if (entities["has_preference"]) parts.push("preference");
-  if (entities["has_activity"]) parts.push("activity");
-  return parts.length > 0 ? `[${parts.join(", ")}]` : "";
-}
+export { buildEntitySummary } from "./memory-decomposer.js";

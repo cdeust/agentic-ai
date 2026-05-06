@@ -39,7 +39,11 @@
   "license": "MIT",
   "pnpm": {
     "onlyBuiltDependencies": [
-      "better-sqlite3"
+      "better-sqlite3",
+      "sharp"
     ]
+  },
+  "dependencies": {
+    "sharp": "0.32.6"
   }
 }

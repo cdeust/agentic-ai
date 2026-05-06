@@ -43,6 +43,11 @@ import type {
   MemoryStore,
   VecHit,
 } from "./memory-store.js";
+import {
+  callRecallMemories,
+  type RecallMemoriesParams,
+  type RecallMemoryRow,
+} from "./pg-store-queries.js";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -153,9 +158,12 @@ export class PgMemoryStore implements MemoryStore {
         hippocampal_dependency, is_benchmark, agent_context, is_global,
         stage_entered_at, arousal, dominant_emotion
       ) VALUES (
-        $1,$2,$3::jsonb,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,
+        $1,$2::jsonb,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,
         $16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29
       ) RETURNING id`,
+      // $2::jsonb — tags is JSON.stringify(array), must be cast to jsonb
+      // source: cortex@82b15b3 mcp_server/infrastructure/pg_store.py:insert_memory
+      //   json.dumps(tags) stored as JSONB column
       [
         data.content,
         JSON.stringify(data.tags ?? []),
@@ -199,6 +207,34 @@ export class PgMemoryStore implements MemoryStore {
 
   async getMemoryAsync(memoryId: number): Promise<MemoryItem | null> {
     return this.runAsync((c) => this._getMemoryOnClient(c, memoryId));
+  }
+
+  /**
+   * Call the PostgreSQL recall_memories() stored procedure.
+   *
+   * This is the parity-critical retrieval method. It invokes the same
+   * PL/pgSQL function that Python's bench calls, producing identical
+   * ranking via TMM normalization + weighted-sum fusion.
+   *
+   * precondition: pool is open; recall_memories function is installed in DB.
+   * postcondition: returns rows ordered by descending score.
+   *
+   * source: cortex@82b15b3 mcp_server/infrastructure/pg_store.py:recall_memories
+   * source: cortex@82b15b3 mcp_server/infrastructure/pg_schema.py:RECALL_MEMORIES_LAZY_FN
+   */
+  async recallMemoriesAsync(params: RecallMemoriesParams): Promise<RecallMemoryRow[]> {
+    return this.runAsync((client) => callRecallMemories(client, params));
+  }
+
+  /**
+   * Delete memories where is_benchmark = TRUE.
+   * Used by the bench harness to clean up between conversations.
+   * source: cortex@82b15b3 benchmarks/lib/bench_db.py:_purge_stale_benchmark_data
+   */
+  async clearBenchmarkMemoriesAsync(): Promise<void> {
+    await this.runAsync(async (client) => {
+      await client.query("DELETE FROM memories WHERE is_benchmark = TRUE");
+    });
   }
 
   private async _getMemoryOnClient(

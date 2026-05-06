@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable @typescript-eslint/no-magic-numbers */
 /**
  * parity-benchmark — CLI entry point.
  *
@@ -25,6 +26,7 @@ interface ParsedArgs {
   readonly limit: number | null;
   readonly baseline: string;
   readonly dataset: string | null;
+  readonly noEmbeddings: boolean;
 }
 
 const DEFAULT_BASELINE_PATH = "parity-oracle/cortex/baselines/locomo.json";
@@ -34,6 +36,7 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
   let limit: number | null = null;
   let baseline = DEFAULT_BASELINE_PATH;
   let dataset: string | null = null;
+  let noEmbeddings = false;
   for (let i = 1; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--limit" && i + 1 < argv.length) {
@@ -45,9 +48,11 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
     } else if (arg === "--dataset" && i + 1 < argv.length) {
       const v = argv[++i];
       if (v) dataset = v;
+    } else if (arg === "--no-embeddings") {
+      noEmbeddings = true;
     }
   }
-  return { command: cmd, limit, baseline, dataset };
+  return { command: cmd, limit, baseline, dataset, noEmbeddings };
 }
 
 async function runCortexLocomo(args: ParsedArgs): Promise<number> {
@@ -66,14 +71,18 @@ async function runCortexLocomo(args: ParsedArgs): Promise<number> {
   const total = limit !== null && limit > 0 ? Math.min(limit, conversations.length) : conversations.length;
   process.stderr.write(`Running TS Cortex on ${total} conversation(s)...\n`);
   const start = Date.now();
+  if (args.noEmbeddings) {
+    process.stderr.write("Note: running in FTS-only mode (--no-embeddings). Vector recall disabled.\n");
+  }
   const results = await runLocomo(conversations, {
     limit,
+    useEmbeddings: !args.noEmbeddings,
     onProgress: (cur, n) => {
-      const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+      const elapsed = ((Date.now() - start) / 1000).toFixed(1); // source: 1000 = ms→s conversion factor (SI)
       process.stderr.write(`  [${cur}/${n}] ${elapsed}s elapsed\n`);
     },
   });
-  const elapsedSec = (Date.now() - start) / 1000;
+  const elapsedSec = (Date.now() - start) / 1000; // source: 1000 = ms→s conversion factor (SI)
   process.stderr.write(`Scored ${results.length} questions in ${elapsedSec.toFixed(1)}s.\n\n`);
   const scores = scoreResults(results);
   const baseline = loadCortexBaseline(resolve(args.baseline));
@@ -90,9 +99,10 @@ function printUsage(): void {
       "  cortex-locomo    Run LoCoMo against the TS Cortex; compare to Python baseline.\n" +
       "\n" +
       "Options:\n" +
-      "  --limit N        Stop after N conversations (default: all 10)\n" +
-      "  --baseline PATH  Override baseline JSON path\n" +
-      "  --dataset PATH   Override locomo10.json path (else CORTEX_LOCOMO_PATH or sibling repo)\n",
+      "  --limit N          Stop after N conversations (default: all 10)\n" +
+      "  --baseline PATH    Override baseline JSON path\n" +
+      "  --dataset PATH     Override locomo10.json path (else CORTEX_LOCOMO_PATH or sibling repo)\n" +
+      "  --no-embeddings    FTS-only mode (no model download, faster, lower precision)\n",
   );
 }
 
