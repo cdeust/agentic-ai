@@ -44,7 +44,7 @@ import {
   fuseSignals,
 } from "./multi-signal-fusion.js";
 import type { EmbeddingEngine, MemoryStore } from "./port.js";
-import { classifyQueryIntent, computeRetrievalWeights, expandSignalWeights } from "./query-intent.js";
+import { classifyQueryIntent, computeRetrievalWeights } from "./query-intent.js";
 import { applyRules } from "./rules.js";
 import type {
   MemoryItem,
