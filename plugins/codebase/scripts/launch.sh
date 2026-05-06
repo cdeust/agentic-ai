@@ -5,24 +5,34 @@
 #   $1 — CLAUDE_PLUGIN_ROOT. Required.
 #
 # Resolution order (first that succeeds wins; never falls through silently):
-#   1. ${PLUGIN_ROOT}/bin/ai-architect-mcp           (pre-built artifact shipped with plugin)
-#   2. command -v ai-architect-mcp                    (already on PATH; e.g. cargo install)
-#   3. ${PLUGIN_ROOT}/src-rust/target/release/ai-architect-mcp
-#                                                     (already built in the plugin dir)
-#   4. cargo build --release in ${PLUGIN_ROOT}/src-rust then exec the freshly built binary
+#   1. ${PLUGIN_ROOT}/bin/ai-architect-mcp
+#        Pre-built artifact shipped with the plugin (override slot for power
+#        users / CI). Empty by default.
+#   2. ${PLUGIN_ROOT}/src-rust/target/release/ai-architect-mcp
+#        Already built from this plugin's vendored Cargo source — guaranteed
+#        protocol/version match. This is the steady-state path after the
+#        first-run cargo build below.
+#   3. cargo build --release in ${PLUGIN_ROOT}/src-rust/ then exec.
+#        Triggered on first launch after install. Requires Rust toolchain
+#        (rustup) on the host. Compilation typically takes 2–5 minutes.
 #
-# All diagnostics go to stderr — stdout is reserved for MCP JSON-RPC framing.
-# source: modelcontextprotocol.io/quickstart/server §"Logging in MCP Servers"
+# Notes
+# -----
+# - We deliberately do NOT fall back to `command -v ai-architect-mcp` on PATH.
+#   The plugin name collides with at least one third-party Python wrapper of
+#   the same name (e.g. /opt/homebrew/bin/ai-architect-mcp from the upstream
+#   ai-architect Python package), which crashes with ModuleNotFoundError when
+#   Claude Code tries to use it as our MCP server. The vendored Rust source
+#   under src-rust/ is the only authoritative server for THIS plugin.
+# - Stdout is reserved for MCP JSON-RPC framing. All shell diagnostics go to
+#   stderr.
+#   source: modelcontextprotocol.io/quickstart/server §"Logging in MCP Servers"
 set -euo pipefail
 PLUGIN_ROOT="${1:?usage: launch.sh <plugin-root>}"
 
 shipped_bin="${PLUGIN_ROOT}/bin/ai-architect-mcp"
 if [ -x "${shipped_bin}" ]; then
   exec "${shipped_bin}"
-fi
-
-if command -v ai-architect-mcp >/dev/null 2>&1; then
-  exec ai-architect-mcp
 fi
 
 src_dir="${PLUGIN_ROOT}/src-rust"
@@ -32,9 +42,11 @@ if [ -x "${prebuilt_in_src}" ]; then
 fi
 
 if ! command -v cargo >/dev/null 2>&1; then
-  echo "codebase plugin: ai-architect-mcp not found and cargo is not installed." >&2
+  echo "codebase plugin: vendored binary not yet built and cargo is not installed." >&2
   echo "  Install Rust toolchain: https://rustup.rs" >&2
-  echo "  Or install the binary:  cargo install --path ${src_dir}" >&2
+  echo "  Then re-launch the plugin (Claude Code will retry on next session)." >&2
+  echo "  Or install manually:    cargo install --path ${src_dir}" >&2
+  echo "                          (then place the binary at ${shipped_bin})" >&2
   exit 1
 fi
 
@@ -43,6 +55,6 @@ if [ ! -f "${src_dir}/Cargo.toml" ]; then
   exit 1
 fi
 
-echo "codebase plugin: building ai-architect-mcp from source (first run)..." >&2
+echo "codebase plugin: building ai-architect-mcp from source (first run, ~2-5 min)..." >&2
 ( cd "${src_dir}" && cargo build --release --quiet >&2 )
 exec "${prebuilt_in_src}"
