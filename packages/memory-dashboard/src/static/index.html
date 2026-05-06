@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Memory Dashboard — Agentic AI</title>
   <style>
-    /* Minimal inline styles for the fallback dashboard.
-       The full constellation map UI assets are served from /js/ and /css/
-       when the Cortex UI directory is available (see server.ts staticDir option).
+    /* Dashboard styles.
        source: cortex@ed33435 ui/unified-viz.html (theme) */
     :root {
       --bg: #0a0a0f;
@@ -17,6 +15,7 @@
       --border: #2a2a3a;
       --hot: #ff6b6b;
       --cool: #48cae4;
+      --tab-active-bg: #1a1a2e;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -27,6 +26,8 @@
       display: flex;
       flex-direction: column;
     }
+
+    /* ── Header ─────────────────────────────────────────────────────────────── */
     header {
       padding: 1rem 1.5rem;
       border-bottom: 1px solid var(--border);
@@ -36,13 +37,46 @@
     }
     header h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: 0.02em; }
     header .status { font-size: 0.75rem; color: var(--cool); margin-left: auto; }
-    main {
-      flex: 1;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: auto auto;
+
+    /* ── Tab navigation ─────────────────────────────────────────────────────── */
+    nav {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      background: var(--card);
+    }
+    nav button {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: #888;
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.85rem;
+      padding: 0.7rem 1.4rem;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+      letter-spacing: 0.03em;
+    }
+    nav button:hover { color: var(--fg); background: rgba(255,255,255,0.03); }
+    nav button.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      background: var(--tab-active-bg);
+    }
+
+    /* ── Tab panels ─────────────────────────────────────────────────────────── */
+    .panel { display: none; flex: 1; flex-direction: column; }
+    .panel.visible { display: flex; }
+
+    /* ── Graph panel ─────────────────────────────────────────────────────────── */
+    #panel-graph {
+      padding: 1rem 1.5rem;
       gap: 1rem;
-      padding: 1.5rem;
+    }
+    #graph-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
     }
     .card {
       background: var(--card);
@@ -56,8 +90,8 @@
     .stat .label { font-size: 0.7rem; color: #888; text-transform: uppercase; }
     .stat .value { font-size: 1.3rem; font-weight: 700; margin-top: 0.2rem; }
     #graph-canvas {
-      grid-column: 1 / -1;
-      height: 400px;
+      flex: 1;
+      min-height: 400px;
       background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -71,8 +105,7 @@
       gap: 0.5rem;
       font-size: 0.8rem;
       color: #aaa;
-      padding: 0.5rem 1.5rem;
-      border-top: 1px solid var(--border);
+      padding: 0.5rem 0;
     }
     .progress-bar {
       flex: 1;
@@ -86,22 +119,152 @@
       background: linear-gradient(90deg, var(--accent), var(--cool));
       transition: width 0.3s ease;
     }
-    #memory-list { max-height: 280px; overflow-y: auto; }
-    .memory-item {
-      padding: 0.5rem 0;
-      border-bottom: 1px solid var(--border);
+
+    /* ── Knowledge panel (memories) ─────────────────────────────────────────── */
+    #panel-knowledge {
+      padding: 1rem 1.5rem;
+      gap: 1rem;
+      overflow-y: auto;
+    }
+    #knowledge-filters {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    #knowledge-filters label { font-size: 0.8rem; color: #aaa; }
+    #knowledge-filters select {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--fg);
+      font: inherit;
       font-size: 0.8rem;
+      padding: 0.3rem 0.6rem;
+    }
+    #knowledge-facets {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .facet-chip {
+      background: var(--border);
+      border-radius: 12px;
+      font-size: 0.72rem;
+      padding: 0.25rem 0.6rem;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: border-color 0.15s;
+    }
+    .facet-chip:hover { border-color: var(--accent); }
+    .facet-chip.selected { border-color: var(--accent); color: var(--accent); }
+    #memory-table {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    #memory-table table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    #memory-table th {
+      background: var(--bg);
+      padding: 0.6rem 0.75rem;
+      text-align: left;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #888;
+      border-bottom: 1px solid var(--border);
+    }
+    #memory-table td {
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid rgba(42,42,58,0.5);
+      vertical-align: top;
       line-height: 1.4;
     }
-    .memory-item .meta { display: flex; gap: 0.5rem; margin-top: 0.25rem; }
+    #memory-table tr:last-child td { border-bottom: none; }
+    #memory-table tr:hover td { background: rgba(255,255,255,0.02); }
     .badge {
+      display: inline-block;
       font-size: 0.65rem;
       padding: 0.1rem 0.4rem;
       border-radius: 3px;
       background: var(--border);
       color: var(--fg);
+      margin-right: 0.2rem;
     }
     .badge.hot { background: rgba(255, 107, 107, 0.2); color: var(--hot); }
+    .badge.protected { background: rgba(108, 99, 255, 0.2); color: var(--accent); }
+    #knowledge-pagination {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      font-size: 0.8rem;
+      color: #aaa;
+    }
+    #knowledge-pagination button {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--fg);
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.8rem;
+      padding: 0.3rem 0.75rem;
+    }
+    #knowledge-pagination button:disabled { opacity: 0.4; cursor: default; }
+
+    /* ── Board panel (Sankey consolidation view) ─────────────────────────────── */
+    #panel-board {
+      padding: 1rem 1.5rem;
+      gap: 1rem;
+    }
+    #board-summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+    #sankey-canvas {
+      flex: 1;
+      min-height: 380px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    #sankey-canvas canvas { width: 100%; height: 100%; }
+    #board-metrics {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.75rem;
+    }
+    .stage-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem;
+    }
+    .stage-card h3 {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--cool);
+      margin-bottom: 0.5rem;
+    }
+    .stage-stat { font-size: 0.75rem; color: #aaa; margin-top: 0.2rem; }
+    .stage-stat .val { color: var(--fg); font-weight: 600; }
+
+    /* ── Footer progress bar ────────────────────────────────────────────────── */
+    footer {
+      padding: 0.4rem 1.5rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: #666;
+    }
   </style>
 </head>
 <body>
@@ -121,86 +284,219 @@
     <span class="status" id="status-text">connecting…</span>
   </header>
 
-  <main>
-    <div class="card" id="stats-card">
-      <h2>Memory Stats</h2>
-      <div class="stat-grid" id="stats-grid">
-        <div class="stat"><div class="label">Total</div><div class="value" id="stat-total">—</div></div>
-        <div class="stat"><div class="label">Episodic</div><div class="value" id="stat-episodic">—</div></div>
-        <div class="stat"><div class="label">Semantic</div><div class="value" id="stat-semantic">—</div></div>
-        <div class="stat"><div class="label">Hot (&gt;0.5)</div><div class="value" id="stat-hot">—</div></div>
-        <div class="stat"><div class="label">Protected</div><div class="value" id="stat-protected">—</div></div>
-        <div class="stat"><div class="label">Domains</div><div class="value" id="stat-domains">—</div></div>
+  <!-- Tab navigation: Graph | Knowledge | Board -->
+  <nav id="tab-nav">
+    <button id="tab-graph" class="active" aria-controls="panel-graph">Graph</button>
+    <button id="tab-knowledge" aria-controls="panel-knowledge">Knowledge</button>
+    <button id="tab-board" aria-controls="panel-board">Board</button>
+  </nav>
+
+  <!-- ── Graph panel ─────────────────────────────────────────────────────────── -->
+  <div id="panel-graph" class="panel visible" role="tabpanel">
+    <div id="graph-stats">
+      <div class="card">
+        <h2>Memory Stats</h2>
+        <div class="stat-grid" id="stats-grid">
+          <div class="stat"><div class="label">Total</div><div class="value" id="stat-total">—</div></div>
+          <div class="stat"><div class="label">Episodic</div><div class="value" id="stat-episodic">—</div></div>
+          <div class="stat"><div class="label">Semantic</div><div class="value" id="stat-semantic">—</div></div>
+          <div class="stat"><div class="label">Hot (&gt;0.5)</div><div class="value" id="stat-hot">—</div></div>
+          <div class="stat"><div class="label">Protected</div><div class="value" id="stat-protected">—</div></div>
+          <div class="stat"><div class="label">Domains</div><div class="value" id="stat-domains">—</div></div>
+        </div>
+      </div>
+      <div class="card" style="grid-column:2/-1">
+        <h2>Graph progress</h2>
+        <div id="build-progress">
+          <span id="progress-message">loading graph…</span>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+          </div>
+          <span id="progress-pct">0%</span>
+        </div>
       </div>
     </div>
-
-    <div class="card">
-      <h2>Recent Memories</h2>
-      <div id="memory-list"></div>
-    </div>
-
     <div id="graph-canvas">
       <canvas id="graph-canvas-el"></canvas>
     </div>
-  </main>
+  </div>
 
-  <div id="build-progress">
-    <span id="progress-message">loading graph…</span>
-    <div class="progress-bar">
-      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+  <!-- ── Knowledge panel ───────────────────────────────────────────────────────── -->
+  <div id="panel-knowledge" class="panel" role="tabpanel">
+    <div id="knowledge-filters">
+      <label for="domain-filter">Domain:</label>
+      <select id="domain-filter">
+        <option value="">All</option>
+      </select>
+      <label for="stage-filter">Stage:</label>
+      <select id="stage-filter">
+        <option value="">All</option>
+        <option value="labile">labile</option>
+        <option value="early_ltp">early_ltp</option>
+        <option value="late_ltp">late_ltp</option>
+        <option value="consolidated">consolidated</option>
+        <option value="reconsolidating">reconsolidating</option>
+      </select>
+    </div>
+    <div id="knowledge-facets"></div>
+    <div id="memory-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Content</th>
+            <th>Heat</th>
+            <th>Type</th>
+            <th>Stage</th>
+            <th>Domain</th>
+            <th>Flags</th>
+          </tr>
+        </thead>
+        <tbody id="memory-tbody"></tbody>
+      </table>
+    </div>
+    <div id="knowledge-pagination">
+      <button id="page-prev" disabled>← Prev</button>
+      <span id="page-info">—</span>
+      <button id="page-next" disabled>Next →</button>
     </div>
   </div>
 
+  <!-- ── Board panel (Sankey consolidation pipeline) ───────────────────────────── -->
+  <div id="panel-board" class="panel" role="tabpanel">
+    <div id="board-summary">
+      <div class="card">
+        <h2>Pipeline summary</h2>
+        <div class="stat-grid">
+          <div class="stat"><div class="label">Total</div><div class="value" id="board-total">—</div></div>
+          <div class="stat"><div class="label">Transitions</div><div class="value" id="board-transitions">—</div></div>
+          <div class="stat"><div class="label">Stages</div><div class="value" id="board-stages">—</div></div>
+        </div>
+      </div>
+      <div class="card" style="grid-column:2/-1">
+        <h2>Consolidation flow</h2>
+        <div style="font-size:0.78rem;color:#aaa;">Nodes = consolidation stages · Flows = transition counts</div>
+      </div>
+    </div>
+    <div id="sankey-canvas">
+      <canvas id="sankey-canvas-el"></canvas>
+    </div>
+    <div id="board-metrics"></div>
+  </div>
+
+  <footer id="footer-bar">Memory Dashboard v0.1.0</footer>
+
   <script type="module">
-    // Minimal dashboard JS — loads data from the local API.
-    // For the full 3D constellation map, serve the Cortex unified-viz.html
-    // by setting staticDir to the Cortex ui/ directory.
+    // Dashboard JS — wires tab navigation to API routes.
+    // Endpoints consumed:
+    //   /api/memories/facets  → stats panel (Graph tab) + facet chips (Knowledge tab)
+    //   /api/memories         → memory table (Knowledge tab)
+    //   /api/graph/progress   → progress bar (Graph tab)
+    //   /api/graph            → canvas render (Graph tab)
+    //   /api/sankey           → sankey canvas + stage metrics (Board tab)
+    //
+    // No external dependencies — vanilla browser JS only.
 
-    const api = (path) => fetch(path).then(r => r.json());
+    const api = (path) => fetch(path).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
 
-    async function loadStats() {
-      try {
-        const facets = await api('/api/memories/facets');
-        document.getElementById('stat-total').textContent = facets.totals?.total ?? '—';
-        document.getElementById('stat-protected').textContent = facets.totals?.protected ?? '—';
-        document.getElementById('stat-domains').textContent = facets.by_domain?.length ?? '—';
-        document.getElementById('status-text').textContent = 'connected';
-      } catch { document.getElementById('status-text').textContent = 'offline'; }
+    // ── Tab switching ────────────────────────────────────────────────────────
+    const tabs = {
+      graph:     { btn: document.getElementById('tab-graph'),     panel: document.getElementById('panel-graph') },
+      knowledge: { btn: document.getElementById('tab-knowledge'), panel: document.getElementById('panel-knowledge') },
+      board:     { btn: document.getElementById('tab-board'),     panel: document.getElementById('panel-board') },
+    };
+
+    let activeTab = 'graph';
+    const tabLoaded = { graph: false, knowledge: false, board: false };
+
+    function switchTab(name) {
+      if (activeTab === name) return;
+      tabs[activeTab].btn.classList.remove('active');
+      tabs[activeTab].panel.classList.remove('visible');
+      activeTab = name;
+      tabs[name].btn.classList.add('active');
+      tabs[name].panel.classList.add('visible');
+      if (!tabLoaded[name]) {
+        tabLoaded[name] = true;
+        if (name === 'knowledge') loadKnowledge();
+        if (name === 'board') loadBoard();
+      }
     }
 
-    async function loadMemories() {
+    Object.entries(tabs).forEach(([name, {btn}]) => {
+      btn.addEventListener('click', () => switchTab(name));
+    });
+
+    // ── Shared: facets ───────────────────────────────────────────────────────
+    let _facets = null;
+
+    async function loadFacets() {
       try {
-        const data = await api('/api/memories?limit=20');
-        const list = document.getElementById('memory-list');
+        _facets = await api('/api/memories/facets');
+        // Graph tab stats
+        document.getElementById('stat-total').textContent = _facets.totals?.total ?? '—';
+        document.getElementById('stat-protected').textContent = _facets.totals?.protected ?? '—';
+        document.getElementById('stat-domains').textContent = _facets.by_domain?.length ?? '—';
+        document.getElementById('status-text').textContent = 'connected';
+
+        // Knowledge tab: populate domain filter
+        const sel = document.getElementById('domain-filter');
+        for (const d of (_facets.by_domain ?? [])) {
+          const o = document.createElement('option');
+          o.value = d.domain;
+          o.textContent = `${d.domain} (${d.count})`;
+          sel.appendChild(o);
+        }
+
+        // Knowledge tab: facet chips
+        const chips = document.getElementById('knowledge-facets');
+        chips.innerHTML = (_facets.by_domain ?? []).map(d =>
+          `<span class="facet-chip" data-domain="${d.domain}">${d.domain} <strong>${d.count}</strong></span>`
+        ).join('');
+        chips.querySelectorAll('.facet-chip').forEach(chip => {
+          chip.addEventListener('click', () => {
+            const domain = chip.dataset.domain;
+            document.getElementById('domain-filter').value = domain;
+            _knowledgePage = { after: null, domain, stage: _knowledgePage.stage };
+            loadKnowledge();
+          });
+        });
+      } catch {
+        document.getElementById('status-text').textContent = 'offline';
+      }
+    }
+
+    // ── Graph tab ────────────────────────────────────────────────────────────
+    tabLoaded.graph = true;
+    loadFacets();
+
+    async function loadGraphStats() {
+      try {
+        const data = await api('/api/memories?limit=200');
         let episodic = 0, semantic = 0, hot = 0;
-        list.innerHTML = (data.memories ?? []).map(m => {
+        for (const m of (data.memories ?? [])) {
           if (m.store_type === 'episodic') episodic++;
           if (m.store_type === 'semantic') semantic++;
           if (m.heat > 0.5) hot++;
-          return `<div class="memory-item">
-            ${m.content}
-            <div class="meta">
-              <span class="badge ${m.heat > 0.5 ? 'hot' : ''}">heat ${m.heat}</span>
-              <span class="badge">${m.store_type}</span>
-              <span class="badge">${m.consolidation_stage}</span>
-              ${m.domain ? `<span class="badge">${m.domain}</span>` : ''}
-            </div>
-          </div>`;
-        }).join('');
+        }
         document.getElementById('stat-episodic').textContent = episodic;
         document.getElementById('stat-semantic').textContent = semantic;
         document.getElementById('stat-hot').textContent = hot;
-      } catch { /* network error */ }
+      } catch { /* offline */ }
     }
+    loadGraphStats();
 
     async function pollGraph() {
       try {
         const prog = await api('/api/graph/progress');
         const pct = Math.round((prog.pct ?? 0) * 100);
         document.getElementById('progress-fill').style.width = pct + '%';
+        document.getElementById('progress-pct').textContent = pct + '%';
         document.getElementById('progress-message').textContent = prog.message || 'loading…';
-        if (!prog.full_ready) setTimeout(pollGraph, 1500);
-        else await loadGraph();
+        if (!prog.full_ready) {
+          setTimeout(pollGraph, 1500);
+        } else {
+          await loadGraph();
+        }
       } catch { setTimeout(pollGraph, 3000); }
     }
 
@@ -224,12 +520,10 @@
       const edges = data.edges ?? [];
       if (nodes.length === 0) return;
 
-      // Simple force-directed layout placeholder (polar layout by domain).
       const cx = canvas.width / 2, cy = canvas.height / 2;
       const domains = [...new Set(nodes.map(n => n.domain ?? ''))];
       const positions = new Map();
 
-      // Lay out domain nodes in a circle, others around them.
       const R = Math.min(cx, cy) * 0.7;
       nodes.forEach(n => {
         if (n.kind === 'domain') {
@@ -246,7 +540,6 @@
         }
       });
 
-      // Draw edges.
       ctx.strokeStyle = 'rgba(100, 100, 180, 0.2)';
       ctx.lineWidth = 0.5;
       for (const e of edges.slice(0, 2000)) {
@@ -255,7 +548,6 @@
         ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(t.x, t.y); ctx.stroke();
       }
 
-      // Draw nodes.
       const colorMap = { domain: '#6c63ff', memory: '#ff6b6b', entity: '#48cae4' };
       for (const n of nodes.slice(0, 3000)) {
         const pos = positions.get(n.id);
@@ -266,11 +558,209 @@
         ctx.fillStyle = colorMap[n.kind] ?? '#888';
         ctx.fill();
       }
+
+      // Legend
+      ctx.font = '11px Inter, system-ui, sans-serif';
+      const legend = [['domain','#6c63ff'],['memory','#ff6b6b'],['entity','#48cae4']];
+      legend.forEach(([label, color], i) => {
+        const lx = 12, ly = 16 + i * 18;
+        ctx.beginPath(); ctx.arc(lx, ly, 5, 0, 2*Math.PI); ctx.fillStyle = color; ctx.fill();
+        ctx.fillStyle = '#aaa'; ctx.fillText(label, lx + 10, ly + 4);
+      });
     }
 
-    loadStats();
-    loadMemories();
     pollGraph();
+
+    // ── Knowledge tab (memories) ─────────────────────────────────────────────
+    const PAGE_SIZE = 50;
+    let _knowledgePage = { after: null, domain: '', stage: '' };
+    let _knowledgeNextAfter = null;
+    let _knowledgeTotal = 0;
+    let _knowledgeOffset = 0;
+
+    async function loadKnowledge() {
+      const domain = document.getElementById('domain-filter').value;
+      const stage = document.getElementById('stage-filter').value;
+      let url = `/api/memories?limit=${PAGE_SIZE}`;
+      if (domain) url += `&domain=${encodeURIComponent(domain)}`;
+      if (stage) url += `&stage=${encodeURIComponent(stage)}`;
+      if (_knowledgePage.after) url += `&after=${encodeURIComponent(_knowledgePage.after)}`;
+
+      try {
+        const data = await api(url);
+        _knowledgeTotal = data.total ?? 0;
+        _knowledgeNextAfter = data.next_after ?? null;
+
+        const tbody = document.getElementById('memory-tbody');
+        tbody.innerHTML = (data.memories ?? []).map(m => `
+          <tr>
+            <td>${escHtml((m.content ?? '').slice(0, 120))}</td>
+            <td><span class="badge ${m.heat > 0.5 ? 'hot' : ''}">${m.heat}</span></td>
+            <td>${escHtml(m.store_type ?? '')}</td>
+            <td>${escHtml(m.consolidation_stage ?? '')}</td>
+            <td>${escHtml(m.domain ?? '')}</td>
+            <td>
+              ${m.is_protected ? '<span class="badge protected">protected</span>' : ''}
+              ${m.is_global ? '<span class="badge">global</span>' : ''}
+            </td>
+          </tr>`).join('');
+
+        document.getElementById('page-info').textContent =
+          `${_knowledgeOffset + 1}–${_knowledgeOffset + (data.memories?.length ?? 0)} of ${_knowledgeTotal}`;
+        document.getElementById('page-prev').disabled = _knowledgeOffset === 0;
+        document.getElementById('page-next').disabled = !data.has_more;
+      } catch (err) {
+        document.getElementById('memory-tbody').innerHTML =
+          `<tr><td colspan="6" style="color:#ff6b6b;padding:1rem">Error loading memories: ${escHtml(String(err))}</td></tr>`;
+      }
+    }
+
+    document.getElementById('domain-filter').addEventListener('change', () => {
+      _knowledgePage = { after: null, domain: '', stage: '' };
+      _knowledgeOffset = 0;
+      if (activeTab === 'knowledge') loadKnowledge();
+    });
+    document.getElementById('stage-filter').addEventListener('change', () => {
+      _knowledgePage = { after: null, domain: '', stage: '' };
+      _knowledgeOffset = 0;
+      if (activeTab === 'knowledge') loadKnowledge();
+    });
+    document.getElementById('page-next').addEventListener('click', () => {
+      _knowledgeOffset += PAGE_SIZE;
+      _knowledgePage = { after: _knowledgeNextAfter, domain: _knowledgePage.domain, stage: _knowledgePage.stage };
+      loadKnowledge();
+    });
+    document.getElementById('page-prev').addEventListener('click', () => {
+      // Keyset pagination is forward-only; reload from start with reduced offset.
+      _knowledgeOffset = Math.max(0, _knowledgeOffset - PAGE_SIZE);
+      _knowledgePage = { after: null, domain: _knowledgePage.domain, stage: _knowledgePage.stage };
+      loadKnowledge();
+    });
+
+    // ── Board tab (Sankey consolidation pipeline) ────────────────────────────
+    async function loadBoard() {
+      try {
+        const data = await api('/api/sankey');
+        document.getElementById('board-total').textContent = data.total_memories ?? '—';
+        document.getElementById('board-transitions').textContent = data.transitions?.length ?? '—';
+        document.getElementById('board-stages').textContent = Object.keys(data.stage_metrics ?? {}).length;
+
+        renderSankey(data);
+        renderStageMetrics(data.stage_metrics ?? {});
+      } catch (err) {
+        document.getElementById('sankey-canvas').innerHTML =
+          `<div style="padding:2rem;color:#ff6b6b">Error loading board: ${escHtml(String(err))}</div>`;
+      }
+    }
+
+    function renderSankey(data) {
+      const canvas = document.getElementById('sankey-canvas-el');
+      const container = document.getElementById('sankey-canvas');
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const stages = ['labile', 'early_ltp', 'late_ltp', 'consolidated', 'reconsolidating'];
+      const transitions = data.transitions ?? [];
+      const stageMetrics = data.stage_metrics ?? {};
+
+      // Simple horizontal Sankey: stages as vertical bars, flows as bezier bands.
+      const W = canvas.width, H = canvas.height;
+      const pad = 60, nodeW = 40;
+      const colW = (W - 2 * pad) / (stages.length - 1);
+
+      // Compute node heights proportional to memory count in each stage.
+      const maxCount = Math.max(1, ...stages.map(s => stageMetrics[s]?.count ?? 0));
+      const nodeHeights = Object.fromEntries(stages.map((s, i) => {
+        const count = stageMetrics[s]?.count ?? 0;
+        const h = Math.max(20, ((count / maxCount) * (H - 2 * pad)));
+        const x = pad + i * colW - nodeW / 2;
+        const y = (H - h) / 2;
+        return [s, { x, y, h, count, idx: i }];
+      }));
+
+      const stageColors = {
+        labile: '#6c63ff', early_ltp: '#48cae4', late_ltp: '#4ade80',
+        consolidated: '#fbbf24', reconsolidating: '#f87171',
+      };
+
+      // Draw flows first (behind nodes).
+      for (const t of transitions) {
+        const src = nodeHeights[t.from_stage], dst = nodeHeights[t.to_stage];
+        if (!src || !dst) continue;
+        const flowH = Math.max(4, (t.count / maxCount) * 40);
+        const sx = src.x + nodeW, sy = src.y + src.h / 2;
+        const dx = dst.x, dy = dst.y + dst.h / 2;
+        ctx.beginPath();
+        ctx.moveTo(sx, sy - flowH / 2);
+        ctx.bezierCurveTo((sx + dx) / 2, sy - flowH / 2, (sx + dx) / 2, dy - flowH / 2, dx, dy - flowH / 2);
+        ctx.lineTo(dx, dy + flowH / 2);
+        ctx.bezierCurveTo((sx + dx) / 2, dy + flowH / 2, (sx + dx) / 2, sy + flowH / 2, sx, sy + flowH / 2);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(108, 99, 255, 0.15)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(108, 99, 255, 0.4)';
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+
+        // Label the flow count.
+        ctx.font = '10px Inter, system-ui, sans-serif';
+        ctx.fillStyle = '#aaa';
+        ctx.fillText(String(t.count), (sx + dx) / 2 - 5, (sy + dy) / 2 - 2);
+      }
+
+      // Draw stage nodes.
+      for (const [stage, n] of Object.entries(nodeHeights)) {
+        const color = stageColors[stage] ?? '#888';
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.roundRect(n.x, n.y, nodeW, n.h, 4);
+        ctx.fill();
+
+        // Label.
+        ctx.save();
+        ctx.font = '10px Inter, system-ui, sans-serif';
+        ctx.fillStyle = '#e0e0f0';
+        ctx.translate(n.x + nodeW / 2, n.y + n.h + 14);
+        ctx.textAlign = 'center';
+        ctx.fillText(stage.replace('_', '_\n'), 0, 0);
+        ctx.restore();
+
+        // Count label inside node.
+        if (n.h > 20) {
+          ctx.font = 'bold 11px Inter, system-ui, sans-serif';
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.fillText(String(n.count), n.x + nodeW / 2, n.y + n.h / 2 + 4);
+        }
+      }
+    }
+
+    function renderStageMetrics(metrics) {
+      const container = document.getElementById('board-metrics');
+      const stages = ['labile', 'early_ltp', 'late_ltp', 'consolidated', 'reconsolidating'];
+      container.innerHTML = stages.map(s => {
+        const m = metrics[s] ?? {};
+        return `<div class="stage-card">
+          <h3>${s}</h3>
+          <div class="stage-stat">Count: <span class="val">${m.count ?? 0}</span></div>
+          <div class="stage-stat">Avg heat: <span class="val">${(m.avg_heat ?? 0).toFixed(3)}</span></div>
+          <div class="stage-stat">Avg hours: <span class="val">${(m.avg_hours ?? 0).toFixed(1)}</span></div>
+          <div class="stage-stat">Avg stability: <span class="val">${(m.avg_stability ?? 0).toFixed(3)}</span></div>
+        </div>`;
+      }).join('');
+    }
+
+    // ── Utility ──────────────────────────────────────────────────────────────
+    function escHtml(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
   </script>
 </body>
 </html>
