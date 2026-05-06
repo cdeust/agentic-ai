@@ -24,7 +24,6 @@
   "dependencies": {
     "@agentic/prd-core": "workspace:*",
     "@agentic/prd-orchestration": "workspace:*",
-    "@agentic/prd-strategy": "workspace:*",
     "@agentic/prd-validation": "workspace:*",
     "ajv": "^8.17.1",
     "mathjs": "^13.0.0",
