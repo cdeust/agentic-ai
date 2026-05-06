@@ -6,7 +6,7 @@
       {
         "memory_id": 1,
         "content": "We chose pgvector over Pinecone because of lower operational complexity, native PostgreSQL integration, and cost. pgvector supports HNSW indexes with m=16, ef_construction=64.",
-        "score": 0.0213,
+        "score": 0.0106,
         "heat": 1,
         "domain": "cortex",
         "tags": [
@@ -22,7 +22,7 @@
       {
         "memory_id": 4,
         "content": "HNSW index parameters: m=16 ef_construction=64 are the pgvector defaults. These match our production config.",
-        "score": 0.0209,
+        "score": 0.0105,
         "heat": 0.7,
         "domain": "cortex",
         "tags": [

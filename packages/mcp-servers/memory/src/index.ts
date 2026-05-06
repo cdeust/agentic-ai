@@ -111,9 +111,17 @@ const recallStore: RecallMemoryStore = {
   },
 
   // source: cortex@ed33435 mcp_server/infrastructure/sqlite_store_search.py::fts_search
+  // SqliteMemoryStore.searchFts returns Array<[memoryId, score]>; the legacy
+  // ftsSearch fallback returns Array<{id, rank}>. Detect both shapes so the
+  // recall pipeline never receives `memory_id: undefined`.
   searchByFts: async (query, limit) => {
-    const raw = (storeExt["searchFts"]?.(query, limit) ??
-      storeExt["ftsSearch"]?.(query, limit) ?? []) as Array<Record<string, unknown>>;
+    const tupleSearch = (memoryStore as unknown as {
+      searchFts?: (q: string, l: number) => Array<[number, number]>;
+    }).searchFts;
+    if (tupleSearch) {
+      return tupleSearch(query, limit).map(([memory_id, score]) => ({ memory_id, score }));
+    }
+    const raw = (storeExt["ftsSearch"]?.(query, limit) ?? []) as Array<Record<string, unknown>>;
     return raw.map((r) => ({
       memory_id: r["id"] as number,
       score:     (r["rank"] as number ?? r["score"] as number) ?? 0,

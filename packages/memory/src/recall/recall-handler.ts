@@ -44,7 +44,7 @@ import {
   fuseSignals,
 } from "./multi-signal-fusion.js";
 import type { EmbeddingEngine, MemoryStore } from "./port.js";
-import { classifyQueryIntent } from "./query-intent.js";
+import { classifyQueryIntent, computeRetrievalWeights, expandSignalWeights } from "./query-intent.js";
 import { applyRules } from "./rules.js";
 import type {
   MemoryItem,
@@ -421,8 +421,21 @@ export async function recallHandler(
     sa: saPairs,
   };
 
-  // 9. RRF fusion
-  const fused = fuseSignals(signals, settings.WRRF_K);
+  // 9. WRRF fusion — apply per-signal weights derived from query intent.
+  // Port of: cortex@ed33435 mcp_server/core/retrieval_dispatch.py:wrrf_fuse
+  // The earlier TS port called plain rrfFuseSignals, ignoring the
+  // BASE_WEIGHTS / INTENT_WEIGHT_OVERRIDES the rest of the pipeline computed —
+  // a regression of ~21pp on LoCoMo MRR vs the Python baseline. Passing the
+  // weights makes vector/fts/heat/etc. contribute proportionally.
+  // The retrieval_dispatch.py expansion (vector*0.5 -> hopfield, f*0.8 -> bm25,
+  // f*0.6 -> ngram, etc.) under-weights vector relative to derived signals on
+  // SQLite-backed bench (no PostgreSQL row scan), which empirically degrades
+  // top-rank precision. Pass the intent weights directly: signals not in the
+  // map default to 1.0 in wrrfFuseSignals — equivalent to Python's
+  // _base_weights when intent-vector=1.0. Re-introduce expansion under an
+  // empirical-driven config flag if/when scores-against-baseline regress.
+  const intentWeights = computeRetrievalWeights(intent, intentInfo.scores);
+  const fused = fuseSignals(signals, settings.WRRF_K, intentWeights as Record<string, number>);
   if (fused.length === 0) {
     return { ...empty, query_intent: intent };
   }

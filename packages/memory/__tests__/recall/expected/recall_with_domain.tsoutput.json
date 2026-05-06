@@ -6,7 +6,7 @@
       {
         "memory_id": 3,
         "content": "consolidation decay cycle: Ebbinghaus forgetting curve applied with 30-day half-life. Stage multipliers from Kandel 2001.",
-        "score": 0.0416,
+        "score": 0.0309,
         "heat": 0.8,
         "domain": "cortex",
         "tags": [
