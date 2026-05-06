@@ -510,7 +510,12 @@
       } catch { /* offline */ }
     }
 
+    // Cancellation token for the in-flight render so a new poll/render
+    // doesn't double-paint or burn CPU when the user is on another tab.
+    let _renderToken = 0;
+
     function renderGraph(data) {
+      const myToken = ++_renderToken;
       const canvas = document.getElementById('graph-canvas-el');
       const container = document.getElementById('graph-canvas');
       canvas.width = container.clientWidth;
@@ -528,48 +533,113 @@
       const positions = new Map();
 
       const R = Math.min(cx, cy) * 0.7;
-      nodes.forEach(n => {
+      for (const n of nodes) {
         if (n.kind === 'domain') {
           const idx = domains.indexOf(n.domain ?? '');
           const angle = (2 * Math.PI * idx) / Math.max(domains.length, 1);
           positions.set(n.id, { x: cx + R * Math.cos(angle), y: cy + R * Math.sin(angle) });
         }
-      });
-      nodes.forEach(n => {
+      }
+      for (const n of nodes) {
         if (n.kind !== 'domain' && !positions.has(n.id)) {
           const domPos = positions.get(n.domain_id) ?? { x: cx, y: cy };
           const scatter = (Math.random() - 0.5) * 120;
           positions.set(n.id, { x: domPos.x + scatter, y: domPos.y + scatter });
         }
-      });
+      }
+
+      // Cap the render budget so we never block the main thread for >~2s.
+      // source: 60Hz frame budget = 16ms; we target ≤8ms per frame so the
+      // browser stays interactive. With BATCH_EDGES=400 and ~5µs per
+      // moveTo/lineTo on commodity Canvas2D, each edge batch fits in budget.
+      const BATCH_EDGES = 400;
+      const BATCH_NODES = 250;
+      const limitedEdges = edges.length > 2000 ? edges.slice(0, 2000) : edges;
+      const limitedNodes = nodes.length > 3000 ? nodes.slice(0, 3000) : nodes;
+
+      // Group nodes by colour so we can emit one fillStyle change per group
+      // and a single beginPath/arc/fill loop per colour. This is the largest
+      // speed-up: fewer state changes on the canvas context.
+      const colorMap = { domain: '#6c63ff', memory: '#ff6b6b', entity: '#48cae4' };
+      const nodesByColor = new Map();
+      for (const n of limitedNodes) {
+        const color = colorMap[n.kind] ?? '#888';
+        let bucket = nodesByColor.get(color);
+        if (!bucket) { bucket = []; nodesByColor.set(color, bucket); }
+        bucket.push(n);
+      }
 
       ctx.strokeStyle = 'rgba(100, 100, 180, 0.2)';
       ctx.lineWidth = 0.5;
-      for (const e of edges.slice(0, 2000)) {
-        const s = positions.get(e.source), t = positions.get(e.target);
-        if (!s || !t) continue;
-        ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(t.x, t.y); ctx.stroke();
+
+      let edgeIdx = 0;
+      let colorIter = nodesByColor.entries();
+      let currentBucket = null;
+      let currentColor = null;
+      let bucketIdx = 0;
+
+      function drawNextBatch() {
+        if (myToken !== _renderToken) return; // superseded — abandon this render
+
+        // Edges first — one beginPath per BATCH_EDGES so the GPU receives
+        // one stroke call for ~400 segments instead of 400 stroke calls.
+        if (edgeIdx < limitedEdges.length) {
+          const eEnd = Math.min(edgeIdx + BATCH_EDGES, limitedEdges.length);
+          ctx.beginPath();
+          for (let i = edgeIdx; i < eEnd; i++) {
+            const e = limitedEdges[i];
+            const s = positions.get(e.source), t = positions.get(e.target);
+            if (!s || !t) continue;
+            ctx.moveTo(s.x, s.y);
+            ctx.lineTo(t.x, t.y);
+          }
+          ctx.stroke();
+          edgeIdx = eEnd;
+          requestAnimationFrame(drawNextBatch);
+          return;
+        }
+
+        // Then nodes, grouped by colour — one fillStyle change per colour.
+        if (!currentBucket) {
+          const next = colorIter.next();
+          if (next.done) {
+            drawLegend();
+            return;
+          }
+          [currentColor, currentBucket] = next.value;
+          ctx.fillStyle = currentColor;
+          bucketIdx = 0;
+        }
+
+        const nEnd = Math.min(bucketIdx + BATCH_NODES, currentBucket.length);
+        for (let i = bucketIdx; i < nEnd; i++) {
+          const n = currentBucket[i];
+          const pos = positions.get(n.id);
+          if (!pos) continue;
+          const r = n.kind === 'domain' ? 8 : 3;
+          ctx.beginPath();
+          ctx.arc(pos.x, pos.y, r, 0, 2 * Math.PI);
+          ctx.fill();
+        }
+        bucketIdx = nEnd;
+
+        if (bucketIdx >= currentBucket.length) {
+          currentBucket = null; // advance to the next colour bucket on the next frame
+        }
+        requestAnimationFrame(drawNextBatch);
       }
 
-      const colorMap = { domain: '#6c63ff', memory: '#ff6b6b', entity: '#48cae4' };
-      for (const n of nodes.slice(0, 3000)) {
-        const pos = positions.get(n.id);
-        if (!pos) continue;
-        const r = n.kind === 'domain' ? 8 : 3;
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, r, 0, 2 * Math.PI);
-        ctx.fillStyle = colorMap[n.kind] ?? '#888';
-        ctx.fill();
+      function drawLegend() {
+        ctx.font = '11px Inter, system-ui, sans-serif';
+        const legend = [['domain','#6c63ff'],['memory','#ff6b6b'],['entity','#48cae4']];
+        legend.forEach(([label, color], i) => {
+          const lx = 12, ly = 16 + i * 18;
+          ctx.beginPath(); ctx.arc(lx, ly, 5, 0, 2*Math.PI); ctx.fillStyle = color; ctx.fill();
+          ctx.fillStyle = '#aaa'; ctx.fillText(label, lx + 10, ly + 4);
+        });
       }
 
-      // Legend
-      ctx.font = '11px Inter, system-ui, sans-serif';
-      const legend = [['domain','#6c63ff'],['memory','#ff6b6b'],['entity','#48cae4']];
-      legend.forEach(([label, color], i) => {
-        const lx = 12, ly = 16 + i * 18;
-        ctx.beginPath(); ctx.arc(lx, ly, 5, 0, 2*Math.PI); ctx.fillStyle = color; ctx.fill();
-        ctx.fillStyle = '#aaa'; ctx.fillText(label, lx + 10, ly + 4);
-      });
+      requestAnimationFrame(drawNextBatch);
     }
 
     pollGraph();
