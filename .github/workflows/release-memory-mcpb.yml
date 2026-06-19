@@ -70,9 +70,15 @@ jobs:
       matrix:
         include:
           - { runner: macos-14, os: darwin, arch: arm64 }
-          - { runner: macos-15-intel, os: darwin, arch: x64 } # Intel macOS (macos-13 retired 2025-12-04); macos-26-intel is its successor (~2027)
           - { runner: ubuntu-24.04, os: linux, arch: x64 }
           - { runner: ubuntu-24.04-arm, os: linux, arch: arm64 } # GA standard runner — `ubuntu-latest-arm` does NOT exist
+          # darwin-x64 (Intel macOS) intentionally NOT shipped: onnxruntime-node@1.25.1
+          # — pinned for FlashRank reranker numerical parity with the Python Cortex —
+          # provides no Intel-macOS binary (ONNX Runtime dropped x64 macOS), so the
+          # offline reranker/fusion cannot run there. Rather than ship a .mcpb whose
+          # offline fusion silently degrades, Intel macOS is unsupported for this
+          # extension. source: onnxruntime-node 1.25.1 bin/ ships darwin/arm64 only
+          # (no darwin/x64); verified 2026-06-19 against the packed bundle.
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 40 # in-bundle `npm install` fetches/builds ~400-500 MB of native deps
     steps:
