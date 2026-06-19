@@ -35,7 +35,6 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 // ── Paths ────────────────────────────────────────────────────────────
 
@@ -315,12 +314,11 @@ async function main(): Promise<void> {
 
 // ── CLI entry ────────────────────────────────────────────────────────
 
-const isCliEntry = (() => {
-  try {
-    return process.argv[1] !== undefined &&
-      fileURLToPath(import.meta.url) === process.argv[1];
-  } catch { return false; }
-})();
+// Basename check — bundle-safe. esbuild rewrites import.meta.url to the output
+// bundle URL, so the `fileURLToPath(import.meta.url) === process.argv[1]` idiom
+// would spuriously fire this detached worker if this module were ever bundled
+// into another entry. Matches the idiom the sibling hooks use (session-start.ts).
+const isCliEntry = process.argv[1]?.endsWith("grooming-background.js") === true;
 
 if (isCliEntry) {
   void main().catch((exc) => {

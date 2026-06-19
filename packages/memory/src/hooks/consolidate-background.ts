@@ -361,18 +361,18 @@ async function buildWikiMaintenanceDeps(
 
 // ── CLI entry — when invoked directly via ``node consolidate-background.js`` ──
 
-// import.meta.url ends with the script path when this file is the
-// program entry; comparing against process.argv[1] is the standard
-// Node ESM idiom for "are we the main module?".
-import { fileURLToPath } from "node:url";
-const isCliEntry = (() => {
-  try {
-    return process.argv[1] !== undefined &&
-      fileURLToPath(import.meta.url) === process.argv[1];
-  } catch {
-    return false;
-  }
-})();
+// Detect the standalone-CLI case by the ENTRY-SCRIPT BASENAME, not by
+// `fileURLToPath(import.meta.url) === process.argv[1]`. esbuild rewrites
+// import.meta.url to the OUTPUT bundle URL when this module is bundled into
+// another entry (the MCP server's dist/index.js), so the URL idiom spuriously
+// matched there and ran this detached worker — including its process.exit(0) —
+// inside the server, killing it right after boot (and corrupting stdout via the
+// memify stage's console log). It only escaped macOS CI because the /var and
+// /tmp symlinks made the two paths differ. The basename check is bundle-safe and
+// is the same idiom the sibling hooks already use (e.g. session-start.ts).
+// source: esbuild keeps `import.meta.url` pointing at the output bundle file
+//   under bundling — verified 2026-06-19 against the packed .mcpb on linux/arm64.
+const isCliEntry = process.argv[1]?.endsWith("consolidate-background.js") === true;
 
 if (isCliEntry) {
   void runConsolidateCycle().then(() => process.exit(0));

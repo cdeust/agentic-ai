@@ -25,7 +25,6 @@
 import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 import type { MemoryStoreExt } from "../remember/storage/memory-store.js";
 
 const LOG_PREFIX = "[ingest-codebase-background]";
@@ -112,14 +111,11 @@ export async function runIngestCycle(projectRoot: string): Promise<number> {
 
 // ── CLI entry ────────────────────────────────────────────────────────
 
-const isCliEntry = (() => {
-  try {
-    return process.argv[1] !== undefined &&
-      fileURLToPath(import.meta.url) === process.argv[1];
-  } catch {
-    return false;
-  }
-})();
+// Basename check — bundle-safe. esbuild rewrites import.meta.url to the output
+// bundle URL, so the `fileURLToPath(import.meta.url) === process.argv[1]` idiom
+// would spuriously fire this detached worker if this module were ever bundled
+// into another entry. Matches the idiom the sibling hooks use (session-start.ts).
+const isCliEntry = process.argv[1]?.endsWith("ingest-codebase-background.js") === true;
 
 if (isCliEntry) {
   const projectRoot = process.argv[2] ?? "";
