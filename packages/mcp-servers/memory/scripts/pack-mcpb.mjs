@@ -45,9 +45,9 @@
  */
 import { execFileSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { homedir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 
 const PKG_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const argv = process.argv.slice(2);
@@ -59,7 +59,11 @@ const opt = (name, dflt) => {
 
 const OUT = resolve(PKG_ROOT, opt("--out", "dist-mcpb"));
 const BUNDLE = join(OUT, "bundle");
-const BUNDLE_MODEL = flag("--bundle-model");
+// Models are bundled BY DEFAULT so the .mcpb is fully offline (transformer +
+// reranker present in the binary, like Cortex). Opt out with --no-bundle-model
+// for a slim bundle that downloads models at first use. `--bundle-model` is
+// still accepted as an explicit no-op for back-compat.
+const BUNDLE_MODEL = !flag("--no-bundle-model");
 const KEEP_TREE_SITTER = flag("--keep-tree-sitter");
 const DO_PACK = !flag("--no-pack");
 
@@ -121,14 +125,39 @@ function bundleEntry() {
     "--format=esm",
     "--target=node20",
     `--outfile=${join(BUNDLE, "dist/index.js")}`,
-    "--banner:js=#!/usr/bin/env node",
+    // NO shebang banner. esbuild already PRESERVES the entry file's shebang
+    // (src/index.ts:1), so a `--banner:js=#!/usr/bin/env node` here produced a
+    // SECOND shebang on line 2. Node strips only the line-1 shebang and parses
+    // line 2 as JS → "SyntaxError: Invalid or unexpected token", and the server
+    // never boots. This shipped in v0.3.0 (verified non-functional 2026-06-19).
+    // The shebang is unused anyway: the manifest runs `node .../dist/index.js`.
     "--log-level=warning",
     ...external,
   ];
   const bin = esbuildBin();
   if (bin) execFileSync(bin, args, { stdio: "inherit" });
   else execFileSync("npx", ["--yes", "esbuild", ...args], { stdio: "inherit" });
+  postProcessBundle(join(BUNDLE, "dist/index.js"));
   log("esbuild: done.");
+}
+
+// Two deterministic fixes applied to the esbuild ESM output:
+//   1. Strip any leading shebang. esbuild preserves the entry's shebang, but the
+//      .mcpb runs `node dist/index.js`, so it is unused — and a stray `#!` on any
+//      line but line 1 is a SyntaxError (this broke v0.3.0).
+//   2. Prepend a CommonJS `require` shim. Bundled CJS deps (e.g. node-fetch@2)
+//      call require() for Node builtins; in an ESM bundle esbuild's __require
+//      helper throws 'Dynamic require of "stream" is not supported' UNLESS a real
+//      `require` exists (it checks `typeof require !== "undefined"` and delegates).
+//      createRequire(import.meta.url) provides it. source: esbuild docs — ESM
+//      output + CJS deps require this shim; evaw/esbuild issues #1921, #1944.
+function postProcessBundle(outPath) {
+  const original = readFileSync(outPath, "utf8");
+  const withoutShebang = original.replace(/^(#![^\n]*\n)+/, "");
+  const requireShim =
+    'import { createRequire as __mcpbCreateRequire } from "node:module";\n' +
+    "const require = __mcpbCreateRequire(import.meta.url);\n";
+  writeFileSync(outPath, requireShim + withoutShebang);
 }
 
 function writeBundlePackageJson(pkg) {
@@ -156,17 +185,29 @@ function installNatives() {
   log("npm install: done.");
 }
 
-// Models needed for offline operation:
-//   - Xenova/all-MiniLM-L6-v2          (384-d embeddings; remember/recall)   ~87 MB
-//   - Xenova/ms-marco-MiniLM-L-12-v2   (FlashRank reranker tokenizer)        ~128 MB
-// source: transformers-embedding-engine.ts (DEFAULT_MODEL_ID) + recall/reranker.ts
-const OFFLINE_MODELS = ["all-MiniLM-L6-v2", "ms-marco-MiniLM-L-12-v2"];
+// Models shipped so the .mcpb is fully OFFLINE (no first-use download). Three
+// artifacts, two distinct load paths:
+//   1. Xenova/all-MiniLM-L6-v2        384-d fp32 embeddings (remember/recall)  ~90 MB
+//        @xenova resolves it from its PACKAGE-RELATIVE .cache (the engine does NOT
+//        override cacheDir; transformers.js@2.17.2 defaults to <pkg>/.cache —
+//        verified: the locally-downloaded copy lives in that .cache). Ship whole.
+//   2. Xenova/ms-marco-MiniLM-L-12-v2  reranker TOKENIZER ONLY (tokenizer.json)
+//        @xenova's ms-marco ONNX is NOT used (wrong INT8 logits — see reranker.ts),
+//        so its onnx/ subdir is skipped to save ~133 MB.
+//   3. FlashRank flashrank-MiniLM-L-12-v2_Q.onnx  cross-encoder MODEL           ~135 MB
+//        loaded by onnxruntime-node DIRECTLY from FLASHRANK_CACHE_DIR (reranker.ts).
+//        Shipped under bundle/models/flashrank/<name>/ and pointed to by the
+//        manifest env FLASHRANK_CACHE_DIR=${__dirname}/models/flashrank.
+// source: transformers-embedding-engine.ts (DEFAULT_MODEL_ID, quantized:false)
+// source: recall/reranker.ts (FLASHRANK_CACHE_DIR, FLASHRANK_ONNX_FILE, ort direct)
+const XENOVA_MODELS = ["all-MiniLM-L6-v2", "ms-marco-MiniLM-L-12-v2"];
+const XENOVA_TOKENIZER_ONLY = new Set(["ms-marco-MiniLM-L-12-v2"]); // skip its onnx/
+const FLASHRANK_MODEL_NAME = "ms-marco-MiniLM-L-12-v2";
+const FLASHRANK_ONNX_FILE = "flashrank-MiniLM-L-12-v2_Q.onnx";
 
-function findModelSource(modelName) {
-  // @xenova/transformers@2.17.2 resolves models from env.cacheDir which DEFAULTS
-  // to <pkg>/.cache (it does NOT read TRANSFORMERS_CACHE/HF_HOME — verified in
-  // @xenova/transformers/src/env.js). So we place models in the bundled package's
-  // .cache. Hunt the model in the known local caches.
+function findXenovaModelSource(modelName) {
+  // @xenova/transformers@2.17.2 resolves models from its package-relative .cache.
+  // Hunt the model in the known local caches (pnpm store + HF hub).
   const roots = [
     join(PKG_ROOT, "../../../node_modules/.pnpm/@xenova+transformers@2.17.2/node_modules/@xenova/transformers/.cache/Xenova"),
     join(homedir(), ".cache/huggingface/hub/Xenova"),
@@ -178,28 +219,57 @@ function findModelSource(modelName) {
   return null;
 }
 
+function findFlashrankOnnxSource() {
+  // reranker.ts reads FLASHRANK_CACHE_DIR ?? os.tmpdir(); the file is downloaded
+  // to <cacheDir>/<model>/<onnx>. Locally it lives under ~/.cache/flashrank (the
+  // user's configured FLASHRANK_CACHE_DIR). Hunt every plausible root.
+  const roots = [process.env["FLASHRANK_CACHE_DIR"], join(homedir(), ".cache/flashrank"), tmpdir()].filter(Boolean);
+  for (const r of roots) {
+    const p = join(r, FLASHRANK_MODEL_NAME, FLASHRANK_ONNX_FILE);
+    if (existsSync(p)) return p;
+  }
+  return null;
+}
+
 function maybeBundleModel(manifest) {
   if (!BUNDLE_MODEL) {
-    log("model: NOT bundled — xenova downloads from HuggingFace at first use (needs network once). Use --bundle-model for offline.");
+    log("model: NOT bundled (--no-bundle-model) — xenova + FlashRank download at first use (needs network once).");
     return manifest;
   }
-  // Destination = the INSTALLED xenova package's default cacheDir, so the runtime
-  // finds the models with zero config (allowLocalModels=true checks local first).
+  // (1)+(2) xenova embedding model + reranker tokenizer → bundled package .cache.
   const xenovaCache = join(BUNDLE, "node_modules/@xenova/transformers/.cache/Xenova");
   mkdirSync(xenovaCache, { recursive: true });
-  for (const m of OFFLINE_MODELS) {
-    const src = findModelSource(m);
+  for (const m of XENOVA_MODELS) {
+    const src = findXenovaModelSource(m);
     if (!src) {
-      log(`WARNING: model ${m} not found in any local cache — run a remember+recall once to populate it, then re-pack. Offline use of this model will fall back to a network download.`);
+      log(`WARNING: xenova model ${m} not found in any local cache — offline use falls back to a network download. Populate it (run a remember + a reranked recall once) then re-pack.`);
       continue;
     }
-    log(`model: copying ${m} -> node_modules/@xenova/transformers/.cache/Xenova/${m}`);
-    cpSync(src, join(xenovaCache, m), { recursive: true });
+    const dst = join(xenovaCache, m);
+    if (XENOVA_TOKENIZER_ONLY.has(m)) {
+      log(`model: copying ${m} (tokenizer only, skipping onnx/) -> node_modules/@xenova/transformers/.cache/Xenova/${m}`);
+      cpSync(src, dst, { recursive: true, filter: (s) => basename(s) !== "onnx" });
+    } else {
+      log(`model: copying ${m} -> node_modules/@xenova/transformers/.cache/Xenova/${m}`);
+      cpSync(src, dst, { recursive: true });
+    }
   }
-  // NOTE: offline operation is NOT yet verified end-to-end (AC1 only exercised the
-  // handshake, not remember/recall). The reranker also loads its ONNX model via
-  // onnxruntime-node directly (see recall/reranker.ts) — that path may need its own
-  // provisioning. Verify with an offline remember+recall after packing.
+  // (3) FlashRank cross-encoder ONNX → bundle/models/flashrank/<name>/, wired via env.
+  const flashSrc = findFlashrankOnnxSource();
+  if (!flashSrc) {
+    log(`WARNING: FlashRank ONNX ${FLASHRANK_ONNX_FILE} not found (looked in FLASHRANK_CACHE_DIR, ~/.cache/flashrank, tmpdir). The cross-encoder reranker will be DISABLED offline (graceful fallback). Populate it (run a reranked recall once) then re-pack.`);
+  } else {
+    const flashDir = join(BUNDLE, "models/flashrank", FLASHRANK_MODEL_NAME);
+    mkdirSync(flashDir, { recursive: true });
+    cpSync(flashSrc, join(flashDir, FLASHRANK_ONNX_FILE));
+    manifest.server = manifest.server ?? {};
+    manifest.server.mcp_config = manifest.server.mcp_config ?? {};
+    manifest.server.mcp_config.env = {
+      ...(manifest.server.mcp_config.env ?? {}),
+      FLASHRANK_CACHE_DIR: "${__dirname}/models/flashrank",
+    };
+    log(`model: copied FlashRank ONNX -> models/flashrank/${FLASHRANK_MODEL_NAME}/${FLASHRANK_ONNX_FILE}; manifest env FLASHRANK_CACHE_DIR set.`);
+  }
   return manifest;
 }
 

@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "agentic-memory",
   "display_name": "Agentic Memory (Cortex)",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Cortex thermodynamic memory for Claude Desktop — local-first, zero-config SQLite. Remember/recall with hybrid WRRF retrieval, FlashRank reranking, knowledge-graph entities, methodology profiling, and a wiki. 48 tools, no external service required.",
   "long_description": "Native Node.js MCP server exposing the full @agentic/memory engine over stdio. Defaults to an embedded SQLite store (sqlite-vec + FTS5) at ~/.cortex/cortex.db — no PostgreSQL, no API key needed; an ANTHROPIC_API_KEY (or Claude Desktop MCP sampling) only enables LLM-assisted entity extraction. Set DATABASE_URL to use a PostgreSQL/pgvector backend instead. Set CORTEX_DB_PATH to relocate the SQLite database.",
   "author": {

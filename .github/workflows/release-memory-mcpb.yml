@@ -101,11 +101,18 @@ jobs:
         # codebase plugin and other unrelated packages (unlike a blunt `pnpm build`).
         run: pnpm --filter "@agentic/core..." --filter "@agentic/memory..." --filter "@agentic/memory-dashboard..." build
 
+      - name: Provision offline models (embedding + reranker)
+        # Download the 3 models pack-mcpb bundles into the local caches it reads, so
+        # the produced .mcpb is fully OFFLINE. A clean runner has no model cache, so
+        # without this pack-mcpb would warn and ship a bundle that downloads from
+        # HuggingFace at first use. source: scripts/fetch-models.mjs (URLs verified).
+        run: node packages/mcp-servers/memory/scripts/fetch-models.mjs
+
       - name: Pack .mcpb (esbuild -> npm install natives -> mcpb pack)
         # The script self-stamps the bundle with this runner's os/arch: it sets
         # compatibility.platforms=[process.platform] and names the file
-        # agentic-memory-<version>-<os>-<arch>.mcpb. No --bundle-model (the embedding
-        # model is fetched from HuggingFace at first use).
+        # agentic-memory-<version>-<os>-<arch>.mcpb. Models are bundled BY DEFAULT
+        # (the step above provisioned them) → the bundle is offline-self-contained.
         run: node packages/mcp-servers/memory/scripts/pack-mcpb.mjs --out dist-mcpb
 
       - name: Locate artifact + checksum
@@ -128,6 +135,20 @@ jobs:
             echo "name=$base"
             echo "sha=$f.sha256"
           } >> "$GITHUB_OUTPUT"
+
+      - name: Runtime smoke-test the packed .mcpb (offline)
+        # Boot the bundle and exercise it OFFLINE before publishing. CI previously
+        # proved build+pack only — never that the bundle RUNS — and shipped v0.3.0
+        # broken (double shebang, `pg` named import, node-fetch dynamic require) with
+        # no bundled models. This gate fails the release if the bundle does not boot,
+        # is missing tools, or the embedding/reranker models are not offline.
+        # source: scripts/smoke-mcpb.mjs
+        shell: bash
+        run: |
+          set -euo pipefail
+          work=$(mktemp -d)
+          unzip -q "${{ steps.artifact.outputs.path }}" -d "$work"
+          node packages/mcp-servers/memory/scripts/smoke-mcpb.mjs "$work"
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4

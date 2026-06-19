@@ -38,7 +38,12 @@
  * source: infrastructure/pg_store.py
  */
 
-import { Pool, type PoolClient } from "pg";
+// `pg` is CommonJS; a named VALUE import (`import { Pool }`) fails under Node's
+// ESM loader in the bundled .mcpb ("Named export 'Pool' not found …"). Use the
+// default import + destructure — the CJS-interop-safe form (mirrors graph-store.ts).
+// The type is aliased (PgPool) so it never collides with the destructured value.
+import pgDefault, { type Pool as PgPool, type PoolClient } from "pg";
+const { Pool } = pgDefault;
 import type { MemoryInsertData, MemoryItem } from "../types.js";
 import type {
   EntityRecord,
@@ -121,7 +126,7 @@ function clampHeat(h: number): number {
  * adapter does not strengthen the precondition (ADR-0003).
  */
 export class PgMemoryStore implements MemoryStoreExt {
-  private readonly _pool: Pool;
+  private readonly _pool: PgPool;
 
   constructor(connectionString: string) {
     this._pool = new Pool({ connectionString, max: 5 });

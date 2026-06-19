@@ -39,7 +39,10 @@ vi.mock("pg", () => {
     static _mockConnect = mockConnect;
   }
 
-  return { Pool: MockPool };
+  // pg-store.ts uses the CJS-interop default import (`import pgDefault from "pg";
+  // const { Pool } = pgDefault`), so the mock must expose `default.Pool`. The named
+  // `Pool` is kept for this test's own `pg.Pool` access below.
+  return { default: { Pool: MockPool }, Pool: MockPool };
 });
 
 import { PgMemoryStore } from "../../src/remember/storage/pg-store.js";
