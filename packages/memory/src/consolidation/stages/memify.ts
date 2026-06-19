@@ -1,3 +1,8 @@
+/* eslint-disable @typescript-eslint/no-magic-numbers -- inline algorithm
+   constants (default importance/entity-heat, importance boost, heat midpoint
+   normalizer, weight-rounding scale) are ported verbatim from the Python source
+   and are documented in context. source: Port of
+   mcp_server/handlers/consolidation/memify.py (see header). */
 /**
  * Memify cycle: self-improvement via pruning, strengthening, and reweighting.
  *
@@ -302,7 +307,9 @@ function logIfPassedThrough(
 ): void {
   const reason = stats.reason_for_zero ?? stats.reason_for_inaction;
   if (reason !== "passed_through") return;
-  console.info(`stage=${stageName} reason=passed_through scanned=${scanned} duration_ms=0`);
+  // stderr only — stdout is the MCP JSON-RPC channel; a log line there corrupts
+  // the framing. source: packages/mcp-servers/memory/src/index.ts header.
+  console.error(`stage=${stageName} reason=passed_through scanned=${scanned} duration_ms=0`);
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────

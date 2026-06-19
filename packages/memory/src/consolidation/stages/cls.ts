@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-magic-numbers -- inline algorithm
+   constants are ported verbatim from the Python source and documented in
+   context. source: Port of mcp_server/handlers/consolidation/cls.py (see header). */
 /**
  * CLS cycle: episodic -> semantic pattern extraction.
  *
@@ -114,7 +117,9 @@ function logIfPassedThrough(
 ): void {
   const reason = stats.reason_for_zero ?? stats.reason_for_inaction;
   if (reason !== "passed_through") return;
-  console.info(
+  // stderr only — stdout is the MCP JSON-RPC channel; a log line there corrupts
+  // the framing. source: packages/mcp-servers/memory/src/index.ts header.
+  console.error(
     `stage=${stageName} reason=passed_through scanned=${scanned} duration_ms=${durationMs}`,
   );
 }

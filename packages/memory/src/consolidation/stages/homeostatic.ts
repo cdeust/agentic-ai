@@ -457,7 +457,8 @@ function logDiagnostics(outcome: Partial<HomeostaticStageResult>): void {
     );
   }
   if (outcome.scaling_kind === "fold") {
-    console.info(
+    // stderr only — stdout is the MCP JSON-RPC channel (see index.ts header).
+    console.error(
       `Homeostatic fold triggered: ` +
         `factor_pre_fold=${(outcome.factor_pre_fold ?? 0.0).toFixed(4)} ` +
         `rows_folded=${outcome.rows_folded ?? 0}`,

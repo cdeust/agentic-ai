@@ -109,11 +109,11 @@ export function writeProcessPages(
     }
   }
   if (skippedEmpty > 0) {
-    // Logger pattern in this package is a structured console.info so
-    // operators running the MCP server can grep for the marker.
+    // Structured operator-facing audit line — to STDERR, never stdout: stdout is
+    // the MCP JSON-RPC channel and a stray line there corrupts the framing.
     // source: cortex@83a6834 logger.info("skipped %d empty process pages")
-    // eslint-disable-next-line no-console -- operator-facing audit line, intentional
-    console.info(
+    // source: packages/mcp-servers/memory/src/index.ts header (stderr-only rule)
+    console.error(
       `[ingest-codebase-pages] skipped ${skippedEmpty} empty process pages (symbol_count=0)`,
     );
   }
