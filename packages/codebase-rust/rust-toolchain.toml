@@ -1,8 +1,0 @@
-# source: docs/PHASE_3_PLAN.md §7.2 — pin to 1.94.0 for reproducible builds.
-# Decision 7.2 (closed 2026-04-28): exact pin via rust-toolchain.toml per
-# coding-standards.md §8 source-discipline. Stable drift can silently break CI
-# on clippy lint changes.
-# source: upstream ai-automatised-pipeline README badge (verified 2026-04-27).
-[toolchain]
-channel = "1.94.0"
-components = ["rustfmt", "clippy"]

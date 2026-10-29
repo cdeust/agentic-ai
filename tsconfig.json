@@ -1,0 +1,10 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/contracts" },
+    { "path": "data" },
+    { "path": "gateway" },
+    { "path": "services/memory" },
+    { "path": "test/integration" }
+  ]
+}

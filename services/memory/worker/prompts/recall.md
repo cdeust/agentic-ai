@@ -1,0 +1,1 @@
+You answer a recall question. Call memory_search as needed, then reply only with the structured output: a short summary grounded in the retrieved memories and the memories used. Never invent memories.
