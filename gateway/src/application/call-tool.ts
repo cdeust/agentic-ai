@@ -1,5 +1,5 @@
-import type { ToolCatalogue } from '../domain/catalogue.js';
-import { GatewayError, UnknownToolError } from '../domain/errors.js';
+import { TOOLS, type ToolName } from '@agentic-ai/contracts';
+import { GatewayError } from '../domain/errors.js';
 import type {
   Authenticator,
   AuditLog,
@@ -17,12 +17,11 @@ export interface CallToolCommand {
 }
 
 /**
- * The gateway's single use case: look up the tool, authenticate, apply the quota,
+ * The gateway's single use case: look up the tool in the contract catalogue, authenticate, apply the quota,
  * route to the owner, journal. It never interprets the payload and runs no agent.
  */
 export class CallTool {
   constructor(
-    private readonly catalogue: ToolCatalogue,
     private readonly auth: Authenticator,
     private readonly quota: QuotaPolicy,
     private readonly services: ServiceClient,
@@ -32,10 +31,10 @@ export class CallTool {
 
   async execute(command: CallToolCommand): Promise<ServiceResponse> {
     const started = this.clock.now();
-    const descriptor = this.catalogue.find(command.tool);
+    const descriptor = Object.hasOwn(TOOLS, command.tool) ? TOOLS[command.tool as ToolName] : undefined;
     let subject = 'anonymous';
     try {
-      if (descriptor === undefined) throw new UnknownToolError(command.tool);
+      if (descriptor === undefined) throw new GatewayError('UNKNOWN_TOOL', `unknown tool ${command.tool}`);
       const identity = await this.auth.authenticate(command.presented);
       subject = identity.subject;
       await this.quota.consume(identity, command.tool);

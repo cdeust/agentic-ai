@@ -14,6 +14,10 @@ Services: `proxy` (Caddy), `gateway`, `memory`, `data`, `postgres` (`pgvector/pg
 
 `docker compose config` validates the file. `test/infra/compose.test.ts` parses it and asserts the network zones in CI (CI does not start Docker).
 
+## Gateway routes
+
+The gateway connects to every service that owns a tool of `TOOLS`; the URL of service `<name>` is read from `<NAME>_URL` (`MEMORY_URL` in `compose.yaml`). A missing variable stops the gateway at start.
+
 ## Proxy
 
 `proxy/Caddyfile`: `:8080` locally. `/mcp` goes to `gateway:8080`, `/healthz` is answered by Caddy, everything else is 404. In production, replace `:8080` with the site address for automatic HTTPS. The proxy is the only service with a published port, bound to `127.0.0.1` locally.
@@ -35,7 +39,7 @@ docker run --rm -i --read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m --cap-drop
   --memory 512m --pids-limit 128 --env INTERNAL_TOOLS_URL=... --env ANTHROPIC_BASE_URL=... <image>
 ```
 
-Image (`services/memory/worker/Dockerfile`): Node 26, non-root uid 10001, no login shell, production dependencies only. The only writable path is the `/tmp` tmpfs; the agent runs with `persistSession: false` and no setting sources, so nothing else is written. The container is named after the run (`agentic-worker-<run_id>`). The timeout is enforced by the runner: it kills the docker client, runs `docker rm -f` on the named container and answers `WORKER_TIMEOUT`; turn and budget limits are passed to the agent.
+Image (`services/memory/worker/Dockerfile`): Node 26, non-root uid 10001, no login shell, production dependencies only, and the system prompts copied to `dist/worker/prompts`. The only writable path is the `/tmp` tmpfs; the agent runs with `persistSession: false` and no setting sources, so nothing else is written. The container is named after the run (`agentic-worker-<run_id>`). The timeout is enforced by the runner: it kills the docker client, runs `docker rm -f` on the named container and answers `WORKER_TIMEOUT`; turn and budget limits are passed to the agent.
 
 Local limitation: `memory` mounts the Docker socket to launch workers. That is root-equivalent on the host and is acceptable only on a developer machine. Production replaces the adapter (see ADR 4 in [design.md](design.md)).
 
@@ -48,9 +52,11 @@ Rule: no secret ever enters a worker container. The worker is given `ANTHROPIC_B
 - Image `pgvector/pgvector:pg17`. The data volume is `postgres-data`.
 - `data/migrations/NNNN_name.sql`, applied in order, once each, inside a transaction, recorded in `schema_migrations` (`data/src/infrastructure/migrate.ts`). The `data` service applies pending migrations at start.
   - `0001_runs.sql`: registry of executions (`runs`, `run_events`).
-  - `0002_memory.sql`: `CREATE EXTENSION vector`, schema `memory`, table `memory.memories` with `embedding vector(384)` and an HNSW cosine index. The dimension must equal `EMBEDDING_DIMENSION` in `data/src/domain/ports.ts`.
+  - `0002_memory.sql`: `CREATE EXTENSION vector`, schema `memory`, table `memory.memories` with `embedding vector(384)` and an HNSW cosine index. The dimension must equal `EMBEDDING_DIMENSION` in `packages/contracts/src/data-ops.ts`, which rejects any other length at the API.
+  - `0003_runs_immutable.sql`: a trigger refuses any update of a completed run (SQLSTATE 55000, reported as `INVALID_OPERATION`).
 - Never edit an applied migration: add a new numbered file.
-- Without `DATABASE_URL`, `data` starts with in-memory repositories (non-persistent, development only).
+- Operations: `data/sql/<op>.sql`, listed in `data/sql/operations.json` with their parameters, the SQLSTATEs that mean a named failure (23503 unknown run: `NOT_FOUND`; 55000: `INVALID_OPERATION`) and the shape of the answer. The data image ships `sql/` and `migrations/` (the root Dockerfile copies `data/`).
+- Without `DATABASE_URL`, `data` starts with the in-memory store (non-persistent, development only).
 
 ## CI
 

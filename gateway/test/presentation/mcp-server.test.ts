@@ -7,7 +7,7 @@ import {
   InMemoryQuota,
   InMemoryServiceClient,
 } from '../../src/infrastructure/in-memory.js';
-import { compose } from '../../src/main.js';
+import { compose, routes } from '../../src/main.js';
 
 const clock = { now: () => new Date('2026-01-01T00:00:00Z') };
 const okResult = {
@@ -81,5 +81,11 @@ describe('gateway MCP server', () => {
     const { client } = await connect('good');
     const result = await client.callTool({ name: 'recall', arguments: { query: 'q' } });
     expect(JSON.stringify(result.content)).toContain('SERVICE_UNAVAILABLE');
+  });
+});
+
+describe('gateway routes', () => {
+  it('derives one route per owning service, with the URL variable compose.yaml sets', () => {
+    expect(routes()).toEqual([{ service: 'memory', urlVariable: 'MEMORY_URL' }]);
   });
 });

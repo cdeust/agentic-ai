@@ -7,12 +7,12 @@ export interface Identity {
   subject: string;
 }
 
-/** Port: who is calling. Throws UnauthorizedError when what was presented is not valid. */
+/** Port: who is calling. Rejects with GatewayError UNAUTHORIZED when what was presented is not valid. */
 export interface Authenticator {
   authenticate(presented: Presented): Promise<Identity>;
 }
 
-/** Port: how much may this identity call. Throws QuotaExceededError when exhausted. */
+/** Port: how much may this identity call. Rejects with GatewayError QUOTA_EXCEEDED when exhausted. */
 export interface QuotaPolicy {
   consume(identity: Identity, tool: string): Promise<void>;
 }

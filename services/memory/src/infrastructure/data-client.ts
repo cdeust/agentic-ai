@@ -1,11 +1,5 @@
-import {
-  DATA_OPS,
-  type DataOpName,
-  type MemoryItem,
-  type RunEventType,
-  type RunStatus,
-} from '@agentic-ai/contracts';
-import { DataUnavailableError, type MemoryStore, type RunRegistry } from '../domain/ports.js';
+import { DATA_OPS, type DataOpName, type RunEventType, type RunStatus } from '@agentic-ai/contracts';
+import { ServiceError, type DataPort, type RunRegistry } from '../domain/ports.js';
 
 export type Fetch = (
   url: string,
@@ -13,13 +7,14 @@ export type Fetch = (
 ) => Promise<{ ok: boolean; status: number; text(): Promise<string> }>;
 
 /** Talks to the data component's typed HTTP API. The only way this service reaches storage. */
-export class HttpDataClient implements RunRegistry, MemoryStore {
+export class HttpDataClient implements RunRegistry, DataPort {
   constructor(
     private readonly baseUrl: string,
     private readonly fetchImpl: Fetch = fetch as unknown as Fetch,
   ) {}
 
-  private async call(op: DataOpName, args: Record<string, unknown>): Promise<unknown> {
+  async call(op: DataOpName, args: unknown): Promise<unknown> {
+    const unavailable = (detail: string) => new ServiceError('DATA_UNAVAILABLE', `data call ${op} ${detail}`);
     let response;
     try {
       response = await this.fetchImpl(`${this.baseUrl}/v1/ops/${op}`, {
@@ -28,13 +23,12 @@ export class HttpDataClient implements RunRegistry, MemoryStore {
         body: JSON.stringify(args),
       });
     } catch (error) {
-      throw new DataUnavailableError(`data call ${op} failed: ${String(error)}`);
+      throw unavailable(`failed: ${String(error)}`);
     }
     const body = await response.text();
-    if (!response.ok)
-      throw new DataUnavailableError(`data call ${op} rejected with ${response.status}: ${body}`);
+    if (!response.ok) throw unavailable(`rejected with ${response.status}: ${body}`);
     const parsed = DATA_OPS[op].output.safeParse(JSON.parse(body));
-    if (!parsed.success) throw new DataUnavailableError(`data call ${op} returned an invalid body`);
+    if (!parsed.success) throw unavailable('returned an invalid body');
     return parsed.data;
   }
 
@@ -49,13 +43,5 @@ export class HttpDataClient implements RunRegistry, MemoryStore {
 
   async complete(runId: string, status: Exclude<RunStatus, 'running'>, result: unknown): Promise<void> {
     await this.call('runs.complete', { run_id: runId, status, result });
-  }
-
-  async insert(content: string, tags: string[]): Promise<{ id: string }> {
-    return (await this.call('memory.insert', { content, tags })) as { id: string };
-  }
-
-  async search(query: string, limit: number): Promise<MemoryItem[]> {
-    return (await this.call('memory.search', { query, limit })) as MemoryItem[];
   }
 }

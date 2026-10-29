@@ -15,6 +15,7 @@ import { InProcessContainerRunner } from '../../services/memory/src/infrastructu
 import { HttpDataClient } from '../../services/memory/src/infrastructure/data-client.js';
 import { compose as composeMemory, DEFAULT_LIMITS } from '../../services/memory/src/main.js';
 import type { AgentPort, AgentRequest } from '../../services/memory/worker/agent-port.js';
+import { loadPrompts, PROMPTS_DIR } from '../../services/memory/worker/prompts.js';
 import { runWorker } from '../../services/memory/worker/run-worker.js';
 
 export const TOKEN = 'test-token';
@@ -49,15 +50,21 @@ export async function buildStack(agent: AgentPort) {
   const dataClient = new HttpDataClient(`http://127.0.0.1:${(dataApi.address() as AddressInfo).port}`);
 
   // The worker's tools are served by the memory service; here the agent reaches them in process.
+  // The prompts are the committed prompts/<tool>.md files, loaded as the worker image loads them.
+  const prompts = await loadPrompts(PROMPTS_DIR);
   const memory = composeMemory({
     registry: dataClient,
-    store: dataClient,
+    data: dataClient,
     runner: new InProcessContainerRunner((stdin) =>
       runWorker(stdin, {
         agent,
+        prompts,
         tools: {
-          search: (query, limit) => memoryRef.internalTools.search(query, limit),
-          insert: (content, tags) => memoryRef.internalTools.insert(content, tags),
+          call: async (tool, args) => {
+            const answer = await memoryRef.internalTools.call(tool, args);
+            if (!answer.ok) throw new Error(answer.message);
+            return answer.value;
+          },
         },
       }),
     ),

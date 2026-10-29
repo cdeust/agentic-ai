@@ -1,6 +1,6 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { SqlExecutor } from './postgres.js';
+import type { SqlExecutor } from './sql-store.js';
 
 const MIGRATION_FILE = /^(\d{4})_[a-z0-9_]+\.sql$/;
 

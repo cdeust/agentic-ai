@@ -1,9 +1,8 @@
-import type { Cost, Evidence, MemoryItem } from '@agentic-ai/contracts';
+import type { Cost, Evidence, InternalToolName } from '@agentic-ai/contracts';
 
-/** Tools the agent may call. Served by the memory service on the exec network. */
+/** Tools the agent may call (INTERNAL_TOOLS in contracts). Served by the memory service on the exec network. */
 export interface InternalTools {
-  search(query: string, limit: number): Promise<MemoryItem[]>;
-  insert(content: string, tags: string[]): Promise<{ id: string }>;
+  call(tool: InternalToolName, args: Record<string, unknown>): Promise<unknown>;
 }
 
 export interface AgentRequest {

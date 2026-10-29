@@ -2,7 +2,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { describe, expect, it } from 'vitest';
 import { compose, DEFAULT_LIMITS } from '../../src/main.js';
-import { InMemoryMemoryStore, InMemoryRunRegistry } from '../../src/infrastructure/in-memory.js';
+import { InMemoryDataPort, InMemoryRunRegistry } from '../../src/infrastructure/in-memory.js';
 import { InProcessContainerRunner } from '../../src/infrastructure/in-process-runner.js';
 
 const cost = { input_tokens: 1, output_tokens: 1, usd: 0 };
@@ -10,7 +10,7 @@ const cost = { input_tokens: 1, output_tokens: 1, usd: 0 };
 async function connect(stdout: string) {
   const app = compose({
     registry: new InMemoryRunRegistry(),
-    store: new InMemoryMemoryStore(),
+    data: new InMemoryDataPort(),
     runner: new InProcessContainerRunner(async () => ({ exitCode: 0, stdout })),
     limits: DEFAULT_LIMITS,
   });

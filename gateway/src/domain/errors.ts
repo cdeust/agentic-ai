@@ -1,31 +1,12 @@
-export abstract class GatewayError extends Error {
-  abstract readonly code: string;
-}
+/** Why the gateway refused or could not route a call. Sent to the client as `{ code, message }`. */
+export type GatewayErrorCode = 'UNKNOWN_TOOL' | 'UNAUTHORIZED' | 'QUOTA_EXCEEDED' | 'SERVICE_UNAVAILABLE';
 
-export class UnknownToolError extends GatewayError {
-  readonly code = 'UNKNOWN_TOOL';
-  constructor(tool: string) {
-    super(`unknown tool ${tool}`);
-  }
-}
-
-export class UnauthorizedError extends GatewayError {
-  readonly code = 'UNAUTHORIZED';
-  constructor(message = 'missing or invalid token') {
+export class GatewayError extends Error {
+  constructor(
+    readonly code: GatewayErrorCode,
+    message: string,
+  ) {
     super(message);
-  }
-}
-
-export class QuotaExceededError extends GatewayError {
-  readonly code = 'QUOTA_EXCEEDED';
-  constructor(subject: string, tool: string) {
-    super(`quota exceeded for ${subject} on ${tool}`);
-  }
-}
-
-export class ServiceUnavailableError extends GatewayError {
-  readonly code = 'SERVICE_UNAVAILABLE';
-  constructor(service: string, detail: string) {
-    super(`service ${service} unavailable: ${detail}`);
+    this.name = 'GatewayError';
   }
 }

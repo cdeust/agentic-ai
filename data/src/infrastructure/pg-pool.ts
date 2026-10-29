@@ -1,5 +1,5 @@
 import pg from 'pg';
-import type { SqlExecutor } from './postgres.js';
+import type { SqlExecutor } from './sql-store.js';
 
 /** The only module of the repository that imports `pg`. */
 export interface PgConnection extends SqlExecutor {

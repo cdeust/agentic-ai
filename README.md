@@ -8,14 +8,14 @@ client --> proxy --> gateway --> services/memory --> worker (container)
                                         +--> data --> postgres + pgvector
 ```
 
-| Path                  | Role                                                                    |
-| --------------------- | ----------------------------------------------------------------------- |
-| `proxy/`              | Caddyfile; the only exposed component (`/mcp`, `/healthz`).             |
-| `gateway/`            | Single MCP server for clients: auth, catalogue, routing, quota, audit.  |
-| `services/memory/`    | Intent tools `recall` and `remember`; `worker/` is the agent image.     |
-| `data/`               | The only component that imports `pg`; typed operations; SQL migrations. |
-| `packages/contracts/` | `Result<T>`, `Run`, `RunEvent`, zod tool schemas.                       |
-| `docs/`               | Architecture, infrastructure, design decisions, agents, testing.        |
+| Path                  | Role                                                                   |
+| --------------------- | ---------------------------------------------------------------------- |
+| `proxy/`              | Caddyfile; the only exposed component (`/mcp`, `/healthz`).            |
+| `gateway/`            | Single MCP server for clients: auth, catalogue, routing, quota, audit. |
+| `services/memory/`    | Intent tools `recall` and `remember`; `worker/` is the agent image.    |
+| `data/`               | The only component that imports `pg`; typed operations from `sql/`.    |
+| `packages/contracts/` | `Result<T>`, `Run`, `RunEvent`, zod tool schemas.                      |
+| `docs/`               | Architecture, infrastructure, design decisions, agents, testing.       |
 
 The architecture is enforced, not just described: `npm run arch` fails on a wrong layer import, a cross-component import, `pg` outside `data/src/infrastructure`, the agent SDK outside a worker, the MCP SDK outside presentation/infrastructure, or a cycle.
 

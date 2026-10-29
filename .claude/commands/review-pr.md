@@ -1,6 +1,6 @@
 ---
 allowed-tools: Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)
-argument-hint: [pr-number]
+argument-hint: '[pr-number]'
 description: Review a pull request against CLAUDE.md with the architecture, test and security reviewers
 ---
 

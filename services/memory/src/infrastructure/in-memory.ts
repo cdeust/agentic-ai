@@ -1,5 +1,5 @@
-import type { MemoryItem, RunEventType, RunStatus } from '@agentic-ai/contracts';
-import type { MemoryStore, RunRegistry } from '../domain/ports.js';
+import type { DataOpName, MemoryItem, RunEventType, RunStatus } from '@agentic-ai/contracts';
+import type { DataPort, RunRegistry } from '../domain/ports.js';
 
 export interface RecordedRun {
   id: string;
@@ -36,16 +36,21 @@ export class InMemoryRunRegistry implements RunRegistry {
   }
 }
 
-export class InMemoryMemoryStore implements MemoryStore {
+/** In-memory DataPort for the memory operations the internal tools use (the real store lives in data). */
+export class InMemoryDataPort implements DataPort {
   private readonly items: MemoryItem[] = [];
 
-  async insert(content: string, tags: string[]): Promise<{ id: string }> {
-    const id = `mem-${this.items.length + 1}`;
-    this.items.push({ id, content, tags, score: 1 });
-    return { id };
-  }
-
-  async search(query: string, limit: number): Promise<MemoryItem[]> {
-    return this.items.filter((m) => m.content.toLowerCase().includes(query.toLowerCase())).slice(0, limit);
+  async call(op: DataOpName, input: unknown): Promise<unknown> {
+    if (op === 'memory.insert') {
+      const { content, tags } = input as { content: string; tags: string[] };
+      const id = `mem-${this.items.length + 1}`;
+      this.items.push({ id, content, tags, score: 1 });
+      return { id };
+    }
+    if (op === 'memory.search') {
+      const { query, limit } = input as { query: string; limit: number };
+      return this.items.filter((m) => m.content.toLowerCase().includes(query.toLowerCase())).slice(0, limit);
+    }
+    throw new Error(`InMemoryDataPort does not serve ${op}`);
   }
 }

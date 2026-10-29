@@ -16,3 +16,4 @@ All notable changes to this project are documented here. The format follows [Kee
 - `compose.yaml` with four network zones; worker and service Dockerfiles.
 - `CLAUDE.md`, `.claude/settings.json`, review subagents, `/review-pr`, and documentation under `docs/`.
 - GitHub workflows: `ci.yml`, and `claude.yml` / `claude-code-review.yml` from `anthropics/claude-code-action`.
+- Behaviour expressed in descriptive files (docs/design.md, ADR 12): data operations as `data/sql/*.sql` with the table `data/sql/operations.json` and one generic executor; migration 0003 makes a completed run immutable in the database; worker system prompts as `services/memory/worker/prompts/<tool>.md`; internal tools declared once in `INTERNAL_TOOLS`; gateway routes derived from the tool owners. Each descriptive file is checked by a load-and-schema test.

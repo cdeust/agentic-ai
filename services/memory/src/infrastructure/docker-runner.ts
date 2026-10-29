@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import {
-  WorkerTimeoutError,
-  WorkerUnavailableError,
+  ServiceError,
+  timeoutError,
   type ContainerRunner,
   type WorkerRunRequest,
   type WorkerRunResult,
@@ -74,14 +74,14 @@ export class DockerContainerRunner implements ContainerRunner {
         request.timeoutMs,
       );
     } catch (error) {
-      if (error instanceof WorkerTimeoutError) {
+      if (error instanceof ServiceError && error.code === 'WORKER_TIMEOUT') {
         // Killing the docker client does not stop the container: remove it explicitly.
         await this.exec('docker', ['rm', '-f', this.containerName(request.input.run_id)], '', 10_000).catch(
           () => undefined,
         );
         throw error;
       }
-      throw new WorkerUnavailableError(`cannot start worker container: ${String(error)}`);
+      throw new ServiceError('WORKER_UNAVAILABLE', `cannot start worker container: ${String(error)}`);
     }
     return { exitCode: result.exitCode, stdout: result.stdout };
   }
@@ -94,7 +94,7 @@ export const execWithNode: Exec = (command, args, stdin, timeoutMs) =>
     let stderr = '';
     const timer = setTimeout(() => {
       child.kill('SIGKILL');
-      reject(new WorkerTimeoutError(timeoutMs));
+      reject(timeoutError(timeoutMs));
     }, timeoutMs);
     child.stdout.on('data', (chunk: Buffer) => (stdout += chunk.toString('utf8')));
     child.stderr.on('data', (chunk: Buffer) => (stderr += chunk.toString('utf8')));

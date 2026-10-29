@@ -1,5 +1,6 @@
 import { ClaudeSdkAgent } from './sdk-agent.js';
 import { HttpInternalTools } from './internal-tools.js';
+import { loadPrompts, PROMPTS_DIR } from './prompts.js';
 import { runWorker } from './run-worker.js';
 
 /**
@@ -29,6 +30,7 @@ if (toolsUrl === undefined) {
 const result = await runWorker(await readStdin(), {
   agent: new ClaudeSdkAgent(),
   tools: new HttpInternalTools(toolsUrl),
+  prompts: await loadPrompts(PROMPTS_DIR),
 });
 process.stdout.write(result.stdout);
 process.exit(result.exitCode);

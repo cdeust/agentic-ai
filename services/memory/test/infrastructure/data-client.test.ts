@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { DataUnavailableError } from '../../src/domain/ports.js';
 import { HttpDataClient, type Fetch } from '../../src/infrastructure/data-client.js';
 
 const reply =
@@ -36,16 +35,18 @@ describe('HttpDataClient', () => {
     });
   });
 
-  it('maps rejections, transport errors and malformed answers to DataUnavailableError', async () => {
+  it('maps rejections, transport errors and malformed answers to DATA_UNAVAILABLE', async () => {
     await expect(
       new HttpDataClient('http://d', reply(404, { code: 'NOT_FOUND' })).appendEvent('x', 'run.created', {}),
-    ).rejects.toBeInstanceOf(DataUnavailableError);
+    ).rejects.toMatchObject({ code: 'DATA_UNAVAILABLE' });
     const down = new HttpDataClient('http://d', async () => {
       throw new Error('ECONNREFUSED');
     });
-    await expect(down.search('q', 1)).rejects.toBeInstanceOf(DataUnavailableError);
+    await expect(down.call('memory.search', { query: 'q' })).rejects.toMatchObject({
+      code: 'DATA_UNAVAILABLE',
+    });
     await expect(
-      new HttpDataClient('http://d', reply(200, { nope: true })).search('q', 1),
-    ).rejects.toBeInstanceOf(DataUnavailableError);
+      new HttpDataClient('http://d', reply(200, { nope: true })).call('memory.search', { query: 'q' }),
+    ).rejects.toMatchObject({ code: 'DATA_UNAVAILABLE' });
   });
 });

@@ -1,5 +1,5 @@
 import {
-  WorkerTimeoutError,
+  timeoutError,
   type ContainerRunner,
   type WorkerRunRequest,
   type WorkerRunResult,
@@ -14,7 +14,7 @@ export class InProcessContainerRunner implements ContainerRunner {
   async run(request: WorkerRunRequest): Promise<WorkerRunResult> {
     let timer: NodeJS.Timeout | undefined;
     const timeout = new Promise<never>((_, reject) => {
-      timer = setTimeout(() => reject(new WorkerTimeoutError(request.timeoutMs)), request.timeoutMs);
+      timer = setTimeout(() => reject(timeoutError(request.timeoutMs)), request.timeoutMs);
     });
     try {
       return await Promise.race([this.entrypoint(JSON.stringify(request.input)), timeout]);

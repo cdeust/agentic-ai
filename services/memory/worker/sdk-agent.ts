@@ -1,9 +1,24 @@
 import { createSdkMcpServer, query, tool } from '@anthropic-ai/claude-agent-sdk';
-import type { Evidence } from '@agentic-ai/contracts';
-import { z } from 'zod';
+import { INTERNAL_TOOLS, INTERNAL_TOOL_NAMES, type Evidence } from '@agentic-ai/contracts';
 import type { AgentOutcome, AgentPort, AgentRequest } from './agent-port.js';
 
 const SERVER_NAME = 'memory';
+const TOOL_NAMES = INTERNAL_TOOL_NAMES.filter((name) => INTERNAL_TOOLS[name].owner === SERVER_NAME);
+
+/** Every returned record carrying an `id` is evidence; its `content`, when present, is the excerpt. */
+function evidenceOf(value: unknown): Evidence[] {
+  return (Array.isArray(value) ? value : [value]).flatMap((item: { id?: unknown; content?: unknown }) =>
+    typeof item?.id === 'string'
+      ? [
+          {
+            source: SERVER_NAME,
+            ref: item.id,
+            ...(typeof item.content === 'string' ? { excerpt: item.content } : {}),
+          },
+        ]
+      : [],
+  );
+}
 
 /**
  * Claude Agent SDK adapter (the only place the SDK is imported).
@@ -16,41 +31,25 @@ export class ClaudeSdkAgent implements AgentPort {
 
   async run(request: AgentRequest): Promise<AgentOutcome> {
     const evidence: Evidence[] = [];
-    const memory = createSdkMcpServer({
+    const server = createSdkMcpServer({
       name: SERVER_NAME,
-      tools: [
-        tool(
-          'memory_search',
-          'Search stored memories by text.',
-          { query: z.string(), limit: z.number().int().min(1).max(50).default(5) },
-          async (args) => {
-            const found = await request.tools.search(args.query, args.limit);
-            for (const item of found)
-              evidence.push({ source: 'memory', ref: item.id, excerpt: item.content });
-            return { content: [{ type: 'text', text: JSON.stringify(found) }] };
-          },
-        ),
-        tool(
-          'memory_insert',
-          'Store one memory.',
-          { content: z.string().min(1), tags: z.array(z.string()).default([]) },
-          async (args) => {
-            const stored = await request.tools.insert(args.content, args.tags);
-            evidence.push({ source: 'memory', ref: stored.id });
-            return { content: [{ type: 'text', text: JSON.stringify(stored) }] };
-          },
-        ),
-      ],
+      tools: TOOL_NAMES.map((name) =>
+        tool(name, INTERNAL_TOOLS[name].description, INTERNAL_TOOLS[name].input.shape, async (args) => {
+          const answer = await request.tools.call(name, args);
+          evidence.push(...evidenceOf(answer));
+          return { content: [{ type: 'text', text: JSON.stringify(answer) }] };
+        }),
+      ),
     });
 
     const stream = query({
       prompt: JSON.stringify({ tool: request.tool, input: request.input }),
       options: {
         systemPrompt: request.systemPrompt,
-        mcpServers: { [SERVER_NAME]: memory },
+        mcpServers: { [SERVER_NAME]: server },
         strictMcpConfig: true,
         tools: [],
-        allowedTools: [`mcp__${SERVER_NAME}__memory_search`, `mcp__${SERVER_NAME}__memory_insert`],
+        allowedTools: TOOL_NAMES.map((name) => `mcp__${SERVER_NAME}__${name}`),
         permissionMode: 'dontAsk',
         settingSources: [],
         persistSession: false,

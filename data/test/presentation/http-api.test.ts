@@ -33,7 +33,7 @@ describe('data HTTP API', () => {
     const { post } = await start();
     const created = await post('/v1/ops/runs.create', { service: 'memory', tool: 'recall', input: {} });
     expect(created.status).toBe(200);
-    const missing = await post('/v1/ops/runs.get', { run_id: 'nope' });
+    const missing = await post('/v1/ops/runs.get', { run_id: '00000000-0000-4000-8000-000000000000' });
     expect(missing.status).toBe(404);
     expect(await missing.json()).toMatchObject({ code: 'NOT_FOUND' });
     expect((await post('/v1/ops/runs.create', { service: 1 })).status).toBe(400);

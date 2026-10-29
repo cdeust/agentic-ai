@@ -1,7 +1,7 @@
 import { pathToFileURL } from 'node:url';
 import { IntentService } from './application/intent-service.js';
 import { InternalToolService } from './application/internal-tools.js';
-import type { ContainerRunner, MemoryStore, RunRegistry, WorkerLimits } from './domain/ports.js';
+import type { ContainerRunner, DataPort, RunRegistry, WorkerLimits } from './domain/ports.js';
 import { HttpDataClient } from './infrastructure/data-client.js';
 import { DockerContainerRunner } from './infrastructure/docker-runner.js';
 import { createHttpHost } from './presentation/http-host.js';
@@ -10,7 +10,7 @@ import { createMemoryServer } from './presentation/mcp-server.js';
 
 export interface MemoryDependencies {
   registry: RunRegistry;
-  store: MemoryStore;
+  data: DataPort;
   runner: ContainerRunner;
   limits: WorkerLimits;
 }
@@ -20,7 +20,7 @@ export const DEFAULT_LIMITS: WorkerLimits = { timeoutMs: 120_000, maxTurns: 8, m
 /** Composition root. All wiring of the memory service happens here. */
 export function compose(deps: MemoryDependencies) {
   const intents = new IntentService(deps.registry, deps.runner, deps.limits);
-  const internalTools = new InternalToolService(deps.store);
+  const internalTools = new InternalToolService(deps.data, 'memory');
   return {
     intents,
     internalTools,
@@ -46,7 +46,7 @@ async function main(): Promise<void> {
       ANTHROPIC_BASE_URL: required('BROKER_URL'),
     },
   });
-  const app = compose({ registry: dataClient, store: dataClient, runner, limits: DEFAULT_LIMITS });
+  const app = compose({ registry: dataClient, data: dataClient, runner, limits: DEFAULT_LIMITS });
   const port = Number(process.env['PORT'] ?? 8081);
   const internalPort = Number(process.env['INTERNAL_PORT'] ?? 8083);
   createHttpHost(app.createServer).listen(port, () => console.warn(`memory listening on :${port}`));

@@ -1,23 +1,12 @@
-export class NotFoundError extends Error {
-  readonly code = 'NOT_FOUND';
-  constructor(what: string, id: string) {
-    super(`${what} ${id} not found`);
-    this.name = 'NotFoundError';
-  }
-}
+/** Named failure of a data operation. The HTTP API maps the code to a status. */
+export type DataErrorCode = 'NOT_FOUND' | 'INVALID_OPERATION' | 'INVALID_INPUT';
 
-export class InvalidOperationError extends Error {
-  readonly code = 'INVALID_OPERATION';
-  constructor(message: string) {
+export class DataError extends Error {
+  constructor(
+    readonly code: DataErrorCode,
+    message: string,
+  ) {
     super(message);
-    this.name = 'InvalidOperationError';
-  }
-}
-
-export class InvalidInputError extends Error {
-  readonly code = 'INVALID_INPUT';
-  constructor(message: string) {
-    super(message);
-    this.name = 'InvalidInputError';
+    this.name = 'DataError';
   }
 }

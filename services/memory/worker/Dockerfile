@@ -18,6 +18,8 @@ COPY --from=build /app/packages/contracts/package.json packages/contracts/packag
 COPY --from=build /app/packages/contracts/dist packages/contracts/dist
 COPY --from=build /app/services/memory/package.json services/memory/package.json
 COPY --from=build /app/services/memory/dist/worker services/memory/dist/worker
+# tsc does not copy non-TS files: the system prompts are read from dist/worker/prompts (worker/prompts.ts).
+COPY services/memory/worker/prompts services/memory/dist/worker/prompts
 COPY data/package.json data/package.json
 COPY gateway/package.json gateway/package.json
 RUN npm ci --omit=dev --ignore-scripts --workspace @agentic-ai/memory

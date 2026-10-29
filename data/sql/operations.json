@@ -1,0 +1,47 @@
+{
+  "errors": {
+    "23503": "NOT_FOUND",
+    "55000": "INVALID_OPERATION"
+  },
+  "statements": [
+    {
+      "op": "runs.create",
+      "file": "runs.create.sql",
+      "params": ["service", "tool", "input:json"],
+      "returns": "row"
+    },
+    {
+      "op": "runs.appendEvent",
+      "file": "runs.append-event.sql",
+      "params": ["run_id", "type", "payload:json"],
+      "returns": "row"
+    },
+    {
+      "op": "runs.complete",
+      "file": "runs.complete.sql",
+      "params": ["run_id", "status", "result:json"],
+      "returns": "row"
+    },
+    { "op": "runs.get", "file": "runs.get.sql", "params": ["run_id"], "returns": "row" },
+    { "op": "runs.events", "file": "runs.events.sql", "params": ["run_id"], "returns": "value" },
+    {
+      "op": "memory.insert",
+      "file": "memory.insert.sql",
+      "params": ["content", "tags", "embedding:json"],
+      "returns": "row"
+    },
+    {
+      "op": "memory.search",
+      "when": "embedding",
+      "file": "memory.search-vector.sql",
+      "params": ["embedding:json", "limit"],
+      "returns": "rows"
+    },
+    {
+      "op": "memory.search",
+      "file": "memory.search-text.sql",
+      "params": ["query", "limit"],
+      "returns": "rows"
+    }
+  ]
+}

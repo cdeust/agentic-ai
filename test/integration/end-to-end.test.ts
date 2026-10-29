@@ -10,13 +10,17 @@ async function stackFor(...args: Parameters<typeof buildStack>) {
   return stack;
 }
 
+const prompts: Record<string, string> = {};
 const wellBehavedAgent = scriptedAgent(async (request) => {
+  prompts[request.tool] = request.systemPrompt;
   if (request.tool === 'remember') {
-    const input = request.input as { content: string; tags: string[] };
-    return { memory_id: (await request.tools.insert(input.content, input.tags)).id };
+    const stored = (await request.tools.call('memory_insert', request.input as Record<string, unknown>)) as {
+      id: string;
+    };
+    return { memory_id: stored.id };
   }
   const input = request.input as { query: string; limit: number };
-  const memories = await request.tools.search(input.query, input.limit);
+  const memories = (await request.tools.call('memory_search', input)) as unknown[];
   return { summary: `${memories.length} memory(ies) match "${input.query}"`, memories };
 });
 
@@ -62,6 +66,10 @@ describe('end to end: client -> gateway -> memory -> worker -> data', () => {
       'run.completed',
     ]);
     expect(events.map((e) => e.seq)).toEqual([0, 1, 2, 3, 4]);
+
+    // The agent received the system prompts of the committed prompts/<tool>.md files.
+    expect(prompts['remember']).toContain('memory_insert');
+    expect(prompts['recall']).toContain('memory_search');
 
     expect(stack.audit.entries.map((e) => [e.tool, e.owner, e.outcome])).toEqual([
       ['remember', 'memory', 'ok'],

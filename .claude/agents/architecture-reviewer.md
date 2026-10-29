@@ -1,6 +1,6 @@
 ---
 name: architecture-reviewer
-description: Use this agent to review a change against the layering and boundary rules of this repository. Examples: a PR adds an adapter or a use case; a PR adds an import across components; a PR touches .dependency-cruiser.cjs; a PR puts logic in the gateway or the proxy.
+description: 'Use this agent to review a change against the layering and boundary rules of this repository. Examples: a PR adds an adapter or a use case; a PR adds an import across components; a PR touches .dependency-cruiser.cjs; a PR puts logic in the gateway or the proxy.'
 tools: Glob, Grep, Read, Bash
 model: inherit
 ---

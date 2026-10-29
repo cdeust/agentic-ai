@@ -1,9 +1,28 @@
-import { expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { InternalToolService } from '../../src/application/internal-tools.js';
-import { InMemoryMemoryStore } from '../../src/infrastructure/in-memory.js';
+import { InMemoryDataPort } from '../../src/infrastructure/in-memory.js';
 
-it('stores and searches through the MemoryStore port', async () => {
-  const tools = new InternalToolService(new InMemoryMemoryStore());
-  const { id } = await tools.insert('release is on Friday', ['plan']);
-  expect((await tools.search('friday', 5)).map((m) => m.id)).toEqual([id]);
+describe('InternalToolService', () => {
+  const tools = () => new InternalToolService(new InMemoryDataPort(), 'memory');
+
+  it('runs the data operation of each internal tool, with the tool defaults applied', async () => {
+    const service = tools();
+    const stored = await service.call('memory_insert', { content: 'release is on Friday' });
+    expect(stored).toMatchObject({ ok: true, value: { id: expect.any(String) } });
+    expect(await service.call('memory_search', { query: 'friday' })).toMatchObject({
+      ok: true,
+      value: [{ content: 'release is on Friday', tags: [] }],
+    });
+  });
+
+  it('refuses invalid input, unknown tools and tools of another owner', async () => {
+    expect(await tools().call('memory_insert', { content: '' })).toMatchObject({ ok: false, status: 400 });
+    expect(await tools().call('sql', {})).toMatchObject({ ok: false, status: 404 });
+    expect(
+      await new InternalToolService(new InMemoryDataPort(), 'billing').call('memory_search', { query: 'q' }),
+    ).toMatchObject({
+      ok: false,
+      status: 404,
+    });
+  });
 });

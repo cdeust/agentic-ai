@@ -1,6 +1,6 @@
 ---
 name: test-reviewer
-description: Use this agent to verify that every new or changed brick ships with its tests. Examples: a PR adds a tool, a port, an adapter, a use case or a worker; a PR changes the path of a call; a PR changes a schema in packages/contracts.
+description: 'Use this agent to verify that every new or changed brick ships with its tests. Examples: a PR adds a tool, a port, an adapter, a use case or a worker; a PR changes the path of a call; a PR changes a schema in packages/contracts.'
 tools: Glob, Grep, Read, Bash
 model: inherit
 ---

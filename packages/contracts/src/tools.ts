@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { resultSchema } from './result.js';
+import { CostSchema, EvidenceSchema, ResultStatusSchema, resultSchema } from './result.js';
 
 export const MemoryItemSchema = z.object({
   id: z.string(),
@@ -70,21 +70,17 @@ export const WorkerInputSchema = z.object({
   run_id: z.string(),
   tool: z.string(),
   input: z.unknown(),
-  limits: z
-    .object({ max_turns: z.number().int().positive(), max_budget_usd: z.number().positive() })
-    .optional(),
+  /** Set by the service (services/<name>/src/main.ts DEFAULT_LIMITS); the worker has no defaults of its own. */
+  limits: z.object({ max_turns: z.number().int().positive(), max_budget_usd: z.number().positive() }),
 });
 export type WorkerInput = z.infer<typeof WorkerInputSchema>;
 
+/** The worker reports a free-form error code; the service maps it to a named ErrorCode. */
 export const WorkerOutputSchema = z.object({
-  status: z.enum(['ok', 'needs_clarification', 'failed']),
+  status: ResultStatusSchema,
   data: z.unknown(),
-  evidence: z.array(z.object({ source: z.string(), ref: z.string(), excerpt: z.string().optional() })),
-  cost: z.object({
-    input_tokens: z.number().int().nonnegative(),
-    output_tokens: z.number().int().nonnegative(),
-    usd: z.number().nonnegative(),
-  }),
+  evidence: z.array(EvidenceSchema),
+  cost: CostSchema,
   error: z.object({ code: z.string(), message: z.string() }).optional(),
 });
 export type WorkerOutput = z.infer<typeof WorkerOutputSchema>;

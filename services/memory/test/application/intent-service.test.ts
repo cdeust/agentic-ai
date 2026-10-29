@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { IntentService } from '../../src/application/intent-service.js';
 import {
-  DataUnavailableError,
-  WorkerTimeoutError,
-  WorkerUnavailableError,
+  ServiceError,
+  timeoutError,
   type ContainerRunner,
   type RunRegistry,
 } from '../../src/domain/ports.js';
@@ -91,12 +90,15 @@ describe('IntentService worker failures', () => {
   });
 
   it('names a timeout as WORKER_TIMEOUT and an unstartable worker as WORKER_UNAVAILABLE', async () => {
+    expect((await setup(runner(timeoutError(5))).service.handle('recall', { query: 'q' })).error?.code).toBe(
+      'WORKER_TIMEOUT',
+    );
     expect(
-      (await setup(runner(new WorkerTimeoutError(5))).service.handle('recall', { query: 'q' })).error?.code,
-    ).toBe('WORKER_TIMEOUT');
-    expect(
-      (await setup(runner(new WorkerUnavailableError('no docker'))).service.handle('recall', { query: 'q' }))
-        .error?.code,
+      (
+        await setup(runner(new ServiceError('WORKER_UNAVAILABLE', 'no docker'))).service.handle('recall', {
+          query: 'q',
+        })
+      ).error?.code,
     ).toBe('WORKER_UNAVAILABLE');
   });
 
@@ -130,7 +132,7 @@ describe('IntentService data outage and limits', () => {
   it('answers DATA_UNAVAILABLE when the registry is down', async () => {
     const down: RunRegistry = {
       async create() {
-        throw new DataUnavailableError('data down');
+        throw new ServiceError('DATA_UNAVAILABLE', 'data down');
       },
       async appendEvent() {},
       async complete() {},

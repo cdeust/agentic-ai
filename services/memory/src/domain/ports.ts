@@ -1,4 +1,4 @@
-import type { MemoryItem, RunEventType, RunStatus, WorkerInput } from '@agentic-ai/contracts';
+import type { DataOpName, ErrorCode, RunEventType, RunStatus, WorkerInput } from '@agentic-ai/contracts';
 
 export interface WorkerLimits {
   timeoutMs: number;
@@ -28,29 +28,21 @@ export interface RunRegistry {
   complete(runId: string, status: Exclude<RunStatus, 'running'>, result: unknown): Promise<void>;
 }
 
-/** The service's view of memory storage kept by the data component. */
-export interface MemoryStore {
-  insert(content: string, tags: string[]): Promise<{ id: string }>;
-  search(query: string, limit: number): Promise<MemoryItem[]>;
+/** The service's access to the typed data operations its internal tools are views of. */
+export interface DataPort {
+  call(op: DataOpName, input: unknown): Promise<unknown>;
 }
 
-export class WorkerTimeoutError extends Error {
-  constructor(timeoutMs: number) {
-    super(`worker exceeded ${timeoutMs} ms`);
-    this.name = 'WorkerTimeoutError';
-  }
-}
-
-export class WorkerUnavailableError extends Error {
-  constructor(message: string) {
+/** A failure an adapter reports with the Result error code it stands for (worker timeout, data down, ...). */
+export class ServiceError extends Error {
+  constructor(
+    readonly code: Extract<ErrorCode, 'WORKER_TIMEOUT' | 'WORKER_UNAVAILABLE' | 'DATA_UNAVAILABLE'>,
+    message: string,
+  ) {
     super(message);
-    this.name = 'WorkerUnavailableError';
+    this.name = 'ServiceError';
   }
 }
 
-export class DataUnavailableError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'DataUnavailableError';
-  }
-}
+export const timeoutError = (timeoutMs: number) =>
+  new ServiceError('WORKER_TIMEOUT', `worker exceeded ${timeoutMs} ms`);

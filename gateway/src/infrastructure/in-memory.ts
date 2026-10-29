@@ -1,4 +1,4 @@
-import { QuotaExceededError, ServiceUnavailableError, UnauthorizedError } from '../domain/errors.js';
+import { GatewayError } from '../domain/errors.js';
 import type {
   AuditEntry,
   AuditLog,
@@ -23,7 +23,7 @@ export class InMemoryAuthenticator implements Authenticator {
 
   async authenticate(presented: Presented): Promise<Identity> {
     const identity = presented.token === undefined ? undefined : this.tokens.get(presented.token);
-    if (identity === undefined) throw new UnauthorizedError();
+    if (identity === undefined) throw new GatewayError('UNAUTHORIZED', 'missing or invalid token');
     return identity;
   }
 }
@@ -44,7 +44,9 @@ export class InMemoryQuota implements QuotaPolicy {
     const current = this.windows.get(key);
     const window =
       current !== undefined && now - current.start < this.windowMs ? current : { start: now, used: 0 };
-    if (window.used >= this.limit) throw new QuotaExceededError(identity.subject, tool);
+    if (window.used >= this.limit) {
+      throw new GatewayError('QUOTA_EXCEEDED', `quota exceeded for ${identity.subject} on ${tool}`);
+    }
     window.used += 1;
     this.windows.set(key, window);
   }
@@ -66,7 +68,8 @@ export class InMemoryServiceClient implements ServiceClient {
 
   async invoke(service: string, tool: string, args: Record<string, unknown>): Promise<ServiceResponse> {
     const handler = this.handlers.get(`${service}/${tool}`);
-    if (handler === undefined) throw new ServiceUnavailableError(service, `no handler for ${tool}`);
+    if (handler === undefined)
+      throw new GatewayError('SERVICE_UNAVAILABLE', `service ${service} has no handler for ${tool}`);
     return handler(args);
   }
 }

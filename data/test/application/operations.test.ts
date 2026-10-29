@@ -1,17 +1,9 @@
+import { EMBEDDING_DIMENSION } from '@agentic-ai/contracts';
 import { describe, expect, it } from 'vitest';
 import { DataOperations } from '../../src/application/operations.js';
-import { InvalidInputError } from '../../src/domain/errors.js';
-import { EMBEDDING_DIMENSION } from '../../src/domain/ports.js';
-import { InMemoryMemoryRepository, InMemoryRunRepository } from '../../src/infrastructure/in-memory.js';
-import { SystemClock, UuidGenerator } from '../../src/infrastructure/system.js';
+import { InMemoryDataStore } from '../../src/infrastructure/in-memory.js';
 
-function operations() {
-  const ids = new UuidGenerator();
-  return new DataOperations(
-    new InMemoryRunRepository(ids, new SystemClock()),
-    new InMemoryMemoryRepository(ids),
-  );
-}
+const operations = () => new DataOperations(new InMemoryDataStore());
 
 describe('DataOperations', () => {
   it('runs the lifecycle create, appendEvent, complete', async () => {
@@ -25,19 +17,28 @@ describe('DataOperations', () => {
     expect(await ops.execute('runs.get', { run_id: run.id })).toMatchObject({ status: 'ok' });
   });
 
-  it('rejects input that does not match the contract schema', async () => {
-    await expect(operations().execute('runs.create', { service: 1 })).rejects.toBeInstanceOf(
-      InvalidInputError,
-    );
+  it('rejects input that does not match the contract schema with INVALID_INPUT', async () => {
+    await expect(operations().execute('runs.create', { service: 1 })).rejects.toMatchObject({
+      code: 'INVALID_INPUT',
+    });
     await expect(
-      operations().execute('runs.complete', { run_id: 'x', status: 'running', result: null }),
-    ).rejects.toBeInstanceOf(InvalidInputError);
+      operations().execute('runs.complete', { run_id: 'not-a-uuid', status: 'ok', result: null }),
+    ).rejects.toMatchObject({ code: 'INVALID_INPUT' });
+    await expect(
+      operations().execute('memory.insert', { content: 'x', embedding: [1, 2] }),
+    ).rejects.toMatchObject({ code: 'INVALID_INPUT' });
   });
 
-  it('rejects an embedding of the wrong dimension', async () => {
-    await expect(operations().execute('memory.insert', { content: 'x', embedding: [1, 2] })).rejects.toThrow(
-      `${EMBEDDING_DIMENSION} dimensions`,
+  it('accepts an embedding of the contract dimension', async () => {
+    const embedding = Array.from({ length: EMBEDDING_DIMENSION }, () => 0.5);
+    await expect(operations().execute('memory.insert', { content: 'x', embedding })).resolves.toHaveProperty(
+      'id',
     );
+  });
+
+  it('refuses a store answer that breaks the output contract', async () => {
+    const lying = new DataOperations({ execute: async () => ({ nope: true }) });
+    await expect(lying.execute('memory.insert', { content: 'x' })).rejects.toThrow('outside its contract');
   });
 
   it('knows exactly the typed operations and no raw SQL operation', () => {

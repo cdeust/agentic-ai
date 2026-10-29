@@ -1,5 +1,4 @@
 import { createServer, type IncomingMessage, type Server } from 'node:http';
-import { DATA_OP_NAMES, type DataOpName } from '@agentic-ai/contracts';
 import type { DataOperations } from '../application/operations.js';
 
 const STATUS_BY_CODE: Record<string, number> = {
@@ -26,7 +25,7 @@ export function createDataApi(operations: DataOperations): Server {
     void (async () => {
       if (req.method === 'GET' && req.url === '/healthz') return send(200, { ok: true });
       const op = /^\/v1\/ops\/([A-Za-z.]+)$/.exec(req.url ?? '')?.[1];
-      if (req.method !== 'POST' || op === undefined || !(DATA_OP_NAMES as string[]).includes(op)) {
+      if (req.method !== 'POST' || op === undefined || !operations.has(op)) {
         return send(404, { code: 'NOT_FOUND', message: 'no such operation' });
       }
       let body: unknown;
@@ -36,7 +35,7 @@ export function createDataApi(operations: DataOperations): Server {
         return send(400, { code: 'INVALID_INPUT', message: 'body is not JSON' });
       }
       try {
-        return send(200, await operations.execute(op as DataOpName, body));
+        return send(200, await operations.execute(op, body));
       } catch (error) {
         const named = error as { code?: string; message?: string };
         return send(STATUS_BY_CODE[named.code ?? ''] ?? 500, {

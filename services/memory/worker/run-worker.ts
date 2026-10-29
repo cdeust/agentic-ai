@@ -1,19 +1,18 @@
 import { TOOLS, WorkerInputSchema, ZERO_COST, type WorkerOutput } from '@agentic-ai/contracts';
 import { z } from 'zod';
 import type { AgentPort, InternalTools } from './agent-port.js';
-import { SYSTEM_PROMPTS } from './prompts.js';
 
 export interface WorkerDependencies {
   agent: AgentPort;
   tools: InternalTools;
+  /** System prompt per intent tool, loaded from prompts/<tool>.md (see prompts.ts). */
+  prompts: Readonly<Record<string, string>>;
 }
 
 export interface WorkerProcessResult {
   exitCode: number;
   stdout: string;
 }
-
-const DEFAULT_LIMITS = { maxTurns: 8, maxBudgetUsd: 0.5 };
 
 function failed(code: string, message: string): WorkerOutput {
   return { status: 'failed', data: null, evidence: [], cost: ZERO_COST, error: { code, message } };
@@ -36,7 +35,7 @@ export async function runWorker(stdin: string, deps: WorkerDependencies): Promis
   }
   const { tool } = input.data;
   const contract = Object.hasOwn(TOOLS, tool) ? TOOLS[tool as keyof typeof TOOLS] : undefined;
-  const systemPrompt = SYSTEM_PROMPTS[tool];
+  const systemPrompt = Object.hasOwn(deps.prompts, tool) ? deps.prompts[tool] : undefined;
   if (contract === undefined || systemPrompt === undefined) {
     return { exitCode: 2, stdout: JSON.stringify(failed('WORKER_FAILED', `unknown tool ${tool}`)) };
   }
@@ -46,9 +45,7 @@ export async function runWorker(stdin: string, deps: WorkerDependencies): Promis
       input: input.data.input,
       systemPrompt,
       outputSchema: z.toJSONSchema(contract.data) as Record<string, unknown>,
-      limits: input.data.limits
-        ? { maxTurns: input.data.limits.max_turns, maxBudgetUsd: input.data.limits.max_budget_usd }
-        : DEFAULT_LIMITS,
+      limits: { maxTurns: input.data.limits.max_turns, maxBudgetUsd: input.data.limits.max_budget_usd },
       tools: deps.tools,
     });
     const output: WorkerOutput = {

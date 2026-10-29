@@ -10,14 +10,7 @@ import {
   type ToolName,
   type WorkerOutput,
 } from '@agentic-ai/contracts';
-import {
-  DataUnavailableError,
-  WorkerTimeoutError,
-  WorkerUnavailableError,
-  type ContainerRunner,
-  type RunRegistry,
-  type WorkerLimits,
-} from '../domain/ports.js';
+import { ServiceError, type ContainerRunner, type RunRegistry, type WorkerLimits } from '../domain/ports.js';
 
 function failure(
   code: ErrorCode,
@@ -70,8 +63,7 @@ export class IntentService {
     try {
       return await this.execute(tool, runId, input.data);
     } catch (error) {
-      if (error instanceof DataUnavailableError) return failure('DATA_UNAVAILABLE', error.message, runId);
-      return failure('INTERNAL', describe(error), runId);
+      return failure(error instanceof ServiceError ? error.code : 'INTERNAL', describe(error), runId);
     }
   }
 
@@ -94,10 +86,9 @@ export class IntentService {
       }
       stdout = run.stdout;
     } catch (error) {
-      const code: ErrorCode = error instanceof WorkerTimeoutError ? 'WORKER_TIMEOUT' : 'WORKER_UNAVAILABLE';
-      if (!(error instanceof WorkerTimeoutError) && !(error instanceof WorkerUnavailableError)) throw error;
-      await this.registry.appendEvent(runId, 'worker.exited', { error: code });
-      return this.finish(runId, failure(code, error.message, runId));
+      if (!(error instanceof ServiceError) || error.code === 'DATA_UNAVAILABLE') throw error;
+      await this.registry.appendEvent(runId, 'worker.exited', { error: error.code });
+      return this.finish(runId, failure(error.code, error.message, runId));
     }
 
     const envelope = parseWorkerStdout(stdout);

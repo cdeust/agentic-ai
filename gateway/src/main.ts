@@ -1,8 +1,6 @@
 import { pathToFileURL } from 'node:url';
 import { TOOLS, TOOL_NAMES } from '@agentic-ai/contracts';
 import { CallTool } from './application/call-tool.js';
-import { ListTools } from './application/list-tools.js';
-import { ToolCatalogue } from './domain/catalogue.js';
 import type { AuditLog, Authenticator, Clock, QuotaPolicy, ServiceClient } from './domain/ports.js';
 import { InMemoryAuthenticator, InMemoryQuota, SystemClock } from './infrastructure/in-memory.js';
 import { connectMcpOverHttp } from './infrastructure/mcp-connect.js';
@@ -19,19 +17,16 @@ export interface GatewayDependencies {
   clock: Clock;
 }
 
-/** The catalogue is derived from the shared tool contracts; the gateway owns no tool logic. */
-export function buildCatalogue(): ToolCatalogue {
-  return new ToolCatalogue(
-    TOOL_NAMES.map((name) => ({ name, description: TOOLS[name].description, owner: TOOLS[name].owner })),
-  );
-}
-
 /** Composition root. All wiring of the gateway happens here. */
 export function compose(deps: GatewayDependencies) {
-  const catalogue = buildCatalogue();
-  const callTool = new CallTool(catalogue, deps.auth, deps.quota, deps.services, deps.audit, deps.clock);
-  const listTools = new ListTools(catalogue);
-  return { createServer: () => createGatewayServer(callTool, listTools) };
+  const callTool = new CallTool(deps.auth, deps.quota, deps.services, deps.audit, deps.clock);
+  return { createServer: () => createGatewayServer(callTool) };
+}
+
+/** Every service that owns a tool of the catalogue, and the variable holding its URL (memory -> MEMORY_URL). */
+export function routes(): { service: string; urlVariable: string }[] {
+  const owners = [...new Set(TOOL_NAMES.map((name) => TOOLS[name].owner))];
+  return owners.map((service) => ({ service, urlVariable: `${service.toUpperCase()}_URL` }));
 }
 
 function parseTokens(raw: string): Map<string, { subject: string }> {
@@ -48,12 +43,20 @@ function parseTokens(raw: string): Map<string, { subject: string }> {
 }
 
 async function main(): Promise<void> {
-  const memory = await connectMcpOverHttp(process.env['MEMORY_URL'] ?? 'http://memory:8081/mcp', 'gateway');
+  const connections = new Map(
+    await Promise.all(
+      routes().map(async ({ service, urlVariable }) => {
+        const url = process.env[urlVariable];
+        if (url === undefined || url === '') throw new Error(`${urlVariable} is required`);
+        return [service, await connectMcpOverHttp(url, 'gateway')] as const;
+      }),
+    ),
+  );
   const clock = new SystemClock();
   const app = compose({
     auth: new InMemoryAuthenticator(parseTokens(process.env['GATEWAY_TOKENS'] ?? '')),
     quota: new InMemoryQuota(Number(process.env['QUOTA_PER_MINUTE'] ?? 60), 60_000, clock),
-    services: new McpServiceClient(new Map([['memory', memory]])),
+    services: new McpServiceClient(connections),
     audit: new JsonLinesAuditLog(),
     clock,
   });

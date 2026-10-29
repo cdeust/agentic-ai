@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { QuotaExceededError, ServiceUnavailableError, UnauthorizedError } from '../../src/domain/errors.js';
 import type { AuditLog, Authenticator, QuotaPolicy, ServiceClient } from '../../src/domain/ports.js';
 
 /** Contract of the Authenticator port: `valid` is a token the adapter accepts for `subject`. */
@@ -12,9 +11,9 @@ export function authenticatorContract(
     it('resolves a valid token to its identity', async () => {
       expect(await make().authenticate({ token: valid.token })).toEqual({ subject: valid.subject });
     });
-    it('rejects a missing or unknown token with UnauthorizedError', async () => {
-      await expect(make().authenticate({})).rejects.toBeInstanceOf(UnauthorizedError);
-      await expect(make().authenticate({ token: 'nope' })).rejects.toBeInstanceOf(UnauthorizedError);
+    it('rejects a missing or unknown token with UNAUTHORIZED', async () => {
+      await expect(make().authenticate({})).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+      await expect(make().authenticate({ token: 'nope' })).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
     });
   });
 }
@@ -22,10 +21,12 @@ export function authenticatorContract(
 /** Contract of the QuotaPolicy port: the adapter allows exactly `limit` calls per identity and tool, then refuses. */
 export function quotaContract(name: string, make: () => QuotaPolicy, limit: number): void {
   describe(`QuotaPolicy contract: ${name}`, () => {
-    it('allows up to the limit then throws QuotaExceededError', async () => {
+    it('allows up to the limit then throws QUOTA_EXCEEDED', async () => {
       const quota = make();
       for (let i = 0; i < limit; i += 1) await quota.consume({ subject: 'a' }, 'recall');
-      await expect(quota.consume({ subject: 'a' }, 'recall')).rejects.toBeInstanceOf(QuotaExceededError);
+      await expect(quota.consume({ subject: 'a' }, 'recall')).rejects.toMatchObject({
+        code: 'QUOTA_EXCEEDED',
+      });
     });
     it('counts per identity and per tool', async () => {
       const quota = make();
@@ -56,8 +57,10 @@ export function serviceClientContract(name: string, make: () => ServiceClient): 
       const response = await make().invoke('memory', 'recall', { query: 'q' });
       expect(response).toMatchObject({ isError: false, structured: { ok: true } });
     });
-    it('throws ServiceUnavailableError for a service it cannot reach', async () => {
-      await expect(make().invoke('ghost', 'recall', {})).rejects.toBeInstanceOf(ServiceUnavailableError);
+    it('throws SERVICE_UNAVAILABLE for a service it cannot reach', async () => {
+      await expect(make().invoke('ghost', 'recall', {})).rejects.toMatchObject({
+        code: 'SERVICE_UNAVAILABLE',
+      });
     });
   });
 }

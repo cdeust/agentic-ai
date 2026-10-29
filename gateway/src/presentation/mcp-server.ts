@@ -1,8 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { TOOLS, type ToolName } from '@agentic-ai/contracts';
+import { TOOLS, TOOL_NAMES } from '@agentic-ai/contracts';
 import type { z } from 'zod';
 import type { CallTool } from '../application/call-tool.js';
-import type { ListTools } from '../application/list-tools.js';
 import { GatewayError } from '../application/errors.js';
 
 function errorResult(error: unknown) {
@@ -11,23 +10,22 @@ function errorResult(error: unknown) {
   return { content: [{ type: 'text' as const, text: JSON.stringify({ code, message }) }], isError: true };
 }
 
-/** The single MCP server clients see. It only translates MCP to the CallTool use case and back. */
-export function createGatewayServer(callTool: CallTool, listTools: ListTools): McpServer {
+/** The single MCP server clients see: the contract catalogue, each call translated to the CallTool use case. */
+export function createGatewayServer(callTool: CallTool): McpServer {
   const server = new McpServer({ name: 'agentic-ai-gateway', version: '0.1.0' });
-  for (const descriptor of listTools.execute()) {
-    const contract = TOOLS[descriptor.name as ToolName] as (typeof TOOLS)[ToolName] | undefined;
-    if (contract === undefined) continue;
+  for (const name of TOOL_NAMES) {
+    const contract = TOOLS[name];
     server.registerTool(
-      descriptor.name,
+      name,
       {
-        description: descriptor.description,
+        description: contract.description,
         inputSchema: contract.input as z.ZodObject,
         outputSchema: contract.output as z.ZodObject,
       },
       async (args: Record<string, unknown>, extra) => {
         try {
           const response = await callTool.execute({
-            tool: descriptor.name,
+            tool: name,
             args,
             presented: { token: extra.authInfo?.token },
           });

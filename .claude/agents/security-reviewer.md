@@ -1,6 +1,6 @@
 ---
 name: security-reviewer
-description: Use this agent to review security of a change. Examples: a PR touches secrets handling, a worker, the Docker runner, compose.yaml, networks, the gateway auth path, or any SQL; a PR adds a dependency.
+description: 'Use this agent to review security of a change. Examples: a PR touches secrets handling, a worker, the Docker runner, compose.yaml, networks, the gateway auth path, or any SQL; a PR adds a dependency.'
 tools: Glob, Grep, Read, Bash
 model: inherit
 ---
@@ -21,7 +21,7 @@ Check against the threat model (STRIDE) of this system:
 
 **Data access**
 
-- `pg` and SQL only in `data/src/infrastructure`; every query parameterised; no operation that accepts free-form SQL; no string-built SQL from user input.
+- `pg` only in `data/src/infrastructure`; SQL only in `data/sql/` and `data/migrations/`; every query parameterised (`$n` bound from `data/sql/operations.json`); no operation that accepts free-form SQL; no string-built SQL from user input.
 - Worker output is untrusted: validated against the tool schema before use or storage.
 
 **Gateway**

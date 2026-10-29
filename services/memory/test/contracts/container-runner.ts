@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { WorkerTimeoutError, type ContainerRunner } from '../../src/domain/ports.js';
+import type { ContainerRunner } from '../../src/domain/ports.js';
 
 export interface RunnerHarness {
   /** A runner whose worker prints `stdout` and exits with `exitCode`. */
@@ -8,7 +8,15 @@ export interface RunnerHarness {
   hanging(): ContainerRunner;
 }
 
-const REQUEST = { input: { run_id: 'r1', tool: 'recall', input: { query: 'q' } }, timeoutMs: 50 };
+const REQUEST = {
+  input: {
+    run_id: 'r1',
+    tool: 'recall',
+    input: { query: 'q' },
+    limits: { max_turns: 1, max_budget_usd: 0.1 },
+  },
+  timeoutMs: 50,
+};
 
 /** Behavioural contract every ContainerRunner adapter must satisfy. */
 export function containerRunnerContract(name: string, harness: RunnerHarness): void {
@@ -21,8 +29,8 @@ export function containerRunnerContract(name: string, harness: RunnerHarness): v
       expect((await harness.responding('', 3).run(REQUEST)).exitCode).toBe(3);
     });
 
-    it('rejects with WorkerTimeoutError when the worker exceeds the timeout', async () => {
-      await expect(harness.hanging().run(REQUEST)).rejects.toBeInstanceOf(WorkerTimeoutError);
+    it('rejects with WORKER_TIMEOUT when the worker exceeds the timeout', async () => {
+      await expect(harness.hanging().run(REQUEST)).rejects.toMatchObject({ code: 'WORKER_TIMEOUT' });
     });
   });
 }
