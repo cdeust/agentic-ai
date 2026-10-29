@@ -1,0 +1,7 @@
+.git
+.claude
+node_modules
+**/node_modules
+**/dist
+**/*.tsbuildinfo
+.env*

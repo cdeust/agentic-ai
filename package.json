@@ -1,51 +1,34 @@
 {
   "name": "agentic-ai",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
-  "description": "Unified TS monorepo: memory + codebase + reasoning + PRD pipeline. Anthropic agent SDK + MCP.",
+  "description": "Four-tier MCP architecture: proxy, gateway, intent services with sandboxed agent workers, typed data layer.",
+  "license": "MIT",
+  "type": "module",
   "engines": {
-    "node": ">=20.0.0",
-    "pnpm": ">=10.0.0"
+    "node": ">=26.0.0"
   },
-  "packageManager": "pnpm@10.0.0",
+  "workspaces": [
+    "packages/contracts",
+    "data",
+    "gateway",
+    "services/memory"
+  ],
   "scripts": {
-    "build": "pnpm -r --workspace-concurrency=1 build",
+    "typecheck": "tsc -b",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "lint": "eslint . --max-warnings=0",
-    "typecheck": "pnpm -r --if-present run typecheck",
-    "parity": "vitest run --config parity-oracle/vitest.parity.config.ts",
-    "bench:cortex": "node packages/parity-benchmark/dist/cli.js cortex-locomo",
-    "bench:codebase": "vitest run packages/codebase/__tests__/parity/index_codebase.parity.test.ts",
-    "layer-check": "tsx scripts/check-layer-imports.ts",
-    "layer-check:self-test": "tsx scripts/check-layer-imports.ts --self-test",
-    "source-citation-check": "bash scripts/check-source-citations.sh",
-    "audit-migration": "bash scripts/audit-migration.sh",
-    "prepare": "husky",
-    "verify": "pnpm install --frozen-lockfile && pnpm build && pnpm lint && pnpm typecheck && pnpm layer-check && pnpm test && pnpm parity",
-    "spawn": "./scripts/spawn-worktree.sh",
-    "worktrees": "git worktree list"
+    "arch": "depcruise --config .dependency-cruiser.cjs packages data gateway services",
+    "lint": "npm run format:check --silent && npm run typecheck --silent",
+    "check": "npm run typecheck && npm run format:check && npm run test && npm run arch"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^8.0.0",
-    "@typescript-eslint/parser": "^8.0.0",
-    "esbuild": "0.28.0",
-    "eslint": "^9.0.0",
-    "husky": "^9.0.0",
-    "tsx": "^4.0.0",
-    "typescript": "^5.6.0",
-    "vitest": "^4.1.0"
-  },
-  "license": "MIT",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "better-sqlite3"
-    ],
-    "overrides": {
-      "protobufjs": ">=7.5.5",
-      "@fastify/static": ">=9.1.1",
-      "ip-address": ">=10.1.1",
-      "mathjs": ">=15.2.0"
-    }
+    "@types/node": "26.6.6",
+    "dependency-cruiser": "18.7.0",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5",
+    "yaml": "2.9.1"
   }
 }

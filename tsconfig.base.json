@@ -1,38 +1,24 @@
 {
-  "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["ES2022"],
+    "target": "ES2023",
+    "lib": ["ES2023"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-
+    "types": ["node"],
     "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "strictBindCallApply": true,
-    "strictPropertyInitialization": true,
-    "alwaysStrict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "noPropertyAccessFromIndexSignature": false,
-
-    "skipLibCheck": true,
-    "isolatedModules": true,
+    "exactOptionalPropertyTypes": false,
     "verbatimModuleSyntax": true,
-    "resolveJsonModule": true,
-
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "composite": true,
     "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "incremental": true,
-
-    "outDir": "dist",
-    "rootDir": "src"
-  },
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/__tests__/**"]
+    "declarationMap": false,
+    "sourceMap": false,
+    "paths": {
+      "@agentic-ai/contracts": ["./packages/contracts/src/index.ts"]
+    }
+  }
 }

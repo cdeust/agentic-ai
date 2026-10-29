@@ -1,0 +1,109 @@
+# Local stack: proxy -> gateway -> memory -> (worker containers on exec) and data -> postgres.
+# Networks are separate on purpose; see docs/infrastructure.md.
+#   public  proxy only (the single published port)
+#   app     proxy, gateway, memory, data
+#   exec    memory and the worker containers it launches; no route to data or postgres
+#   data    data and postgres
+# `internal: true` networks have no route to the outside; workers reach Anthropic only through the secrets broker (BROKER_URL).
+name: agentic-ai
+
+services:
+  proxy:
+    image: caddy:2.11.7-alpine
+    ports:
+      - '127.0.0.1:8080:8080'
+    volumes:
+      - ./proxy/Caddyfile:/etc/caddy/Caddyfile:ro
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    depends_on: [gateway]
+    networks: [public, app]
+
+  gateway:
+    build:
+      context: .
+      args:
+        ENTRY: gateway/dist/src/main.js
+    environment:
+      PORT: '8080'
+      MEMORY_URL: http://memory:8081/mcp
+      GATEWAY_TOKENS: ${GATEWAY_TOKENS:?set GATEWAY_TOKENS in the local env file, e.g. dev-token=alice}
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    depends_on: [memory]
+    networks: [app]
+
+  memory:
+    build:
+      context: .
+      args:
+        ENTRY: services/memory/dist/src/main.js
+    environment:
+      PORT: '8081'
+      INTERNAL_PORT: '8083'
+      DATA_URL: http://data:8082
+      WORKER_IMAGE: agentic-ai/memory-worker:local
+      WORKER_NETWORK: agentic-ai_exec
+      INTERNAL_TOOLS_URL: http://memory:8083
+      BROKER_URL: ${BROKER_URL:-http://broker:8090}
+    # LOCAL ONLY: launching worker containers needs the Docker API. The socket is root-equivalent;
+    # production replaces DockerContainerRunner with an orchestrator adapter (docs/design.md, ADR 4).
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    depends_on: [data]
+    networks: [app, exec]
+
+  data:
+    build:
+      context: .
+      args:
+        ENTRY: data/dist/src/main.js
+    environment:
+      PORT: '8082'
+      DATABASE_URL: postgres://agentic:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in the local env file}@postgres:5432/agentic
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [app, data]
+
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: agentic
+      POSTGRES_DB: agentic
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in the local env file}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U agentic -d agentic']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks: [data]
+
+  # Built on demand so `docker compose build` produces the image memory launches; it is not started as a service.
+  memory-worker:
+    build:
+      context: .
+      dockerfile: services/memory/worker/Dockerfile
+    image: agentic-ai/memory-worker:local
+    profiles: [build-only]
+
+networks:
+  public: {}
+  app:
+    internal: true
+  exec:
+    internal: true
+  data:
+    internal: true
+
+volumes:
+  postgres-data: {}

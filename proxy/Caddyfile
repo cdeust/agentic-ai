@@ -1,0 +1,17 @@
+# The only component exposed to the outside. It terminates TLS in production and forwards two paths.
+# Local: plain HTTP on :8080 (see compose.yaml). Production: replace :8080 with the site address to get automatic HTTPS.
+:8080 {
+	handle /healthz {
+		respond "ok" 200
+	}
+
+	handle /mcp {
+		reverse_proxy gateway:8080
+	}
+
+	handle {
+		respond "not found" 404
+	}
+
+	header -Server
+}
