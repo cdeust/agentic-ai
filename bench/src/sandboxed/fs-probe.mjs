@@ -7,7 +7,7 @@ const res = {};
 for (const { k, op, p } of ops) {
   try {
     if (op === 'read') { const d = fs.readFileSync(p, 'utf8'); res[k] = d.includes('CANA' + 'RY-') ? 'LU-CANARI' : 'OK'; }
-    else if (op === 'readdir') { fs.readdirSync(p); res[k] = 'OK'; }
+    else if (op === 'readdir') { const names = fs.readdirSync(p); res[k] = names.length ? 'LISTE:' + names.join(',') : 'VIDE'; }
     else if (op === 'write') { fs.writeFileSync(p, 'x'); res[k] = 'OK'; }
     else if (op === 'mkdirwrite') { fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, 'x'); res[k] = 'OK'; }
     else if (op === 'import') { await import(pathToFileURL(p).href); res[k] = 'OK'; }

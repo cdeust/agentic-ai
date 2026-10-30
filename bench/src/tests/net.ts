@@ -37,7 +37,7 @@ await run('T-03c', 'liste 127.0.0.1:port, connexion directe : refusee', { allowe
 await run('T-03d', 'liste, NODE_USE_ENV_PROXY sans vider NO_PROXY : refusee', { allowedDomains: [`127.0.0.1:${port}`] }, 'proxy', String(port), ['env', 'NODE_USE_ENV_PROXY=1'], false);
 await run('T-03e', 'liste 127.0.0.1:port, via proxy (NO_PROXY vide) : atteint', { allowedDomains: [`127.0.0.1:${port}`] }, 'proxy', String(port), clear, true);
 // f : documente. macOS : allowLocalBinding ouvre tout le loopback sans proxy (residu). Linux : ignore, netns propre (README).
-await run('T-03f', `allowLocalBinding, connexion directe (${osName === 'macos' ? 'macOS : atteint = residu documente' : 'Linux : ignore, doit etre refuse'})`, { allowLocalBinding: true }, 'direct', String(port), [], osName !== 'macos', osName === 'macos');
+await run('T-03f', `allowLocalBinding, connexion directe (${osName === 'macos' ? 'macOS : atteint = residu documente' : 'Linux : ignore, doit etre refuse'})`, { allowLocalBinding: true }, 'direct', String(port), [], false, osName === 'macos');
 const u = await run('T-03U', 'reseau nul, socket Unix de l\'hote : refuse', {}, 'unix', sockPath, [], false);
 
 const i2ok = !a.reached && !b.reached && !u.reached && a.hostSaw === 0 && u.hostSaw === 0;

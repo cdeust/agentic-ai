@@ -60,6 +60,7 @@ export function record(id: string, title: string, command: string, result: Resul
  * en dehors de toute zone inscriptible. */
 export interface World {
   root: string;
+  tmp: string;
   home: string;
   work: string;
   profiles: string;
@@ -70,6 +71,10 @@ export function makeWorld(name: string): World {
   const home = path.join(root, 'home');
   const work = path.join(home, 'work');
   const profiles = path.join(root, 'profiles');
+  // srt fixe TMPDIR=/tmp/claude dans la sandbox (ou CLAUDE_CODE_TMPDIR) sans le creer : tsx et Claude Code y font un mkdir non recursif.
+  // Le banc cree un tmp par monde, le transmet par CLAUDE_CODE_TMPDIR et l'ajoute a allowWrite (exigence d'hote decouverte sur le runner).
+  const tmp = path.join(root, 'tmp');
+  mkdirSync(tmp, { recursive: true });
   mkdirSync(path.join(home, '.ssh'), { recursive: true });
   mkdirSync(work, { recursive: true });
   mkdirSync(profiles, { recursive: true });
@@ -77,7 +82,7 @@ export function makeWorld(name: string): World {
   writeFileSync(path.join(home, '.ssh', 'id_test'), canary);
   writeFileSync(path.join(home, '.zshrc'), 'export CANARY_RC=1\n');
   maskValue(canary);
-  return { root, home, work, profiles, canary };
+  return { root, tmp, home, work, profiles, canary };
 }
 
 export interface ProfileOpts {
@@ -88,6 +93,8 @@ export interface ProfileOpts {
   denyWrite?: string[];
   allowUnixSockets?: string[];
   allowLocalBinding?: boolean;
+  /** Repertoires temporaires inscriptibles de la sandbox (defaut : w.tmp). */
+  tmp?: string[];
 }
 export function writeProfile(w: World, name: string, o: ProfileOpts): string {
   const net: Record<string, unknown> = { allowedDomains: o.allowedDomains ?? [], deniedDomains: [], strictAllowlist: true };
@@ -96,7 +103,7 @@ export function writeProfile(w: World, name: string, o: ProfileOpts): string {
   const fsCfg: Record<string, unknown> = {
     denyRead: o.denyRead ?? ['~'],
     allowRead: o.allowRead ?? [w.work],
-    allowWrite: o.allowWrite ?? [w.work],
+    allowWrite: [...(o.allowWrite ?? [w.work]), ...(o.tmp ?? [w.tmp])],
     denyWrite: o.denyWrite ?? [],
   };
   const file = path.join(w.profiles, `${name}.srt.json`);
@@ -107,6 +114,7 @@ export function writeProfile(w: World, name: string, o: ProfileOpts): string {
 export const baseEnv = (w: World, extra: Record<string, string> = {}): Record<string, string> => ({
   PATH: process.env['PATH'] ?? '/usr/bin:/bin',
   HOME: w.home,
+  CLAUDE_CODE_TMPDIR: w.tmp,
   ...extra,
 });
 
