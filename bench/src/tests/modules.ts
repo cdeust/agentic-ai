@@ -70,7 +70,8 @@ try {
     fetch_external: refusedFetch(probe['fetch_external']),
     fetch_host_loopback: refusedFetch(probe['fetch_host_loopback']),
     read_ssh: probe['read_ssh'] !== 'LU',
-    list_home: probe['list_home'] !== 'LU',
+    // Linux masque ~ par un tmpfs : la liste peut reussir mais ne montre rien de sensible ; macOS refuse (EPERM).
+    list_home: !/\.ssh|\.zshrc/.test(probe['list_home'] ?? '.ssh'),
     host_tcp_untouched: tcpConns === 0,
     host_pg_untouched: pgConns === 0,
     tools_call_works: e === 'bonjour',

@@ -93,7 +93,7 @@ async function runWorker(name: string, prompt: string, up: Upstream, opts: { onS
     !Object.values(leaks).some(Boolean) && injected && r.broker.clientKeys.length > 0 && r.broker.clientKeys.every((k) => k === 'aucune-cle-ici') && result === 'success:fin' ? 'pass' : 'fail',
     `fuites=${JSON.stringify(leaks)} amont_recoit_la_cle_du_broker=${injected} cles_envoyees_par_le_worker=${JSON.stringify([...new Set(r.broker.clientKeys)])} fichiers=${keyInFiles.length} proxy_env=${JSON.stringify(proofs['proxy_env'])}`);
 
-  const sshOk = proofs['ssh_read'] !== 'LU' && proofs['ssh_read'] !== undefined && proofs['home_list'] !== 'LU' && !r.output.includes(r.w.canary) && !r.stderr.includes(r.w.canary);
+  const sshOk = proofs['ssh_read'] !== 'LU' && proofs['ssh_read'] !== undefined && !/\.ssh|\.zshrc/.test(String(proofs['home_list'])) && !r.output.includes(r.w.canary) && !r.stderr.includes(r.w.canary);
   record('T-41c', 'le worker ne peut pas lire ~/.ssh (faux HOME, canari) ni lister ~', cmd, sshOk ? 'pass' : 'fail', `ssh_read=${String(proofs['ssh_read'])} home_list=${String(proofs['home_list'])} home=${String(proofs['home'])} canari_visible_cote_hote=${r.output.includes(r.w.canary)}`);
 
   record('T-41d', 'sandbox imbriquee evitee : un seul srt (celui de l\'hote) ; le binaire Claude Code est un enfant simple du worker', cmd,

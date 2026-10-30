@@ -90,6 +90,20 @@ function check(id: string, title: string, cmd: string, json: Record<string, stri
     `retour sandbox=${JSON.stringify(r3.json)} hook_persiste=${p3.length > 0} config_modifiee=${configChanged}`);
 }
 {
+  // Correction candidate (une variable : denyWrite explicite) : srt Linux ne protege que les chemins deja presents ; on nomme les chemins.
+  const base = path.join(w.root, 'builder-explicit');
+  mkdirSync(path.join(base, 'repo', '.git', 'hooks'), { recursive: true });
+  const targets = [
+    path.join(base, '.git', 'hooks', 'pre-commit'), path.join(base, '.git', 'config'), path.join(base, '.mcp.json'), path.join(base, '.claude', 'agents', 'a.md'),
+    path.join(base, 'repo', '.git', 'hooks', 'pre-commit'), path.join(base, 'repo', '.git', 'config'),
+  ];
+  const deny = [path.join(base, '.git', 'hooks'), path.join(base, '.git', 'config'), path.join(base, '.mcp.json'), path.join(base, '.claude'), path.join(base, 'repo', '.git', 'hooks'), path.join(base, 'repo', '.git', 'config')];
+  const r = await probeRun('p3d', { allowRead: [base, pdir], allowWrite: [base], denyWrite: deny }, targets.map((p, i) => ({ k: `t${i}`, op: 'mkdirwrite', p })), base);
+  const persistedNow = targets.filter((p) => existsSync(p));
+  record('T-02e4', 'avec denyWrite explicite (.git/hooks, .git/config, .mcp.json, .claude ; racine et depot imbrique) : rien ne persiste sur l\'hote', r.cmd, r.json && persistedNow.length === 0 ? 'pass' : 'fail',
+    `retour sandbox=${JSON.stringify(r.json)} persistes_sur_l_hote=${JSON.stringify(persistedNow.map((p) => path.relative(base, p)))}`);
+}
+{
   const f = await probeRun('p4', {}, [{ k: 'import-inst', op: 'import', p: path.join(inst, 'mod.mjs') }]);
   check('T-02f', 'module sous ~ sans allowRead : import refuse', f.cmd, f.json, f.run, { 'import-inst': 'refuse' });
   const g = await probeRun('p5', { allowRead: [w.work, pdir, inst] }, [{ k: 'import-inst', op: 'import', p: path.join(inst, 'mod.mjs') }]);

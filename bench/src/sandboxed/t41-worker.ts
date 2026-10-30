@@ -22,7 +22,7 @@ const proofs: Record<string, unknown> = {
   home: homedir(),
   pid: process.pid,
   ssh_read: tryFs(() => readFileSync(path.join(homedir(), '.ssh', 'id_test'))),
-  home_list: tryFs(() => readdirSync(homedir())),
+  home_list: (() => { try { return `LISTE:${readdirSync(homedir()).join(',')}`; } catch (e) { return (e as NodeJS.ErrnoException).code ?? 'ERR'; } })(),
   env_entries: Object.entries(process.env).map(([k, v]) => `${k}=${v}`),
   proxy_env: Object.keys(process.env).filter((k) => /proxy/i.test(k)),
 };

@@ -30,7 +30,7 @@ server.registerTool('probe', { description: 'tentatives interdites', inputSchema
       fetch_external: await tryFetch('https://example.com'),
       fetch_host_loopback: await tryFetch(`http://127.0.0.1:${tcpPort}/`),
       read_ssh: tryFs(() => readFileSync(canary)),
-      list_home: tryFs(() => readdirSync(home)),
+      list_home: (() => { try { return `LISTE:${readdirSync(home).join(',')}`; } catch (e) { return (e as NodeJS.ErrnoException).code ?? 'ERR'; } })(),
     }));
 server.registerTool('listen_http', { description: 'tente d ecouter en HTTP', inputSchema: {} }, async () => {
   const srv = http.createServer((_q, r) => r.end('module-http'));
