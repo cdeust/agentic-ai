@@ -25,7 +25,7 @@ Cases: `recall` after `remember` returns `status: ok` with validated data, evide
 
 ## Port contracts
 
-A contract suite is a function taking a factory for the adapter under test. Adding an adapter means adding one line that calls the suite. Example: `dataStoreContract('postgres', ...)` in `data/test/infrastructure/sql-store.test.ts` runs the SQL files through `SqlDataStore` and is skipped unless `TEST_DATABASE_URL` points at a disposable Postgres with pgvector; the same suite runs on the in-memory store on every `npm test`.
+A contract is one Gherkin `Scenario Outline` per case with one `Examples` row per adapter. Adding an adapter means adding one row to each outline. Example: `data/features/data-store-contract.feature` runs the same six cases on `in-memory` and on `postgres`; the postgres rows are tagged `@postgres`, and the hook `features/support/postgres.ts` starts a disposable Postgres 17 (unix socket only, pgvector) the first time one runs, from `PG_BIN` or the `pg_ctl` found on `PATH`, with a fresh database per scenario. Without a PostgreSQL the scenario fails; it is never skipped.
 
 ## Descriptive files
 
@@ -33,7 +33,7 @@ Each descriptive file is loaded by its test exactly as production loads it, chec
 
 | File                                                                    | Test                                             | Broken copies rejected                                                                                  |
 | ----------------------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| `data/sql/operations.json` and `data/sql/*.sql`                         | `data/test/infrastructure/sql-store.test.ts`     | missing or unknown operation, `$n` count different from `params`, unknown field, missing file, not JSON |
+| `data/sql/operations.json` and `data/sql/*.sql`                         | `data/features/sql-store.feature`                | missing or unknown operation, `$n` count different from `params`, unknown field, missing file, not JSON |
 | `services/memory/worker/prompts/<tool>.md`                              | `services/memory/test/worker/run-worker.test.ts` | missing prompt, empty prompt                                                                            |
 | `.claude/agents/*.md`, `.claude/commands/*.md`, `.claude/settings.json` | `test/descriptive/claude-files.test.ts`          | no frontmatter, missing `description`, misspelt field                                                   |
 | `compose.yaml`                                                          | `test/infra/compose.test.ts`                     | (zone assertions)                                                                                       |
@@ -52,7 +52,7 @@ rm gateway/src/application/zz-tmp.ts && npm run arch                      # gree
 ## Known gaps
 
 - `services/memory/worker/sdk-agent.ts` is not exercised against the live SDK in the default suite (needs the broker and an API key).
-- The SQL files run against a real database only when `TEST_DATABASE_URL` is set; without it, the statement table, parameter binding and migration order are asserted without a database.
+- The SQL files run against a real Postgres through the `@postgres` scenarios of `data/features/data-store-contract.feature`; the statement table, parameter binding and migration order are also asserted without a database in `data/features/sql-store.feature`.
 - Docker images and `docker compose up` are not exercised by CI; `compose.yaml` is validated structurally.
 
 ## Checklist for a new brick

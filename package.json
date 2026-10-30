@@ -21,9 +21,10 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
+    "test:features": "cucumber-js",
     "arch": "depcruise --config .dependency-cruiser.cjs packages data gateway services",
     "lint": "npm run format:check --silent && npm run typecheck --silent",
-    "check": "npm run typecheck && npm run format:check && npm run test && npm run arch"
+    "check": "npm run typecheck && npm run format:check && npm run test && npm run test:features && npm run arch"
   },
   "devDependencies": {
     "@cucumber/cucumber": "12.9.0",

@@ -8,3 +8,4 @@ coverage/
 .claude/settings.local.json
 scripts/gate.sh
 .claude/worktrees/
+reports/
