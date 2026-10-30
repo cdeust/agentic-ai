@@ -98,6 +98,24 @@ module.exports = {
       from: { pathNot: '^(gateway|services/[^/]+)/(src/(presentation|infrastructure)|test)/' },
       to: { path: '(^|/)node_modules/@modelcontextprotocol/sdk(/|$)' },
     },
+    {
+      name: 'child-process-only-in-sandbox',
+      comment:
+        'Process launching lives behind the SandboxRunner port (docs/design/platform-v3-srt.md, §6). Named exception: ' +
+        'services/memory/src/infrastructure/docker-runner.ts, which moves behind the port in brick 1b.1.',
+      severity: 'error',
+      from: {
+        pathNot: ['^packages/sandbox/', '^services/memory/src/infrastructure/docker-runner\\.ts$'],
+      },
+      to: { path: '^(node:)?child_process$', dependencyTypes: ['core'] },
+    },
+    {
+      name: 'sandbox-runtime-only-in-sandbox',
+      comment: 'srt (@anthropic-ai/sandbox-runtime) is reached only by packages/sandbox (platform-v3-srt.md, §6).',
+      severity: 'error',
+      from: { pathNot: '^packages/sandbox/' },
+      to: { path: '(^|/)node_modules/@anthropic-ai/sandbox-runtime(/|$)' },
+    },
   ],
   options: {
     doNotFollow: { path: 'node_modules' },
