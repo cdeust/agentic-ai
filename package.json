@@ -10,11 +10,13 @@
   },
   "workspaces": [
     "packages/contracts",
+    "packages/sandbox",
     "data",
     "gateway",
     "services/memory"
   ],
   "scripts": {
+    "code": "node --import tsx packages/sandbox/src/code.ts",
     "typecheck": "tsc -b",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -24,7 +26,6 @@
     "check": "npm run typecheck && npm run format:check && npm run test && npm run arch"
   },
   "devDependencies": {
-    "@anthropic-ai/sandbox-runtime": "0.0.81",
     "@cucumber/cucumber": "12.9.0",
     "@cucumber/gherkin": "38.0.0",
     "@cucumber/messages": "32.3.1",

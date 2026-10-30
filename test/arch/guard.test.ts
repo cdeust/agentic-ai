@@ -91,6 +91,21 @@ const FIXTURES: { file: string; code: string; rule: string }[] = [
     rule: 'contracts-has-no-component-dependency',
   },
   {
+    file: 'gateway/src/infrastructure/zz-fixture-spawn.ts',
+    code: "import 'node:child_process';",
+    rule: 'child-process-only-in-sandbox',
+  },
+  {
+    file: 'services/memory/src/infrastructure/zz-fixture-spawn.ts',
+    code: "import 'child_process';",
+    rule: 'child-process-only-in-sandbox',
+  },
+  {
+    file: 'gateway/src/infrastructure/zz-fixture-srt.ts',
+    code: "import '@anthropic-ai/sandbox-runtime';",
+    rule: 'sandbox-runtime-only-in-sandbox',
+  },
+  {
     file: 'data/src/domain/zz-fixture-cycle-a.ts',
     code: "import './zz-fixture-cycle-b.js';\nexport const a = 1;",
     rule: 'no-circular',

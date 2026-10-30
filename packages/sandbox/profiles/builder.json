@@ -1,0 +1,79 @@
+{
+  "description": "Profil builder de la brique 1a.0 (docs/design/platform-v3-srt.md, §8 ; journal, §14 et §15). Aucun secret ne franchit la frontière : Claude Code tourne avec un dossier de configuration propre à la sandbox et un jeton de session, et ne joint le modèle que par le proxy d'authentification de l'hôte. Variables : ${home}, ${repo}, ${worktree}, ${worktreeName}, ${tmp} et ${config} (adaptateur), ${authProxyPort} et ${sessionToken} (lanceur).",
+  "srt": {
+    "network": {
+      "allowedDomains": ["127.0.0.1:${authProxyPort}", "registry.npmjs.org"],
+      "deniedDomains": []
+    },
+    "filesystem": {
+      "denyRead": [
+        "${home}/.ssh",
+        "${home}/.aws",
+        "${home}/.gnupg",
+        "${home}/.config/gh",
+        "${home}/.npmrc",
+        "${home}/.netrc",
+        "${home}/.claude",
+        "${home}/.claude.json",
+        "${home}/Library/Keychains"
+      ],
+      "allowWrite": [
+        "${worktree}",
+        "${repo}/.git/worktrees/${worktreeName}",
+        "${repo}/.git/objects",
+        "${repo}/.git/refs",
+        "${repo}/.git/logs",
+        "${home}/.cache",
+        "${config}",
+        "${tmp}"
+      ],
+      "denyWrite": [
+        "${repo}/.git/hooks",
+        "${repo}/.git/config",
+        "${repo}/.git/worktrees/${worktreeName}/commondir",
+        "${repo}/.git/worktrees/${worktreeName}/gitdir",
+        "${repo}/.git/worktrees/${worktreeName}/config.worktree",
+        "${repo}/.git/refs/heads/main",
+        "${worktree}/.claude/settings.json",
+        "${worktree}/.claude/settings.local.json",
+        "${config}/settings.json"
+      ]
+    },
+    "allowPty": true
+  },
+  "env": {
+    "pass": [
+      "HOME",
+      "USER",
+      "LOGNAME",
+      "PATH",
+      "SHELL",
+      "TERM",
+      "COLORTERM",
+      "TERM_PROGRAM",
+      "LANG",
+      "LC_ALL",
+      "LC_CTYPE"
+    ],
+    "set": {
+      "CLAUDE_CODE_TMPDIR": "${tmp}",
+      "CLAUDE_CONFIG_DIR": "${config}",
+      "ANTHROPIC_BASE_URL": "http://127.0.0.1:${authProxyPort}",
+      "CLAUDE_CODE_OAUTH_TOKEN": "${sessionToken}",
+      "npm_config_cache": "${home}/.cache/npm"
+    },
+    "unset": ["NO_PROXY", "no_proxy"]
+  },
+  "files": {
+    "${config}/settings.json": {
+      "sandbox": { "enabled": false }
+    },
+    "${config}/.claude.json": {
+      "hasCompletedOnboarding": true,
+      "projects": {
+        "${repo}": { "hasTrustDialogAccepted": true },
+        "${worktree}": { "hasTrustDialogAccepted": true }
+      }
+    }
+  }
+}

@@ -1,10 +1,26 @@
 {
   "files": [],
   "references": [
-    { "path": "packages/contracts" },
-    { "path": "data" },
-    { "path": "gateway" },
-    { "path": "services/memory" },
-    { "path": "test/integration" }
+    {
+      "path": "packages/contracts"
+    },
+    {
+      "path": "packages/sandbox"
+    },
+    {
+      "path": "data"
+    },
+    {
+      "path": "gateway"
+    },
+    {
+      "path": "services/memory"
+    },
+    {
+      "path": "test/integration"
+    },
+    {
+      "path": "plugins/builder-guard"
+    }
   ]
 }
