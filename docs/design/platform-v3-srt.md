@@ -19,7 +19,7 @@ Mesures v3 : M1, tokens de contexte client par tâche, en baisse ; M2, tokens to
 | Pilier | Fait | Prévu | Sans objet |
 |---|---|---|---|
 | Recherche | Banc Linux et macOS, 106 tests, échecs conservés, run 41044838678, une commande : `cd bench && npm run bench:sandbox` | TUI de 1a.0 ; banc rejoué à chaque montée de srt (T-54) ; M1, M2, R aux briques 1c à 3 ; baseline à la brique 0 | |
-| SSDLC | STRIDE court et risques acceptés (§4), R-10 fermé ; dépendances épinglées, lockfile (§4.3) | SBOM en 1c ; SAST = porte de tests, brique 1a ; DAST = `escape.feature`, brique 1b | |
+| SSDLC | STRIDE court et risques acceptés (§4), usurpation d'une task hors des appels actifs refusée, confusion entre appels concurrents d'un même module acceptée (R-10) ; dépendances épinglées, lockfile (§4.3) | SBOM en 1c ; SAST = porte de tests, brique 1a ; DAST = `escape.feature`, brique 1b | |
 | Opérationnel | Moindre privilège par profil (§5) ; aucun secret lu pour écrire ce document | Clé API seule dans le broker, brique 1b ; sur serveur un uid propre au broker, brique D | IRB : aucune donnée humaine ; à revoir en brique 4 si la mémoire en reçoit |
 
 ## 2. Topologie
@@ -31,7 +31,7 @@ Mesures v3 : M1, tokens de contexte client par tâche, en baisse ; M2, tokens to
  natifs, quatre exceptions prouvées
     gateway      seul point de décision, seul parent des sandboxes ; auth, profils,
                  calls_allowed, writes_tables, identifiants d'appel, budgets (décision),
-                 registre, max_result_tokens, tasks MCP et task.wait (v3)
+                 registre, max_result_tokens
     broker       seul détenteur de la clé API ; exécute réserve et règlement ; POST /v1/messages seul
     data         seul importeur de pg ; opérations typées en tools MCP
     postgres 17  listen_addresses='' ; peer sur socket Unix, aucun mot de passe
@@ -58,17 +58,21 @@ Mesures v3 : M1, tokens de contexte client par tâche, en baisse ; M2, tokens to
 | Secret | Détenteur | Risque résiduel |
 |---|---|---|
 | Clé API Anthropic | broker, fichier 0600 | Lisible par un natif du même uid (R-3) |
-| Jeton de task (broker), identifiant d'appel (gateway) | worker de la task ; module, le temps de l'appel | Sans valeur hors de cette task, de cet appel et du loopback (R-4) |
+| Jeton de task (gateway), identifiant d'appel (gateway) | worker de la task ; module, le temps de l'appel | Sans valeur hors de cette task, de cet appel et du loopback (R-4) |
 | Identifiants Postgres | aucun, `peer` | |
 | Compte Claude du propriétaire | outil de code 1a.0 seulement | R-1 ; jamais la plateforme : clé API obligatoire dès qu'elle sert quelqu'un d'autre |
 | CI : fédération OIDC, `GATEWAY_CI_TOKEN` | secrets des workflows Claude | Aucun dans la porte de tests |
 
-**Broker.** Le worker reçoit `ANTHROPIC_BASE_URL=http://127.0.0.1:<port>` et un jeton de task aléatoire comme `ANTHROPIC_API_KEY` : il n'a jamais la vraie clé [E-05, T-23, T-41]. Un seul listener, port fixe dans le profil. Le broker résout la task par le jeton (`401` sinon), réserve sur le plafond fixé par la gateway, puis construit la requête amont : seul `POST /v1/messages*` passe, vers le seul `api.anthropic.com`, avec la clé dans le seul `x-api-key` et le corps inchangé. Les autres chemins répondent `403`. Le jeton ne protège pas d'un natif déterminé (R-3) ; il évite qu'un processus local quelconque dépense la clé en joignant le port, et il attribue le coût à une task. [à prouver : `broker.feature`, 1b ; appel réel avec une clé d'essai, requêtes invalides comprises (T-04R, décidé), 1b]
+**Broker.** Le worker reçoit `ANTHROPIC_BASE_URL=http://127.0.0.1:<port>` et un jeton de task aléatoire comme `ANTHROPIC_API_KEY` : il n'a jamais la vraie clé [E-05, T-23, T-41]. Un seul listener, port fixe dans le profil. Ordre, une règle : la gateway crée la ligne `budgets` avec le plafond, écrit {jeton, task} sur le stdin du broker (son enfant natif, lancé avant tout worker), puis lance le worker. Le broker résout le jeton vers une task connue (`401` sinon), ne reçoit jamais de plafond du worker, réserve sur le plafond de la ligne `budgets`, puis construit la requête amont : seul `POST /v1/messages*` passe, vers le seul `api.anthropic.com`, avec la clé dans le seul `x-api-key` et le corps inchangé. Les autres chemins répondent `403`. Le jeton ne protège pas d'un natif déterminé (R-3) ; il évite qu'un processus local quelconque dépense la clé en joignant le port, et il attribue le coût à une task. [à prouver : `broker.feature`, 1b ; appel réel avec une clé d'essai, requêtes invalides comprises (T-04R, décidé), 1b]
 
 **Budgets : la gateway décide, le broker exécute.** La gateway crée la ligne `budgets` de la task avec son plafond (profil client, `agent.budget_tokens`) ; le broker réserve et règle par `data`, sans rien décider. Une table de réservations, un identifiant tiré au hasard par le broker à chaque requête, deux instructions :
 
 ```sql
--- budget.reserve($1 task, $2 id, $3 montant) : une ligne = accepté ; zéro = refus ; id déjà vu = 23505, rien d'écrit
+CREATE TABLE platform.budgets (task text PRIMARY KEY, cap bigint NOT NULL CHECK (cap >= 0),
+  reserved bigint NOT NULL DEFAULT 0 CHECK (reserved >= 0), spent bigint NOT NULL DEFAULT 0 CHECK (spent >= 0));
+CREATE TABLE platform.budget_reservations (id text NOT NULL UNIQUE,
+  task text NOT NULL REFERENCES platform.budgets(task), amount bigint NOT NULL CHECK (amount >= 0));
+-- budget.reserve($1 task, $2 id, $3 montant) : une ligne = accepté ; zéro ligne = rejeu ou refus de plafond (voir le contrat) ; 23505 = id déjà vu, plafond accepté, rien d'écrit
 WITH b AS (UPDATE platform.budgets SET reserved = reserved + $3
             WHERE task = $1 AND reserved + spent + $3 <= cap RETURNING task)
 INSERT INTO platform.budget_reservations (id, task, amount) SELECT $2, task, $3 FROM b RETURNING id;
@@ -77,6 +81,8 @@ WITH r AS (DELETE FROM platform.budget_reservations WHERE id = $1 RETURNING task
 UPDATE platform.budgets b SET reserved = b.reserved - r.amount, spent = b.spent + $2
   FROM r WHERE b.task = r.task RETURNING b.task;
 ```
+
+Contrat de `reserve` sur 0 ligne : le broker vérifie par `data` l'existence de l'`id` dans `budget_reservations` ; présent = rejeu idempotent (succès, rien de nouveau), absent = refus de plafond. Le `23505` n'arrive que si le plafond accepte un `id` déjà vu : le zéro ligne est sinon indiscernable d'un refus, le rejeu de 60 sur plafond 100 déjà retenu à 60 donne 0 ligne sans erreur [X-1, budget-sql.out]. Un coût négatif ouvrirait le plafond (`spent` à −500, réservation de 1 400 acceptée sur 1 000) : les `CHECK` le bornent, et `data` refuse à sa frontière un coût de `settle` négatif [atomicity.out, C].
 
 Le test du plafond reste sur l'`UPDATE`, réévalué après le verrou : il tient le plafond exact en parallèle [T-20 : 300 réservations de 10 sur un plafond de 1 000, 100 acceptées]. Une requête interrompue garde sa réservation : montant retenu, du côté prudent, jusqu'à un `settle` manuel. La concurrence est un compteur en mémoire de la gateway, écart accepté au « stateless » de v3 : il ne compte que ses enfants vivants, qui meurent avec elle (fin de stdin) ; dans `data`, il coûterait une écriture par appel et fuirait à chaque arrêt brutal ; un enfant qui survivrait reste borné par son budget [à prouver : `spawn.feature`, 1b.1]. Une facture supérieure s'enregistre, et la réservation suivante est refusée d'elle-même. Si `data` est injoignable, le broker refuse. `maxBudgetUsd` et `maxTurns` restent le second rempart côté SDK. La facturation fait autorité, jamais `total_cost_usd`. Les deux instructions prennent les lignes dans l'ordre inverse : l'interblocage `reserve(X)` rejoué × `settle(X)` vu sur l'ancien SQL est à rejouer, il ne coûte au pire qu'une erreur `40P01` sans écriture. [à prouver : T-45 rejoué sur ce SQL, concurrence et rejeu ; `budget.feature`, 1b.3]
 **Organisation du dépôt.** Marketplace à la racine : `.claude-plugin/marketplace.json`, `plugins/`. Plateforme : `gateway/`, `data/`, `modules/`, `services/`, `packages/{contracts,sandbox}`. Descriptif : `topology/modules.mcp.json` (format `.mcp.json`), `agents/*.md`, `sandboxes/base.srt.json`, `modules/*/manifest.yaml`. Le nom provisoire vit dans `platform.json`, et `features/descriptive/name.feature` échoue si le littéral sort de la liste dérivée.
@@ -136,11 +142,11 @@ Les arguments restent non fiables : Zod protège la structure, pas la sémantiqu
 | Menace | Vecteur réel | Réponse | Sinon |
 |---|---|---|---|
 | **S** | Processus local qui joint le broker ou la gateway | Jeton de task, identifiant d'appel, `401` | R-3 |
-| **S** | Module qui se dit d'une autre task au rappel | Identifiant d'appel créé par la gateway, invalidé au retour | R-10 fermé |
+| **S** | Module qui se dit d'une autre task au rappel | Identifiant d'appel créé par la gateway, invalidé au retour | R-10 : confusion entre appels concurrents acceptée |
 | **T** | Une sandbox réécrit un hook, `.git/config`, son profil ou srt | `denyWrite` nommés ; profil et srt hors chemins inscriptibles ; hooks `PreToolUse` en 1a.0 | R-2 |
 | **T** | Un module écrit la table d'un autre | `writes_tables` contrôlé à chaque opération par la gateway | R-8 |
 | **T** | Une PR affaiblit la porte | Visible au diff, revue, ruleset sur `main` | R-6 |
-| **R** | Coût ou verdict non attribuable | Registre append-only (`0003_runs_immutable.sql`) avec `trace` et `parent` | |
+| **R** | Coût ou verdict non attribuable | Registre append-only : `0003_runs_immutable.sql` n'interdit que l'UPDATE d'un run terminé ; `trace` et `parent` : migration à écrire, brique 2 | |
 | **I** | Exfiltration par un domaine autorisé | Sandbox de plateforme : seul le broker. Outil 1a.0 : accepté | R-1, R-5 |
 | **I** | Lecture de la clé | Broker, fichier 0600 ; sur serveur, uid propre au broker | R-3, R-8 |
 | **D** | Boucle, inondation, sandbox sans fin | Budgets, profondeur et échéance par appel, `maxTurns`, `maxBufferSize`, plafond d'octets, gateway qui survit [E-03] | R-7 |
@@ -160,7 +166,7 @@ Les arguments restent non fiables : Zod protège la structure, pas la sémantiqu
 | R-7 | macOS : un enfant `setsid` survit à la mise à mort du groupe, et aucune limite mémoire ou PID par sandbox [T-06b, T-09] | Poste de développement | Timeout, budgets, `systemd-run` sur serveur [à prouver : brique D] | Serveur macOS |
 | R-8 | Gateway compromise. **Peut** : tout lire et écrire de Postgres si elle partage l'uid de `data` (le rôle `peer` est celui de l'uid, la règle « pg dans `data` seul » n'est que du code), réécrire budgets et registre, dépenser par le broker avec les jetons de task qu'elle émet, lire les entrées et sorties de toute sandbox, lancer n'importe quel profil, envoyer tout cela hors de l'hôte (processus natif). **Ne peut pas** : lire la clé API, ni l'environnement ou la mémoire du broker (uid propre, fichier 0600) ; elle ne dépense donc la clé que par le broker, vers `api.anthropic.com`, et arrêter le broker suffit à l'arrêter, sans clé à changer. Sous Docker, équivaut à root par la socket | Point de décision unique voulu | Code court, enveloppes seules ; uid du broker ; facture ; socket Docker dans aucun conteneur | |
 | R-9 | Dépassement de budget : une requête interrompue garde sa réservation, montant retenu jusqu'à un `settle` manuel ; coût réel supérieur d'au plus une requête. Un `settle` rejoué ne trouve plus la réservation et ne fait rien [à prouver : T-45 rejoué] | Erreur du côté prudent | Plafond, registre, facture | Écart constaté sur facture |
-| R-10 | **Fermé** par l'identifiant d'appel (§2) : un module ne choisit plus sa task, et l'identifiant meurt au retour. Seul reste, accepté : un module compromis qui sert deux appels à la fois peut présenter l'un pour l'autre, attribution entre ces deux tasks, dans son `calls_allowed` | | | |
+| R-10 | Usurpation hors des appels actifs refusée par l'identifiant d'appel (§2) : un module ne choisit plus sa task, et l'identifiant meurt au retour. Confusion acceptée : un module compromis qui sert deux appels à la fois peut présenter l'un pour l'autre, attribution entre ces deux tasks, dans son `calls_allowed` | | | |
 | R-11 | Amont qui refléterait un en-tête d'authentification [T-04, T-42h] : aucun retrait en réponse | Hôte amont fixe ; un retrait se contourne par encodage | TLS vers `api.anthropic.com`, `T-04R` | T-04R observe un reflet |
 | R-12 | `zod` imbriqué de srt, GHSA-mrhx-c7xc-m3w5, sans correctif ni override utile (O-33, acceptée sans override) | Non exploitable depuis la sandbox : seul `safeParse` observé, sur la configuration de démarrage, écrite par nous | Règle : profil hors de tout chemin inscriptible | Usage de `srt proxy` ; relu à chaque montée |
 | R-13 | Linux : `kernel.apparmor_restrict_unprivileged_userns=0`, réglage global exigé par bwrap sur Ubuntu 24.04 [E-07] | Runners jetables | Profil AppArmor dédié sur serveur [à prouver : brique D] | Déploiement Linux |
@@ -171,7 +177,7 @@ Versions exactes et lockfile, `npm ci --ignore-scripts` en CI [T-15] ; `.nvmrc` 
 
 ## 5. Profils
 
-**Un gabarit, pas dix fichiers.** `sandboxes/base.srt.json` porte ce qui ne varie pas. Les variables sont le réseau et les lectures en plus, dérivés du manifeste ou de la sorte de processus. `.` est un cwd jetable, créé au lancement et retiré à l'arrêt : un par session pour l'executor, un par task pour le worker, un par processus de module ; un module sert plusieurs tasks dans le même cwd, d'où `realpath` sous le dépôt de la task (§3). L'adaptateur fusionne, valide avec un schéma zod strict, écrit le résultat hors de `allowWrite` et le passe par `--settings`.
+**Un gabarit, pas dix fichiers.** `sandboxes/base.srt.json` porte ce qui ne varie pas. Les variables, dérivées du manifeste ou de la sorte de processus, sont le réseau, les lectures en plus et les écritures en plus : le dossier de sortie persistant de `manifest-registry`, nommé dans son profil, hors de son cwd jetable ; `CLAUDE_CODE_TMPDIR` ; le worktree d'un agent qui modifie du code. `.` est un cwd jetable, créé au lancement et retiré à l'arrêt : un par session pour l'executor, un par task pour le worker, un par processus de module ; un module sert plusieurs tasks dans le même cwd, d'où `realpath` sous le dépôt de la task (§3). L'adaptateur fusionne, valide avec un schéma zod strict, écrit le résultat hors de `allowWrite` et le passe par `--settings`.
 
 ```json
 {
@@ -187,7 +193,7 @@ Versions exactes et lockfile, `npm ci --ignore-scripts` en CI [T-15] ; `.nvmrc` 
 |---|---|---|---|
 | executor | aucun | dist de l'executor, modules importables générés | aucun |
 | module (`data`, `workflow`), dont Structurer, Judge, Embedder | gateway | dist et ressources du module | selon manifeste ; modèle local pour les trois derniers [à prouver : brique 8] |
-| manifest-registry | aucun | `modules/*/manifest.yaml` ; écriture : son dossier de sortie, hors du cwd des autres | aucun |
+| manifest-registry | aucun | `modules/*/manifest.yaml` ; écriture : son dossier de sortie persistant nommé dans son profil, hors de son cwd jetable | aucun |
 | agent : scout, builder, zetetic-reviewer, autres | broker | `agents/<nom>.md` choisit tools et modèle | selon profil |
 | `egress` déclaré : web-scout | allowlist du manifeste, plages privées refusées | | aucun ; sortie en quarantaine |
 | db-migrator | aucun ; Postgres jetable dans la sandbox | migrations du plugin | aucun |
@@ -196,11 +202,11 @@ Versions exactes et lockfile, `npm ci --ignore-scripts` en CI [T-15] ; `.nvmrc` 
 
 - Schéma strict : srt tolère une clé mal écrite, `strictAllowlistt` passe sans erreur [T-01]. Le schéma refuse aussi les options d'affaiblissement (§4.1).
 - `denyWrite` nommés : sous Linux, srt ne protège que ce qui existe au lancement [T-02e, T-02e2] ; nommés, ils tiennent [T-02e4, T-02e5, T-02e6].
-- Un dossier temporaire par sandbox, `CLAUDE_CODE_TMPDIR` et `allowWrite`, retiré à l'arrêt : srt fixe `TMPDIR` sans le créer, le binaire et `tsx` échouent, et le poste donnait un faux vert (runs 41037109539 et 41037711860).
+- Un dossier temporaire par sandbox, `CLAUDE_CODE_TMPDIR` et `allowWrite` (écriture en plus), retiré à l'arrêt : srt fixe `TMPDIR` sans le créer, le binaire et `tsx` échouent, et le poste donnait un faux vert (runs 41037109539 et 41037711860).
 - `NO_PROXY` retiré de l'environnement du worker, sinon le loopback contourne le proxy et se fait refuser [T-03, T-41].
 - srt installé hors de tout chemin inscriptible (README srt, « Where This Package Is Installed »).
 
-**Profils de task.** `agents/<nom>.md`, format Claude Code, chargés par `query({ agents })` : par `plugins`, le corps du prompt n'atteint pas le modèle [E-08]. Un agent qui modifie du code travaille dans un worktree, comme en 1a.0 (R-2) ; un agent en lecture n'a que `allowRead` sur le dépôt.
+**Profils de task.** `agents/<nom>.md`, format Claude Code, chargés par `query({ agents })` : par `plugins`, le corps du prompt n'atteint pas le modèle [E-08]. Un agent qui modifie du code travaille dans un worktree, écriture en plus, comme en 1a.0 (R-2) ; un agent en lecture n'a que `allowRead` sur le dépôt.
 
 **Manifeste de module.** Lu par `manifest-registry`, module sous srt, qui génère les modules importables (lus par l'executor) et le catalogue. La gateway ne lit que cette sortie, après validation par le schéma de `packages/contracts` ; un manifeste invalide n'est pas routé.
 
@@ -263,10 +269,10 @@ Seul le résultat des tests fait foi : aucun hash, aucun digest. **Trois famille
 **Le compte.** `exécutés = base + ajoutés − supprimés`.
 
 1. L'unité est le pickle : un `Scenario`, une ligne d'`Examples`, un `Scenario` de `Rule` [T-12].
-2. `base` = compte de pickles exécutés, publié en artefact par le dernier run vert de `main`, lu par l'API (`actions: read`) ; ce run doit porter le SHA du premier parent du commit de merge, sinon la porte est rouge et se relance après lui. `ajoutés` et `supprimés` = différence d'ensembles entre ce premier parent et la tête, dérivée du diff, jamais déclarée. L'identité d'un pickle : chemin, `Feature`, `Rule`, `Scenario`, ligne d'`Examples`.
+2. `base` = compte de pickles exécutés, publié en artefact par le dernier run vert de `main`, lu par l'API (`actions: read`). Repli écrit : si aucun run vert de `main` ne porte le SHA du premier parent du commit de merge, la base est le compte statique du premier parent et la porte le signale dans son rapport au lieu d'être rouge ; le premier run de `main` et l'artefact expiré tombent dans ce repli. `ajoutés` et `supprimés` = différence d'ensembles entre ce premier parent et la tête, dérivée du diff, jamais déclarée. L'identité d'un pickle : chemin, `Feature`, `Rule`, `Scenario`, ligne d'`Examples`.
 3. La porte est verte si et seulement si tous les pickles attendus sont exécutés, verts, une seule tentative, chaque step `PASSED`. Elle lit le rapport Messages, jamais `TestRunFinished.success` : un step `SKIPPED` y donne `success: true` et un code de sortie 0 [T-13c]. `cucumber.mjs` n'a ni `tags` ni `name`, `retry: 0` ; une table `Examples` calculée est interdite.
 
-La base venant d'une exécution réelle, `exécutés = base + ajoutés − supprimés` est un contrôle réel, et `exécutés = statique` reste : ensemble, ils attrapent filtres, skips, steps absents et un compte statique faussé par la PR ; le résumé `+a −s` rend toute suppression visible à la revue.
+Hors repli, la base venant d'une exécution réelle, `exécutés = base + ajoutés − supprimés` est un contrôle réel, et `exécutés = statique` reste : ensemble, ils attrapent filtres, skips, steps absents et un compte statique faussé par la PR ; le résumé `+a −s` rend toute suppression visible à la revue.
 
 **Mutation.** 0 survivant sur les lignes modifiées du diff, sources de production. `Survived`, `NoCoverage`, `Pending` échouent ; `Killed`, `Timeout` passent. Un équivalent se marque `// Stryker disable next-line <Mutateur>: équivalent: <invariant>` : la porte juge la forme, la revue l'équivalence. Du code exécuté seulement dans un processus enfant survit [T-14b] : d'où les ports avec adaptateur en mémoire, déjà la règle du dépôt. Coût mesuré : 46 à 75 ms par mutant [M-01].
 
@@ -308,7 +314,7 @@ Un fichier `builder.json` par worktree, hors de tout chemin inscriptible, une co
 |---|---|---|
 | 1b.1 | `packages/sandbox` : port, adaptateur srt, gabarit, schéma, canari ; `docker-runner.ts` derrière le port, avec un plafond d'octets sur stdout (décision 3 ; `docker-runner.ts:93-99`, sans borne : 2 Mo donnent 545 Mo de tas) | `canary.feature`, `spawn.feature` (enfant hostile, sortie au-delà du plafond refusée, groupe tué), garde et fixture |
 | 1b.2 | `modules/broker` en flux, clé API, jeton de task | `broker.feature` : sans jeton `401`, hors chemin `403` ; aucune clé en sandbox ; appel réel (T-04R) |
-| 1b.3 | `data` en MCP généré depuis `DATA_OPS`, tables écrites déclarées par opération ; SQL dans `data/sql/*.sql`, budgets et réservations | `budget.feature` : 300 réservations parallèles, plafond exact ; `settle` rejoué sans effet ; facture supérieure ; `data` absent = refus |
+| 1b.3 | `data` en MCP généré depuis `DATA_OPS`, tables écrites déclarées par opération ; SQL dans `data/sql/*.sql`, budgets et réservations | `budget.feature` : 300 réservations parallèles, plafond exact ; rejeu de `reserve` sur plafond atteint = succès sans effet ; `settle` rejoué sans effet ; facture supérieure ; coût de `settle` négatif refusé, `spent` inchangé ; `data` absent = refus |
 | 1b.4 | Gateway : lit la sortie validée de `manifest-registry` et `modules.mcp.json`, lance les modules, serveur MCP par sandbox, identifiants d'appel, 3 reconnexions puis `SERVICE_UNAVAILABLE` ; sandbox jamais relancée | `gateway.feature` : hors `calls_allowed`, au-delà de la profondeur, après l'échéance, identifiant invalidé, table hors `writes_tables` : refusé et journalisé ; module tué puis reconnecté ; `manifest.feature` : sortie invalide non routée |
 | 1b.5 | Memory : module et worker sous srt, `agents/*.md` ; retrait de `internal-http.ts` ; `.max()` sur `WorkerOutputSchema.evidence` (décision 3 ; `tools.ts:82`, sans borne) | `recall` e2e à travers un vrai `srt`, faux amont ; `evidence` trop grande rejetée |
 | 1b.6 | Retrait de `compose.yaml` ; `proxy/` vers `deploy/edge/` ; docs à jour | `npm run gate` vert |
@@ -321,7 +327,7 @@ Un fichier `builder.json` par worktree, hors de tout chemin inscriptible, une co
 |---|---|---|---|
 | 0 | Baseline | 20 tâches, M1, M2 ; à la date du propriétaire | Chiffres écrits dans `baseline/results/` |
 | 1c | Marketplace | Marketplace et plugins, `alwaysLoad`, SBOM, workflows Claude en OIDC, hook M1 | `claude plugin validate . --strict` = 0 [T-11] ; installation dans un `HOME` jetable ; aucune clé statique |
-| 2 | Catalogue, registre, recall | Mode `catalog`, registre, profil `ci-review`, `memory-recall` en `workflow` | Résultat au-delà de `max_result_tokens` = résumé + handle ; appel hors profil refusé ; T(orchestration directe) relevé |
+| 2 | Catalogue, registre, recall | Mode `catalog`, registre (colonnes `trace`, `parent`, migration), profil `ci-review`, `memory-recall` en `workflow` | Résultat au-delà de `max_result_tokens` = résumé + handle ; appel hors profil refusé ; T(orchestration directe) relevé |
 | 3 | Front de code | `search`, `describe`, `execute` (fusion des deux premiers mesurée ici), modules importables, executor par session | `code-front.feature` ; réseau refusé ; R et définitions relevés |
 | 4 | Scission Cortex | `memory-write`, `memory-consolidate`, un écrivain par table, db-migrator ; extension BM25, une à la fois | Écriture hors `writes_tables` refusée au chargement et à l'opération |
 | 5 | Code et tasks | `code-index`, `verify`, `codebase-ask` ; scout, builder, zetetic-reviewer | Citation invalide rejetée par `verify` ; builder confiné à son worktree ; `claude-review` réel |
@@ -350,7 +356,7 @@ Un fichier `builder.json` par worktree, hors de tout chemin inscriptible, une co
 | [5] Orchestrateur de conteneurs | Port `SandboxRunner` de la gateway, clé au broker natif (D-9 : `platformd` retiré ; D-10) |
 | [6] Postgres | Natif, joint par `data` seul, natif aussi (D-5, D-8, E-09) |
 
-**B. Correctif de l'audit, validé par le propriétaire** : `manifest-registry` module sous srt (§2, §5) ; identifiant d'appel, R-10 fermé (§2) ; `trace` et `parent` au registre (§3) ; `writes_tables` à chaque opération (§3) ; uid propre au broker, R-8 explicite (§4) ; compteur de concurrence en mémoire, écart accepté (§2) ; budget décidé par la gateway, exécuté par le broker (§2).
+**B. Correctif de l'audit, validé par le propriétaire** : `manifest-registry` module sous srt (§2, §5) ; identifiant d'appel, R-10 : usurpation hors des appels actifs refusée, confusion entre appels concurrents acceptée (§2) ; `trace` et `parent` au registre, migration à écrire en brique 2 (§3) ; `writes_tables` à chaque opération (§3) ; uid propre au broker, R-8 explicite (§4) ; compteur de concurrence en mémoire, écart accepté (§2) ; budget décidé par la gateway, exécuté par le broker (§2).
 
 **C. Décisions du propriétaire, 30 octobre 2026.**
 

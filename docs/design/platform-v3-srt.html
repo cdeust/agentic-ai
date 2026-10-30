@@ -30,7 +30,7 @@
 <h2>1. Topologie</h2>
 <p class="legend">Trait noir : processus natif. Trait orange : processus sous srt. Pointillé : frontière srt. Tous les liens gateway-enfants sont MCP stdio. Chaque composant de la figure 1 de v3 est un processus séparé (décision A).</p>
 <figure>
-<svg viewBox="0 0 1000 616" role="img" aria-label="Topologie : le client parle en MCP http à la gateway native. Gateway, broker, data et Postgres sont natifs. Sous srt, l'executor sans réseau, les modules dont Structurer, Judge et Embedder qui rappellent la gateway avec un identifiant d'appel, manifest-registry qui génère modules importables et catalogue, les workers qui joignent le broker, web-scout et db-migrator. Tous les liens avec la gateway sont MCP stdio." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="13" fill="currentColor">
+<svg viewBox="0 0 1000 616" role="img" aria-label="Topologie : le client parle en MCP http à la gateway native. Gateway, broker, data et Postgres sont natifs. Sous srt, l'executor sans réseau, les modules dont Structurer, Judge et Embedder qui rappellent la gateway avec un identifiant d'appel, manifest-registry qui génère modules importables et catalogue, les workers qui joignent le broker, web-scout et db-migrator. La gateway lance le broker et lui écrit le jeton et la task de chaque worker avant de lancer ce worker ; le broker réserve et règle par data. Tous les liens avec la gateway sont MCP stdio." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="13" fill="currentColor">
 <defs>
   <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
 </defs>
@@ -49,7 +49,7 @@
 
 <rect x="570" y="98" width="400" height="94" rx="4" fill="none" stroke="currentColor" stroke-width="1.4"/>
 <text x="586" y="122" font-weight="600">broker : seul détenteur de la clé API</text>
-<text x="586" y="144" font-size="12">exécute réserve et règlement ; jeton de task</text>
+<text x="586" y="144" font-size="12">résout le jeton de task, réserve et règle</text>
 <text x="586" y="164" font-size="12">POST /v1/messages seul, vers api.anthropic.com</text>
 <text x="586" y="184" font-size="12">sur serveur : uid propre au broker</text>
 
@@ -61,9 +61,13 @@
 <text x="306" y="289">socket Unix, peer, pas de TCP</text>
 <line x1="270" y1="274" x2="290" y2="274" stroke="currentColor" marker-end="url(#a1)"/>
 <line x1="150" y1="232" x2="150" y2="246" stroke="currentColor" marker-end="url(#a1)"/>
+<line x1="530" y1="130" x2="570" y2="130" stroke="currentColor" marker-end="url(#a1)"/>
+<path d="M 600 192 V 239 H 230 V 246" fill="none" stroke="currentColor" marker-end="url(#a1)"/>
+<path d="M 280 370 V 232" fill="none" stroke="#c15a2e" stroke-dasharray="5 3" marker-end="url(#a1)"/>
+<text x="274" y="352" font-size="12" text-anchor="end">rappel : proxy srt</text>
 
 <rect x="20" y="334" width="960" height="272" rx="6" fill="none" stroke="currentColor" stroke-dasharray="7 4" stroke-width="1.4"/>
-<text x="36" y="594" font-weight="600">Sous srt : base.srt.json ; variables : réseau et lectures en plus ; cwd jetable</text>
+<text x="36" y="594" font-weight="600">Sous srt : base.srt.json ; variables : réseau, lectures et écritures en plus ; cwd jetable</text>
 
 <rect x="36" y="370" width="170" height="200" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
 <text x="48" y="394" font-weight="600" fill="#c15a2e">executor</text>
@@ -128,7 +132,7 @@
 <path d="M 780 368 L 780 240 L 830 240 L 830 194" fill="none" stroke="#c15a2e" stroke-dasharray="5 3" marker-end="url(#a1)"/>
 <text x="772" y="262" font-size="12" text-anchor="end">HTTP par le proxy srt</text>
 </svg>
-<figcaption>Figure 1. Sous srt, un processus ne sert pas de listener joignable par l'hôte (T-39b, T-07) : gateway et broker restent natifs. Sous Linux, <code>allowUnixSockets</code> est ignoré : data et Postgres aussi (E-09). Un module rappelle la gateway par le proxy srt (T-38) avec l'identifiant d'appel que la gateway lui a passé dans <code>_meta</code>, invalidé au retour. <code>manifest-registry</code> lit les manifestes ; la gateway ne lit que sa sortie validée. Un worker complet sous srt est prouvé sur les deux OS avec un faux amont (T-41). Reverse proxy Caddy natif en brique D, non dessiné.</figcaption>
+<figcaption>Figure 1. Sous srt, un processus ne sert pas de listener joignable par l'hôte (T-39b, T-07) : gateway et broker restent natifs. Sous Linux, <code>allowUnixSockets</code> est ignoré : data et Postgres aussi (E-09). Un module rappelle la gateway par le proxy srt (T-38) avec l'identifiant d'appel que la gateway lui a passé dans <code>_meta</code>, invalidé au retour. <code>manifest-registry</code> lit les manifestes ; la gateway ne lit que sa sortie validée. Un worker complet sous srt est prouvé sur les deux OS avec un faux amont (T-41). La gateway lance le broker, lui écrit {jeton, task} sur son stdin avant chaque worker (flèche gateway → broker) ; le broker réserve et règle par data (flèche broker → data). Reverse proxy Caddy natif en brique D, non dessiné.</figcaption>
 </figure>
 
 <h2>2. Chemin d'un appel <code>execute</code></h2>
@@ -153,14 +157,15 @@
 <line x1="470" y1="146" x2="270" y2="146" stroke="currentColor" marker-end="url(#a2)"/><text x="370" y="139" text-anchor="middle">4. tools/list, task_input</text>
 <line x1="470" y1="190" x2="270" y2="190" stroke="currentColor" marker-end="url(#a2)"/><text x="370" y="183" text-anchor="middle">5. tools/call</text>
 <line x1="270" y1="232" x2="660" y2="232" stroke="currentColor" marker-end="url(#a2)"/><text x="465" y="225" text-anchor="middle" font-size="12">6. calls_allowed, profondeur ; identifiant d'appel ; tools/call</text>
-<line x1="660" y1="274" x2="470" y2="274" stroke="currentColor" stroke-dasharray="4 3" marker-end="url(#a2)"/><text x="565" y="267" text-anchor="middle">7. résultat typé</text>
-<text x="482" y="300">8. le script filtre ; 5 à 8 se répètent</text>
+<line x1="660" y1="256" x2="270" y2="256" stroke="currentColor" stroke-dasharray="4 3" marker-end="url(#a2)"/><text x="465" y="249" text-anchor="middle">7. résultat typé, module → gateway</text>
+<line x1="270" y1="280" x2="470" y2="280" stroke="currentColor" stroke-dasharray="4 3" marker-end="url(#a2)"/><text x="370" y="273" text-anchor="middle">7. relayé à l'executor</text>
+<text x="482" y="306">8. le script filtre ; 5 à 8 se répètent</text>
 <line x1="470" y1="332" x2="270" y2="332" stroke="currentColor" marker-end="url(#a2)"/><text x="370" y="325" text-anchor="middle">9. task_complete</text>
 <line x1="270" y1="376" x2="810" y2="376" stroke="currentColor" marker-end="url(#a2)"/><text x="540" y="369" text-anchor="middle">10. verify, si du code est produit</text>
 <line x1="270" y1="424" x2="930" y2="424" stroke="currentColor" marker-end="url(#a2)"/><text x="600" y="417" text-anchor="middle">11. trace, parent, verdict, tokens par couche et par modèle</text>
 <line x1="270" y1="480" x2="80" y2="480" stroke="currentColor" marker-end="url(#a2)"/><text x="175" y="473" text-anchor="middle">12. ≤ max_result_tokens</text>
 <text x="175" y="498" text-anchor="middle" font-size="12">sinon résumé + handle</text>
-<text x="290" y="470" font-weight="600" fill="#c15a2e">Zone teintée : étapes 2 à 11, hors du contexte du client.</text>
+<text x="290" y="470" font-weight="600" fill="#c15a2e">Zone teintée : étapes 4 à 10, hors du contexte du client.</text>
 <text x="290" y="492" font-size="12">kind: agent, pour le non stabilisable : tools/call à l'étape 6, worker sous srt ; plafond de la gateway, appliqué au broker.</text>
 <text x="290" y="512" font-size="12">À prouver : code-front.feature, brique 3.</text>
 </svg>

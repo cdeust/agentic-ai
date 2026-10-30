@@ -250,3 +250,25 @@ Faites par un agent en parallèle, reçues du coordinateur, non rejouées ici.
 **Règle d'arrêt des revues**, inscrite en tête des décisions ouvertes : consensus quand une revue ne trouve plus ni défaut de correction fonctionnelle ni contradiction avec les décisions du propriétaire ; un risque nommé et accepté ne bloque pas ; un mécanisme supplémentaire proposé n'est pas un défaut.
 
 **Choix de rédaction à relire.** La base de la porte exige que le run vert de `main` porte le SHA du premier parent du commit de merge, faute de quoi l'identité échoue à tort ; la porte est alors rouge et se relance. R-10 garde un résidu nommé : un module compromis qui sert deux appels à la fois peut présenter l'un pour l'autre. L'Orchestrateur de conteneurs de v3 n'est pas un processus séparé : il est le port `SandboxRunner` de la gateway, couvert par D-9 et D-10. L'annexe de `platform-v3-srt.md` reste octet pour octet l'entrée de T-45 jusqu'à la tâche 9.
+
+## 11. Relecture de consensus, e8389ec, 30 octobre 2026
+
+Expériences X-1 à X-7 (`budget-sql.out`), `atomicity.out` et `ddl-check.out`, Postgres 17.9 jetable, SQL extrait du document, rejouables en une commande (`node budget-sql.mjs`). Chaque correction cite la ligne corrigée de `e8389ec`.
+
+| Défaut | Ligne corrigée | Correction | Preuve |
+|---|---|---|---|
+| D1 | md 71 « id déjà vu = 23505 » | Contrat sur 0 ligne : `id` présent dans `budget_reservations` = rejeu, absent = refus ; `UNIQUE` sur `id` et colonnes au DDL du §2 | X-1 : rejeu de 60 sur plafond 100 retenu à 60 = 0 ligne sans erreur ; `ddl-check.out` : 0 ligne puis 23505 |
+| D2 | md 61, 66, R-8, html 33, 52 | Émetteur du jeton = gateway ; ordre en une règle, association sur le stdin du broker, flèches gateway → broker et broker → data | rapport, D2 |
+| D3 | md 174, 190, 199, 203 | Variables = réseau, lectures et écritures en plus ; sortie persistante de `manifest-registry` hors du cwd jetable | rapport, D3 |
+| D4 | html 156, 163, aria-label 33 | Étape 7 module → gateway → executor ; « étapes 4 à 10 » ; rappel module → gateway dessiné | rapport, D4 |
+| D5 | md 33 | `tasks` MCP et `task.wait` retirés : ouverts dans la v3 (§9, brique 2), non repris ici | rapport, D5 |
+| D6 | md 266 | Repli écrit : base = compte statique du premier parent, signalé au rapport, sans porte rouge | rapport, D6 |
+| D7 | md 143, 324, 353 | `trace`, `parent` : migration à écrire, brique 2 ; 0003 n'interdit que l'UPDATE d'un run terminé | `data/migrations/0003_runs_immutable.sql` |
+| D8 | §2, 1b.3 | `CHECK` non négatif sur `cap`, `reserved`, `spent`, `amount` ; coût de `settle` négatif refusé par `data` ; scénario en 1b.3 | `atomicity.out` C : `spent` −500, 1 400 acceptés sur 1 000 ; `ddl-check.out` : `CHECK` refuse un coût qui rend `spent` négatif |
+| D9 | md 22, 139, 353 | « R-10 fermé » remplacé par usurpation hors des appels actifs refusée, confusion entre appels concurrents acceptée | R-10 |
+
+Objection « CTE non atomique » (revue externe 1), réfutée par expérience : `atomicity.out`, 23505 annule toute l'instruction en autocommit, en transaction explicite et avec SAVEPOINT.
+
+Confirmé sans défaut : X-2 (`settle` rejoué, 50 concurrents ×6 : 1 ligne), X-3 (300×10 sur 1 000 : 100, puis 30), X-4 (facture 150 sur plafond 100 : réservation suivante refusée), X-5 cas I (40P01 sur `reserve` rejoué, rien d'écrit ; cas II non observé), X-7 (1 780 opérations ×6 : 0 interblocage, invariant tenu).
+
+Hors correction, notés : montant par requête non fixé ; X-6, `reserve(X)` rejoué après `settle(X)` recrée la ligne ; précédence `timeout` / `timeout_ms` d'un tool `agent`. Annexe du banc : inchangée, `t45.ts` lit son SQL entre les titres 4.5 et 4.6 et ne lit rien du §2, donc aucun effet sur `t45.ts`.
