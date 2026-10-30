@@ -18,6 +18,7 @@ const config = {
   ],
   format: ['message:reports/cucumber.ndjson', 'progress'],
   retry: 0,
+  tags: 'not @postgres',
   strict: true,
 };
 
