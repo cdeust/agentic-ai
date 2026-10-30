@@ -4,14 +4,14 @@
 
 ## Pyramid
 
-| Level              | Where                                                               | What it proves                                                                                                                               |
-| ------------------ | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Unit, per layer    | `<component>/test/{domain,application,infrastructure,presentation}` | Each layer in isolation, ports replaced by in-memory adapters or small fakes.                                                                |
-| Port contracts     | `<component>/test/contracts/*.ts`                                   | One suite per port (`DataStore`, `ContainerRunner`, `Authenticator`, `QuotaPolicy`, `AuditLog`, `ServiceClient`), run against every adapter. |
-| Worker             | `services/memory/test/worker`                                       | `runWorker` with a scripted `AgentPort`: ok output, agent error, bad input.                                                                  |
-| End to end         | `test/integration/end-to-end.test.ts`                               | Client, gateway, memory, worker, data in one process; the run and its events are in the registry.                                            |
-| Infrastructure     | `test/infra/compose.test.ts`                                        | Network zones, single published port, dropped capabilities in `compose.yaml`.                                                                |
-| Architecture guard | `test/arch/guard.test.ts`                                           | The guard is green on the tree and red on each kind of violation (temporary fixtures).                                                       |
+| Level              | Where                                                                   | What it proves                                                                                                                                                                             |
+| ------------------ | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Unit, per layer    | `<component>/features/*.feature`, steps in `<component>/features/steps` | Each layer in isolation, ports replaced by in-memory adapters or small fakes.                                                                                                              |
+| Port contracts     | `<component>/features/*.feature` (Scenario Outlines)                    | One Scenario Outline per port case, one Examples row per adapter (`DataStore`, `ContainerRunner`, `Authenticator`, `QuotaPolicy`, `AuditLog`, `ServiceClient`), run against every adapter. |
+| Worker             | `services/memory/features/run-worker.feature`                           | `runWorker` with a scripted `AgentPort`: ok output, agent error, bad input.                                                                                                                |
+| End to end         | `test/integration/end-to-end.test.ts`                                   | Client, gateway, memory, worker, data in one process; the run and its events are in the registry.                                                                                          |
+| Infrastructure     | `test/infra/compose.test.ts`                                            | Network zones, single published port, dropped capabilities in `compose.yaml`.                                                                                                              |
+| Architecture guard | `test/arch/guard.test.ts`                                               | The guard is green on the tree and red on each kind of violation (temporary fixtures).                                                                                                     |
 
 ## End to end
 
@@ -31,12 +31,12 @@ A contract is one Gherkin `Scenario Outline` per case with one `Examples` row pe
 
 Each descriptive file is loaded by its test exactly as production loads it, checked against its schema, and a broken copy is shown to be rejected:
 
-| File                                                                    | Test                                             | Broken copies rejected                                                                                  |
-| ----------------------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| `data/sql/operations.json` and `data/sql/*.sql`                         | `data/features/sql-store.feature`                | missing or unknown operation, `$n` count different from `params`, unknown field, missing file, not JSON |
-| `services/memory/worker/prompts/<tool>.md`                              | `services/memory/test/worker/run-worker.test.ts` | missing prompt, empty prompt                                                                            |
-| `.claude/agents/*.md`, `.claude/commands/*.md`, `.claude/settings.json` | `test/descriptive/claude-files.test.ts`          | no frontmatter, missing `description`, misspelt field                                                   |
-| `compose.yaml`                                                          | `test/infra/compose.test.ts`                     | (zone assertions)                                                                                       |
+| File                                                                    | Test                                          | Broken copies rejected                                                                                  |
+| ----------------------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `data/sql/operations.json` and `data/sql/*.sql`                         | `data/features/sql-store.feature`             | missing or unknown operation, `$n` count different from `params`, unknown field, missing file, not JSON |
+| `services/memory/worker/prompts/<tool>.md`                              | `services/memory/features/run-worker.feature` | missing prompt, empty prompt                                                                            |
+| `.claude/agents/*.md`, `.claude/commands/*.md`, `.claude/settings.json` | `test/descriptive/claude-files.test.ts`       | no frontmatter, missing `description`, misspelt field                                                   |
+| `compose.yaml`                                                          | `test/infra/compose.test.ts`                  | (zone assertions)                                                                                       |
 
 The end-to-end test loads the committed prompts and asserts the agent received them.
 
