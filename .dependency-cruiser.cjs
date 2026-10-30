@@ -111,7 +111,8 @@ module.exports = {
     },
     {
       name: 'sandbox-runtime-only-in-sandbox',
-      comment: 'srt (@anthropic-ai/sandbox-runtime) is reached only by packages/sandbox (platform-v3-srt.md, §6).',
+      comment:
+        'srt (@anthropic-ai/sandbox-runtime) is reached only by packages/sandbox (platform-v3-srt.md, §6).',
       severity: 'error',
       from: { pathNot: '^packages/sandbox/' },
       to: { path: '(^|/)node_modules/@anthropic-ai/sandbox-runtime(/|$)' },
