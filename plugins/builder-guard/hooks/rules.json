@@ -1,0 +1,49 @@
+{
+  "description": "Rules of the PreToolUse guard. Each rule is a case-insensitive regular expression; `bash` rules apply to the Bash command, `paths` rules to the path arguments of file tools (file_path, notebook_path, path, pattern). The first match denies the call.",
+  "bash": [
+    {
+      "id": "push-main",
+      "pattern": "\\bgit\\b[^;&|\\n]*\\bpush\\b[^;&|\\n]*(?:\\s|:|\\+|refs/heads/)main(?=$|[\\s;&|)])",
+      "reason": "git push to main is refused: main moves only through a reviewed pull request."
+    },
+    {
+      "id": "push-force",
+      "pattern": "\\bgit\\b[^;&|\\n]*\\bpush\\b[^;&|\\n]*(?:\\s--force(?:-with-lease|-if-includes)?\\b|\\s-[a-z]*f[a-z]*\\b|\\s\\+[^\\s]+)",
+      "reason": "Forced push is refused."
+    },
+    {
+      "id": "keychain",
+      "pattern": "\\bsecurity\\b[^;&|\\n]*\\s(?:find-[a-z-]+|dump-keychain|export)\\b",
+      "reason": "Keychain access is refused (security find-*, dump-keychain, export)."
+    },
+    {
+      "id": "secret-files",
+      "pattern": "(?:^|[\\s\"'=:/~])\\.(?:ssh|aws|gnupg|npmrc|netrc)(?=$|[\\s\"'/;&|)])|\\.config/gh(?=$|[\\s\"'/;&|)])",
+      "reason": "Secret files are refused (~/.ssh, ~/.aws, ~/.gnupg, ~/.config/gh, .npmrc, .netrc)."
+    },
+    {
+      "id": "git-hooks-config-write",
+      "pattern": "(?:>|\\btee\\b|\\bcp\\b|\\bmv\\b|\\bln\\b|\\brm\\b|\\bchmod\\b|\\btouch\\b|\\binstall\\b|\\bdd\\b|\\bsed\\s+-i)[^;&|\\n]*\\.git/(?:hooks|config)\\b",
+      "reason": "Writing .git/hooks or .git/config is refused."
+    },
+    {
+      "id": "git-config-write",
+      "pattern": "\\bgit\\b(?:\\s+-[^\\s]+)*\\s+config\\b(?![^;&|\\n]*\\s(?:--get|--get-all|--get-regexp|--list|-l|--show-origin)\\b)[^;&|\\n]*\\s[a-z][a-z0-9-]*\\.[^\\s]+\\s+[^\\s;&|]",
+      "reason": "git config writes are refused (they write .git/config)."
+    }
+  ],
+  "paths": [
+    {
+      "id": "secret-files",
+      "pattern": "(?:^|/|~)\\.(?:ssh|aws|gnupg|npmrc|netrc)(?:$|/)|(?:^|/)\\.config/gh(?:$|/)",
+      "tools": ["Read", "Write", "Edit", "MultiEdit", "NotebookEdit", "Grep", "Glob"],
+      "reason": "Secret files are refused (~/.ssh, ~/.aws, ~/.gnupg, ~/.config/gh, .npmrc, .netrc)."
+    },
+    {
+      "id": "git-hooks-config-write",
+      "pattern": "(?:^|/)\\.git/(?:hooks(?:$|/)|config$)",
+      "tools": ["Write", "Edit", "MultiEdit", "NotebookEdit"],
+      "reason": "Writing .git/hooks or .git/config is refused."
+    }
+  ]
+}

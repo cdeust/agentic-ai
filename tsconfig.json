@@ -18,6 +18,9 @@
     },
     {
       "path": "test/integration"
+    },
+    {
+      "path": "plugins/builder-guard"
     }
   ]
 }

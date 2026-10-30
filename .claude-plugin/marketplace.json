@@ -1,0 +1,15 @@
+{
+  "name": "architect-os",
+  "owner": { "name": "architect-os" },
+  "metadata": {
+    "description": "Plugins of the architect-os repository (ai-architect.tools)."
+  },
+  "plugins": [
+    {
+      "name": "builder-guard",
+      "source": "./plugins/builder-guard",
+      "description": "PreToolUse protection hooks for the isolated code tool (brick 1a.0): no push to main, no forced push, no keychain or secret files, no write to .git/hooks or .git/config.",
+      "version": "0.1.0"
+    }
+  ]
+}

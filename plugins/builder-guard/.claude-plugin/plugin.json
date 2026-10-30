@@ -1,0 +1,7 @@
+{
+  "name": "builder-guard",
+  "version": "0.1.0",
+  "description": "PreToolUse protection hooks for the isolated code tool (brick 1a.0). A reduction layer beside srt, not a boundary: an obfuscated command or a script started by npm escapes them.",
+  "author": { "name": "architect-os" },
+  "license": "MIT"
+}
