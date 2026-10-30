@@ -9,6 +9,7 @@ npm run format:check   # prettier --check (npm run format to fix)
 npm test               # vitest run: unit, port contracts, end to end, architecture guard
 npm run arch           # dependency-cruiser: layers, boundaries, cycles
 npm run check          # all four. Must be green before every PR.
+npm --prefix <launcher checkout> run code   # from a worktree: claude under srt, builder profile (packages/sandbox/README.md)
 ```
 
 ## What This Is
@@ -28,6 +29,7 @@ client -> proxy -> gateway -> services/<name> -> worker (container, exec network
 | `services/memory/`    | Intent tools `recall` / `remember`. `src/` is the MCP service, `worker/` is the agent image.             |
 | `data/`               | Only component that imports `pg`. Typed operations served from `sql/` by one executor; migrations.       |
 | `packages/contracts/` | Only shared package: `Result<T>`, `Run`, `RunEvent`, zod schemas of tools and data operations. No logic. |
+| `packages/sandbox/`   | `SandboxRunner` port, srt adapter, builder profile template, `npm run code` (brick 1a.0).                |
 
 Details: `docs/architecture.md`, `docs/infrastructure.md`, `docs/design.md`, `docs/agents.md`, `docs/testing.md`.
 
@@ -61,6 +63,7 @@ Every descriptive file has a test that loads the committed file, checks it again
 - `pg` only in `data/src/infrastructure`. SQL only in `data/sql/` and `data/migrations/`, executed only by `data/src/infrastructure`. No DB access anywhere else. Data exposes typed operations, never free-form SQL.
 - `@anthropic-ai/claude-agent-sdk` only in `services/*/worker`.
 - `@modelcontextprotocol/sdk` only in `presentation` and `infrastructure` of `gateway` and `services/*` (and their tests).
+- `child_process` and `@anthropic-ai/sandbox-runtime` only in `packages/sandbox` (named exception: `services/memory/src/infrastructure/docker-runner.ts`, until brick 1b.1).
 - No import cycles.
 - The gateway and the proxy contain no business logic: the gateway runs no agent and touches no data.
 
