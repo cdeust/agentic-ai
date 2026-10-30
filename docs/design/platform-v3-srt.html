@@ -30,7 +30,7 @@
 <h2>1. Topologie</h2>
 <p class="legend">Trait noir : processus natif. Trait orange : processus sous srt. Pointillé : frontière srt. Tous les liens gateway-enfants sont MCP stdio. Chaque composant de la figure 1 de v3 est un processus séparé (décision A).</p>
 <figure>
-<svg viewBox="0 0 1000 600" role="img" aria-label="Topologie : le client parle en MCP http à la gateway native. Gateway, broker, data et Postgres sont natifs. Sous srt, l'executor sans réseau, les modules dont Structurer, Judge et Embedder qui rappellent la gateway avec un identifiant d'appel, manifest-registry qui génère modules importables et catalogue, les workers qui joignent le broker, web-scout et db-migrator. Tous les liens avec la gateway sont MCP stdio." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="13" fill="currentColor">
+<svg viewBox="0 0 1000 616" role="img" aria-label="Topologie : le client parle en MCP http à la gateway native. Gateway, broker, data et Postgres sont natifs. Sous srt, l'executor sans réseau, les modules dont Structurer, Judge et Embedder qui rappellent la gateway avec un identifiant d'appel, manifest-registry qui génère modules importables et catalogue, les workers qui joignent le broker, web-scout et db-migrator. Tous les liens avec la gateway sont MCP stdio." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="13" fill="currentColor">
 <defs>
   <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
 </defs>
@@ -62,8 +62,8 @@
 <line x1="270" y1="274" x2="290" y2="274" stroke="currentColor" marker-end="url(#a1)"/>
 <line x1="150" y1="232" x2="150" y2="246" stroke="currentColor" marker-end="url(#a1)"/>
 
-<rect x="20" y="334" width="960" height="250" rx="6" fill="none" stroke="currentColor" stroke-dasharray="7 4" stroke-width="1.4"/>
-<text x="36" y="356" font-weight="600">Sous srt : base.srt.json ; variables : réseau et lectures en plus ; cwd jetable</text>
+<rect x="20" y="334" width="960" height="272" rx="6" fill="none" stroke="currentColor" stroke-dasharray="7 4" stroke-width="1.4"/>
+<text x="36" y="594" font-weight="600">Sous srt : base.srt.json ; variables : réseau et lectures en plus ; cwd jetable</text>
 
 <rect x="36" y="370" width="170" height="200" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
 <text x="48" y="394" font-weight="600" fill="#c15a2e">executor</text>
