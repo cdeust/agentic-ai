@@ -197,7 +197,7 @@ Sort des tests :
 | Retirés avec leur mécanisme | T-14c, T-14d, T-18, T-21, T-27, T-32, T-35, T-35-pre, T-37b, T-42 Bearer, T-43e, T-45, T-45l, T-46, T-50, T-34h-variante |
 | Attendent le premier hôte réel | T-41D, T-38D, T-06D, T-34D, T-43D |
 
-**Contrainte relevée.** `bench/src/tests/t45.ts:22-28` lit son SQL dans `platform-v3-srt.md`, entre `### 4.5 Budgets` et `### 4.6`, et un push sur cette branche lance le banc. Le code du banc étant hors de cette passe, le bloc reste en annexe, extraction contrôlée identique à `0dd97c5`.
+**Contrainte relevée.** `bench/src/tests/t45.ts:22-28` lit son SQL dans `platform-v3-srt.md`, entre `### 4.5 Budgets` et `### 4.6`, et un push sur cette branche lance le banc. Le code du banc étant hors de cette passe, le bloc reste en annexe, extraction contrôlée identique à `0dd97c5`. (Annexe retirée le 30 octobre, §12.)
 
 ## 8. Vérifications sur le poste, 30 octobre 2026
 
@@ -230,7 +230,7 @@ Faites par un agent en parallèle, reçues du coordinateur, non rejouées ici.
 | Serveur | Un uid pour toute la plateforme | Un uid propre au broker ; gateway et `data` peuvent partager un uid ; R-8 dit ce qu'une gateway compromise lit ou non |
 | Concurrence | Compteur en mémoire, non qualifié | Écart au « stateless » de v3 accepté : il ne compte que des enfants qui meurent avec la gateway ; dans `data`, une écriture par appel et une fuite à chaque arrêt brutal. Mort des enfants avec la gateway à prouver (`spawn.feature`) |
 | Profils | « La seule variable est le réseau » | Réseau et lectures en plus ; cwd jetable par session, par task, par processus de module |
-| Budget | Gateway et broker cités tous deux comme décideurs | La gateway fixe le plafond, le broker exécute |
+| Budget | Gateway et broker cités tous deux comme décideurs | La gateway fixe le plafond, le broker exécute. **Remplacé le 30 octobre** : aucun plafond (§12) |
 
 **Décisions du propriétaire.** Remplacent les statuts « à confirmer » du §4, qui restent tels qu'écrits à leur date.
 
@@ -243,7 +243,7 @@ Faites par un agent en parallèle, reçues du coordinateur, non rejouées ici.
 | 5 | O-1, O-23, O-26 | Retirées ; détection d'assertions affaiblies refusée, reste dans R-6 |
 | 6 | Stage 0 publié et `fixpoint.sh` | Retirés ; aucune affirmation de reproductibilité |
 | 7 | Base de la porte lue dans le dernier run vert de `main` | Adoptée ; remplace « base comptée au premier parent » du §7 ; `exécutés = statique` conservé |
-| 8 | Budgets : table de réservations, `settle` par `DELETE … RETURNING` | Adoptée, à prouver (T-45 rejoué : concurrence, rejeu, interblocage `reserve` × `settle`) |
+| 8 | Budgets : table de réservations, `settle` par `DELETE … RETURNING` | Adoptée, à prouver (T-45 rejoué : concurrence, rejeu, interblocage `reserve` × `settle`). **Remplacée le 30 octobre** par les décisions 11 et 12 (§12) |
 | 9 | Nettoyage du banc | Tâche inscrite ; ces résultats restent ici |
 | 10 | Marque `ai-architect.tools` | Rétablie au titre ; `architect-os` provisoire |
 
@@ -257,14 +257,14 @@ Expériences X-1 à X-7 (`budget-sql.out`), `atomicity.out` et `ddl-check.out`, 
 
 | Défaut | Ligne corrigée | Correction | Preuve |
 |---|---|---|---|
-| D1 | md 71 « id déjà vu = 23505 » | Contrat sur 0 ligne : `id` présent dans `budget_reservations` = rejeu, absent = refus ; `UNIQUE` sur `id` et colonnes au DDL du §2 | X-1 : rejeu de 60 sur plafond 100 retenu à 60 = 0 ligne sans erreur ; `ddl-check.out` : 0 ligne puis 23505 |
+| D1 (sans objet depuis le 30 octobre, §12) | md 71 « id déjà vu = 23505 » | Contrat sur 0 ligne : `id` présent dans `budget_reservations` = rejeu, absent = refus ; `UNIQUE` sur `id` et colonnes au DDL du §2 | X-1 : rejeu de 60 sur plafond 100 retenu à 60 = 0 ligne sans erreur ; `ddl-check.out` : 0 ligne puis 23505 |
 | D2 | md 61, 66, R-8, html 33, 52 | Émetteur du jeton = gateway ; ordre en une règle, association sur le stdin du broker, flèches gateway → broker et broker → data | rapport, D2 |
 | D3 | md 174, 190, 199, 203 | Variables = réseau, lectures et écritures en plus ; sortie persistante de `manifest-registry` hors du cwd jetable | rapport, D3 |
 | D4 | html 156, 163, aria-label 33 | Étape 7 module → gateway → executor ; « étapes 4 à 10 » ; rappel module → gateway dessiné | rapport, D4 |
 | D5 | md 33 | `tasks` MCP et `task.wait` retirés : ouverts dans la v3 (§9, brique 2), non repris ici | rapport, D5 |
 | D6 | md 266 | Repli écrit : base = compte statique du premier parent, signalé au rapport, sans porte rouge | rapport, D6 |
 | D7 | md 143, 324, 353 | `trace`, `parent` : migration à écrire, brique 2 ; 0003 n'interdit que l'UPDATE d'un run terminé | `data/migrations/0003_runs_immutable.sql` |
-| D8 | §2, 1b.3 | `CHECK` non négatif sur `cap`, `reserved`, `spent`, `amount` ; coût de `settle` négatif refusé par `data` ; scénario en 1b.3 | `atomicity.out` C : `spent` −500, 1 400 acceptés sur 1 000 ; `ddl-check.out` : `CHECK` refuse un coût qui rend `spent` négatif |
+| D8 (sans objet depuis le 30 octobre, §12) | §2, 1b.3 | `CHECK` non négatif sur `cap`, `reserved`, `spent`, `amount` ; coût de `settle` négatif refusé par `data` ; scénario en 1b.3 | `atomicity.out` C : `spent` −500, 1 400 acceptés sur 1 000 ; `ddl-check.out` : `CHECK` refuse un coût qui rend `spent` négatif |
 | D9 | md 22, 139, 353 | « R-10 fermé » remplacé par usurpation hors des appels actifs refusée, confusion entre appels concurrents acceptée | R-10 |
 
 Objection « CTE non atomique » (revue externe 1), réfutée par expérience : `atomicity.out`, 23505 annule toute l'instruction en autocommit, en transaction explicite et avec SAVEPOINT.
@@ -272,3 +272,33 @@ Objection « CTE non atomique » (revue externe 1), réfutée par expérience : 
 Confirmé sans défaut : X-2 (`settle` rejoué, 50 concurrents ×6 : 1 ligne), X-3 (300×10 sur 1 000 : 100, puis 30), X-4 (facture 150 sur plafond 100 : réservation suivante refusée), X-5 cas I (40P01 sur `reserve` rejoué, rien d'écrit ; cas II non observé), X-7 (1 780 opérations ×6 : 0 interblocage, invariant tenu).
 
 Hors correction, notés : montant par requête non fixé ; X-6, `reserve(X)` rejoué après `settle(X)` recrée la ligne ; précédence `timeout` / `timeout_ms` d'un tool `agent`. Annexe du banc : inchangée, `t45.ts` lit son SQL entre les titres 4.5 et 4.6 et ne lit rien du §2, donc aucun effet sur `t45.ts`.
+
+## 12. Décisions du propriétaire et relecture de 0ef74e6, 30 octobre 2026
+
+Remplacent le §10 décision 8 et la ligne « Budget » du correctif du §10, qui restent tels qu'écrits à leur date ; D1 et D8 du §11 deviennent sans objet.
+
+| # | Décision | Statut |
+|---|---|---|
+| 11 | Aucun plafond financier. Le coût est mesuré pour la traçabilité et la prévision, rien d'autre : aucune réservation, aucune coupure de task, aucun refus pour raison financière | Adoptée |
+| 12 | Bornes opérationnelles : une task peut toujours être interrompue, aucune boucle ne tourne indéfiniment. Délai maximal et nombre maximal d'appels par task (profil client), `maxTurns` pour un agent ; borne atteinte ou annulation par le propriétaire = identifiants et jeton invalidés, groupe srt de la task tué | Adoptée |
+
+**Inscription au document.** Retirés : bloc « Budgets » du §2 (DDL `budgets` et `budget_reservations`, `budget.reserve`, `budget.settle`, contrat sur 0 ligne), `budget_tokens`, `maxBudgetUsd`, `budget.feature`, l'ancien R-9, et « budgets » dans STRIDE D, R-4, R-7, R-8, B, C.8 et 1b.3. R-9 devient l'acceptation écrite de l'absence de plafond. Écrits : mesure du coût par réponse au broker (`usage` avec cache lu et écrit, modèle, task, parent, horodatage), persistée en append-only par `data`, à prouver en 1b.2 et 1b.3 ; bornes opérationnelles, à prouver en 1b.4 ; `max_turns` remplace `budget_tokens` au manifeste ; précédence des `timeout` : le plus court gagne ; « Budget le long du DAG » renommé « Bornes le long du DAG ».
+
+**Transport broker → `data` (C.3).** Le broker est serveur MCP pour la gateway sur son stdio : {jeton, task} lui arrive par un `tools/call` (C.1, md 52 et 66, html 31, 33, 135), le retrait du jeton par un second. Il remonte chaque enregistrement par une notification MCP standard (`notifications/message`, logger `usage`) ; la gateway l'écrit par `data`. Aucun lien broker → `data` : la flèche est retirée de la figure 1. `data` injoignable : la gateway retire les jetons, le broker répond `401`. Hors règle : le dossier persistant de `manifest-registry` est nommé en figure 1 ; la sortie de la brique D nomme le broker lancé sous son uid, stdio conservé (C.2), à prouver.
+
+**Annexe du banc retirée**, ce qui remplace la « Contrainte relevée » du §7. `bench/src/tests/t45.ts` lit le document à l'exécution seulement (`readFileSync`) : les titres absents donnent un SQL vide, et T-45 sort en échec au banc à chaque push sur cette branche jusqu'à la tâche 9, qui le retire comme sans objet. `npm run check` ne lit ni `bench/` ni `docs/design` (inclusions de vitest, références de `tsconfig.json`, `.prettierignore`). Le SQL de l'annexe reste lisible à `0ef74e6`. Sort des tests du §7 : `budget` (T-20) sans objet ; T-20 reste une recherche close.
+
+**Relevé historique de la relecture de `0ef74e6`.** SQL extrait de `0ef74e6`, Postgres 17.9 jetable, 13/13 PASS, une commande (`node budget-sql-v2.mjs`, dossier de relecture hors dépôt). Le mécanisme testé étant retiré, ce relevé ne prouve rien de la conception.
+
+| X | Résultat |
+|---|---|
+| X-1 | Rejeu de 60 sur plafond 100 retenu à 60 : 0 ligne sans erreur, `id` présent, donc rejeu ; rejeu de 5 : 23505, budget inchangé |
+| X-2 | `settle` rejoué, 50 concurrents ×6 : 1 ligne |
+| X-3 | 300 réservations de 10 sur 1 000 : 100, puis 30 après règlement |
+| X-4 | Facture 150 sur plafond 100 : réservation suivante refusée |
+| X-5 | Interblocage `reserve` rejoué × `settle` : cas I (`reserve` victime de 40P01) à `e8389ec`, cas II (`settle` victime de 40P01, `reserve` rejoué 23505) ici ; rien d'écrit dans les deux |
+| X-6 | `reserve(X)` rejoué après `settle(X)` recrée la ligne (§11) |
+| X-7 | 1 780 opérations ×6 : aucun interblocage, invariant tenu |
+| X-8 | `settle(−500)` sur `spent` 0 et `reserve(−10)` : 23514 ; `settle(−50)` sur `spent` 100 passe le DDL (`spent` 50) : seul le refus de `data` à sa frontière fermait |
+| X-9 | 50 rejeux concurrents sur plafond atteint : 0 ligne ×50, aucune erreur |
+| X-10 | `reserve(B, X, 30)` après `reserve(A, X, 60)`, plafond de B refusant : 0 ligne, `id` présent, « rejeu, succès » sans rien réserver pour B |
