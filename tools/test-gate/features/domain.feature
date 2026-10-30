@@ -29,6 +29,17 @@ Feature: Test gate domain functions, observed directly
       x.mjs: 1
       """
 
+  Scenario: a hunk that adds twelve lines lists all twelve
+    When the gate parses the unified diff:
+      """
+      diff --git a/x.mjs b/x.mjs
+      @@ -0,0 +1,12 @@
+      """
+    Then the gate parsed diff is:
+      """
+      x.mjs: 1,2,3,4,5,6,7,8,9,10,11,12
+      """
+
   Scenario Outline: the component of <path> among <components> is <component>
     Then the gate component of "<path>" among the components "<components>" is "<component>"
 
