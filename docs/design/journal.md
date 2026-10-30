@@ -514,3 +514,76 @@ Branche `feat/gate-1a`, créée depuis `origin/feat/marketplace-srt` (`e525b50`)
 | 8 | 1a.3 bis | Tuer les 27 mutants survivants des lignes changées par la brique (21 dans `tools/test-gate`, 6 dans `srt-runner.ts`), liste tirée de la porte rejouée sur l'hôte sur un merge simulé ; deux équivalents marqués avec justification (`diff.ts:23`) | 880 s | 25 × 200, sonnet-5-5 (`--model sonnet`), 36 tours | 50 ; 30 444 ; 1 510 288 ; 74 597 | 0,75 USD | Stryker ne démarre pas dans la sandbox : l'agent raisonne du mutant à l'assertion, l'hôte rejoue Stryker. Run complet de cucumber abandonné par l'agent (600 s, Postgres). Hôte : 363/363 |
 | 9 | 1a.4 bis | Profil `mutation` de `cucumber.mjs` (par chemin, sans `features/repository/`) pour Stryker seul ; scénarios des profils (6) ; `.prettierignore` ancré | 709 s | 16 × 200, sonnet-5-5, 21 tours | 32 ; 9 545 ; 548 666 ; 31 132 | 0,27 USD | Run complet de cucumber abandonné par l'agent (Postgres) ; Stryker non lancé (consigne). Hôte : voir ligne suivante du rejeu |
 | 10 | 1a.3 ter | Dernier survivant des lignes changées (`diff.ts:10`, quantificateur du compte de lignes d'un hunk) : un scénario de hunk à 12 lignes | 36 s | 7 × 200, sonnet-5-5, 9 tours | 14 ; 1 863 ; 173 473 ; 19 414 | 0,11 USD | Aucun |
+| 11 | 1a.5 | Le changement sain : refactorisation sans effet de `count.ts` (différence d'ensembles extraite), aucune `.feature` ni step touchés | 67 s | 8 × 200, sonnet-5-5, 9 tours | 16 ; 2 196 ; 200 521 ; 18 871 | 0,12 USD | Aucun |
+
+**Total de l'outil, 12 appels partis (l'essai perdu n'a rien envoyé)** : 12 919 s (3 h 35), 421 réponses, toutes `200` ; aucun `429`, `401` ni `503` pendant la brique (les deux `429` du fichier datent de 1a.0, 16 h 51 et 16 h 53 UTC) : l'identifiant de l'hôte n'a pas changé en cours de brique. Tokens : entrée 860, sortie 480 590, cache lu 49 820 992, cache écrit 1 058 516. Coût selon `total_cost_usd` : 20,83 USD, dont 13,60 USD pour la seule étape 2 en opus (150 réponses). Les étapes 3 à 11 sont en sonnet ; à partir de l'étape 8, `--model sonnet` est passé explicitement (quota hebdomadaire du propriétaire).
+
+### Rejeu sur l'hôte
+
+Méthode : chaque étape est rejouée sur l'hôte dans le worktree de travail, et la porte complète dans un second worktree détaché, `<repo>/.claude/worktrees/gate-1a-verify`, au commit exact (`npm ci --ignore-scripts` puis `npm run gate`). Le checkout propre a trouvé un défaut que ni la sandbox ni le worktree de travail ne montraient.
+
+| Constat | Où | Cause racine | Correction |
+|---|---|---|---|
+| `pg_ctl start` : « le postmaster est devenu multithreadé lors du démarrage », 6 lignes `@postgres` rouges sur l'hôte après l'étape 1 | hook `@postgres` | macOS, `LANG` et `LC_ALL` vides dans l'environnement de l'hôte | `initdb --no-locale`, `LC_ALL=C` passé à `initdb`, `pg_ctl`, `createdb` (étape 2) |
+| 74 scénarios de la porte rouges dans un checkout propre de `565f139` (`ENOENT … fixtures/reports/green.ndjson`), verts dans le worktree de travail | `.gitignore` | `reports/` non ancré ignorait aussi `tools/test-gate/fixtures/reports/` : les rapports fixtures n'avaient jamais été commités | `/reports/`, `/.stryker-tmp/` (étape 4) |
+| `initdb` : `shmget … No space left on device` ; 14 Postgres jetables encore vivants | hook `@postgres` sous Stryker | Stryker tue ses workers (délais, redémarrages) : `AfterAll` ne tourne pas, chaque orphelin garde un segment SysV, `kern.sysv.shmmni=32` | Orphelins arrêtés à la main sur l'hôte (artefacts de la porte, `pg_ctl stop -m immediate`). Durée de vie liée au processus de test par un veilleur détaché, `concurrency: 4` (étape 5) |
+| Le scénario `runInTerminal` refuse sans terminal : bloquerait depuis un vrai terminal (fds 0 à 2 en TTY, `cat` lancé) | `packages/sandbox` | Le scénario dépend des descripteurs de celui qui lance cucumber | Contrôle du terminal injectable dans l'adaptateur, comme `srtCli` et `trusted` (étape 5) |
+| L'agent de l'étape 1 a lancé `git rm` (index de l'hôte) | outil | Consigne « ne pas toucher à .git » comprise comme `.git/` seulement | Consigne précisée (« ni `git rm` ni `git add` ») ; plus observé ensuite |
+| CI, run 41126794516 (`3a30961`) : gate-linux rouge, gate-macos verte (5/5). Sur Linux, 339/339 scénarios verts, dont les 5 srt réels sous bwrap ; puis le run initial de Stryker échoue sur « the repository is formatted » | `features/repository/` sous Stryker | Stryker exécute les scénarios dans sa copie instrumentée (`.stryker-tmp/sandbox-*`), que `prettier` ne peut pas trouver formatée ; ces scénarios tournent en processus enfant et ne tuent aucun mutant (T-14b) | Profil `mutation` de `cucumber.mjs`, par chemin, utilisé par Stryker seul ; le run compté garde tout (étape 9) |
+
+### Migration : compte tracé
+
+Base : 224 cas vitest à `e525b50` (dont 6 ignorés). Chaque `it` est un `Scenario`, chaque ligne d'`it.each` une ligne d'`Examples`, un contrat sur N adaptateurs un `Scenario Outline` à N lignes. Pickles par fichier égaux au compte vitest, ignorés compris (ils tournent maintenant) : `packages/contracts` 7, `data` 32 (dont les 6 lignes `@postgres` du contrat `DataStore`, autrefois `skipIf`), `gateway` 25, `services/memory` 38, `packages/sandbox` 54 (dont 5 srt réels dans `features/sandbox/`, autrefois `runIf(darwin)`), `test/` racine 68. Total migré : 224 pickles. Ajoutés par 1a : `tools/test-gate` 118, veilleur Postgres 1, dépôt (typecheck, format) 2, workflows 13, profils cucumber 6, adaptateur srt (terminal) 6 : **370 pickles** à `122296b`. Plus aucun `*.test.ts`, vitest retiré.
+
+### Exécutions de la porte
+
+| Run | Commit | Contexte | gate-linux | gate-macos | Constat |
+|---|---|---|---|---|---|
+| local | `565f139` | worktree propre | rouge | | 74 scénarios en `ENOENT` (rapports fixtures non commités) |
+| local | `3977dc2` | worktree propre | rouge, 12 min 46 | | Règles 1 à 4 vertes (201) ; 2 918 mutants, 111 survivants dans le périmètre étendu |
+| [41126794516](https://github.com/cdeust/architect-os/actions/runs/41126794516) | `3a30961` | push | rouge | **verte** (5/5) | Linux : 339/339, srt réel sous bwrap compris ; Stryker : `prettier --check` dans sa copie instrumentée |
+| [41128986373](https://github.com/cdeust/architect-os/actions/runs/41128986373) | `71152fc` | push | rouge | verte | Même cause (corrigée à l'étape 9) |
+| local | merge simulé `e525b50` + `6b0dd76` | `refs/pull/N/merge` reproduit, jamais poussé | rouge, 30 min 19 | | 324 = 0 + 324 − 0 = statique ; 27 survivants sur les lignes changées, 309 dans le périmètre étendu |
+| [41130695038](https://github.com/cdeust/architect-os/actions/runs/41130695038) | `e44d992` | push | rouge | verte | Stryker complet sous Linux, 1 039 s ; 369/369 ; 258 survivants anciens, périmètre étendu par les steps racine |
+| local | merge simulé `e525b50` + `e44d992` | idem | rouge, 17 min 50 | | 1 survivant sur les lignes changées (`diff.ts:10`) |
+| [41133552688](https://github.com/cdeust/architect-os/actions/runs/41133552688) | `0600c1d` | push | rouge | verte | Une `.feature` de la porte changée : périmètre étendu par `coveredBy` et par les mutants statiques, 477 mutants, survivants statiques anciens (`data`, `services/memory`) |
+| local | `122296b` | worktree propre | **verte**, 1 min 20 | | 370 = 370 + 0 − 0 = statique ; périmètre 1 fichier, 7 mutants, 5 tués, 2 invalides |
+| [41136001960](https://github.com/cdeust/architect-os/actions/runs/41136001960) | `122296b` | push, **le changement sain** | **verte** | **verte** | Idem en CI |
+| local | merge simulé `e525b50` + `122296b` | idem | rouge, 17 min 16 | | Règles 1 à 4 vertes : 370 = 0 + 370 − 0 = statique ; **0 survivant sur les lignes changées** (2 équivalents justifiés) ; périmètre étendu : 2 435 mutants, 251 survivants, tous sur du code antérieur à la brique |
+
+### Sentinelles
+
+Fixtures (dans `tools/test-gate/fixtures/`, rejouées à chaque run, local et CI) : step non défini, `pending`, `skipped`, ambigu, en échec, deux tentatives, scénario sans step, pickle absent (filtre), pickle inattendu, identité en double, base d'un autre SHA, d'un autre job, compte faux, repli signalé, survivant dans et hors du périmètre, `NoCoverage`, `Stryker disable all`, `disable next-line` sans justification, équivalent justifié, fichier du périmètre absent du rapport, périmètre étendu par `coveredBy`. Branches réelles, poussées depuis `0600c1d`, chacune d'une ligne, **faites à la main** (casses délibérées, pas du code livré) :
+
+| Branche | Casse | CI | Local | Règle nommée |
+|---|---|---|---|---|
+| `sentinel/gate-1a-tags` (`248d263`) | `tags: 'not @postgres'` dans `cucumber.mjs` (test externe du §8) | [41135804131](https://github.com/cdeust/architect-os/actions/runs/41135804131) rouge (macOS verte : aucun `@postgres` dans `features/sandbox`) | rouge | 2 (scénario des profils), 3 (les 6 lignes `@postgres` attendues, non exécutées), 4 (364 ≠ 370) |
+| `sentinel/gate-1a-skipped` (`d94f916`) | un step qui rend `'skipped'` | [41135806704](https://github.com/cdeust/architect-os/actions/runs/41135806704) rouge | rouge | 2 (step `SKIPPED`, puis le suivant) ; 5 en plus, step changé = périmètre de `packages/contracts` étendu |
+| `sentinel/gate-1a-survivor` (`4158f83`) | une ligne de production sans scénario qui tue ses mutants | [41135812342](https://github.com/cdeust/architect-os/actions/runs/41135812342) rouge | rouge | 5 seule : `count.ts:44`, `Survived` et `NoCoverage` |
+
+### Porte de sortie de 1a
+
+| Critère (§8, consigne) | Résultat | Preuve |
+|---|---|---|
+| 0 `*.test.ts`, vitest retiré | Fait | `git ls-files '*.test.ts'` vide à `122296b` ; `vitest` absent de `package.json` |
+| `exécutés_verts = attendu = statique` | Fait, local et CI | 370 = 370 + 0 − 0 = 370 (run 41136001960 et local `122296b`) ; sur le merge simulé de toute la brique : 370 = 0 + 370 − 0 = 370 |
+| `exécutés = base + ajoutés − supprimés` sur `main`, base lue dans le dernier run vert de `main` | **Prévu** au premier push sur `main` après fusion | Aucun run de `gate.yml` sur `main` n'existe : chaque run de la branche a pris le repli écrit, signalé au rapport. Le chemin de l'artefact (`gate-base-<job>`, `gh api … head_sha=<premier parent>`) est écrit et non exercé |
+| Rapports fixtures refusés (§7) | Fait | 118 scénarios de `tools/test-gate`, verts en local et en CI |
+| PR sentinelles rouges | Fait, local et CI | `tags`, `skipped`, `survivor` : tableau ci-dessus |
+| PR saine verte | Fait, local et CI | `122296b` : run 41136001960, deux jobs verts, mutation exercée (7 mutants) |
+| 0 survivant sur le diff d'une PR réelle | Fait au sens du §7 (lignes modifiées) ; **rouge** au sens étendu de la consigne | Merge simulé `e525b50` + `122296b` : 0 survivant sur les lignes changées ; périmètre étendu (code couvert par les `.feature` et steps changés, mutants statiques compris) : 251 survivants, tous antérieurs à la brique (décision au propriétaire) |
+| Workflows épinglés, garde sur l'acteur, `--ignore-scripts` | Fait | `gate.yml`, `ci.yml`, `claude.yml`, `claude-code-review.yml` ; `features/descriptive/workflows.feature` (13 scénarios, copies cassées refusées). `bench-sandbox.yml` déjà épinglé (v4.2.2, v4.4.0), laissé tel quel |
+| Ruleset sur `main` | **Au propriétaire** (décision) | Corps : `docs/design/ruleset-main.json` ; commande ci-dessous |
+| `npm run gate` localement vert | Fait | `122296b`, worktree propre, 1 min 20, exit 0 |
+
+**Piliers.** Recherche : fait, porte prouvée par exécution réelle (runs ci-dessus, merges simulés, sentinelles), usage de l'outil mesuré par appel. SSDLC : fait, versions exactes et lockfile, actions épinglées par SHA vérifiés à l'API, `persist-credentials: false`, `npm ci --ignore-scripts`, aucun cache, garde sur l'acteur, aucun hash ni digest dans la porte (identités textuelles) ; SAST = la porte ; SBOM prévu en 1c. Opérationnel : fait, aucun secret dans `gate.yml` (seul le jeton automatique, `contents: read`, `actions: read`), aucun secret lu ; ruleset au propriétaire.
+
+**Écarts à la consigne, dits.** Pas de profil srt `gate-tests` : le §7 n'exige pas que la suite tourne sous srt ; seuls les scénarios de `features/sandbox/` lancent de vrais srt. Pas de Postgres sur macOS : `gate-macos` ne lance que `features/sandbox/`, sans `@postgres` ; un scénario `@postgres` qui y entrerait échouerait, visiblement. Validation du plugin (`claude plugin validate --strict`) non mise en scénario : binaire absent des runners, sortie de 1c. Déclencheurs `push` temporaires `feat/gate-1a` et `sentinel/gate-1a-*` dans `gate.yml`, à retirer à la fusion (aucune PR ouverte par le constructeur, `workflow_dispatch` exige le fichier sur la branche par défaut).
+
+**Décisions au propriétaire.**
+
+1. Périmètre de mutation. La consigne l'étend au code couvert quand une `.feature` ou une step change ; le §7 dit « lignes modifiées du diff ». Mesuré : avec l'extension, toute PR qui touche une `.feature` ou une step de `data`, `gateway`, `services/memory`, `packages/sandbox`, `packages/contracts` ou de `features/` racine est rouge tant que les survivants anciens de ce code ne sont pas tués (251 sur toute la brique ; les mutants statiques, couverts par tous les scénarios, entrent dès qu'une `.feature` change : 7 survivants statiques anciens dans `data` et `services/memory`). Options : (a) périmètre du §7 tel qu'écrit ; (b) tuer les survivants anciens dans une brique dédiée ; (c) fusionner 1a avec le contournement du ruleset, l'extension restant en vigueur. Non tranché ici.
+2. Ruleset sur `main`, à créer par le propriétaire : `gh api -X POST repos/cdeust/architect-os/rulesets --input docs/design/ruleset-main.json`. `actor_id: 5` (rôle admin) n'est pas confirmé par la documentation lue : vérifier après création avec `gh api repos/cdeust/architect-os/rulesets --jq '.[] | {id, name}'` puis `gh api repos/cdeust/architect-os/rulesets/<id> --jq '.bypass_actors'`.
+3. `ci.yml` réduit aux contrôles statiques : à retirer, `gate.yml` les porte en scénarios.
+4. Retirer les déclencheurs temporaires de `gate.yml` à la fusion ; supprimer les branches `sentinel/gate-1a-*`.
+5. `anthropics/claude-code-action` `6d5ae52…` est un commit du 30 octobre 2026 (le jour même) : épinglé comme demandé, ancienneté nulle.
