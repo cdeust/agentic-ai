@@ -1,0 +1,23 @@
+{
+  "name": "@architect-os/bench-sandbox",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Banc de preuve brique 1b.0 : srt 0.0.81 sur Linux et macOS, faux amont local, aucune cle reelle.",
+  "engines": { "node": ">=26.11.1" },
+  "scripts": {
+    "bench:sandbox": "node --import tsx src/run.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "0.3.312",
+    "@anthropic-ai/sandbox-runtime": "0.0.81",
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "tsx": "4.23.15",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.6",
+    "typescript": "6.0.3"
+  }
+}
