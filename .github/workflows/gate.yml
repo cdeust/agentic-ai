@@ -1,0 +1,141 @@
+# The CI gate (docs/design/platform-v3-srt.md §7): plan, Gherkin suite, Stryker on the perimeter, verdict.
+# No secret, no cache. The token is the automatic one, restricted to contents: read and actions: read.
+name: gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      # TEMPORARY, for the proofs of brick 1a only: the owner removes the next two entries at merge
+      # (the builder opens no PR, and workflow_dispatch only works once the file is on the default branch).
+      - feat/gate-1a
+      - sentinel/gate-1a-*
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  gate-linux:
+    name: gate-linux
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Host dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends bubblewrap socat ripgrep
+          bwrap --version
+
+      - name: Host requirement - allow unprivileged user namespaces with capabilities (E-07, R-13)
+        run: |
+          echo "before: $(cat /proc/sys/kernel/apparmor_restrict_unprivileged_userns)"
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          echo "after: $(cat /proc/sys/kernel/apparmor_restrict_unprivileged_userns)"
+
+      - name: PostgreSQL 17 (PGDG) with pgvector
+        run: |
+          sudo apt-get install -y --no-install-recommends postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y --no-install-recommends postgresql-17 postgresql-17-pgvector
+          echo "PG_BIN=/usr/lib/postgresql/17/bin" >> "$GITHUB_ENV"
+          /usr/lib/postgresql/17/bin/postgres --version
+
+      - name: Install (lockfile, scripts disabled)
+        run: npm ci --ignore-scripts
+
+      - name: Base of the count (artifact of the last green main run)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # docs/design/platform-v3-srt.md §7.2: the run of gate.yml on main whose head_sha is the first parent.
+          # Nothing found, expired or no first parent: download nothing, the gate applies its written fallback and says so.
+          mkdir -p reports/base
+          parent=$(git rev-parse --verify --quiet HEAD^1 || true)
+          if [ -z "$parent" ]; then echo "base: no first parent"; exit 0; fi
+          run_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/gate.yml/runs?branch=main&status=success&head_sha=$parent&per_page=1" --jq '.workflow_runs[0].id // empty' || true)
+          if [ -z "$run_id" ]; then echo "base: no green main run for $parent"; exit 0; fi
+          gh run download "$run_id" -n gate-base-linux -D reports/base -R "$GITHUB_REPOSITORY" || echo "base: artifact gate-base-linux of run $run_id not downloadable"
+
+      - name: Gate
+        run: npm run gate -- --job linux
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: gate-reports-linux
+          path: reports/
+          if-no-files-found: warn
+
+      - name: Upload base for the next run
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: gate-base-linux
+          path: reports/gate-base.json
+          if-no-files-found: error
+
+  gate-macos:
+    name: gate-macos
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      # features/sandbox/ needs no Postgres: none is installed, a @postgres scenario landing there fails visibly.
+      - name: Install (lockfile, scripts disabled)
+        run: npm ci --ignore-scripts
+
+      - name: Base of the count (artifact of the last green main run)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # docs/design/platform-v3-srt.md §7.2: the run of gate.yml on main whose head_sha is the first parent.
+          # Nothing found, expired or no first parent: download nothing, the gate applies its written fallback and says so.
+          mkdir -p reports/base
+          parent=$(git rev-parse --verify --quiet HEAD^1 || true)
+          if [ -z "$parent" ]; then echo "base: no first parent"; exit 0; fi
+          run_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/gate.yml/runs?branch=main&status=success&head_sha=$parent&per_page=1" --jq '.workflow_runs[0].id // empty' || true)
+          if [ -z "$run_id" ]; then echo "base: no green main run for $parent"; exit 0; fi
+          gh run download "$run_id" -n gate-base-macos -D reports/base -R "$GITHUB_REPOSITORY" || echo "base: artifact gate-base-macos of run $run_id not downloadable"
+
+      - name: Gate
+        run: npm run gate -- --job macos
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: gate-reports-macos
+          path: reports/
+          if-no-files-found: warn
+
+      - name: Upload base for the next run
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: gate-base-macos
+          path: reports/gate-base.json
+          if-no-files-found: error
