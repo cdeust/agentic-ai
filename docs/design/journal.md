@@ -302,3 +302,9 @@ Remplacent le §10 décision 8 et la ligne « Budget » du correctif du §10, qu
 | X-8 | `settle(−500)` sur `spent` 0 et `reserve(−10)` : 23514 ; `settle(−50)` sur `spent` 100 passe le DDL (`spent` 50) : seul le refus de `data` à sa frontière fermait |
 | X-9 | 50 rejeux concurrents sur plafond atteint : 0 ligne ×50, aucune erreur |
 | X-10 | `reserve(B, X, 30)` après `reserve(A, X, 60)`, plafond de B refusant : 0 ligne, `id` présent, « rejeu, succès » sans rien réserver pour B |
+
+## 13. Clôture de la relecture de consensus, 62e5131, 30 octobre 2026
+
+- Clôture de la relecture de 62e5131 (`rapport-62e5131.md`, dossier de relecture hors dépôt) : le document reste à 366 lignes (borne 372), sans code, test ni workflow.
+- Défauts bloquants 1 et 2 : M1 et la couche client viennent du hook M1 de la brique 1c, `usage` couvre le broker, M2 agrège les deux ; la gateway passe {jeton, task, parent} au broker (md 66, html 33 et 135).
+- Contrats 3 à 5, décidés par le propriétaire : réponse interrompue sans enregistrement (la facture fait foi), indisponibilité de `data` détectée à l'échec du `tools/call` puis jetons réémis, fin par borne ou annulation sans `verify` ni verdict et portée au registre ; hors règle : `timeout_ms`, T-42h et T-43d conservés, `maxTurns` en scénario, tool d'annulation.
