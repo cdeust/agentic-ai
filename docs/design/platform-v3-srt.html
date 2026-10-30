@@ -173,43 +173,52 @@
 </figure>
 
 <h2>3. Outil de code, brique 1a.0</h2>
-<p><code>srt --settings builder.json claude</code>, dans le worktree habituel. C'est le stage 0 simplifié : le reste de la plateforme se construit dedans. Profil et jeu minimal de hooks adoptés par le propriétaire le 30 octobre (décisions 1 et 2), avec R-1 et R-2.</p>
+<p>Une commande depuis le worktree habituel : le lanceur crée une configuration propre, lance le proxy d'authentification de l'hôte, puis <code>srt … claude</code>. C'est le stage 0 simplifié : le reste de la plateforme se construit dedans. Schéma implémenté et prouvé sur <code>feat/tool-1a0</code> (<code>f14da63</code>, journal §14 et §15), décisions D13 à D16 du 30 octobre, avec R-1 et R-2 réécrits.</p>
 <figure>
-<svg viewBox="0 0 1000 400" role="img" aria-label="Outil de code : Claude Code tourne sous srt avec le compte du propriétaire, dans un worktree du dépôt. Il écrit dans le worktree et les parties git nécessaires au commit ; les hooks, la configuration et les pointeurs du worktree sont refusés. Le réseau va vers Anthropic, npm et GitHub. Le trousseau reste lisible. Des hooks PreToolUse, livrés dans un plugin de la marketplace, réduisent le risque sans former de frontière." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="13" fill="currentColor">
+<svg viewBox="0 0 1000 400" role="img" aria-label="Outil de code : Claude Code tourne sous srt avec un jeton de session, dans un worktree du dépôt. Il écrit dans le worktree et les parties git nécessaires au commit ; les hooks, la configuration et les pointeurs du worktree sont refusés. Le trousseau, le dossier claude et le fichier claude.json de l'utilisateur sont illisibles. Le seul chemin vers le modèle est le proxy d'authentification de l'hôte, hors de la sandbox, qui détient seul l'identifiant et ne relaie que les messages vers api.anthropic.com. Des hooks PreToolUse réduisent le risque sans former de frontière." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="13" fill="currentColor">
 <defs>
   <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
 </defs>
 <rect x="20" y="16" width="620" height="368" rx="6" fill="none" stroke="currentColor" stroke-dasharray="7 4" stroke-width="1.4"/>
-<text x="36" y="40" font-weight="600">Frontière srt : builder.json, un par worktree, hors de tout chemin inscriptible</text>
+<text x="36" y="40" font-weight="600">Frontière srt : profil builder, hors de tout chemin inscriptible</text>
 <rect x="36" y="54" width="588" height="44" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
-<text x="330" y="81" text-anchor="middle" font-weight="600" fill="#c15a2e">Claude Code, compte du propriétaire</text>
+<text x="330" y="81" text-anchor="middle" font-weight="600" fill="#c15a2e">Claude Code, jeton de session seulement</text>
 <text x="36" y="126" font-weight="600">Écriture autorisée</text>
 <text x="36" y="148">&lt;repo&gt;/.claude/worktrees/&lt;w&gt;</text>
 <text x="36" y="170">.git/worktrees/&lt;w&gt;, .git/objects, .git/refs, .git/logs</text>
-<text x="36" y="192">~/.cache, dossiers de session de ~/.claude</text>
+<text x="36" y="192">~/.cache, configuration et tmp propres à la sandbox</text>
 <text x="36" y="226" font-weight="600">Écriture refusée</text>
 <text x="36" y="248">.git/hooks, .git/config, refs/heads/main</text>
 <text x="36" y="270">worktrees/&lt;w&gt;/commondir, gitdir, config.worktree ; &lt;w&gt;/.claude/settings*.json</text>
 <text x="36" y="304" font-weight="600">Lecture refusée</text>
 <text x="36" y="326">~/.ssh, ~/.aws, ~/.gnupg, ~/.config/gh, ~/.npmrc, ~/.netrc</text>
-<text x="36" y="360" fill="#c15a2e" font-weight="600">Reste lisible : le trousseau (R-1)</text>
-<line x1="640" y1="90" x2="700" y2="90" stroke="currentColor" marker-end="url(#a3)"/>
-<rect x="700" y="60" width="280" height="60" rx="4" fill="none" stroke="currentColor"/>
-<text x="716" y="85" font-weight="600">Allowlist réseau</text>
-<text x="716" y="106">Anthropic, npm, GitHub</text>
-<rect x="700" y="150" width="280" height="102" rx="4" fill="none" stroke="currentColor"/>
-<text x="716" y="175" font-weight="600">Risques acceptés</text>
-<text x="716" y="197">R-1 : exfiltration et push possibles</text>
-<text x="716" y="219">R-2 : l'hôte qui lance dans le worktree</text>
-<text x="716" y="238">exécute du code de la sandbox</text>
-<rect x="700" y="270" width="280" height="114" rx="4" fill="none" stroke="currentColor"/>
-<text x="716" y="293" font-weight="600">Réduction, pas frontière</text>
-<text x="716" y="315">hooks PreToolUse, plugin :</text>
-<text x="716" y="334" font-size="12">push main ou forcé, trousseau, secrets,</text>
-<text x="716" y="351" font-size="12">.git/hooks, .git/config</text>
-<text x="716" y="372">ruleset sur main, côté GitHub</text>
+<text x="36" y="344">~/.claude, ~/.claude.json</text>
+<text x="36" y="364" text-decoration="line-through" fill="#c15a2e" font-weight="600">~/Library/Keychains</text>
+<text x="190" y="364" fill="#c15a2e" font-weight="600">trousseau introuvable depuis la sandbox</text>
+<line x1="640" y1="76" x2="700" y2="76" stroke="currentColor" marker-end="url(#a3)"/>
+<rect x="700" y="40" width="280" height="104" rx="4" fill="none" stroke="currentColor" stroke-width="2"/>
+<text x="716" y="62" font-weight="600">Proxy d'authentification (hôte)</text>
+<text x="716" y="82" font-size="12">127.0.0.1, port aléatoire, hors sandbox</text>
+<text x="716" y="99" font-size="12">seul détenteur de l'identifiant (mémoire)</text>
+<text x="716" y="116" font-size="12">/v1/messages, count_tokens ; 403 sinon</text>
+<text x="716" y="133" font-size="12">401 sans jeton ; usage par réponse</text>
+<line x1="840" y1="144" x2="840" y2="166" stroke="currentColor" marker-end="url(#a3)"/>
+<text x="852" y="160" font-size="12">api.anthropic.com</text>
+<rect x="700" y="172" width="280" height="44" rx="4" fill="none" stroke="currentColor"/>
+<text x="716" y="190" font-weight="600">Allowlist réseau de la sandbox</text>
+<text x="716" y="207" font-size="12">le proxy, registry.npmjs.org</text>
+<rect x="700" y="226" width="280" height="76" rx="4" fill="none" stroke="currentColor"/>
+<text x="716" y="248" font-weight="600">Risques acceptés</text>
+<text x="716" y="268" font-size="12">R-1 : jeton de session lisible, appels</text>
+<text x="716" y="284" font-size="12">au modèle seulement, révoqué à la fin</text>
+<text x="716" y="298" font-size="12">R-2 : l'hôte exécute du code du worktree</text>
+<rect x="700" y="312" width="280" height="72" rx="4" fill="none" stroke="currentColor"/>
+<text x="716" y="332" font-weight="600">Réduction, pas frontière</text>
+<text x="716" y="350" font-size="12">builder-guard, onFailure: block :</text>
+<text x="716" y="366" font-size="12">push main ou forcé, secrets, .git/hooks ;</text>
+<text x="716" y="379" font-size="12">ruleset sur main, côté GitHub</text>
 </svg>
-<figcaption>Figure 3. Vérifié sur le poste macOS en <code>-p</code>, avec un appel réel minimal. Le profil initial, limité à <code>.git/hooks</code> et <code>.git/config</code>, cassait <code>git commit</code> et laissait une évasion par <code>commondir</code>. Les hooks <code>PreToolUse</code> réduisent le risque sans former de frontière : un Bash obfusqué leur échappe, et ceux d'un <code>.claude/settings.json</code> de worktree ne comptent pas. À prouver à la sortie de 1a.0 : la TUI ; le plugin chargé, appliqué à la TUI sous srt, impossible à couper depuis le worktree ; <code>main</code> et la config git commune intouchables, directement ou par une commande git autorisée, sinon risque accepté écrit ; les dossiers de session partagés.</figcaption>
+<figcaption>Figure 3. Aucun secret ne franchit la frontière (D13) : le trousseau, <code>~/.claude</code> et <code>~/.claude.json</code> sont illisibles, aucun <code>GH_TOKEN</code>, et seul le proxy de l'hôte détient l'identifiant Claude. Le jeton de session est révoqué en fin de session. Prouvé en <code>-p</code> avec un appel réel par le proxy, et la TUI en pty (journal §15). Le plugin est chargé par <code>--plugin-dir</code> depuis le lanceur, avec <code>onFailure: block</code> ; les hooks réduisent le risque sans former de frontière. Statut : TUI prouvée en pty ; premier lancement réel au propriétaire. À observer en réel au premier scénario de 1a : <code>onFailure: block</code>.</figcaption>
 </figure>
 
 <h2>4. Processus, réseau, secrets</h2>

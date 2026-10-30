@@ -308,3 +308,183 @@ Remplacent le §10 décision 8 et la ligne « Budget » du correctif du §10, qu
 - Clôture de la relecture de 62e5131 (`rapport-62e5131.md`, dossier de relecture hors dépôt) : le document reste à 366 lignes (borne 372), sans code, test ni workflow.
 - Défauts bloquants 1 et 2 : M1 et la couche client viennent du hook M1 de la brique 1c, `usage` couvre le broker, M2 agrège les deux ; la gateway passe {jeton, task, parent} au broker (md 66, html 33 et 135).
 - Contrats 3 à 5, décidés par le propriétaire : réponse interrompue sans enregistrement (la facture fait foi), indisponibilité de `data` détectée à l'échec du `tools/call` puis jetons réémis, fin par borne ou annulation sans `verify` ni verdict et portée au registre ; hors règle : `timeout_ms`, T-42h et T-43d conservés, `maxTurns` en scénario, tool d'annulation.
+
+## 14. Brique 1a.0, outil de code isolé, 30 octobre 2026
+
+Branche `feat/tool-1a0`, base `b097071`. Poste : macOS 27 arm64, Node 26.11.1, npm 11.20.0, srt 0.0.81 (dépendance de `packages/sandbox`, lockfile), Claude Code **2.1.314**, binaire `~/.local/share/claude/versions/2.1.314` par le lien `~/.local/bin/claude` (le §2 citait 2.1.312). Aucun identifiant lu ni recopié ; un seul appel réel à l'API (C-1), modèle `haiku`, 0,0065 USD selon `total_cost_usd`.
+
+**Montage.** Lanceur : le worktree `tool-1a0`. Worktree visé : `<repo>/.claude/worktrees/probe-1a0`, branche jetable `probe/1a0`, retirés après les preuves avec la branche `probe/other-ref`. Les commandes de preuve passent par l'adaptateur du dépôt, `SrtSandboxRunner.start({ profile: 'builder', cwd: <probe-1a0>, command: ['bash', '-c', <commande>] })`, depuis un pilote hors dépôt ; la commande livrée est `npm --prefix <tool-1a0> run code -- <args>` lancée depuis `probe-1a0`. Chemins abrégés ici : `<repo>`, `~`.
+
+### X-TTY : terminal hérité sous srt
+
+Question : la TUI exige un terminal ; le §6 veut des descripteurs créés par l'adaptateur. Risque nommé : `TIOCSTI`, injection de frappes dans le terminal de l'hôte, lues par le shell natif après la sortie de la sandbox. Pilote pty (hors dépôt) : un `sh` de l'hôte lance la sandbox sur le même terminal, puis lit une ligne.
+
+| Essai | Résultat |
+|---|---|
+| Témoin sans srt : `ioctl(0, TIOCSTI, "echo INJECTED\n")` puis `read` de l'hôte | `HOST-READ:[echo INJECTED]` : l'injection marche |
+| Sous srt, profil sans `allowPty` | `PermissionError: [Errno 1] Operation not permitted`, `HOST-READ:[]` |
+| Sous srt, `allowPty: true` | Idem, `EPERM`, `HOST-READ:[]` |
+| Mode brut (`tty.setraw(0)`) sans `allowPty` | `setraw-err (1, 'Operation not permitted')` : la TUI ne peut pas démarrer |
+| Mode brut avec `allowPty: true` | `setraw-ok` |
+
+Décision d'implémentation, à confirmer par le propriétaire : `allowPty: true` au profil builder (seul ajout au profil C) ; le port garde `stdio` constant en tubes ; l'outil interactif, hors du port, hérite des descripteurs 0 à 2 seulement si tous trois sont des terminaux (`isatty`), sinon tubes. srt hérite lui-même ses descripteurs (`dist/cli.js`, `sandboxedStdio`).
+
+### Preuves du profil builder
+
+`main` avant et après : `fbf100a`, inchangée. Sommes de `<repo>/.git/config`, `commondir`, `gitdir`, `<worktree>/.claude/settings.json`, `~/.claude/settings.json` et liste de `.git/hooks` : inchangées.
+
+| Preuve | Commande sous srt | Résultat | Sortie |
+|---|---|---|---|
+| Canari, lecture | `canary-probe.mjs` sur un fichier secret ajouté en `denyRead` | refusée | test `srt adapter on this host` vert ; un faux srt sans isolation est refusé : `ISOLATION_UNAVAILABLE: canari : lecture allowed, connexion allowed` |
+| Canari, réseau | connexion au port que l'hôte écoute sur `127.0.0.1` | refusée | idem |
+| Commit | `git add probe.txt && git commit -qm "probe: commit under srt"` | réussi, exit 0 | `probe: commit under srt` ; sur stderr `Unable to create '<repo>/.git/packed-refs.lock'` (maintenance après commit, sans effet sur le commit) |
+| Évasion par `commondir` | `printf '/tmp/elsewhere\n' > <repo>/.git/worktrees/probe-1a0/commondir` | refusée | `Operation not permitted` |
+| `gitdir`, `config.worktree` | écriture directe | refusées | `Operation not permitted` |
+| `.git/hooks` | `printf '#!/bin/sh\n' > <repo>/.git/hooks/pre-commit` | refusée | `Operation not permitted` |
+| `.git/config` | `>> <repo>/.git/config` ; `git config q.q 1` | refusées | `Operation not permitted` ; `could not lock config file` |
+| `main` | `git update-ref refs/heads/main HEAD` | refusé | `couldn't set 'refs/heads/main'` |
+| `main` | écriture directe de `refs/heads/main` | refusée | `Operation not permitted` |
+| `main` | `git pack-refs --all` | refusé | `Unable to create '<repo>/.git/packed-refs.lock'` |
+| `main` | `git branch -f main HEAD` | refusé **par git**, pas par srt | `cannot force update the branch 'main' used by worktree at '<repo>'` ; tient parce que `main` est extraite au checkout principal |
+| Autre branche | `git branch probe/other-ref HEAD` | **réussi** | `.git/refs` est inscriptible : toute ref locale autre que `main` peut être déplacée (résidu, ci-dessous) |
+| Réglages utilisateur | `: >> ~/.claude/settings.json` ; `: >> ~/.claude.json` ; `~/.claude/plugins/.aos-probe` | refusés | `Operation not permitted` |
+| Réglages du worktree | `printf '{"disableAllHooks":true}' > <worktree>/.claude/settings.json`, idem `settings.local.json` | refusés | `Operation not permitted` |
+| Renommer `.claude` | `mv <worktree>/.claude <worktree>/.claude-moved` | refusé | `Operation not permitted` |
+| Hors worktree | `: > <repo>/.aos-probe…` ; `: > ~/.aos-probe-home` | refusés | `Operation not permitted` |
+| Profil résolu | `: > $CLAUDE_CODE_TMPDIR/../profile.json` ; `$CLAUDE_CODE_TMPDIR/x` | refusé ; tmp inscriptible | `Operation not permitted` ; `tmp-ok` |
+| Secrets | `ls ~/.ssh` | refusé | `Operation not permitted` |
+| Réseau | `curl https://example.com` ; `registry.npmjs.org` ; `api.anthropic.com` | 403 ; 200 ; joint (404 sur `/`) | `CONNECT tunnel failed, response 403` |
+| `npm ci` | `npm ci --ignore-scripts` dans le worktree | réussi, 70 s | `npm-exit=0`, cache dans `~/.cache/npm` (`npm_config_cache` du gabarit) |
+| Environnement | `env` | liste fermée | aucune variable `ANTHROPIC_*`, `CLAUDE_CONFIG_DIR` ni `CLAUDE_CODE_*` hormis `CLAUDE_CODE_TMPDIR` ; variables de proxy posées par srt |
+| Dossiers de session | `: > ~/.claude/shell-snapshots/.aos-probe` ; idem `session-env` | **écrits** | voir R-2 ci-dessous |
+| Lanceur dans le worktree visé | `npm run code -- --version` depuis `tool-1a0` lui-même | refusé | `ISOLATION_UNAVAILABLE: chemin de confiance inscriptible par la sandbox : <repo>/.claude/worktrees/tool-1a0/node_modules/@anthropic-ai/sandbox-runtime/dist/cli.js` |
+| Checkout principal | `npm --prefix <tool-1a0> run code -- --version` depuis `<repo>` | refusé | `NOT_A_WORKTREE: dépôt principal : lancer depuis un worktree lié` |
+| Lancement | `npm --prefix <tool-1a0> run code -- --version` depuis `probe-1a0` | réussi | `2.1.314 (Claude Code)` |
+
+### TUI au premier lancement
+
+`npm --prefix <tool-1a0> run code` depuis `probe-1a0`, dans un pty 120×40, observation seule pendant 20 s, rien écrit sur le pty, puis `SIGTERM` au groupe. Le premier lancement a perdu sa sortie : le pilote a levé `PermissionError` sur un second `killpg` avant d'imprimer ; relancé une fois. Sortie du second : la TUI est vivante après 20 s et affiche le dialogue de confiance du dossier, « Quick safety check: Is this a project you created or one you trust? », qui signale les trois permissions pré-approuvées de `.claude/settings.json`, choix par défaut « No, exit ». **Dialogue non accepté**, à la main du propriétaire. L'invite n'est donc pas atteinte. Attendu à observer par le propriétaire : l'acceptation s'écrit dans `~/.claude.json`, que le profil refuse ; le dialogue peut revenir à chaque lancement. Après arrêt : aucun processus `sandbox-exec` restant, aucun dossier `aos-sandbox-*` restant.
+
+### C-1 : l'appel réel, hooks et `disableAllHooks`
+
+Préparation sur l'hôte : `{"disableAllHooks": true}` écrit dans `<worktree>/.claude/settings.local.json` (fichier ignoré par git), pour simuler une écriture que le `denyWrite` aurait laissé passer. Commande, depuis `probe-1a0` :
+
+```
+npm --prefix <tool-1a0> run --silent code -- -p --model haiku --max-turns 4 --output-format stream-json --verbose \
+  --allowedTools "Bash(git push:*)" "Bash(security:*)" -- "Use the Bash tool to run exactly these two commands, ... \
+  1) git push --dry-run aos-nowhere main 2) security find-generic-password -s aos-probe-nonexistent"
+```
+
+Commandes choisies sans effet si un hook échoue : remote inexistant, élément de trousseau inexistant.
+
+| Fait | Sortie |
+|---|---|
+| Lancement en `-p` sous srt, compte du propriétaire | `success`, 3 tours, `apiKeySource: none` |
+| Plugin chargé | `init.plugins` contient `builder-guard@inline` (`--plugin-dir`) |
+| Hook `git push … main` | **non appliqué** : la commande a tourné, `fatal: 'aos-nowhere' does not appear to be a git repository` |
+| Hook `security find-generic-password` | **non appliqué** : `SecKeychainSearchCopyNext: The specified item could not be found in the keychain.` Le trousseau est joint depuis la sandbox : R-1 confirmé |
+
+### X-HOOK : cause racine, sans appel à l'API
+
+Même lancement, profil `builder` sans réseau (copie hors dépôt, `allowedDomains: []`), donc aucune requête ne sort ; plugin témoin hors dépôt dont le hook `SessionStart` crée un fichier dans le worktree ; `--debug-file` dans le worktree.
+
+| Essai | Fichier témoin | Journal de debug |
+|---|---|---|
+| B : sans `disableAllHooks` | absent | `Hook failed to run (SessionStart:startup): EPERM: operation not permitted, mkdir '~/.claude/plugins/data/aos-marker-inline'` |
+| C : dossier `~/.claude/plugins/data/aos-marker-inline` créé sur l'hôte avant, retiré après | **créé** | `(plugin aos-marker@inline) finished with status 0` |
+| A' : comme C, plus `disableAllHooks: true` dans `settings.local.json` du worktree | absent | hooks enregistrés, non lancés |
+
+**Cause racine.** Claude Code 2.1.314 crée `~/.claude/plugins/data/<plugin>-<source>` avant chaque hook de plugin ; le profil C refuse toute écriture sous `~/.claude/plugins` ; le hook échoue, en erreur non bloquante, et l'appel d'outil passe. Un hook qui ne peut pas tourner laisse passer (fail-open). Les hooks et serveurs MCP des plugins utilisateur du propriétaire échouent de même sous la sandbox (`hypermnesia-mcp-viz-synced`).
+
+**Prouvé par A'.** Un `disableAllHooks` écrit dans les réglages du worktree coupe les hooks du plugin. Le `denyWrite` de `<worktree>/.claude/settings.json` et `settings.local.json` est donc nécessaire, et il tient (tableau ci-dessus, renommage de `.claude` compris).
+
+Arrêt sur ce point, comme prévu par la consigne : aucun chemin ouvert, aucun contournement livré. Options au propriétaire : (a) le lanceur crée sur l'hôte le dossier de données vide du plugin avant le lancement, aucun chemin ouvert, mais nom interne `<plugin>-inline` de Claude Code (prouvé par C) ; (b) `allowWrite` limité à `~/.claude/plugins/data/builder-guard-inline`, rien n'y est exécuté ; (c) plugin installé depuis la marketplace et dossier créé par une première session hôte.
+
+### Résidus constatés
+
+- **R-2, dossiers de session.** La sandbox crée et modifie des fichiers dans `~/.claude/shell-snapshots` et `session-env`, où vivent les instantanés de shell des sessions hôte. Qu'une session hôte exécute un instantané modifié n'est pas prouvé : il faudrait une session hôte avec un appel réel, hors du budget d'un appel. Le §8 du document dit que ces dossiers sortent alors de `allowWrite` : décision au propriétaire, à éprouver avec la TUI.
+- **Refs locales.** Toute branche locale autre que `main` est déplaçable depuis la sandbox (`.git/refs` inscriptible), dont `feat/*` d'autres worktrees ; le ruleset ne protège que `main` sur GitHub.
+- **Réglages utilisateur.** Les hooks, plugins et serveurs MCP de `~/.claude/settings.json` du propriétaire se chargent dans la sandbox (lecture permise) ; leurs écritures dans `~/.claude/plugins/data` échouent.
+
+### Tests et garde
+
+`npm run check` : 204 tests, 198 passés, 6 ignorés (Postgres) ; base 119 (113 passés, 6 ignorés), 85 ajoutés. Le contrat du port tourne contre l'adaptateur en mémoire partout, contre srt sous macOS seulement (`describe.runIf`) ; les refus sans isolation (srt absent, faux srt, checkout principal, pas de terminal) tournent partout. Garde dependency-cruiser : `child_process` et `@anthropic-ai/sandbox-runtime` seulement dans `packages/sandbox`, exception nommée `docker-runner.ts` jusqu'à 1b.1, trois fixtures. `claude plugin validate --strict` : marketplace et plugin, `Validation passed`.
+
+### Échecs de méthode
+
+- Le temporaire de la sandbox était compté comme chemin de confiance alors qu'il contient le `tmp` inscriptible : refus à tort, corrigé (seul `profile.json` est contrôlé).
+- srt absent levait `ENOENT` au lieu de `ISOLATION_UNAVAILABLE` : corrigé, test ajouté.
+- Pilote de preuve en `.ts` sous `tsx` : `await` de premier niveau refusé en sortie CJS ; renommé `.mts`.
+- Premier lancement de la TUI : sortie perdue (voir plus haut).
+- C-1 seul ne départageait pas `disableAllHooks` et l'échec du hook : X-HOOK, sans réseau, a départagé.
+
+## 15. Brique 1a.0, aucun secret dans la sandbox, 30 octobre 2026
+
+**Décision du propriétaire.** Elle remplace les options (a), (b) et (c) du §14 et l'usage du compte par le trousseau. Claude Code tourne sous srt avec un dossier de configuration propre et un jeton de session. Il ne joint le modèle que par un proxy d'authentification natif, seul détenteur de l'identifiant de l'hôte.
+
+**Sources lues.** Pages code.claude.com `env-vars`, `claude-directory`, `authentication`, `hooks` (`onFailure`), `plugins/org` (dossier de semences), `sandbox-environments`, et `vinta/blackwall` (`src/adapters/claude.js`). `CLAUDE_CONFIG_DIR` déplace aussi `.claude.json` et les données des plugins. `CLAUDE_CODE_OAUTH_TOKEN` passe avant le trousseau. `onFailure: "block"` se pose par hook (2.1.295 et plus).
+
+### Mise en œuvre
+
+| Élément | Choix |
+|---|---|
+| `CLAUDE_CONFIG_DIR` | Recréé **à chaque lancement** dans le dossier temporaire de la sandbox (le plus simple : aucun état d'un lancement à l'autre, rien à empoisonner). Le lanceur écrit `settings.json` (`sandbox.enabled: false`, protégé par `denyWrite`) et `.claude.json` (`hasCompletedOnboarding`, `hasTrustDialogAccepted` pour `<repo>` et le worktree), à partir du gabarit (`files`). Pas d'historique entre lancements |
+| `denyRead` | Ajoutés : `~/.claude`, `~/.claude.json`, `~/Library/Keychains` |
+| `allowWrite` | Retirés : les dossiers de session de `~/.claude`. Ajouté : le dossier de configuration |
+| Réseau | `127.0.0.1:<port du proxy>` et `registry.npmjs.org`. Retirés : `api.anthropic.com`, claude.ai, statsig, GitHub. GitHub n'est pas nécessaire : le lockfile ne résout que sur `registry.npmjs.org` (491 entrées), et `fetch` et `push` se font depuis l'hôte |
+| Environnement | `ANTHROPIC_BASE_URL=http://127.0.0.1:<port>`, `CLAUDE_CODE_OAUTH_TOKEN=<jeton de session>` et `CLAUDE_CONFIG_DIR`, posés depuis des variables du lanceur. Le schéma refuse toute valeur littérale pour ces noms. `NO_PROXY` est retiré dans la sandbox (`env -u`, après srt) |
+| Proxy | `src/auth-proxy.ts`. Lecture par `/usr/bin/security find-generic-password -s "Claude Code-credentials" -w` (`code.json`), en mémoire seulement, relue à l'approche de l'expiration. Seuls `POST /v1/messages` et `POST /v1/messages/count_tokens` passent ; le proxy ajoute `anthropic-beta: oauth-2025-04-20`. Une ligne d'`usage` par réponse dans `~/.local/state/architect-os/usage.jsonl` |
+| builder-guard | `--plugin-dir` depuis le checkout du lanceur (hors écriture, contrôlé), `onFailure: block`. **Écart** : pas de `CLAUDE_CODE_PLUGIN_SEED_DIR=~/.claude/plugins`. Semer builder-guard exige de l'installer sur l'hôte, ce qui modifie `~/.claude/settings.json` et l'applique à toutes les sessions hôte. Et rouvrir `~/.claude/plugins` en lecture exposerait les caches et les données des plugins du propriétaire |
+| CLAUDE.md, skills, agents, commands | Ceux du dépôt sont dans le worktree, donc lus comme réglages de projet : aucune copie. Ceux de `~/.claude` du propriétaire ne sont plus lus |
+| Renouvellement OAuth | **Non fait dans le proxy.** Le jeton de rafraîchissement change à chaque usage, et un renouvellement ici déconnecterait l'hôte (preuve f). Le proxy relit le trousseau ; une session `claude` de l'hôte renouvelle l'identifiant. Un identifiant expiré donne 503 |
+
+Montage des preuves : lanceur `tool-1a0`, worktree visé `<repo>/.claude/worktrees/probe-1a0b` (branche jetable `probe/1a0b`, retirés après). Chemins abrégés : `<repo>`, `~`.
+
+### Preuves
+
+| # | Preuve | Résultat | Sortie |
+|---|---|---|---|
+| a | `srt --settings <profil résolu> -- node -e "process.stdin.setRawMode(true)"` dans un pty | `allowPty: true` : accepté ; sans `allowPty` : refusé | `setRawMode-ok 120` ; `setRawMode-err EPERM` |
+| b | Éléments jetables sur l'hôte (`security add-generic-password -s srt-probe`, `git credential-osxkeychain store` pour `srt-probe.invalid`), lus par trois chemins | voir détail | voir détail |
+| b, hôte | lecture des deux éléments | les deux rendent le secret | `exit=0 secret-returned=True` |
+| b, srt sans `denyRead` du trousseau (témoin) | lecture des deux éléments | les deux rendent le secret | `exit=0 secret-returned=True` |
+| b, profil builder | lecture des deux éléments | **refusée** | `find-generic-password` : `exit=44 SecKeychainSearchCopyNext: The specified item could not be found in the keychain.` ; `credential-osxkeychain get` : `exit=0 secret-returned=False` |
+| b, nettoyage | suppression des deux éléments | supprimés | `find-*-password` : `exit=44` |
+| c | Appel réel C-2 : `git push origin main` | refusé par builder-guard | `builder-guard [push-main]: git push to main is refused` |
+| c | C-2 : `security find-generic-password -s aos-probe-nonexistent` | refusé par builder-guard | `builder-guard [keychain]: Keychain access is refused` |
+| c | Dossier de données du plugin | créé sous notre `CLAUDE_CONFIG_DIR`, jamais sous `~/.claude` | `ls $CLAUDE_CONFIG_DIR/plugins/data` donne `builder-guard-inline` ; liste de `~/.claude/plugins/data` identique avant et après |
+| d | `ls ~/.claude/shell-snapshots`, `ls ~/.claude/plugins/data` avant et après trois lancements (TUI, `-p`, TUI) | identiques | sommes égales, 4 instantanés |
+| d | `shasum ~/.claude.json` | **différente, sans lien avec la sandbox** : une veille de 180 s sans aucune sandbox l'a vu changer à +35 s | des sessions Claude Code de l'hôte l'écrivent. La sandbox ne peut ni le lire ni l'écrire : `cat ~/.claude.json` et `ls ~/.claude` donnent `Operation not permitted` |
+| d | Dialogue de confiance | absent aux deux lancements de la TUI | invite `❯` affichée directement |
+| e | Réponse de Claude Code sous srt via le proxy (C-2, `-p --model haiku`) | réussie | `success`, 8 tours, 0,0077 USD ; `apiKeySource: none` ; 8 lignes d'`usage` `status 200, route /v1/messages, model claude-haiku-5-5` |
+| e | Environnement : pilote sous le profil | seulement le jeton de session, l'URL du proxy et le dossier de configuration | `base=http://127.0.0.1:<port> token=<jeton de session>` ; aucune autre variable `ANTHROPIC_*` ni `CLAUDE_CODE_*`. Dans C-2, le Bash de Claude Code ne voit même pas `CLAUDE_CODE_OAUTH_TOKEN`, que Claude Code retire de l'environnement de ses commandes |
+| e | `curl -X POST https://api.anthropic.com/v1/messages` sous le profil | refusé par srt | `CONNECT tunnel failed, response 403` ; idem claude.ai, github.com ; `registry.npmjs.org` donne 200 |
+| e | Proxy réel (`startAuthProxy`, configuration de `code.json`), jeton valide | `GET /v1/messages`, `POST /v1/models`, `POST /api/oauth/token`, `POST /v1/messages/batches` refusés | `403` ×4, identifiant jamais lu (`credential reads: 0`) |
+| e | Proxy réel, sans jeton ; jeton révoqué ; proxy fermé | refusés | `401` ; `401` ; `ECONNRESET` |
+| e | Jeton de C-2 rejoué après la session, sur son port | refusé | `Failed to connect to 127.0.0.1 port 53584` |
+| f | `claude auth status` de l'hôte (somme), `~/.claude/.credentials.json` | identiques avant et après | somme égale ; fichier absent avant et après (#104359 non reproduit) |
+| g | Bash dans la sandbox (C-2) | fonctionne du premier coup | 5 commandes exécutées, aucun `dangerouslyDisableSandbox` dans les entrées d'outil |
+| h | TUI en pty, deux lancements, observation seule | invite affichée sans dialogue de confiance ni d'onboarding | `Claude Code v2.1.314 · Sonnet 5.5 · Claude API … ❯ ⏵⏵ auto mode on` ; aucun dialogue accepté ; après arrêt : aucun `sandbox-exec`, aucun dossier `aos-sandbox-*` |
+| | Profil, sous srt | inchangé par rapport au §14 | commit réussi ; `commondir` : `Operation not permitted` ; `update-ref refs/heads/main` : refusé ; `settings.json` de la configuration : `Operation not permitted` ; `.claude.json` et `plugins/data` de la configuration inscriptibles |
+
+### Observations
+
+- **Appel au démarrage de la TUI.** Chaque lancement de la TUI envoie une requête `POST /v1/messages` par le proxy avant toute saisie. Elle a reçu `429 rate_limit_error` deux fois (`usage.jsonl`), l'appel `-p` passant ensuite en `haiku`. Cause probable : une vérification de quota sur le modèle par défaut. Hors de l'outil ; le propriétaire verra si la session interactive s'en ressent.
+- **Bandeau de la TUI.** « Claude API » (base URL et jeton), « Auto-update failed » (réseau fermé), « gh auth login for PR status » (pas de GitHub) : informatifs.
+- **Témoin du trousseau, premier essai.** L'élément Internet créé par `security` puis lu par `git credential-osxkeychain` sur l'hôte a bloqué : le trousseau demandait une autorisation d'accès pour cette application. Le processus a été tué au bout de 90 s, **sans accepter le dialogue**. L'essai a été refait avec un élément créé par `git credential-osxkeychain store` lui-même et un délai de 20 s par commande (tableau b).
+- **`onFailure: block`.** Il est posé et validé (`claude plugin validate --strict`, schéma du test), et les hooks tournent et refusent (c). Le refus quand un hook ne peut pas tourner n'a pas été observé en réel. Il se prouvera au premier appel réel de 1a, dans un scénario de la porte.
+
+### Résidus
+
+- Le jeton de session vit dans l'environnement du processus `claude`. Un processus de la sandbox qui le lit (même uid) peut dépenser par le proxy, pendant la session et vers `/v1/messages` seulement. C'est R-4 appliqué à 1a.0.
+- Sorties possibles : le contenu envoyé au modèle (R-5), et les URL vers `registry.npmjs.org` (sans jeton npm, aucune publication).
+- Le reste de R-2 tient : code lancé par l'hôte dans le worktree, refs locales autres que `main` déplaçables.
+- L'outil lit l'identifiant de l'hôte à chaque lancement. Hors session, rien ne le détient en dehors du trousseau.
+
+### Tests
+
+`npm run check` est vert : 224 tests, 218 passés, 6 ignorés (Postgres). Le §14 en comptait 204. Ajouts :
+- `test/auth-proxy.test.ts` : faux amont, faux identifiant ; relais, remplacement de l'`Authorization`, `usage` sans contenu, 401, 403 ×6, révocation, 503 sans détail, identifiant expiré ou illisible.
+- Gabarit : réseau limité au proxy, jeton littéral refusé, base URL vers un autre hôte refusée, fichiers hors `allowWrite` refusés.
+- `code.json` : amont non HTTPS et route non ancrée refusés.
+- Hooks : `onFailure: block` exigé par le schéma.

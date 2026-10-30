@@ -1,6 +1,6 @@
 # ai-architect.tools : plateforme v3 sous sandbox-runtime (srt)
 
-`ai-architect.tools` est la marque ; `architect-os` reste le nom provisoire du dépôt et du code. Conception, 30 octobre 2026, réécrite depuis `0dd97c5`, amendée le même jour après audit (§9). Elle amende la vision v3 (`docs/design/platform-v3.html`, inchangée) et se lit d'une traite. L'historique est dans [`journal.md`](journal.md) : résultats du banc, décisions, échecs, sort de chaque mécanisme retiré. Le journal d'expériences reste [`bench/JOURNAL.md`](../../bench/JOURNAL.md), et l'ancien texte complet reste dans git à `0dd97c5`. Figures : [`platform-v3-srt.html`](platform-v3-srt.html).
+`ai-architect.tools` est la marque ; `architect-os` reste le nom provisoire du dépôt et du code. Conception, 30 octobre 2026, réécrite depuis `0dd97c5`, amendée le même jour après audit (§9), puis par le schéma de l'outil 1a.0 (D13 à D16). Elle amende la vision v3 (`docs/design/platform-v3.html`, inchangée) et se lit d'une traite. L'historique est dans [`journal.md`](journal.md) : résultats du banc, décisions, échecs, sort de chaque mécanisme retiré. Le journal d'expériences reste [`bench/JOURNAL.md`](../../bench/JOURNAL.md), et l'ancien texte complet reste dans git à `0dd97c5`. Figures : [`platform-v3-srt.html`](platform-v3-srt.html).
 
 Position du propriétaire, qui règle ce document :
 
@@ -18,9 +18,9 @@ Mesures v3 : M1, tokens de contexte client par tâche, en baisse ; M2, tokens to
 
 | Pilier | Fait | Prévu | Sans objet |
 |---|---|---|---|
-| Recherche | Banc Linux et macOS, 106 tests, échecs conservés, run 41044838678, une commande : `cd bench && npm run bench:sandbox` | TUI de 1a.0 ; banc rejoué à chaque montée de srt (T-54) ; M1, M2, R aux briques 1c à 3 ; baseline à la brique 0 | |
+| Recherche | 1a.0 prouvée (journal §14, §15, `f14da63`) ; banc Linux et macOS, 106 tests, échecs conservés, run 41044838678, une commande : `cd bench && npm run bench:sandbox` | premier lancement réel de la TUI de 1a.0 (propriétaire) ; `onFailure: block` observé en réel, premier scénario de 1a ; banc rejoué à chaque montée de srt (T-54) ; M1, M2, R aux briques 1c à 3 ; baseline à la brique 0 | |
 | SSDLC | STRIDE court et risques acceptés (§4), usurpation d'une task hors des appels actifs refusée, confusion entre appels concurrents d'un même module acceptée (R-10) ; dépendances épinglées, lockfile (§4.3) | SBOM en 1c ; SAST = porte de tests, brique 1a ; DAST = `escape.feature`, brique 1b | |
-| Opérationnel | Moindre privilège par profil (§5) ; aucun secret lu pour écrire ce document | Clé API seule dans le broker, brique 1b ; sur serveur un uid propre au broker, brique D | IRB : aucune donnée humaine ; à revoir en brique 4 si la mémoire en reçoit |
+| Opérationnel | Moindre privilège par profil (§5) ; aucun secret ne franchit la sandbox de 1a.0 (D13, journal §15) ; aucun secret lu pour écrire ce document | Broker de 1b.2 = le proxy de 1a.0 étendu ; clé API seule dans le broker ; sur serveur un uid propre au broker, brique D | IRB : aucune donnée humaine ; à revoir en brique 4 si la mémoire en reçoit |
 
 ## 2. Topologie
 
@@ -33,6 +33,7 @@ Mesures v3 : M1, tokens de contexte client par tâche, en baisse ; M2, tokens to
                  calls_allowed, writes_tables, identifiants d'appel, bornes de task,
                  annulation, registre, max_result_tokens
     broker       seul détenteur de la clé API ; mesure l'usage de chaque réponse ; POST /v1/messages seul
+                 (1a.0 : proxy d'authentification déjà construit ; 1b.2 l'étend)
     data         seul importeur de pg ; opérations typées en tools MCP
     postgres 17  listen_addresses='' ; peer sur socket Unix, aucun mot de passe
     |  MCP stdio, créé par l'adaptateur
@@ -60,7 +61,7 @@ Mesures v3 : M1, tokens de contexte client par tâche, en baisse ; M2, tokens to
 | Clé API Anthropic | broker, fichier 0600 | Lisible par un natif du même uid (R-3) |
 | Jeton de task (gateway), identifiant d'appel (gateway) | worker de la task ; module, le temps de l'appel | Sans valeur hors de cette task, de cet appel et du loopback (R-4) |
 | Identifiants Postgres | aucun, `peer` | |
-| Compte Claude du propriétaire | outil de code 1a.0 seulement | R-1 ; jamais la plateforme : clé API obligatoire dès qu'elle sert quelqu'un d'autre |
+| Compte Claude du propriétaire | proxy d'authentification de l'hôte (1a.0), en mémoire ; la sandbox n'a qu'un jeton de session | R-1 ; jamais la plateforme : clé API obligatoire dès qu'elle sert quelqu'un d'autre |
 | CI : fédération OIDC, `GATEWAY_CI_TOKEN` | secrets des workflows Claude | Aucun dans la porte de tests |
 
 **Broker.** Le worker reçoit `ANTHROPIC_BASE_URL=http://127.0.0.1:<port>` et un jeton de task aléatoire comme `ANTHROPIC_API_KEY` : il n'a jamais la vraie clé [E-05, T-23, T-41]. Un seul listener, port fixe dans le profil. Ordre, une règle : la gateway passe {jeton, task, parent} au broker par un `tools/call` MCP sur le stdio du broker (son enfant natif, lancé avant tout worker, serveur MCP pour elle), puis lance le worker ; à la fin de la task, un second `tools/call` retire le jeton. Le broker résout le jeton vers une task connue (`401` sinon), puis construit la requête amont : seul `POST /v1/messages*` passe, vers le seul `api.anthropic.com`, avec la clé dans le seul `x-api-key` et le corps inchangé. Les autres chemins répondent `403`. Le jeton ne protège pas d'un natif déterminé (R-3) ; il évite qu'un processus local quelconque dépense la clé en joignant le port, et il attribue le coût à une task. [à prouver : `broker.feature`, 1b ; appel réel avec une clé d'essai, requêtes invalides comprises (T-04R, décidé), 1b]
@@ -114,26 +115,30 @@ Les arguments restent non fiables : Zod protège la structure, pas la sémantiqu
 | Une sandbox de plateforme ne lit ni `~`, ni `.ssh`, ni l'état d'une autre task | `denyRead: ["~"]`, `cwd` jetable (§5) | [T-02, T-41c, deux OS] ; rien de sensible visible, sans viser un code d'erreur : macOS `EPERM`, Linux `tmpfs` |
 | L'executor n'a aucun réseau, un module que la gateway, un worker que le broker | Allowlist du profil | [T-03, T-38, T-41] |
 | Aucune clé API dans une sandbox | Broker | [E-05, T-23, T-41b] |
+| Aucun secret dans la sandbox de l'outil 1a.0 | Trousseau, `~/.claude`, `~/.claude.json` en `denyRead` ; proxy d'authentification de l'hôte, jeton de session | Journal §15, b et e : trousseau introuvable, 403, 401 |
 | Aucune sandbox n'atteint Postgres | Socket refusée, pas de TCP | [E-09, T-38] |
 | Mort d'une task sans effet sur les autres ; le groupe tué ne laisse aucun descendant | Un enfant par task, `kill(-pgid)` | [E-06, T-06] ; R-7 |
 | Le client ne voit ni résultat intermédiaire ni tool de module | §3 | [à prouver : `code-front.feature`, 3] |
 | Écrire un hook ou `.git/config` nommés est refusé | `denyWrite` nommés | [T-02e4, deux OS] |
 
-**Hooks de protection : une couche de réduction, à côté de srt, pas une frontière.** Pour l'outil 1a.0, des hooks Claude Code `PreToolUse`, simples et descriptifs, refusent les erreurs et les injections ordinaires avant que srt n'ait à répondre. Un Bash obfusqué ou un script lancé par `npm test` leur échappe : ils réduisent le risque, ils ne le ferment pas. Ils sont livrés dans un plugin de la marketplace, jamais dans `~/.claude/settings.json`, qui s'appliquerait à toutes les sessions, ni dans un fichier que la sandbox peut écrire. Les hooks d'un `.claude/settings.json` de worktree ne comptent pas comme protection. Les workers de plateforme n'en dépendent pas (`settingSources: []`).
+**Hooks de protection : une couche de réduction, à côté de srt, pas une frontière.** Pour l'outil 1a.0, des hooks Claude Code `PreToolUse`, simples et descriptifs, refusent les erreurs et les injections ordinaires avant que srt n'ait à répondre. Un Bash obfusqué ou un script lancé par `npm test` leur échappe : ils réduisent le risque, ils ne le ferment pas. Ils sont livrés dans un plugin de la marketplace, chargé par `--plugin-dir` depuis le lanceur avec `onFailure: block` (D14), jamais dans `~/.claude/settings.json`, qui s'appliquerait à toutes les sessions, ni dans un fichier que la sandbox peut écrire. Les hooks d'un `.claude/settings.json` de worktree ne comptent pas comme protection. Les workers de plateforme n'en dépendent pas (`settingSources: []`).
 
 ### 4.1 STRIDE
 
 | Menace | Vecteur réel | Réponse | Sinon |
 |---|---|---|---|
 | **S** | Processus local qui joint le broker ou la gateway | Jeton de task, identifiant d'appel, `401` | R-3 |
+| **S** | Processus de la sandbox 1a.0 qui se sert du proxy ou le contourne | Jeton de session aléatoire (401 sinon), révoqué en fin de session ; routes fermées (403) ; `api.anthropic.com` direct refusé par srt | R-1 |
 | **S** | Module qui se dit d'une autre task au rappel | Identifiant d'appel créé par la gateway, invalidé au retour | R-10 : confusion entre appels concurrents acceptée |
 | **T** | Une sandbox réécrit un hook, `.git/config`, son profil ou srt | `denyWrite` nommés ; profil et srt hors chemins inscriptibles ; hooks `PreToolUse` en 1a.0 | R-2 |
 | **T** | Un module écrit la table d'un autre | `writes_tables` contrôlé à chaque opération par la gateway | R-8 |
 | **T** | Une PR affaiblit la porte | Visible au diff, revue, ruleset sur `main` | R-6 |
 | **R** | Coût ou verdict non attribuable | Coût : un enregistrement d'`usage` par réponse au broker, task tirée du jeton, parent tiré de l'identifiant d'appel, append-only par `data` (§2). Registre append-only : `0003_runs_immutable.sql` n'interdit que l'UPDATE d'un run terminé ; `trace` et `parent` : migration à écrire, brique 2 | R-10 : attribution confondue entre deux appels concurrents d'un module compromis |
-| **I** | Exfiltration par un domaine autorisé | Sandbox de plateforme : seul le broker. Outil 1a.0 : accepté | R-1, R-5 |
+| **I** | Exfiltration par un domaine autorisé | Sandbox de plateforme : seul le broker. Outil 1a.0 : proxy et `registry.npmjs.org` seuls, aucun secret lisible ; sort le contenu envoyé au modèle et les URL npm | R-1, R-5 |
+| **I** | Lecture de l'identifiant Claude depuis la sandbox 1a.0 (T-04) | Trousseau et `~/.claude*` en `denyRead` ; identifiant en mémoire du proxy hôte | R-1 |
 | **I** | Lecture de la clé | Broker, fichier 0600 ; sur serveur, uid propre au broker | R-3, R-8 |
 | **D** | Boucle, inondation, sandbox sans fin | Délai maximal et nombre maximal d'appels par task, profondeur et échéance par appel, `maxTurns` ; borne atteinte ou annulation par le propriétaire : identifiants invalidés, groupe tué ; `maxBufferSize`, plafond d'octets, gateway qui survit [E-03] | R-7, R-9 |
+| **E** | Hook de sécurité qui ne peut pas tourner (fail-open observé, journal §14) | `onFailure: block`, configuration propre à la sandbox | Observé en réel au premier scénario de 1a |
 | **E** | Évasion par espace de noms imbriqué | `allowNestedUserNamespaces`, `enableWeakerNestedSandbox`, `allowAllUnixSockets` refusés par schéma ; `escape.feature` | R-5 |
 | **E** | Contenu non fiable qui atteint le lancement ou la gateway | Signature fermée, argv statique (§6) ; gateway limitée aux enveloppes, sans `eval` | R-8 |
 
@@ -141,8 +146,8 @@ Les arguments restent non fiables : Zod protège la structure, pas la sémantiqu
 
 | # | Risque | Pourquoi on vit avec | Ce qui le borne | On le rouvre si |
 |---|---|---|---|---|
-| R-1 | Outil 1a.0 : le trousseau est lisible depuis la sandbox, donc le jeton Claude et possiblement GitHub ; exfiltration et push possibles par les domaines autorisés (README srt, « Security Limitations ») | Outil personnel, poste du propriétaire, simplicité d'usage réel | Révocation ; réseau limité à trois fournisseurs ; `denyRead` ciblés ; hooks `PreToolUse` ; ruleset sur `main` comme limite | Tout usage par un tiers |
-| R-2 | Tout ce que l'hôte lance dans le worktree exécute du code écrit par la sandbox : `git`, scripts npm, `.claude/settings.json`, `.envrc`. Sous Linux, un hook écrit dans un dépôt imbriqué non nommé persiste [T-34h, T-34i, T-02e, T-02e2]. Les dossiers de session de `~/.claude` restent inscriptibles et partagés avec les sessions hôte hors sandbox (à prouver, §8) | Même risque qu'aujourd'hui avec tout code d'agent ; la lecture du diff précède le lancement | `denyWrite` du dépôt principal ; revue | Un incident réel |
+| R-1 | Outil 1a.0 : le jeton de session est lisible dans la sandbox pendant la session et ne donne que des appels au modèle via le proxy, journalisés, révoqués à la fin | Aucun secret réel n'y entre (D13) ; outil personnel, poste du propriétaire | Proxy : `/v1/messages` et `count_tokens` seuls, une ligne d'`usage` par réponse ; réseau limité au proxy et à npm ; ruleset sur `main` | Tout usage par un tiers |
+| R-2 | Tout ce que l'hôte lance dans le worktree exécute du code écrit par la sandbox : `git`, scripts npm, `.claude/settings.json`, `.envrc`. Sous Linux, un hook écrit dans un dépôt imbriqué non nommé persiste [T-34h, T-34i, T-02e, T-02e2]. Les refs locales autres que `main` sont déplaçables depuis la sandbox (journal §14) ; la part « dossiers de session partagés » est fermée (D15) | Même risque qu'aujourd'hui avec tout code d'agent ; la lecture du diff précède le lancement | `denyWrite` du dépôt principal ; revue | Un incident réel |
 | R-3 | Un natif du même uid lit la clé ou un jeton [T-24, T-43d] | Il lirait déjà tout le reste du poste | Sur serveur, un uid propre au broker | Serveur partagé |
 | R-4 | Le modèle lit le jeton de sa task | Il n'atteint que le broker de sa task, toute dépense est mesurée et attribuée à sa task, et il ne vaut rien ailleurs | Bornes de la task, annulation, retrait du jeton en fin de task | |
 | R-5 | Évasion de srt, faille du noyau, exfiltration du contenu par l'API de modèle (inhérente) | Aucune correction totale possible ; utilisateurs fiables | Banc rejoué à chaque montée de srt, `escape.feature`, version exacte | Un test d'évasion réussit (§6) |
@@ -154,6 +159,8 @@ Les arguments restent non fiables : Zod protège la structure, pas la sémantiqu
 | R-11 | Amont qui refléterait un en-tête d'authentification [T-04, T-42h] : aucun retrait en réponse | Hôte amont fixe ; un retrait se contourne par encodage | TLS vers `api.anthropic.com`, `T-04R` | T-04R observe un reflet |
 | R-12 | `zod` imbriqué de srt, GHSA-mrhx-c7xc-m3w5, sans correctif ni override utile (O-33, acceptée sans override) | Non exploitable depuis la sandbox : seul `safeParse` observé, sur la configuration de démarrage, écrite par nous | Règle : profil hors de tout chemin inscriptible | Usage de `srt proxy` ; relu à chaque montée |
 | R-13 | Linux : `kernel.apparmor_restrict_unprivileged_userns=0`, réglage global exigé par bwrap sur Ubuntu 24.04 [E-07] | Runners jetables | Profil AppArmor dédié sur serveur [à prouver : brique D] | Déploiement Linux |
+
+**Constats externes.** `claude-code#104359` : le login de l'hôte est effacé sous srt quand le trousseau n'est pas inscriptible ; évité par D13 (la sandbox ne touche pas au trousseau), non reproduit (journal §15, f). `srt#755` : le trousseau est accessible par défaut ; fermé par `denyRead` (§8). `srt#391` : séquences de terminal sous `allowPty` ; à observer à chaque montée de srt.
 
 ### 4.3 Chaîne d'approvisionnement
 
@@ -270,21 +277,39 @@ Une brique s'arrête sur sa preuve. Ordre d'exécution : 1a.0, puis 1a, 1b, 1c, 
 
 ### 1a.0 Outil de code isolé, stage 0 simplifié
 
-Un fichier `builder.json` par worktree, hors de tout chemin inscriptible, une commande : `srt --settings builder.json claude`, dans le worktree habituel `<repo>/.claude/worktrees/<w>`. C'est tout. Le reste de la plateforme se construit dedans.
+Implémenté et prouvé sur `feat/tool-1a0` (`f14da63`), preuves au journal §14 et §15. Une commande depuis un worktree `<repo>/.claude/worktrees/<w>` : `npm --prefix <lanceur> run code -- <arguments de claude>`. Le checkout du lanceur (code, srt, plugin) est hors du worktree visé, sinon refus `ISOLATION_UNAVAILABLE` ; après fusion, le checkout principal. À chaque lancement : le lanceur lit l'identifiant de l'hôte dans le trousseau et le confie au proxy ; crée un dossier temporaire (profil résolu en lecture seule, `tmp`, `CLAUDE_CONFIG_DIR`) ; lance le canari, puis `srt --settings <profil> -- env -u NO_PROXY -u no_proxy claude --plugin-dir <lanceur>/plugins/builder-guard` ; à la fin il révoque le jeton, ferme le proxy et retire le dossier. Le reste de la plateforme se construit dedans.
 
-| Élément | Choix adopté le 30 octobre (décision 1) |
+**Profil builder** (`packages/sandbox/profiles/builder.json`), schéma retenu le 30 octobre (D13, D14) :
+
+| Élément | Choix |
 |---|---|
-| `allowWrite` | Le worktree ; `<repo>/.git/worktrees/<w>`, `.git/objects`, `.git/refs`, `.git/logs` ; `~/.cache` et les dossiers de session de `~/.claude` |
-| `denyWrite` | `<repo>/.git/hooks`, `<repo>/.git/config`, `worktrees/<w>/commondir`, `gitdir`, `config.worktree`, `refs/heads/main` ; `<worktree>/.claude/settings.json` et `settings.local.json` |
-| `denyRead` | `~/.ssh`, `~/.aws`, `~/.gnupg`, `~/.config/gh`, `~/.npmrc`, `~/.netrc` |
-| Réseau | Anthropic, npm, GitHub |
-| Authentification | Le compte Claude du propriétaire ; `CLAUDE_CONFIG_DIR` non défini ; srt installé hors du worktree |
-| Hooks `PreToolUse`, jeu minimal adopté (décision 2), dans un plugin de la marketplace | Refuser `git push` vers `main` et les push forcés ; l'accès au trousseau et aux identifiants (`security find-*`, fichiers de secrets) ; les écritures dans `.git/hooks` et `.git/config` |
-| Résidus | R-1, R-2 ; les objets écrits par la sandbox sont lus par le `git` de l'hôte ; le ruleset tient `main` sur GitHub, pas la ref locale |
+| `allowWrite` | Le worktree ; `<repo>/.git/worktrees/<w>`, `.git/objects`, `.git/refs`, `.git/logs` ; `~/.cache` ; `CLAUDE_CONFIG_DIR` et `tmp` de la sandbox. Retirés : les dossiers de session de `~/.claude` |
+| `denyWrite` | `<repo>/.git/hooks`, `<repo>/.git/config`, `worktrees/<w>/commondir`, `gitdir`, `config.worktree`, `refs/heads/main` ; `<worktree>/.claude/settings.json` et `settings.local.json` ; `settings.json` du dossier de configuration |
+| `denyRead` | `~/.ssh`, `~/.aws`, `~/.gnupg`, `~/.config/gh`, `~/.npmrc`, `~/.netrc`, `~/.claude`, `~/.claude.json`, `~/Library/Keychains` |
+| Réseau | `127.0.0.1:<port du proxy>` et `registry.npmjs.org`, rien d'autre. Aucun `GH_TOKEN` : `fetch` et `push` depuis l'hôte, par le propriétaire |
+| Terminal | `allowPty: true` (macOS) : sans lui la TUI ne passe pas le terminal en mode brut ; `TIOCSTI` reste refusé (journal §14, X-TTY) |
+| Environnement | Liste fermée, plus `ANTHROPIC_BASE_URL` (le proxy), `CLAUDE_CODE_OAUTH_TOKEN` (le jeton de session) et `CLAUDE_CONFIG_DIR`, posés par le lanceur ; le schéma refuse une valeur littérale pour ces noms ; `NO_PROXY` retiré |
+| Configuration | `CLAUDE_CONFIG_DIR` propre à la sandbox, recréé à chaque lancement, pas de `--resume`. `settings.json` : `sandbox.enabled: false` (un Seatbelt ne s'imbrique pas). `.claude.json` : confiance du worktree pré-écrite. Plus aucun dossier de session partagé avec l'hôte |
+| Proxy d'authentification (D13) | Natif sur l'hôte, `127.0.0.1`, port aléatoire. Seul détenteur de l'identifiant Claude, lu dans le trousseau, gardé en mémoire. Ne relaie que `POST /v1/messages` et `count_tokens` vers `api.anthropic.com` ; 403 sinon ; 401 sans le jeton de session aléatoire, révoqué en fin de session. Une ligne d'`usage` par réponse (modèle, tokens, horodatage, jamais le contenu). Pas de renouvellement OAuth : identifiant expiré = 503, une session hôte le renouvelle (D14) |
+| Hooks | Plugin `builder-guard`, chargé par `--plugin-dir` depuis le lanceur, hors du worktree visé, `onFailure: block` sur chaque hook. Réduction, pas frontière (§4) |
 
-**Faisabilité, vérifiée sur le poste macOS** : la commande fonctionne en `-p` avec le compte Claude, un appel réel minimal. Le profil initial, limité à `.git/hooks` et `.git/config`, casse `git commit` et permet une évasion prouvée par réécriture de `.git/worktrees/<w>/commondir` : d'où les lignes ci-dessus. **À prouver : la TUI au premier lancement.** Réglages du worktree refusés : `~/.claude/settings.json` et les plugins restent hors de `allowWrite`. Mais srt ne protège que `.claude/commands` et `.claude/agents`, pas `.claude/settings.json` ; or un fichier de projet a priorité sur l'utilisateur et se recharge en cours de session (doc Claude Code) : un `disableAllHooks: true` ou un plugin désactivé dans le worktree couperait les hooks. D'où les deux `denyWrite` ; ne pas ajouter `~/.claude.json` ni `~/.claude/settings.json` à `allowWrite` pour faire passer la TUI.
+**Preuves** (journal §15, lettres a à h ; §14 pour le profil git) :
 
-**Sortie** : la TUI répond dans la sandbox ; un commit réussit dans le worktree ; l'écriture de `.git/hooks/x`, `.git/config`, `worktrees/<w>/commondir`, `~/.claude/settings.json` et `<worktree>/.claude/settings.json` est refusée, y compris en renommant `.claude` ; `~/.ssh` est illisible ; `npm ci` passe ; un domaine hors liste est refusé. Hooks : le plugin se charge ; il s'applique à la TUI sous srt ; aucune écriture depuis le worktree ne le coupe (`disableAllHooks`, plugin désactivé) ; chaque hook refuse son cas nominal. Git : la session ne peut ni déplacer `main` ni modifier la config git commune, directement ou par une commande git autorisée (`update-ref`, `branch -f`, `pack-refs`, `config`) ; sinon risque accepté écrit, le ruleset distant ne protégeant pas les refs locales. Restent à prouver à cette même sortie, du journal : le hook de worktree coupé par `.claude/settings.json`, et une session hôte hors sandbox qui exécuterait du code écrit par la sandbox dans `~/.claude/shell-snapshots` ou `session-env`, sinon ces dossiers sortent de `allowWrite`. Essai consigné au journal. **Test externe** : la brique 1a démarre dans l'outil.
+| Preuve | Résultat |
+|---|---|
+| Trousseau (b) | Éléments jetables lus par l'hôte et sous srt sans `denyRead` ; **introuvables** sous le profil builder |
+| Environnement, proxy (e) | Seuls le jeton de session, l'URL du proxy et le dossier de configuration sont visibles ; `GET /v1/messages`, `/v1/models`, `/api/oauth/token`, `/batches` : 403 ; sans jeton ou jeton révoqué : 401 ; jeton rejoué après la session : connexion refusée |
+| Réseau (e) | `api.anthropic.com` direct : 403 du proxy srt ; `registry.npmjs.org` : 200 |
+| Appel réel (e) | Claude Code sous srt par le proxy : `success`, 8 tours, 0,0077 USD, 8 lignes d'`usage` |
+| Hôte intact (d, f) | `claude auth status` de l'hôte, dossiers de session de `~/.claude` : identiques avant et après ; login effacé (#104359) non reproduit |
+| Hooks (c) | `git push origin main` et `security find-*` refusés par builder-guard en réel ; dossier de données du plugin sous la configuration de la sandbox |
+| TUI (a, h) | En pty : `setRawMode` accepté avec `allowPty` ; deux lancements, invite affichée sans dialogue de confiance. Premier lancement réel de la TUI non fait |
+| Profil git (§14) | Commit réussi ; `commondir`, `.git/hooks`, `.git/config`, `refs/heads/main`, réglages du worktree et d'utilisateur : refusés ; renommer `.claude` : refusé |
+| Tests | `npm run check` : 224 tests, 218 passés, 6 ignorés (Postgres) |
+
+Deux causes racines gardées. Un `disableAllHooks` écrit dans les réglages du worktree coupe les hooks : les deux `denyWrite` sont nécessaires (journal §14, X-HOOK, A'). Un hook qui ne peut pas tourner laisse passer (fail-open) : d'où `onFailure: block` et le dossier de configuration propre, qui remplacent les options (a), (b), (c) du §14. Écart assumé : pas de `CLAUDE_CODE_PLUGIN_SEED_DIR`, semer le plugin modifierait `~/.claude/settings.json` de l'hôte.
+
+**Sortie** : atteinte pour le profil, le proxy et le commit. Restent au propriétaire : le premier lancement réel de la TUI (effet du 429 reçu au démarrage, §15) et `onFailure: block` observé en réel au premier scénario de 1a. Risques : R-1 et R-2 réécrits (§4.2). Les objets écrits par la sandbox sont lus par le `git` de l'hôte ; le ruleset tient `main` sur GitHub, pas la ref locale. **Test externe** : la brique 1a démarre dans l'outil.
 
 ### 1a Gherkin et porte
 
@@ -297,7 +322,7 @@ Un fichier `builder.json` par worktree, hors de tout chemin inscriptible, une co
 | Étape | Contenu | Sortie |
 |---|---|---|
 | 1b.1 | `packages/sandbox` : port, adaptateur srt, gabarit, schéma, canari ; `docker-runner.ts` derrière le port, avec un plafond d'octets sur stdout (décision 3 ; `docker-runner.ts:93-99`, sans borne : 2 Mo donnent 545 Mo de tas) | `canary.feature`, `spawn.feature` (enfant hostile, sortie au-delà du plafond refusée, groupe tué), garde et fixture |
-| 1b.2 | `modules/broker` en flux, clé API, jeton de task par `tools/call`, enregistrement d'`usage` par réponse | `broker.feature` : sans jeton `401`, hors chemin `403` ; aucune clé en sandbox ; appel réel (T-04R) ; un enregistrement par réponse, remonté à la gateway ; jeton retiré = `401` |
+| 1b.2 | `modules/broker` : le proxy d'authentification de 1a.0 (`packages/sandbox/src/auth-proxy.ts`, déjà construit) étendu : jetons par task passés par `tools/call`, parent, enregistrement d'`usage` par réponse au registre | `broker.feature` : sans jeton `401`, hors chemin `403` ; aucune clé en sandbox ; appel réel (T-04R) ; un enregistrement par réponse, remonté à la gateway ; jeton retiré = `401` |
 | 1b.3 | `data` en MCP généré depuis `DATA_OPS`, tables écrites déclarées par opération ; SQL dans `data/sql/*.sql`, enregistrements d'`usage` | `usage.feature` : enregistrement en append-only, UPDATE refusé ; agrégation par task, couche et modèle ; `data` absent (échec du `tools/call`) = refus du broker, jetons réémis au retour, enregistrements intermédiaires perdus |
 | 1b.4 | Gateway : lit la sortie validée de `manifest-registry` et `modules.mcp.json`, lance les modules, serveur MCP par sandbox, identifiants d'appel, bornes de task et annulation, 3 reconnexions puis `SERVICE_UNAVAILABLE` ; sandbox jamais relancée | `gateway.feature` : hors `calls_allowed`, au-delà de la profondeur, après l'échéance, identifiant invalidé, table hors `writes_tables` : refusé et journalisé ; délai, nombre d'appels, `maxTurns` atteint et annulation : identifiants invalidés, groupe tué, ni `verify` ni verdict, fin portée au registre ; module tué puis reconnecté ; `manifest.feature` : sortie invalide non routée |
 | 1b.5 | Memory : module et worker sous srt, `agents/*.md` ; retrait de `internal-http.ts` ; `.max()` sur `WorkerOutputSchema.evidence` (décision 3 ; `tools.ts:82`, sans borne) | `recall` e2e à travers un vrai `srt`, faux amont ; `evidence` trop grande rejetée |
@@ -358,9 +383,13 @@ Un fichier `builder.json` par worktree, hors de tout chemin inscriptible, une co
 | 10 | Marque `ai-architect.tools` au titre et à l'en-tête ; `architect-os` nom provisoire | En-tête |
 | 11 | Aucun plafond financier : coût mesuré par réponse pour la traçabilité et la prévision, rien d'autre ; aucune réservation, coupure ni refus financier | §2, R-9 |
 | 12 | Bornes opérationnelles : délai maximal et nombre maximal d'appels par task (profil client), `maxTurns` ; borne atteinte ou annulation par le propriétaire = identifiants invalidés, groupe tué | §2, §4.1 D, R-7 |
+| 13 | D13 : aucun secret ne franchit la frontière de la sandbox. Proxy d'authentification natif sur l'hôte, seul détenteur de l'identifiant ; trousseau, `~/.claude`, `~/.claude.json` en `denyRead` ; aucun `GH_TOKEN`. Le broker de 1b.2 est ce même proxy, étendu | §8, 1a.0 ; 1b.2 |
+| 14 | D14 : `CLAUDE_CONFIG_DIR` propre, recréé à chaque lancement, `sandbox.enabled: false`, hooks `onFailure: block`, confiance pré-écrite ; `allowPty: true` ; builder-guard par `--plugin-dir` ; pas de renouvellement OAuth (503) | §8, 1a.0 |
+| 15 | D15 : R-1 et R-2 réécrits ; constats externes `#104359`, `srt#755`, `srt#391` | §4.2 |
+| 16 | D16 : décisions 1a.0 closes (hooks, `allowPty`, dossiers de session, confiance du dossier) ; les options (a), (b), (c) du journal §14 sont remplacées | Journal §14, §15 |
 
 ### 9.2 Décisions ouvertes
 
 **Règle d'arrêt des revues.** Le consensus est atteint quand une revue ne trouve plus ni défaut de correction fonctionnelle ni contradiction avec les décisions du propriétaire. Un risque nommé et accepté ne bloque pas. Une proposition de mécanisme supplémentaire ne compte pas comme défaut.
 
-Ouvertes : la date de la baseline (D-7) et le nom définitif, au propriétaire.
+Ouvertes : la date de la baseline (D-7) et le nom définitif, au propriétaire. Reste au propriétaire pour 1a.0 : le premier lancement réel de la TUI (effet du 429 au démarrage) ; `onFailure: block` observé en réel au premier scénario de 1a.
