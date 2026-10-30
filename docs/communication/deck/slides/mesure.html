@@ -1,0 +1,42 @@
+<section id="mesure" data-transition="fade" style="background:#f1eee7;color:#261d17;font-family:'Inter Tight', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;justify-content:space-between;gap:28px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#a53e00">Garde-fous</p>
+<h2 style="font-family:'Fraunces', Georgia, serif;font-size:64px;font-weight:400;line-height:1.15;letter-spacing:-1px;color:#261d17">Mesurer, pas prédire</h2>
+</div>
+<div style="display:flex;gap:48px;align-items:flex-start">
+<div style="width:760px;display:flex;flex-direction:column;gap:20px">
+<p style="font-family:'Fraunces', Georgia, serif;font-size:40px;line-height:1.3;color:#261d17">On ne connaît pas le coût d’une task à l’avance. On le mesure, réponse par réponse.</p>
+<p style="font-size:30px;line-height:1.4;color:#4b4038">Aucun plafond financier&#160;: le coût sert la traçabilité et la prévision.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26);border-radius:18px;padding:28px 36px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#a53e00;padding:0 0 12px">Le broker enregistre</p>
+<p style="font-size:30px;line-height:1.4;color:#261d17;padding:8px 0;border-top:1px solid rgba(62,50,42,0.26)">Tokens d’entrée, de sortie, de cache lu et écrit</p>
+<p style="font-size:30px;line-height:1.4;color:#261d17;padding:8px 0;border-top:1px solid rgba(62,50,42,0.26)">Le modèle</p>
+<p style="font-size:30px;line-height:1.4;color:#261d17;padding:8px 0;border-top:1px solid rgba(62,50,42,0.26)">La task et l’appel parent</p>
+<p style="font-size:30px;line-height:1.4;color:#261d17;padding:8px 0;border-top:1px solid rgba(62,50,42,0.26)">L’horodatage</p>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;gap:24px;align-items:center;justify-content:space-between">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#a53e00">Bornes opérationnelles · une boucle s’arrête</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#845b00;background:#f8f7f2;border:1px solid #845b00;border-radius:999px;padding:6px 20px;white-space:nowrap">À prouver · 1b</p>
+</div>
+<div style="display:flex;gap:24px">
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26);border-radius:18px;padding:28px">
+<h3 style="font-family:'Fraunces', Georgia, serif;font-size:40px;font-weight:400;line-height:1.2;color:#261d17">Délai</h3>
+<p style="font-size:24px;line-height:1.35;color:#4b4038">un délai maximal par task, fixé à son ouverture</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26);border-radius:18px;padding:28px">
+<h3 style="font-family:'Fraunces', Georgia, serif;font-size:40px;font-weight:400;line-height:1.2;color:#261d17">Appels</h3>
+<p style="font-size:24px;line-height:1.35;color:#4b4038">un nombre maximal d’appels de modules, toutes profondeurs</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26);border-radius:18px;padding:28px">
+<h3 style="font-family:'Fraunces', Georgia, serif;font-size:40px;font-weight:400;line-height:1.2;color:#261d17">Tours</h3>
+<p style="font-size:24px;line-height:1.35;color:#4b4038">maxTurns pour un agent, second rempart côté SDK</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1200px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:2px;color:#61554e">ai-architect.tools · architecture v3</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#61554e">07 / 13</p>
+<aside>Deuxième problème : la boucle et la dépense. La conception fait un choix simple. On ne prétend pas connaître le coût d’une tâche à l’avance, on le mesure. À chaque réponse du modèle, le broker enregistre l’usage : les tokens d’entrée, de sortie, de cache lu et de cache écrit, le modèle, la task, l’appel parent et l’horodatage. L’enregistrement remonte à la gateway, qui le fait écrire par data, en ajout seulement, sans modification possible. Il sert à deux choses : savoir qui a dépensé quoi, et prévoir. Le propriétaire a décidé qu’il n’y aurait aucun plafond financier : pas de réservation, pas de coupure ni de refus pour raison d’argent. C’est un risque accepté par écrit, le R-9. Ce qui arrête une boucle, ce sont des bornes opérationnelles. Chaque task a un délai maximal, fixé à son ouverture, et un nombre maximal d’appels de modules, toutes profondeurs confondues. Un agent a en plus une limite de tours, maxTurns, second rempart côté SDK. Quand une borne est atteinte, ou quand le propriétaire annule, la gateway invalide les identifiants de la task et tue tout son groupe de processus. Ces mécanismes sont écrits dans la conception ; leurs scénarios de preuve sont prévus aux étapes 1b.2 à 1b.4.</aside>
+</section>

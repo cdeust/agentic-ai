@@ -1,0 +1,21 @@
+<section id="idee" data-transition="fade" style="background:#cf6e39;color:#130b08;font-family:'Inter Tight', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;justify-content:center;gap:56px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#130b08">L’idée</p>
+<p style="font-family:'Fraunces', Georgia, serif;font-size:64px;font-weight:400;line-height:1.15;letter-spacing:-1px;color:#130b08;width:1500px">Le modèle exprime l’intention et reçoit un résultat borné. Le code fait les appels intermédiaires, hors de son contexte.</p>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:#120c08;border-radius:18px;padding:36px 40px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:40px;font-weight:600;color:#e58b55">search</p>
+<p style="font-size:30px;line-height:1.4;color:#c0bdba">chercher un outil dans le catalogue</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:#120c08;border-radius:18px;padding:36px 40px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:40px;font-weight:600;color:#e58b55">describe</p>
+<p style="font-size:30px;line-height:1.4;color:#c0bdba">lire la description d’un outil</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:#120c08;border-radius:18px;padding:36px 40px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:40px;font-weight:600;color:#e58b55">execute</p>
+<p style="font-size:30px;line-height:1.4;color:#c0bdba">lancer un script qui fait le travail</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1200px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:2px;color:#130b08">ai-architect.tools · architecture v3</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#130b08">03 / 13</p>
+<aside>Voici l’idée qui répond au premier problème, celui du contexte. Plutôt que de laisser le modèle appeler chaque outil lui-même et relire chaque réponse, on lui demande d’écrire un petit programme. Le modèle dit ce qu’il veut, l’intention. Le code fait les appels intermédiaires, filtre, agrège, et ne rend au modèle qu’un résultat borné, c’est-à-dire de taille limitée. Tout ce qui se passe entre les deux ne traverse jamais le contexte du modèle. Pour cela, le modèle ne voit que trois outils, qu’on appelle des méta-tools. search pour chercher un outil dans le catalogue. describe pour lire ce qu’un outil attend et ce qu’il rend. execute pour lancer le script qui fait le travail. C’est l’objectif unique de cette version : réduire le contexte et les tokens consommés par tâche, avec un seul chemin d’exécution pour le produit, le développement et la CI. Le gain se mesurera sur les mêmes tâches, avant et après ; la date de cette mesure de référence reste à fixer par le propriétaire.</aside>
+</section>

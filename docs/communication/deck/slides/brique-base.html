@@ -1,0 +1,34 @@
+<section id="brique-base" data-transition="fade" style="background:#f1eee7;color:#261d17;font-family:'Inter Tight', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;justify-content:space-between;gap:28px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#a53e00">Preuves et suite</p>
+<h2 style="font-family:'Fraunces', Georgia, serif;font-size:64px;font-weight:400;line-height:1.15;letter-spacing:-1px;color:#261d17">La brique de base</h2>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px;background:#120c08;border-radius:28px;padding:48px 56px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:48px;font-weight:600;line-height:1.2;color:#f3f1ee">srt --settings builder.json claude</p>
+<p style="font-size:30px;line-height:1.4;color:#c0bdba">Ton Claude Code, dans un sandbox, dans ton worktree habituel. Une commande, c’est tout.</p>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26);border-radius:18px;padding:36px 40px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#a53e00">Autorisé</p>
+<h3 style="font-family:'Fraunces', Georgia, serif;font-size:40px;font-weight:400;line-height:1.2;color:#261d17">Le worktree</h3>
+<p style="font-size:30px;line-height:1.4;color:#4b4038">et les parties git nécessaires au commit.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26);border-radius:18px;padding:36px 40px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#a53e00">Refusé</p>
+<h3 style="font-family:'Fraunces', Georgia, serif;font-size:40px;font-weight:400;line-height:1.2;color:#261d17">Hooks et réglages</h3>
+<p style="font-size:30px;line-height:1.4;color:#4b4038">.git/hooks, .git/config, les réglages du worktree&#160;; ~/.ssh illisible.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26);border-radius:18px;padding:36px 40px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#a53e00">Réseau</p>
+<h3 style="font-family:'Fraunces', Georgia, serif;font-size:40px;font-weight:400;line-height:1.2;color:#261d17">Trois fournisseurs</h3>
+<p style="font-size:30px;line-height:1.4;color:#4b4038">Anthropic, npm et GitHub, rien d’autre.</p>
+</div>
+</div>
+<div style="display:flex;gap:32px;align-items:center">
+<p style="flex:1;font-family:'Fraunces', Georgia, serif;font-size:40px;line-height:1.3;color:#261d17">C’est aussi le stage 0&#160;: le reste de la plateforme se construit dedans.</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#845b00;background:#f8f7f2;border:1px solid #845b00;border-radius:999px;padding:6px 20px;white-space:nowrap">TUI à prouver</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1200px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:2px;color:#61554e">ai-architect.tools · architecture v3</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#61554e">11 / 13</p>
+<aside>Si vous ne retenez qu’une chose pratique, c’est celle-ci. La brique de base tient en une commande : srt, tiret tiret settings, builder.json, claude. Elle lance votre Claude Code habituel, mais à l’intérieur d’un sandbox, dans votre worktree habituel. Le fichier builder.json, placé hors de tout chemin inscriptible, dit ce qui est permis. Écrire : le worktree, et les parties de git nécessaires à un commit. Refusé : les hooks git, la configuration git commune, les fichiers de réglages Claude Code du worktree, parce qu’un réglage de projet pourrait désactiver les hooks de protection en cours de session. Illisibles : ~/.ssh, ~/.aws, ~/.gnupg et les autres dossiers d’identifiants. Réseau : Anthropic, npm et GitHub, rien d’autre. Les risques qui restent sont écrits, R-1 et R-2, par exemple le trousseau qui reste lisible. C’est aussi le stage 0 : le reste de la plateforme se construit à l’intérieur de cet outil. Ce qui est vérifié : sur le poste macOS, la commande fonctionne en mode non interactif avec le compte Claude, sur un appel réel minimal. Ce qui reste à prouver : l’interface interactive, la TUI, au premier lancement. Une première version du profil avait d’ailleurs permis une évasion, prouvée en réécrivant un pointeur de worktree ; c’est ce qui a conduit aux refus que vous voyez ici.</aside>
+</section>

@@ -1,0 +1,39 @@
+<section id="isolation" data-transition="fade" style="background:#f1eee7;color:#261d17;font-family:'Inter Tight', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;justify-content:space-between;gap:28px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#a53e00">Architecture</p>
+<h2 style="font-family:'Fraunces', Georgia, serif;font-size:64px;font-weight:400;line-height:1.15;letter-spacing:-1px;color:#261d17">L’isolation</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26);border-radius:18px;padding:40px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#a53e00">Par défaut</p>
+<h3 style="font-family:'Fraunces', Georgia, serif;font-size:40px;font-weight:400;line-height:1.2;color:#261d17">srt, le sandbox-runtime d’Anthropic</h3>
+<p style="font-size:30px;line-height:1.4;color:#4b4038">Seatbelt sur macOS, bubblewrap sous Linux&#160;: le processus entier.</p>
+<div style="flex:1"></div>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#61554e">srt 0.0.81, version exacte</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26);border-radius:18px;padding:40px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#a53e00">Exception</p>
+<h3 style="font-family:'Fraunces', Georgia, serif;font-size:40px;font-weight:400;line-height:1.2;color:#261d17">Docker, là où srt n’est pas supporté</h3>
+<p style="font-size:30px;line-height:1.4;color:#4b4038">Par configuration explicite, jamais par détection ni bascule.</p>
+<div style="flex:1"></div>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#61554e">un seul port&#160;: SandboxRunner</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26);border-radius:18px;padding:40px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#a53e00">Au démarrage</p>
+<h3 style="font-family:'Fraunces', Georgia, serif;font-size:40px;font-weight:400;line-height:1.2;color:#261d17">Sans isolation, aucun démarrage</h3>
+<p style="font-size:30px;line-height:1.4;color:#4b4038">Une sandbox témoin doit être refusée en lecture et en réseau.</p>
+<div style="flex:1"></div>
+<p style="align-self:flex-start;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#845b00;background:#f1eee7;border:1px solid #845b00;border-radius:999px;padding:6px 20px;white-space:nowrap">À prouver · 1b</p>
+</div>
+</div>
+<div style="display:flex;gap:32px;align-items:center;background:#e6e1d7;border-radius:28px;padding:24px 32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:8px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#a53e00">Moindre privilège</p>
+<p style="font-size:30px;line-height:1.4;color:#261d17">L’executor n’a aucun réseau, un module ne joint que la gateway, un worker que le broker&#160;; aucune sandbox n’atteint Postgres.</p>
+</div>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#0a693c;background:#f8f7f2;border:1px solid #0a693c;border-radius:999px;padding:6px 20px;white-space:nowrap">Prouvé au banc</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1200px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:2px;color:#61554e">ai-architect.tools · architecture v3</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#61554e">06 / 13</p>
+<aside>Une sandbox, c’est une boîte dans laquelle un programme tourne avec des droits réduits : il ne lit que ce qu’on lui permet de lire, n’écrit que là où on le permet, et ne joint que les adresses réseau autorisées. Par défaut, la plateforme utilise srt, le sandbox-runtime publié par Anthropic. Il s’appuie sur les mécanismes du système : Seatbelt sur macOS, bubblewrap sous Linux. Il enveloppe le processus entier, y compris ses échanges MCP et ses hooks, et la version est épinglée exactement, 0.0.81. Docker n’intervient que là où srt n’est pas supporté, par un champ de configuration explicite, jamais par détection automatique ni par bascule silencieuse. Dans les deux cas, on passe par un seul point de lancement dans le code, le port SandboxRunner, appelé par la seule gateway. Troisième règle : au démarrage, une sandbox témoin doit échouer à lire un fichier hors de ses droits et à joindre une adresse hors de sa liste. Si l’un des deux réussit, la plateforme refuse de démarrer, sans aucun repli. C’est la sécurité pensée dès la conception : on préfère ne pas tourner que tourner sans isolation. Ce test au démarrage est encore à écrire, à la brique 1b. En bas, le moindre privilège : chaque sorte de processus n’a que le réseau dont elle a besoin, et aucune sandbox n’atteint la base. Cela, le banc l’a déjà prouvé sur Linux et sur macOS.</aside>
+</section>

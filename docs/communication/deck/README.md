@@ -1,0 +1,3 @@
+Deck « ai-architect.tools — architecture v3 » (Slides) : https://claude.ai/artifact/TcYRBShv14TN9ELDc1mzvZ ; contenu tiré de `docs/design/platform-v3-srt.md` (b097071) et `docs/design/journal.md`.
+Design system : AI Architect Design System (https://claude.ai/artifact/AsFcB9wvvTPNVyJVqywrsq, version 1793373377-428c), installé dans le deck sous `project/ds/ai-architect/` (non copié ici) ; polices Google Fonts Fraunces, Inter Tight, JetBrains Mono.
+Republier : placer `deck.json` et `slides/` sous `<racine>/project/`, puis publier vers l’url du deck avec l’outil Artifact (`root` = `<racine>`, `file_path` = le fichier modifié, `files` = les autres) ; n’envoyer `deck.json` que si l’ordre, les sections ou les polices changent.

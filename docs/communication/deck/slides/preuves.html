@@ -1,0 +1,64 @@
+<section id="preuves" data-transition="fade" style="background:#f1eee7;color:#261d17;font-family:'Inter Tight', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#a53e00">Preuves et suite</p>
+<h2 style="font-family:'Fraunces', Georgia, serif;font-size:64px;font-weight:400;line-height:1.15;letter-spacing:-1px;color:#261d17">Ce qui est prouvé</h2>
+</div>
+<div style="flex:1;display:flex;gap:48px">
+<div style="width:800px;display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:160px;font-weight:600;line-height:1;letter-spacing:-4px;color:#261d17">106</p>
+<p style="font-size:30px;line-height:1.4;color:#4b4038">tests au banc, sur Linux et macOS, en une commande</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#261d17">cd bench &amp;&amp; npm run bench:sandbox</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#61554e">run 41044838678</p>
+<div style="flex:1"></div>
+<table style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:26px;color:#261d17;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26)">
+<tr style="background:#e6e1d7">
+<th style="width:20%;text-align:left">OS</th>
+<th style="width:20%;text-align:right">réussis</th>
+<th style="width:20%;text-align:right">échecs</th>
+<th style="width:20%;text-align:right">résidus</th>
+<th style="width:20%;text-align:right">constats</th>
+</tr>
+<tr>
+<td>macOS</td>
+<td>94</td>
+<td>1</td>
+<td>5</td>
+<td>6</td>
+</tr>
+<tr>
+<td>Linux</td>
+<td>92</td>
+<td>5</td>
+<td>3</td>
+<td>6</td>
+</tr>
+</table>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;flex-direction:column;gap:8px;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26);border-radius:18px;padding:28px 32px">
+<div style="display:flex;gap:16px;align-items:center">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#0a693c;background:#f1eee7;border:1px solid #0a693c;border-radius:999px;padding:6px 20px;white-space:nowrap">Prouvé</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;font-weight:600;color:#261d17">T-41</p>
+</div>
+<p style="font-size:24px;line-height:1.35;color:#4b4038">Worker entier sous srt&#160;: query(), handlers et binaire Claude Code. Aucune clé dans l’environnement, les sorties ni les fichiers. Deux OS.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26);border-radius:18px;padding:28px 32px">
+<div style="display:flex;gap:16px;align-items:center">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#0a693c;background:#f1eee7;border:1px solid #0a693c;border-radius:999px;padding:6px 20px;white-space:nowrap">Prouvé</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;font-weight:600;color:#261d17">T-38</p>
+</div>
+<p style="font-size:24px;line-height:1.35;color:#4b4038">Module sous srt sur stdio, rappel de la gateway par le proxy, lecture et réseau limités. Deux OS.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26);border-radius:18px;padding:28px 32px">
+<div style="display:flex;gap:16px;align-items:center">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#a52a24;background:#f1eee7;border:1px solid #a52a24;border-radius:999px;padding:6px 20px;white-space:nowrap">Échec conservé</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;font-weight:600;color:#261d17">T-02e, T-34h</p>
+</div>
+<p style="font-size:24px;line-height:1.35;color:#4b4038">Linux&#160;: un hook ou un .git/config non nommé, écrit par la sandbox, persiste sur l’hôte. Nommés en denyWrite, ils tiennent (T-02e4 à e6).</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1200px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:2px;color:#61554e">ai-architect.tools · architecture v3</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#61554e">10 / 13</p>
+<aside>Place aux preuves. Le banc compte 106 tests, joués sur Linux et sur macOS dans la CI, au run 41044838678, et il se relance en une seule commande. Sur macOS : 94 réussis, 1 échec, 5 résidus, 6 constats. Sur Linux : 92 réussis, 5 échecs, 3 résidus, 6 constats. On ne masque pas les échecs : ils sont au journal, avec leur explication. Celui de macOS, E-03-huge, est un défaut du banc lui-même, identifié et documenté. Deux résultats portent l’architecture. T-41 : un worker entier tourne sous srt, avec query(), ses handlers et le binaire Claude Code, contre un faux serveur amont, et aucune clé n’apparaît ni dans l’environnement, ni dans les sorties, ni dans les fichiers. T-38 : un module tourne sous srt sur stdio, rappelle la gateway par le proxy, avec lecture et réseau limités. Les deux passent sur les deux systèmes. Et voici un échec réel, conservé : sous Linux, un hook ou un .git/config absent au lancement, écrit par la sandbox, persiste sur la machine hôte. C’est T-02e et T-02e2, et le même effet dans un dépôt imbriqué non nommé, T-34h et T-34i. La réponse n’a pas été d’en parler, mais de nommer explicitement ces chemins dans la liste des écritures refusées ; avec cela, plus rien ne persiste, T-02e4 à T-02e6, sur les deux systèmes. C’est le sens de « preuve par l’expérience » : un échec documenté vaut mieux qu’une garantie supposée.</aside>
+</section>

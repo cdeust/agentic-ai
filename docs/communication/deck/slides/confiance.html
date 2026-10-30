@@ -1,0 +1,44 @@
+<section id="confiance" data-transition="fade" style="background:#f1eee7;color:#261d17;font-family:'Inter Tight', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;justify-content:space-between;gap:28px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#a53e00">Garde-fous</p>
+<h2 style="font-family:'Fraunces', Georgia, serif;font-size:64px;font-weight:400;line-height:1.15;letter-spacing:-1px;color:#261d17">Le modèle de confiance</h2>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'Fraunces', Georgia, serif;font-size:40px;line-height:1.3;color:#261d17">Treize risques nommés et acceptés par écrit, plutôt qu’un mécanisme de plus.</p>
+<p style="font-size:30px;line-height:1.4;color:#4b4038;width:1300px">Une architecture simple et propre&#160;: un mécanisme n’y reste que si son retrait laisse un risque réel, nommé.</p>
+</div>
+<table style="font-family:'Inter Tight', Arial, sans-serif;font-size:26px;color:#261d17;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26)">
+<tr style="background:#e6e1d7">
+<th style="width:8%;text-align:left">#</th>
+<th style="width:64%;text-align:left">Risque accepté</th>
+<th style="width:28%;text-align:left">On le rouvre si</th>
+</tr>
+<tr>
+<td style="color:#a53e00">R-1</td>
+<td>Outil de code&#160;: le trousseau reste lisible depuis la sandbox</td>
+<td>Tout usage par un tiers</td>
+</tr>
+<tr>
+<td style="color:#a53e00">R-5</td>
+<td>Évasion de srt ou faille du noyau&#160;: aucune correction totale</td>
+<td>Un test d’évasion réussit</td>
+</tr>
+<tr>
+<td style="color:#a53e00">R-7</td>
+<td>macOS&#160;: aucune limite mémoire ou PID par sandbox</td>
+<td>Serveur macOS</td>
+</tr>
+<tr>
+<td style="color:#a53e00">R-9</td>
+<td>Aucun plafond financier&#160;: une task dépense jusqu’à ses bornes</td>
+<td>Décision du propriétaire</td>
+</tr>
+</table>
+<div style="display:flex;gap:24px;align-items:center;background:#e6e1d7;border-radius:28px;padding:24px 32px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#a53e00;white-space:nowrap">Hooks</p>
+<p style="flex:1;font-size:30px;line-height:1.4;color:#261d17">Une couche de protection à côté de srt, qui réduit le risque sans servir de frontière.</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1200px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:2px;color:#61554e">ai-architect.tools · architecture v3</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#61554e">09 / 13</p>
+<aside>Aucune faille de sécurité n’est totalement corrigible. Plutôt que d’empiler des mécanismes, la conception nomme ses risques et les accepte par écrit. Il y en a treize, de R-1 à R-13. Chacun dit pourquoi on vit avec, ce qui le borne, et à quelle condition on le rouvre. En voici quatre. R-1 : l’outil de code du propriétaire peut lire le trousseau depuis la sandbox ; c’est accepté parce que c’est un outil personnel, et on le rouvre dès qu’un tiers l’utilise. R-5 : une évasion de srt ou une faille du noyau ; aucune correction totale n’existe, on rejoue le banc à chaque montée de version, et on rouvre si un test d’évasion réussit. R-7 : sur macOS, aucune limite de mémoire ou de processus par sandbox ; acceptable sur un poste de développement, pas sur un serveur macOS. R-9 : pas de plafond financier, par décision du propriétaire. La règle de lecture du document est simple : un mécanisme n’y figure que si son retrait laisse un risque réel, nommé ; tout le reste est accepté par écrit. C’est la position du propriétaire : une architecture simple et propre plutôt que de la sur-ingénierie. Les hooks de protection, enfin, sont des petits contrôles de Claude Code qui refusent les erreurs et les injections ordinaires avant que srt n’ait à répondre. Ils réduisent le risque, ils ne le ferment pas : un Bash obfusqué ou un script lancé par npm test leur échappe. Ils sont livrés dans un plugin de la marketplace, jamais dans la configuration globale.</aside>
+</section>

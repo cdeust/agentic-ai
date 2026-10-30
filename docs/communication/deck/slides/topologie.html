@@ -1,0 +1,57 @@
+<section id="topologie" data-transition="fade" style="background:#f1eee7;color:#261d17;font-family:'Inter Tight', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#a53e00">Architecture</p>
+<h2 style="font-family:'Fraunces', Georgia, serif;font-size:64px;font-weight:400;line-height:1.15;letter-spacing:-1px;color:#261d17">La topologie</h2>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<p style="align-self:center;font-size:30px;line-height:1.4;color:#261d17;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26);border-radius:999px;padding:16px 40px">Client&#160;: Claude Code, Codex, claude-code-action</p>
+<x-shape kind="arrow-down" style="align-self:center;width:28px;height:44px;background:#a53e00"></x-shape>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#a53e00">Natifs · quatre exceptions prouvées</p>
+<div style="display:flex;gap:24px">
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26);border-radius:18px;padding:28px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;font-weight:600;color:#261d17">gateway</p>
+<p style="font-size:24px;line-height:1.35;color:#4b4038">seul point de décision, seul parent des sandboxes</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26);border-radius:18px;padding:28px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;font-weight:600;color:#261d17">broker</p>
+<p style="font-size:24px;line-height:1.35;color:#4b4038">seul détenteur de la clé API, mesure l’usage</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26);border-radius:18px;padding:28px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;font-weight:600;color:#261d17">data</p>
+<p style="font-size:24px;line-height:1.35;color:#4b4038">seul accès à la base, opérations typées</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26);border-radius:18px;padding:28px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;font-weight:600;color:#261d17">Postgres 17</p>
+<p style="font-size:24px;line-height:1.35;color:#4b4038">socket Unix, aucun mot de passe</p>
+</div>
+</div>
+<div style="display:flex;gap:16px;align-items:center;justify-content:center">
+<x-shape kind="arrow-down" style="width:28px;height:44px;background:#a53e00"></x-shape>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#61554e">MCP stdio</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#e6e1d7;border-radius:28px;padding:24px 28px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#a53e00">Sous srt · un processus par module, plugins compris</p>
+<div style="display:flex;gap:20px">
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;background:#f8f7f2;border-radius:18px;padding:20px 24px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;font-weight:600;color:#261d17">executor</p>
+<p style="font-size:24px;line-height:1.35;color:#4b4038">un par session, aucun réseau</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;background:#f8f7f2;border-radius:18px;padding:20px 24px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;font-weight:600;color:#261d17">module</p>
+<p style="font-size:24px;line-height:1.35;color:#4b4038">un par module, réseau&#160;: la gateway</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;background:#f8f7f2;border-radius:18px;padding:20px 24px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;font-weight:600;color:#261d17">worker</p>
+<p style="font-size:24px;line-height:1.35;color:#4b4038">un par task, réseau&#160;: le broker</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;background:#f8f7f2;border-radius:18px;padding:20px 24px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;font-weight:600;color:#261d17">manifest-registry</p>
+<p style="font-size:24px;line-height:1.35;color:#4b4038">lit les manifestes, aucun réseau</p>
+</div>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1200px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:2px;color:#61554e">ai-architect.tools · architecture v3</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#61554e">04 / 13</p>
+<aside>Voici comment la plateforme est découpée. En haut, le client : Claude Code, Codex ou l’action GitHub de Claude. Il parle à un seul point d’entrée, la gateway. Au milieu, quatre processus tournent directement sur la machine, sans sandbox. Ce sont des exceptions, et chacune est justifiée par une expérience. La gateway est le seul point de décision et le seul parent des sandboxes. Le broker est le seul à détenir la clé API, et il mesure l’usage de chaque réponse. data est le seul à parler à la base, par des opérations typées. Postgres 17 n’écoute que sur une socket Unix, sans mot de passe. Pourquoi ces quatre-là restent natifs : le banc a montré qu’un processus sous sandbox ne peut pas servir de point d’écoute joignable par la machine, avec EPERM sous macOS et ECONNREFUSED sous Linux. Tout le reste tourne sous srt, la sandbox d’Anthropic, un processus par module, plugins compris : l’executor, un par session et sans réseau ; chaque module, qui ne joint que la gateway ; chaque worker, un par task, qui ne joint que le broker ; et manifest-registry, qui lit les manifestes sans réseau. web-scout et db-migrator suivent le même principe. C’est le moindre privilège appliqué au découpage : chaque processus n’a que le réseau dont il a besoin. Tous les liens internes sont du MCP sur stdio, aucun protocole maison.</aside>
+</section>

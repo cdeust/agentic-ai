@@ -1,0 +1,29 @@
+<section id="briques" data-transition="fade" style="background:#f1eee7;color:#261d17;font-family:'Inter Tight', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#a53e00">Preuves et suite</p>
+<h2 style="font-family:'Fraunces', Georgia, serif;font-size:64px;font-weight:400;line-height:1.15;letter-spacing:-1px;color:#261d17">Les briques dans l’ordre</h2>
+</div>
+<table style="font-family:'Inter Tight', Arial, sans-serif;font-size:24px;line-height:1.2;color:#261d17;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26)">
+<tr style="background:#e6e1d7">
+<th style="width:8%;text-align:left;padding:7px 16px">#</th>
+<th style="width:26%;text-align:left;padding:7px 16px">Brique</th>
+<th style="width:66%;text-align:left;padding:7px 16px">Porte de sortie</th>
+</tr>
+<tr><td style="padding:7px 16px;color:#a53e00">1a.0</td><td style="padding:7px 16px">Outil de code isolé</td><td style="padding:7px 16px">TUI sous srt, commit réussi, écritures et domaines hors liste refusés</td></tr>
+<tr><td style="padding:7px 16px;color:#a53e00">1a</td><td style="padding:7px 16px">Gherkin et porte</td><td style="padding:7px 16px">Plus aucun test vitest&#160;; une PR saine verte, une PR qui filtre rouge</td></tr>
+<tr><td style="padding:7px 16px;color:#a53e00">1b</td><td style="padding:7px 16px">srt, broker, topologie</td><td style="padding:7px 16px">Tests d’évasion verts sur Linux et macOS, pour chaque sorte de profil</td></tr>
+<tr><td style="padding:7px 16px;color:#a53e00">1c</td><td style="padding:7px 16px">Marketplace</td><td style="padding:7px 16px">Validation stricte des plugins&#160;; aucune clé statique</td></tr>
+<tr><td style="padding:7px 16px;color:#a53e00">2</td><td style="padding:7px 16px">Catalogue, registre, recall</td><td style="padding:7px 16px">Résultat trop long = résumé et handle&#160;; appel hors profil refusé</td></tr>
+<tr><td style="padding:7px 16px;color:#a53e00">3</td><td style="padding:7px 16px">Front de code</td><td style="padding:7px 16px">Les trois méta-tools seuls visibles&#160;; réseau refusé&#160;; gain mesuré</td></tr>
+<tr><td style="padding:7px 16px;color:#a53e00">4</td><td style="padding:7px 16px">Scission Cortex</td><td style="padding:7px 16px">Écriture hors des tables déclarées refusée</td></tr>
+<tr><td style="padding:7px 16px;color:#a53e00">5</td><td style="padding:7px 16px">Code et tasks</td><td style="padding:7px 16px">Citation invalide rejetée&#160;; builder confiné à son worktree</td></tr>
+<tr><td style="padding:7px 16px;color:#a53e00">6</td><td style="padding:7px 16px">Spec</td><td style="padding:7px 16px">Spec sans critère rejetée</td></tr>
+<tr><td style="padding:7px 16px;color:#a53e00">7</td><td style="padding:7px 16px">Mission Control</td><td style="padding:7px 16px">Tokens par couche visibles sur une task réelle</td></tr>
+<tr><td style="padding:7px 16px;color:#a53e00">8</td><td style="padding:7px 16px">Modèles, web-scout</td><td style="padding:7px 16px">Quarantaine seule&#160;; adresse privée refusée</td></tr>
+<tr><td style="padding:7px 16px;color:#a53e00">D</td><td style="padding:7px 16px">Serveur</td><td style="padding:7px 16px">Limites mémoire et PID prouvées&#160;; profil AppArmor sans réglage global</td></tr>
+<tr><td style="padding:7px 16px;color:#a53e00">0</td><td style="padding:7px 16px">Baseline</td><td style="padding:7px 16px">20 tâches mesurées, à la date que fixera le propriétaire</td></tr>
+</table>
+<p style="position:absolute;left:128px;bottom:64px;width:1200px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:2px;color:#61554e">ai-architect.tools · architecture v3</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#61554e">12 / 13</p>
+<aside>Voici l’ordre de construction. Une règle : une brique s’arrête sur sa preuve, c’est sa porte de sortie. On commence par 1a.0, l’outil de code isolé qu’on vient de voir : sa sortie, c’est la TUI qui répond sous srt, un commit qui réussit, et les écritures interdites comme les domaines hors liste refusés. Puis 1a, la porte de CI en Gherkin : plus aucun test vitest, une PR saine passe au vert, une PR qui ajoute un filtre de tests passe au rouge. Puis 1b, srt, le broker et la topologie : un scénario d’évasion joué contre de vrais processus, vert sur Linux et sur macOS, pour chaque sorte de profil. 1c, la marketplace, validée en mode strict, sans clé statique. Ensuite les briques produit, de 2 à 8 : le catalogue et le registre, le front de code avec ses trois méta-tools, la scission de la mémoire Cortex, le code et les tasks, la spec, Mission Control, puis les modèles locaux et web-scout. D, le serveur, avec des limites mémoire et de processus prouvées et un profil AppArmor dédié. Reste la brique 0, la baseline : vingt tâches mesurées, qui serviront de référence pour le gain en contexte et en tokens ; sa date est au propriétaire. Je n’ai mis ici qu’une ligne par brique ; le détail des preuves de sortie est dans la section 8 du document.</aside>
+</section>

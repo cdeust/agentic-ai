@@ -1,0 +1,45 @@
+<section id="parcours" data-transition="fade" style="background:#f1eee7;color:#261d17;font-family:'Inter Tight', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;justify-content:space-between;gap:28px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#a53e00">Architecture</p>
+<h2 style="font-family:'Fraunces', Georgia, serif;font-size:64px;font-weight:400;line-height:1.15;letter-spacing:-1px;color:#261d17">Le parcours d’un appel «&#160;execute&#160;»</h2>
+</div>
+<div style="display:flex;flex-direction:column">
+<div style="display:flex;gap:24px;align-items:baseline;padding:18px 0;border-top:1px solid rgba(62,50,42,0.26)">
+<p style="width:72px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;font-weight:600;color:#a53e00">1</p>
+<p style="width:420px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#61554e">client → gateway</p>
+<p style="flex:1;font-size:30px;line-height:1.4;color:#261d17">execute(script), l’un des trois méta-tools</p>
+</div>
+<div style="display:flex;gap:24px;align-items:baseline;padding:18px 0;border-top:1px solid rgba(62,50,42,0.26)">
+<p style="width:72px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;font-weight:600;color:#a53e00">2</p>
+<p style="width:420px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#61554e">gateway</p>
+<p style="flex:1;font-size:30px;line-height:1.4;color:#261d17">Ouvre la task avec ses bornes, lance l’executor sous srt</p>
+</div>
+<div style="display:flex;gap:24px;align-items:baseline;padding:18px 0;border-top:1px solid rgba(62,50,42,0.26)">
+<p style="width:72px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;font-weight:600;color:#a53e00">3</p>
+<p style="width:420px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#61554e">executor → gateway → module</p>
+<p style="flex:1;font-size:30px;line-height:1.4;color:#261d17">Le script appelle un outil&#160;; la gateway vérifie les droits</p>
+</div>
+<div style="display:flex;gap:24px;align-items:baseline;padding:18px 0;border-top:1px solid rgba(62,50,42,0.26)">
+<p style="width:72px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;font-weight:600;color:#a53e00">4</p>
+<p style="width:420px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#61554e">executor</p>
+<p style="flex:1;font-size:30px;line-height:1.4;color:#261d17">Le script filtre et agrège&#160;; les étapes 3 et 4 se répètent</p>
+</div>
+<div style="display:flex;gap:24px;align-items:baseline;padding:18px 0;border-top:1px solid rgba(62,50,42,0.26)">
+<p style="width:72px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;font-weight:600;color:#a53e00">5</p>
+<p style="width:420px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#61554e">gateway → verify, registre</p>
+<p style="flex:1;font-size:30px;line-height:1.4;color:#261d17">Si du code est produit, verify le valide&#160;; tout va au registre</p>
+</div>
+<div style="display:flex;gap:24px;align-items:baseline;padding:18px 0;border-top:1px solid rgba(62,50,42,0.26);border-bottom:1px solid rgba(62,50,42,0.26)">
+<p style="width:72px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;font-weight:600;color:#a53e00">6</p>
+<p style="width:420px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#61554e">gateway → client</p>
+<p style="flex:1;font-size:30px;line-height:1.4;color:#261d17">Un résultat borné, sinon un résumé et un handle</p>
+</div>
+</div>
+<div style="display:flex;gap:32px;align-items:center;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26);border-radius:18px;padding:24px 32px">
+<p style="flex:1;font-family:'Fraunces', Georgia, serif;font-size:30px;line-height:1.4;color:#261d17">Seul le résultat de la dernière étape entre dans le contexte du client.</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#845b00;background:#f1eee7;border:1px solid #845b00;border-radius:999px;padding:6px 20px;white-space:nowrap">À prouver · brique 3</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1200px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:2px;color:#61554e">ai-architect.tools · architecture v3</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#61554e">05 / 13</p>
+<aside>Suivons un appel du début à la fin. Le document le décrit en douze étapes ; je les ramène à six. Un, le client appelle execute avec un script. Deux, la gateway vérifie l’accès et le profil du client, ouvre une task avec ses bornes, c’est-à-dire un délai maximal et un nombre maximal d’appels, puis lance l’executor sous srt. Le script n’est jamais passé en argument de ligne de commande : l’executor le récupère ensuite par le canal MCP. Trois, le script appelle un outil, par exemple le rappel de mémoire. La gateway vérifie que cet appel est permis, contrôle la profondeur, crée un identifiant d’appel à usage unique et transmet au module, qui s’exécute lui aussi sous srt. Quatre, le script filtre et agrège ; les étapes trois et quatre se répètent autant que nécessaire. Cinq, si du code a été produit, verify le valide, et la gateway écrit au registre la trace, le verdict et les tokens consommés. Six, le client reçoit un résultat borné ; s’il est trop long, un résumé déterministe et un handle pour aller chercher le reste. Le point à retenir : seul ce dernier résultat entre dans le contexte du client. Le document le marque comme à prouver, par un scénario prévu à la brique 3. On ne l’affirme donc pas encore comme acquis.</aside>
+</section>

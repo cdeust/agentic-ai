@@ -1,0 +1,22 @@
+{
+ "v": 4,
+ "createdOnFiles": {"v": 1, "at": "2026-10-30T15:21:57Z"},
+ "lists": "css",
+ "title": "ai-architect.tools — architecture v3",
+ "cover": "cover",
+ "order": ["cover", "probleme", "idee", "topologie", "parcours", "isolation", "mesure", "porte-ci", "confiance", "preuves", "brique-base", "briques", "build-public"],
+ "sections": {
+  "s1": {"description": "Pour commencer : le problème d’un agent qui travaille seul, et l’idée qui y répond.", "start": "cover"},
+  "s2": {"description": "L’architecture : quatre processus natifs, tout le reste sous sandbox, un parcours d’appel court.", "start": "topologie"},
+  "s3": {"description": "Les garde-fous : mesurer le coût, une porte de CI fondée sur les tests, des risques nommés.", "start": "mesure"},
+  "s4": {"description": "Ce qui est prouvé au banc, la brique de base, l’ordre des briques et l’invitation.", "start": "preuves"}
+ },
+ "faces": {
+  "fraunces": {"family": "Fraunces", "href": "https://fonts.googleapis.com/css2?family=Fraunces:wght@300..700&display=swap"},
+  "inter-tight": {"family": "Inter Tight", "href": "https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400..700&display=swap"},
+  "jetbrains-mono": {"family": "JetBrains Mono", "href": "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400..700&display=swap"}
+ },
+ "designSystems": [
+  {"title": "AI Architect Design System", "namespace": "ai-architect", "artifact": "https://claude.ai/artifact/AsFcB9wvvTPNVyJVqywrsq", "version": "1793373377-428c", "copiedAt": "2026-10-30T15:21:57Z"}
+ ]
+}

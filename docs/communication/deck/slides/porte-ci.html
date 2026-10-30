@@ -1,0 +1,34 @@
+<section id="porte-ci" data-transition="fade" style="background:#f1eee7;color:#261d17;font-family:'Inter Tight', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;justify-content:space-between;gap:28px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#a53e00">Garde-fous</p>
+<h2 style="font-family:'Fraunces', Georgia, serif;font-size:64px;font-weight:400;line-height:1.15;letter-spacing:-1px;color:#261d17">La porte de CI</h2>
+</div>
+<p style="font-family:'Fraunces', Georgia, serif;font-size:40px;line-height:1.3;color:#261d17">Seul le résultat des tests fait foi&#160;: aucun hash, aucun digest.</p>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26);border-radius:18px;padding:36px 40px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#a53e00">e2e · Gherkin</p>
+<h3 style="font-family:'Fraunces', Georgia, serif;font-size:40px;font-weight:400;line-height:1.2;color:#261d17">De bout en bout</h3>
+<p style="font-size:30px;line-height:1.4;color:#4b4038">srt et Postgres réels, des scénarios lisibles par tous.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26);border-radius:18px;padding:36px 40px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#a53e00">Unitaires · Gherkin</p>
+<h3 style="font-family:'Fraunces', Georgia, serif;font-size:40px;font-weight:400;line-height:1.2;color:#261d17">Par composant</h3>
+<p style="font-size:30px;line-height:1.4;color:#4b4038">Le même format, un dossier de scénarios par composant.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#f8f7f2;border:1px solid rgba(62,50,42,0.26);border-radius:18px;padding:36px 40px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#a53e00">Mutation · Stryker</p>
+<h3 style="font-family:'Fraunces', Georgia, serif;font-size:40px;font-weight:400;line-height:1.2;color:#261d17">Zéro survivant</h3>
+<p style="font-size:30px;line-height:1.4;color:#4b4038">Sur le code modifié, chaque mutant doit être tué.</p>
+</div>
+</div>
+<div style="display:flex;gap:48px;align-items:center;background:#e6e1d7;border-radius:28px;padding:28px 36px">
+<div style="flex:1;display:flex;flex-direction:column;gap:8px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;font-weight:600;color:#261d17">exécutés = base + ajoutés − supprimés</p>
+<p style="font-size:30px;line-height:1.4;color:#261d17">Verte si et seulement si chaque scénario attendu tourne, vert, en une seule tentative, chaque step PASSED.</p>
+</div>
+<p style="width:520px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.4;color:#4b4038">T-13&#160;: un step SKIPPED donnait success: true et un code de sortie 0.</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1200px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:2px;color:#61554e">ai-architect.tools · architecture v3</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#61554e">08 / 13</p>
+<aside>Troisième problème : la CI. Une version précédente voulait prouver que deux builds produisaient les mêmes empreintes. La conception actuelle retire cette idée : seul le résultat des tests fait foi, aucun hash, aucun digest. Il y a trois familles de tests. Les tests de bout en bout et les tests unitaires sont écrits en Gherkin, une syntaxe Given, When, Then que l’on peut lire sans être développeur ; les tests de bout en bout tournent avec srt et Postgres réels. La troisième famille est la mutation, avec Stryker : l’outil modifie volontairement le code, par exemple il inverse une condition, et vérifie qu’au moins un test échoue. Un mutant qui survit, c’est un test qui ne vérifie rien. La règle : zéro survivant sur les lignes modifiées. Enfin le compte. Le nombre de scénarios exécutés doit égaler la base, plus les ajoutés, moins les supprimés. La porte est verte si et seulement si chaque scénario attendu a tourné, en une seule tentative, avec chaque step au statut PASSED. Pourquoi si strict : le banc a montré, test T-13, qu’un step sauté donnait quand même success: true et un code de sortie 0. Un test sauté ressemblait à un test réussi. La porte lit donc le rapport détaillé, jamais le code de sortie. C’est la preuve par l’expérience appliquée à notre propre outillage. Cette porte s’écrit à la brique 1a.</aside>
+</section>
