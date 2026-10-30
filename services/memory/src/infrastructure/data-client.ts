@@ -1,4 +1,4 @@
-import { DATA_OPS, type DataOpName, type RunEventType, type RunStatus } from '@agentic-ai/contracts';
+import { DATA_OPS, type DataOpName, type RunEventType, type RunStatus } from '@architect-os/contracts';
 import { ServiceError, type DataPort, type RunRegistry } from '../domain/ports.js';
 
 export type Fetch = (

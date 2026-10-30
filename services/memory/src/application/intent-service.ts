@@ -9,7 +9,7 @@ import {
   type Result,
   type ToolName,
   type WorkerOutput,
-} from '@agentic-ai/contracts';
+} from '@architect-os/contracts';
 import { ServiceError, type ContainerRunner, type RunRegistry, type WorkerLimits } from '../domain/ports.js';
 
 function failure(

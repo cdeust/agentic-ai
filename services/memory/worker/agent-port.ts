@@ -1,4 +1,4 @@
-import type { Cost, Evidence, InternalToolName } from '@agentic-ai/contracts';
+import type { Cost, Evidence, InternalToolName } from '@architect-os/contracts';
 
 /** Tools the agent may call (INTERNAL_TOOLS in contracts). Served by the memory service on the exec network. */
 export interface InternalTools {

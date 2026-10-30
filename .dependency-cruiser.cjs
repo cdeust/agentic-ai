@@ -18,7 +18,7 @@ module.exports = {
     },
     {
       name: 'domain-imports-only-domain-and-contracts',
-      comment: 'domain imports only domain and @agentic-ai/contracts (and Node built-ins).',
+      comment: 'domain imports only domain and @architect-os/contracts (and Node built-ins).',
       severity: 'error',
       from: { path: `${COMPONENT}src/domain/` },
       to: { pathNot: [`^$1/src/domain/`, CONTRACTS], dependencyTypesNot: ['core'] },

@@ -35,7 +35,7 @@ Started by `DockerContainerRunner` (`services/memory/src/infrastructure/docker-r
 
 ```
 docker run --rm -i --read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m --cap-drop ALL
-  --security-opt no-new-privileges --user 10001:10001 --network agentic-ai_exec
+  --security-opt no-new-privileges --user 10001:10001 --network architect-os_exec
   --memory 512m --pids-limit 128 --env INTERNAL_TOOLS_URL=... --env ANTHROPIC_BASE_URL=... <image>
 ```
 

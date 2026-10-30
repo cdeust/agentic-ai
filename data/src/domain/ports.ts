@@ -1,4 +1,4 @@
-import type { DataOpInput, DataOpName } from '@agentic-ai/contracts';
+import type { DataOpInput, DataOpName } from '@architect-os/contracts';
 
 /**
  * Executes one typed data operation on validated input. Rejects with DataError

@@ -1,5 +1,5 @@
 {
-  "name": "agentic-ai",
+  "name": "architect-os",
   "version": "0.1.0",
   "private": true,
   "description": "Four-tier MCP architecture: proxy, gateway, intent services with sandboxed agent workers, typed data layer.",

@@ -1,4 +1,4 @@
-import type { DataOpName, ErrorCode, RunEventType, RunStatus, WorkerInput } from '@agentic-ai/contracts';
+import type { DataOpName, ErrorCode, RunEventType, RunStatus, WorkerInput } from '@architect-os/contracts';
 
 export interface WorkerLimits {
   timeoutMs: number;

@@ -6,6 +6,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Changed
 
+- The repository was renamed from `agentic-ai` to `architect-os` (npm scope `@agentic-ai/*` is now `@architect-os/*`); GitHub redirects the old URL.
 - The repository was replaced by the architecture skeleton. The previous content is archived under the tag `archive/v1-2026-10-29` and is no longer maintained.
 
 ### Added

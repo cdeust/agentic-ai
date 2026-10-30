@@ -1,11 +1,11 @@
 {
-  "name": "@agentic-ai/gateway",
+  "name": "@architect-os/gateway",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "license": "MIT",
   "dependencies": {
-    "@agentic-ai/contracts": "0.1.0",
+    "@architect-os/contracts": "0.1.0",
     "@modelcontextprotocol/sdk": "1.32.2",
     "zod": "4.6.7"
   }

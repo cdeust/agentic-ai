@@ -1,5 +1,5 @@
 # Image for a long-running component (gateway, memory, data). Build context: repository root.
-#   docker build --build-arg ENTRY=gateway/dist/src/main.js -t agentic-ai/gateway .
+#   docker build --build-arg ENTRY=gateway/dist/src/main.js -t architect-os/gateway .
 # The worker has its own image: services/memory/worker/Dockerfile.
 FROM node:26-slim AS build
 WORKDIR /app

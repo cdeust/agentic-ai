@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { TOOLS, TOOL_NAMES } from '@agentic-ai/contracts';
+import { TOOLS, TOOL_NAMES } from '@architect-os/contracts';
 
 /** Directory of the system prompts, one `<tool>.md` per intent tool (copied next to dist/worker in the image). */
 export const PROMPTS_DIR = new URL('./prompts/', import.meta.url);

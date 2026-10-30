@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { ResultStatusSchema, TOOLS } from '@agentic-ai/contracts';
+import { ResultStatusSchema, TOOLS } from '@architect-os/contracts';
 import { buildStack, scriptedAgent } from './harness.js';
 
 const open: { close(): unknown }[] = [];

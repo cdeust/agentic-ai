@@ -5,7 +5,7 @@
 #   exec    memory and the worker containers it launches; no route to data or postgres
 #   data    data and postgres
 # `internal: true` networks have no route to the outside; workers reach Anthropic only through the secrets broker (BROKER_URL).
-name: agentic-ai
+name: architect-os
 
 services:
   proxy:
@@ -44,8 +44,8 @@ services:
       PORT: '8081'
       INTERNAL_PORT: '8083'
       DATA_URL: http://data:8082
-      WORKER_IMAGE: agentic-ai/memory-worker:local
-      WORKER_NETWORK: agentic-ai_exec
+      WORKER_IMAGE: architect-os/memory-worker:local
+      WORKER_NETWORK: architect-os_exec
       INTERNAL_TOOLS_URL: http://memory:8083
       BROKER_URL: ${BROKER_URL:-http://broker:8090}
     # LOCAL ONLY: launching worker containers needs the Docker API. The socket is root-equivalent;
@@ -93,7 +93,7 @@ services:
     build:
       context: .
       dockerfile: services/memory/worker/Dockerfile
-    image: agentic-ai/memory-worker:local
+    image: architect-os/memory-worker:local
     profiles: [build-only]
 
 networks:

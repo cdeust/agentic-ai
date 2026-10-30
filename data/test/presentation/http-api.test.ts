@@ -1,5 +1,5 @@
 import type { AddressInfo } from 'node:net';
-import { DATA_OP_NAMES } from '@agentic-ai/contracts';
+import { DATA_OP_NAMES } from '@architect-os/contracts';
 import { afterEach, describe, expect, it } from 'vitest';
 import { composeInMemory } from '../../src/main.js';
 

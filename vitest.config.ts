@@ -4,7 +4,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   resolve: {
     alias: {
-      '@agentic-ai/contracts': fileURLToPath(new URL('./packages/contracts/src/index.ts', import.meta.url)),
+      '@architect-os/contracts': fileURLToPath(new URL('./packages/contracts/src/index.ts', import.meta.url)),
     },
   },
   test: {

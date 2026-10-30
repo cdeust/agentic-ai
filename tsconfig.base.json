@@ -18,7 +18,7 @@
     "declarationMap": false,
     "sourceMap": false,
     "paths": {
-      "@agentic-ai/contracts": ["./packages/contracts/src/index.ts"]
+      "@architect-os/contracts": ["./packages/contracts/src/index.ts"]
     }
   }
 }

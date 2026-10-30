@@ -1,4 +1,4 @@
-import type { InternalToolName } from '@agentic-ai/contracts';
+import type { InternalToolName } from '@architect-os/contracts';
 import type { InternalTools } from './agent-port.js';
 
 type Fetch = (

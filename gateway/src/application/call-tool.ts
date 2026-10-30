@@ -1,4 +1,4 @@
-import { TOOLS, type ToolName } from '@agentic-ai/contracts';
+import { TOOLS, type ToolName } from '@architect-os/contracts';
 import { GatewayError } from '../domain/errors.js';
 import type {
   Authenticator,

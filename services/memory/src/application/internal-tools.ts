@@ -1,4 +1,4 @@
-import { INTERNAL_TOOLS, type InternalToolName } from '@agentic-ai/contracts';
+import { INTERNAL_TOOLS, type InternalToolName } from '@architect-os/contracts';
 import type { DataPort } from '../domain/ports.js';
 
 export type InternalToolAnswer =

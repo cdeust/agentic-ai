@@ -1,4 +1,4 @@
-import type { DataOpName, MemoryItem, RunEventType, RunStatus } from '@agentic-ai/contracts';
+import type { DataOpName, MemoryItem, RunEventType, RunStatus } from '@architect-os/contracts';
 import type { DataPort, RunRegistry } from '../domain/ports.js';
 
 export interface RecordedRun {

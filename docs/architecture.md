@@ -29,7 +29,7 @@ presentation  ->  application  ->  domain  <-  infrastructure
 src/main.ts: the composition root, the only place objects are built
 ```
 
-- `domain` imports only `domain` and `@agentic-ai/contracts`.
+- `domain` imports only `domain` and `@architect-os/contracts`.
 - `application` imports `domain`. `infrastructure` imports `domain` and `application`. `presentation` imports `application`.
 - Dependencies are injected by constructor. There is no service locator and no global singleton.
 - Every port has a real adapter and an in-memory adapter; the in-memory ones make the whole system runnable in a single test process.

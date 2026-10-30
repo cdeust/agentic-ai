@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { DATA_OP_NAMES, type DataOpInput, type DataOpName } from '@agentic-ai/contracts';
+import { DATA_OP_NAMES, type DataOpInput, type DataOpName } from '@architect-os/contracts';
 import { z } from 'zod';
 import { DataError } from '../domain/errors.js';
 import type { DataStore } from '../domain/ports.js';

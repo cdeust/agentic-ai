@@ -11,7 +11,7 @@ Check, on the diff and the files it touches:
 
 **Layers** (per component `gateway`, `services/*`, `data`)
 
-- `src/domain` imports only `domain` and `@agentic-ai/contracts`; ports are interfaces here.
+- `src/domain` imports only `domain` and `@architect-os/contracts`; ports are interfaces here.
 - `src/application` imports `domain` only; ports arrive by constructor.
 - `src/infrastructure` implements ports; every port has an in-memory adapter.
 - `src/presentation` calls `application` only and translates protocol to use case.
@@ -19,7 +19,7 @@ Check, on the diff and the files it touches:
 
 **Boundaries**
 
-- No import between components; only `@agentic-ai/contracts` is shared and it holds schemas and types, no logic.
+- No import between components; only `@architect-os/contracts` is shared and it holds schemas and types, no logic.
 - `pg` only in `data/src/infrastructure`; `@anthropic-ai/claude-agent-sdk` only in `services/*/worker`; `@modelcontextprotocol/sdk` only in `presentation` and `infrastructure` of `gateway` and `services/*`.
 - The gateway and the proxy hold no business logic: auth, catalogue, routing, quota, audit and nothing else. The gateway runs no agent and touches no data.
 - No import cycles.

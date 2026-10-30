@@ -1,7 +1,7 @@
 import type { AddressInfo } from 'node:net';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import type { Run, RunEvent } from '@agentic-ai/contracts';
+import type { Run, RunEvent } from '@architect-os/contracts';
 import { composeInMemory as composeData } from '../../data/src/main.js';
 import { compose as composeGateway } from '../../gateway/src/main.js';
 import {

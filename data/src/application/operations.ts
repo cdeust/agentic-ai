@@ -1,4 +1,4 @@
-import { DATA_OPS, type DataOpName } from '@agentic-ai/contracts';
+import { DATA_OPS, type DataOpName } from '@architect-os/contracts';
 import { DataError } from '../domain/errors.js';
 import type { DataStore } from '../domain/ports.js';
 

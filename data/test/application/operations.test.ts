@@ -1,4 +1,4 @@
-import { EMBEDDING_DIMENSION } from '@agentic-ai/contracts';
+import { EMBEDDING_DIMENSION } from '@architect-os/contracts';
 import { describe, expect, it } from 'vitest';
 import { DataOperations } from '../../src/application/operations.js';
 import { InMemoryDataStore } from '../../src/infrastructure/in-memory.js';

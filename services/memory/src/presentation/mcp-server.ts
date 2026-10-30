@@ -1,11 +1,11 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { TOOLS, TOOL_NAMES } from '@agentic-ai/contracts';
+import { TOOLS, TOOL_NAMES } from '@architect-os/contracts';
 import type { z } from 'zod';
 import type { IntentService } from '../application/intent-service.js';
 
 /** Internal MCP server of the memory service: one tool per intent it owns. */
 export function createMemoryServer(intents: IntentService): McpServer {
-  const server = new McpServer({ name: 'agentic-ai-memory', version: '0.1.0' });
+  const server = new McpServer({ name: 'architect-os-memory', version: '0.1.0' });
   for (const name of TOOL_NAMES) {
     const contract = TOOLS[name];
     if (contract.owner !== 'memory') continue;

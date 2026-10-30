@@ -1,5 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { TOOLS, TOOL_NAMES } from '@agentic-ai/contracts';
+import { TOOLS, TOOL_NAMES } from '@architect-os/contracts';
 import type { z } from 'zod';
 import type { CallTool } from '../application/call-tool.js';
 import { GatewayError } from '../application/errors.js';
@@ -12,7 +12,7 @@ function errorResult(error: unknown) {
 
 /** The single MCP server clients see: the contract catalogue, each call translated to the CallTool use case. */
 export function createGatewayServer(callTool: CallTool): McpServer {
-  const server = new McpServer({ name: 'agentic-ai-gateway', version: '0.1.0' });
+  const server = new McpServer({ name: 'architect-os-gateway', version: '0.1.0' });
   for (const name of TOOL_NAMES) {
     const contract = TOOLS[name];
     server.registerTool(

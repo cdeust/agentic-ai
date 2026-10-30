@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { DataOpInput, DataOpName, MemoryItem, Run, RunEvent } from '@agentic-ai/contracts';
+import type { DataOpInput, DataOpName, MemoryItem, Run, RunEvent } from '@architect-os/contracts';
 import { DataError } from '../domain/errors.js';
 import type { DataStore } from '../domain/ports.js';
 

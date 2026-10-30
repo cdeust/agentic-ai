@@ -1,5 +1,5 @@
 import { pathToFileURL } from 'node:url';
-import { TOOLS, TOOL_NAMES } from '@agentic-ai/contracts';
+import { TOOLS, TOOL_NAMES } from '@architect-os/contracts';
 import { CallTool } from './application/call-tool.js';
 import type { AuditLog, Authenticator, Clock, QuotaPolicy, ServiceClient } from './domain/ports.js';
 import { InMemoryAuthenticator, InMemoryQuota, SystemClock } from './infrastructure/in-memory.js';

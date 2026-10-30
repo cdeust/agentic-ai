@@ -1,4 +1,4 @@
-import { TOOLS, WorkerInputSchema, ZERO_COST, type WorkerOutput } from '@agentic-ai/contracts';
+import { TOOLS, WorkerInputSchema, ZERO_COST, type WorkerOutput } from '@architect-os/contracts';
 import { z } from 'zod';
 import type { AgentPort, InternalTools } from './agent-port.js';
 

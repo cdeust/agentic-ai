@@ -1,5 +1,5 @@
 # Worker image for the memory service. Build context: repository root.
-#   docker build -f services/memory/worker/Dockerfile -t agentic-ai/memory-worker .
+#   docker build -f services/memory/worker/Dockerfile -t architect-os/memory-worker .
 FROM node:26-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json tsconfig.base.json ./
@@ -7,7 +7,7 @@ COPY packages/contracts packages/contracts
 COPY services/memory services/memory
 COPY data/package.json data/package.json
 COPY gateway/package.json gateway/package.json
-RUN npm ci --ignore-scripts --workspace @agentic-ai/memory --include-workspace-root \
+RUN npm ci --ignore-scripts --workspace @architect-os/memory --include-workspace-root \
  && npx tsc -b services/memory
 
 FROM node:26-slim
@@ -22,7 +22,7 @@ COPY --from=build /app/services/memory/dist/worker services/memory/dist/worker
 COPY services/memory/worker/prompts services/memory/dist/worker/prompts
 COPY data/package.json data/package.json
 COPY gateway/package.json gateway/package.json
-RUN npm ci --omit=dev --ignore-scripts --workspace @agentic-ai/memory
+RUN npm ci --omit=dev --ignore-scripts --workspace @architect-os/memory
 
 # Non-root user without a login shell. Run with a read-only root filesystem:
 #   docker run --rm -i --read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m --cap-drop ALL \

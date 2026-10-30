@@ -35,12 +35,12 @@ Details: `docs/architecture.md`, `docs/infrastructure.md`, `docs/design.md`, `do
 
 Each component has `src/domain`, `src/application`, `src/infrastructure`, `src/presentation`, `test/`, and one composition root `src/main.ts`.
 
-- `domain` imports only `domain` and `@agentic-ai/contracts`. It holds entities and **ports** (interfaces).
+- `domain` imports only `domain` and `@architect-os/contracts`. It holds entities and **ports** (interfaces).
 - `application` imports `domain`. Use cases, constructor-injected ports.
 - `infrastructure` imports `domain` and `application`. **Adapters**, with an in-memory adapter for every port.
 - `presentation` imports `application`. MCP or HTTP translation only.
 - `src/main.ts` is the only place that builds objects. No service locator, no global singleton, nothing imports `main.ts`.
-- No import between components. They talk over the network; the only shared code is `@agentic-ai/contracts`.
+- No import between components. They talk over the network; the only shared code is `@architect-os/contracts`.
 
 ## Descriptive files before code
 

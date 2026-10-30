@@ -1,4 +1,4 @@
-# agentic-ai
+# architect-os
 
 A four-tier MCP system. Clients call one intent tool on a single gateway; the owning service runs a sandboxed Claude Agent SDK worker and answers with a validated `Result`. Data access lives in one typed component.
 

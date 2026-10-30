@@ -1,5 +1,5 @@
 import { createSdkMcpServer, query, tool } from '@anthropic-ai/claude-agent-sdk';
-import { INTERNAL_TOOLS, INTERNAL_TOOL_NAMES, type Evidence } from '@agentic-ai/contracts';
+import { INTERNAL_TOOLS, INTERNAL_TOOL_NAMES, type Evidence } from '@architect-os/contracts';
 import type { AgentOutcome, AgentPort, AgentRequest } from './agent-port.js';
 
 const SERVER_NAME = 'memory';
