@@ -24,9 +24,16 @@
     "check": "npm run typecheck && npm run format:check && npm run test && npm run arch"
   },
   "devDependencies": {
+    "@anthropic-ai/sandbox-runtime": "0.0.81",
+    "@cucumber/cucumber": "12.9.0",
+    "@cucumber/gherkin": "38.0.0",
+    "@cucumber/messages": "32.3.1",
+    "@stryker-mutator/core": "10.1.1",
+    "@stryker-mutator/cucumber-runner": "10.1.1",
     "@types/node": "26.6.6",
     "dependency-cruiser": "18.7.0",
     "prettier": "3.9.10",
+    "tsx": "4.23.15",
     "typescript": "6.0.3",
     "vitest": "5.0.5",
     "yaml": "2.9.1"
