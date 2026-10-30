@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { isAbsolute, join } from 'node:path';
+import { dirname, isAbsolute, join } from 'node:path';
 import { z } from 'zod';
 import { SandboxError } from './port.js';
 
@@ -30,35 +30,60 @@ export const SrtSettingsSchema = z.strictObject({
 });
 export type SrtSettings = z.infer<typeof SrtSettingsSchema>;
 
-/** Variables jamais transmises : clé ou jeton (le compte vient du trousseau, pas de l'environnement), répertoire
- * de configuration (le compte du propriétaire est utilisé tel quel), proxy (srt fixe le sien ; `NO_PROXY`
- * contournerait le proxy [T-03, T-41]), injection de code dans node. */
-const FORBIDDEN_ENV =
-  /^(ANTHROPIC_.*|CLAUDE_CONFIG_DIR|CLAUDE_CODE_OAUTH.*|NO_PROXY|HTTPS?_PROXY|ALL_PROXY|NODE_OPTIONS)$/i;
-const EnvName = z
+/** Variables jamais copiées depuis l'hôte : clé ou jeton, répertoire de configuration, proxy (srt fixe le sien),
+ * injection de code dans node. Les noms sensibles (`ANTHROPIC_*`, `CLAUDE_CONFIG_DIR`, `CLAUDE_CODE_OAUTH_TOKEN`)
+ * ne peuvent être posés par `set` que depuis des variables du lanceur (jeton de session, port du proxy, dossier de
+ * configuration propre à la sandbox), jamais par une valeur écrite dans le fichier. */
+const FORBIDDEN_PASS =
+  /^(ANTHROPIC_.*|CLAUDE_CONFIG_DIR|CLAUDE_CODE_.*|NO_PROXY|HTTPS?_PROXY|ALL_PROXY|NODE_OPTIONS)$/i;
+const SENSITIVE_SET = /^(ANTHROPIC_.*|CLAUDE_CONFIG_DIR|CLAUDE_CODE_OAUTH.*)$/i;
+const SENSITIVE_LITERALS = new Set(['', 'http://127.0.0.1:']);
+const NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
+const PassName = z
   .string()
-  .regex(/^[A-Za-z_][A-Za-z0-9_]*$/)
-  .refine((name) => !FORBIDDEN_ENV.test(name), { message: 'variable interdite' });
+  .regex(NAME)
+  .refine((name) => !FORBIDDEN_PASS.test(name), { message: 'variable interdite' });
+
+const Json: z.ZodType<unknown> = z.lazy(() =>
+  z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(Json), z.record(z.string(), Json)]),
+);
 
 export const ProfileTemplateSchema = z.strictObject({
   description: z.string().min(1),
   srt: SrtSettingsSchema,
   env: z.strictObject({
-    pass: z.array(EnvName),
+    pass: z.array(PassName),
     set: z.record(z.string(), z.string()).superRefine((set, ctx) => {
-      for (const name of Object.keys(set))
-        if (!EnvName.safeParse(name).success) ctx.addIssue({ code: 'custom', message: `variable ${name}` });
+      for (const [name, value] of Object.entries(set)) {
+        if (!NAME.test(name) || /^(NO_PROXY|HTTPS?_PROXY|ALL_PROXY|NODE_OPTIONS)$/i.test(name))
+          ctx.addIssue({ code: 'custom', message: `variable ${name}` });
+        const literal = value.replace(/\$\{[A-Za-z]+\}/g, '');
+        if (SENSITIVE_SET.test(name) && (!value.includes('${') || !SENSITIVE_LITERALS.has(literal)))
+          ctx.addIssue({ code: 'custom', message: `${name} : valeur fournie par le lanceur seulement` });
+      }
     }),
+    /** Variables retirées dans la sandbox, après srt : `NO_PROXY` ferait contourner le proxy par le loopback
+     * [T-03d, T-41]. */
+    unset: z.array(z.string().regex(NAME)),
   }),
+  /** Fichiers JSON écrits par le lanceur avant chaque lancement ; clés et valeurs portent des variables. */
+  files: z.record(z.string(), Json),
 });
 export type ProfileTemplate = z.infer<typeof ProfileTemplateSchema>;
 
-export const PROFILE_VARIABLES = ['home', 'repo', 'worktree', 'worktreeName', 'tmp'] as const;
-export type ProfileVariables = Record<(typeof PROFILE_VARIABLES)[number], string>;
+/** Variables posées par l'adaptateur ; le lanceur peut en ajouter (`SrtRunnerOptions.variables`). */
+export const PROFILE_VARIABLES = ['home', 'repo', 'worktree', 'worktreeName', 'tmp', 'config'] as const;
+export type ProfileVariables = Record<(typeof PROFILE_VARIABLES)[number], string> & Record<string, string>;
 
 export interface ResolvedProfile {
   readonly settings: SrtSettings;
-  readonly env: { readonly pass: readonly string[]; readonly set: Readonly<Record<string, string>> };
+  readonly env: {
+    readonly pass: readonly string[];
+    readonly set: Readonly<Record<string, string>>;
+    readonly unset: readonly string[];
+  };
+  /** Chemin absolu vers contenu JSON. */
+  readonly files: Readonly<Record<string, unknown>>;
 }
 
 const PROFILE_NAME = /^[a-z][a-z0-9-]*$/;
@@ -84,35 +109,54 @@ export function parseTemplate(raw: unknown, name = 'gabarit'): ProfileTemplate {
 
 function substitute(value: string, vars: ProfileVariables): string {
   return value.replace(/\$\{([A-Za-z]+)\}/g, (_, key: string) => {
-    if (!(PROFILE_VARIABLES as readonly string[]).includes(key))
-      throw new SandboxError('PROFILE_INVALID', `variable inconnue : \${${key}}`);
-    return vars[key as keyof ProfileVariables];
+    const resolved = vars[key];
+    if (resolved === undefined) throw new SandboxError('PROFILE_INVALID', `variable inconnue : \${${key}}`);
+    return resolved;
   });
 }
 
-/** Résout les variables ; chaque chemin résolu doit être absolu. */
+function substituteJson(value: unknown, vars: ProfileVariables): unknown {
+  if (typeof value === 'string') return substitute(value, vars);
+  if (Array.isArray(value)) return value.map((v) => substituteJson(v, vars));
+  if (value !== null && typeof value === 'object')
+    return Object.fromEntries(
+      Object.entries(value).map(([k, v]) => [substitute(k, vars), substituteJson(v, vars)]),
+    );
+  return value;
+}
+
+/** Résout les variables ; chaque chemin résolu doit être absolu, chaque fichier écrit sous un `allowWrite`. */
 export function resolveProfile(template: ProfileTemplate, vars: ProfileVariables): ResolvedProfile {
-  for (const [key, value] of Object.entries(vars))
-    if (!isAbsolute(value) && key !== 'worktreeName')
-      throw new SandboxError('PROFILE_INVALID', `variable ${key} non absolue`);
-  const paths = (list: readonly string[]) =>
-    list.map((entry) => {
-      const resolved = substitute(entry, vars);
-      if (!isAbsolute(resolved)) throw new SandboxError('PROFILE_INVALID', `chemin non absolu : ${entry}`);
-      return resolved;
-    });
+  const absolute = (entry: string) => {
+    const resolved = substitute(entry, vars);
+    if (!isAbsolute(resolved)) throw new SandboxError('PROFILE_INVALID', `chemin non absolu : ${entry}`);
+    return resolved;
+  };
+  const paths = (list: readonly string[]) => list.map(absolute);
   const fs = template.srt.filesystem;
-  const settings: SrtSettings = {
+  const settings = SrtSettingsSchema.parse({
     ...template.srt,
+    network: {
+      allowedDomains: template.srt.network.allowedDomains.map((d) => substitute(d, vars)),
+      deniedDomains: template.srt.network.deniedDomains.map((d) => substitute(d, vars)),
+    },
     filesystem: {
       denyRead: paths(fs.denyRead),
       ...(fs.allowRead ? { allowRead: paths(fs.allowRead) } : {}),
       allowWrite: paths(fs.allowWrite),
       denyWrite: paths(fs.denyWrite),
     },
-  };
+  });
   const set = Object.fromEntries(Object.entries(template.env.set).map(([k, v]) => [k, substitute(v, vars)]));
-  return { settings: SrtSettingsSchema.parse(settings), env: { pass: template.env.pass, set } };
+  const files = Object.fromEntries(
+    Object.entries(template.files).map(([file, content]) => {
+      const path = absolute(file);
+      if (!settings.filesystem.allowWrite.some((root) => under(dirname(path), root)))
+        throw new SandboxError('PROFILE_INVALID', `fichier hors de allowWrite : ${file}`);
+      return [path, substituteJson(content, vars)];
+    }),
+  );
+  return { settings, env: { pass: template.env.pass, set, unset: template.env.unset }, files };
 }
 
 const under = (path: string, root: string): boolean => path === root || path.startsWith(`${root}/`);

@@ -48,6 +48,7 @@ const srtOptions = (extra: Partial<SrtRunnerOptions> = {}): SrtRunnerOptions => 
   home: homedir(),
   hostEnv: { PATH: process.env['PATH'], HOME: process.env['HOME'] },
   trusted: [],
+  variables: { authProxyPort: '9', sessionToken: 'contract-test' },
   ...extra,
 });
 

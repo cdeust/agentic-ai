@@ -10,6 +10,15 @@ export const ToolSchema = z.strictObject({
   command: z.array(z.string().min(1)).min(1),
   /** Plugins chargés pour la session par `--plugin-dir`, relatifs à la racine du checkout du lanceur. */
   pluginDirs: z.array(z.string().min(1)),
+  /** Proxy d'authentification de l'hôte (`auth-proxy.ts`). */
+  authProxy: z.strictObject({
+    upstream: z.url({ protocol: /^https$/ }),
+    routes: z.array(z.string().min(2).startsWith('^')).min(1),
+    betas: z.array(z.string().min(1)),
+    credentialCommand: z.array(z.string().min(1)).min(1),
+    /** `${home}` seul est résolu. */
+    usageLog: z.string().min(1),
+  }),
 });
 export type Tool = z.infer<typeof ToolSchema>;
 

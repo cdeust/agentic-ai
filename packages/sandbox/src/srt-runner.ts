@@ -47,6 +47,8 @@ export interface SrtRunnerOptions {
   readonly hostEnv: Readonly<Record<string, string | undefined>>;
   /** Chemins de confiance en plus (code du lanceur, plugins chargés) : refus s'ils sont inscriptibles. */
   readonly trusted: readonly string[];
+  /** Variables du lanceur en plus de celles de l'adaptateur (port du proxy, jeton de session). */
+  readonly variables?: Readonly<Record<string, string>>;
   readonly canaryTimeoutMs?: number;
 }
 
@@ -183,16 +185,28 @@ export class SrtSandboxRunner implements SandboxRunner {
     const dir = realpathSync(mkdtempSync(join(o.tmpRoot, 'aos-sandbox-')));
     try {
       const tmp = join(dir, 'tmp');
+      const config = join(dir, 'config');
       mkdirSync(tmp, { mode: 0o700 });
+      mkdirSync(config, { mode: 0o700 });
       const profile = resolveProfile(template, {
+        ...o.variables,
         home: realpathSync(o.home),
         repo: wt.repo,
         worktree: wt.worktree,
         worktreeName: wt.worktreeName,
         tmp,
+        config,
       });
+      for (const [file, content] of Object.entries(profile.files)) {
+        mkdirSync(dirname(file), { recursive: true, mode: 0o700 });
+        writeFileSync(file, `${JSON.stringify(content, null, 2)}\n`, { mode: 0o600 });
+      }
       const env = closedEnv(profile, o.hostEnv);
       const executable = resolveExecutable(name, env['PATH']);
+      const unset =
+        profile.env.unset.length === 0
+          ? []
+          : [resolveExecutable('env', env['PATH']), ...profile.env.unset.flatMap((n) => ['-u', n])];
       const settingsFile = join(dir, 'profile.json');
       writeFileSync(settingsFile, `${JSON.stringify(profile.settings, null, 2)}\n`, { mode: 0o400 });
       assertTrusted(profile.settings, [
@@ -207,7 +221,12 @@ export class SrtSandboxRunner implements SandboxRunner {
       assertTrusted(profile.settings, [nodeModulesOf(srtCli)]);
       const cwd = realpathSync(resolve(request.cwd));
       await this.canary(profile.settings, srtCli, dir, cwd, env);
-      return { argv: [srtCli, '--settings', settingsFile, '--', executable, ...args], cwd, env, dir };
+      return {
+        argv: [srtCli, '--settings', settingsFile, '--', ...unset, executable, ...args],
+        cwd,
+        env,
+        dir,
+      };
     } catch (error) {
       rmSync(dir, { recursive: true, force: true });
       throw error;

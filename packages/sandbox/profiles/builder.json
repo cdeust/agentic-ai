@@ -1,19 +1,8 @@
 {
-  "description": "Profil builder de la brique 1a.0 (docs/design/platform-v3-srt.md, §8 ; journal, profil C). Gabarit : les variables ${home}, ${repo}, ${worktree}, ${worktreeName} et ${tmp} sont résolues par l'adaptateur, qui écrit le profil résolu hors de tout chemin inscriptible.",
+  "description": "Profil builder de la brique 1a.0 (docs/design/platform-v3-srt.md, §8 ; journal, §14 et §15). Aucun secret ne franchit la frontière : Claude Code tourne avec un dossier de configuration propre à la sandbox et un jeton de session, et ne joint le modèle que par le proxy d'authentification de l'hôte. Variables : ${home}, ${repo}, ${worktree}, ${worktreeName}, ${tmp} et ${config} (adaptateur), ${authProxyPort} et ${sessionToken} (lanceur).",
   "srt": {
     "network": {
-      "allowedDomains": [
-        "api.anthropic.com",
-        "claude.ai",
-        "*.claude.ai",
-        "console.anthropic.com",
-        "platform.claude.com",
-        "statsig.anthropic.com",
-        "registry.npmjs.org",
-        "github.com",
-        "api.github.com",
-        "*.githubusercontent.com"
-      ],
+      "allowedDomains": ["127.0.0.1:${authProxyPort}", "registry.npmjs.org"],
       "deniedDomains": []
     },
     "filesystem": {
@@ -23,7 +12,10 @@
         "${home}/.gnupg",
         "${home}/.config/gh",
         "${home}/.npmrc",
-        "${home}/.netrc"
+        "${home}/.netrc",
+        "${home}/.claude",
+        "${home}/.claude.json",
+        "${home}/Library/Keychains"
       ],
       "allowWrite": [
         "${worktree}",
@@ -32,16 +24,7 @@
         "${repo}/.git/refs",
         "${repo}/.git/logs",
         "${home}/.cache",
-        "${home}/.claude/projects",
-        "${home}/.claude/todos",
-        "${home}/.claude/session-env",
-        "${home}/.claude/shell-snapshots",
-        "${home}/.claude/file-history",
-        "${home}/.claude/debug",
-        "${home}/.claude/statsig",
-        "${home}/.claude/cache",
-        "${home}/.claude/tasks",
-        "${home}/.claude/plans",
+        "${config}",
         "${tmp}"
       ],
       "denyWrite": [
@@ -52,7 +35,8 @@
         "${repo}/.git/worktrees/${worktreeName}/config.worktree",
         "${repo}/.git/refs/heads/main",
         "${worktree}/.claude/settings.json",
-        "${worktree}/.claude/settings.local.json"
+        "${worktree}/.claude/settings.local.json",
+        "${config}/settings.json"
       ]
     },
     "allowPty": true
@@ -73,7 +57,23 @@
     ],
     "set": {
       "CLAUDE_CODE_TMPDIR": "${tmp}",
+      "CLAUDE_CONFIG_DIR": "${config}",
+      "ANTHROPIC_BASE_URL": "http://127.0.0.1:${authProxyPort}",
+      "CLAUDE_CODE_OAUTH_TOKEN": "${sessionToken}",
       "npm_config_cache": "${home}/.cache/npm"
+    },
+    "unset": ["NO_PROXY", "no_proxy"]
+  },
+  "files": {
+    "${config}/settings.json": {
+      "sandbox": { "enabled": false }
+    },
+    "${config}/.claude.json": {
+      "hasCompletedOnboarding": true,
+      "projects": {
+        "${repo}": { "hasTrustDialogAccepted": true },
+        "${worktree}": { "hasTrustDialogAccepted": true }
+      }
     }
   }
 }

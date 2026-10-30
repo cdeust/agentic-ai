@@ -4,3 +4,4 @@ export * from './worktree.js';
 export * from './srt-runner.js';
 export * from './in-memory.js';
 export * from './tool.js';
+export * from './auth-proxy.js';

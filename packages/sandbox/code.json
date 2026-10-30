@@ -1,6 +1,19 @@
 {
-  "description": "Outil de code isolé de la brique 1a.0 : `srt --settings <profil résolu> claude`, avec le plugin de protection chargé pour la session.",
+  "description": "Outil de code isolé de la brique 1a.0 : `srt --settings <profil résolu> claude`, plugin de protection chargé pour la session, modèle joint par le proxy d'authentification de l'hôte. Aucun secret dans la sandbox.",
   "profile": "builder",
   "command": ["claude"],
-  "pluginDirs": ["plugins/builder-guard"]
+  "pluginDirs": ["plugins/builder-guard"],
+  "authProxy": {
+    "upstream": "https://api.anthropic.com",
+    "routes": ["^/v1/messages(/count_tokens)?(\\?[^#]*)?$"],
+    "betas": ["oauth-2025-04-20"],
+    "credentialCommand": [
+      "/usr/bin/security",
+      "find-generic-password",
+      "-s",
+      "Claude Code-credentials",
+      "-w"
+    ],
+    "usageLog": "${home}/.local/state/architect-os/usage.jsonl"
+  }
 }

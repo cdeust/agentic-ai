@@ -15,6 +15,7 @@ describe('code.json (descriptive file of the 1a.0 tool)', () => {
     expect(tool.profile).toBe('builder');
     expect(tool.command).toEqual(['claude']);
     expect(tool.pluginDirs).toEqual(['plugins/builder-guard']);
+    expect(tool.authProxy.upstream).toBe('https://api.anthropic.com');
     expect(() =>
       readFileSync(join(ROOT, tool.pluginDirs[0] as string, '.claude-plugin', 'plugin.json')),
     ).not.toThrow();
@@ -23,6 +24,11 @@ describe('code.json (descriptive file of the 1a.0 tool)', () => {
   it.each([
     ['a misspelt key', (t: Record<string, any>) => (t['plugins'] = [])],
     ['an empty command', (t: Record<string, any>) => (t['command'] = [])],
+    [
+      'a plain-http upstream',
+      (t: Record<string, any>) => (t['authProxy']['upstream'] = 'http://api.anthropic.com'),
+    ],
+    ['an unanchored route', (t: Record<string, any>) => (t['authProxy']['routes'] = ['/v1/messages'])],
   ])('rejects a broken copy with %s', (_, breakIt) => {
     const broken = committed();
     breakIt(broken);
