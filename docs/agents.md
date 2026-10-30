@@ -33,7 +33,7 @@ Not covered by the default test suite: a live run of `sdk-agent.ts` against Anth
 1. Define the tool schemas in `packages/contracts` (and add the tool to `TOOLS` with its owner), and write `services/<name>/worker/prompts/<tool>.md`.
 2. Create `services/<name>/` with the same layers and a `worker/` directory.
 3. Give the agent only the internal tools it needs (entries of `INTERNAL_TOOLS` with its owner); keep the built-in tools off.
-4. Register tests per [testing.md](testing.md) and add the service to `compose.yaml` and `test/infra/compose.test.ts`.
+4. Register tests per [testing.md](testing.md) and add the service to `compose.yaml` and `features/infra/compose.feature`.
 
 ## Review subagents (`.claude/agents/`)
 

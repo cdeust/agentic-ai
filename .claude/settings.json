@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
-    "allow": ["Bash(npm run *)", "Bash(npm test)", "Bash(npx vitest *)"],
+    "allow": ["Bash(npm run *)", "Bash(npm test)", "Bash(npx cucumber-js *)"],
     "deny": [
       "Read(./.env)",
       "Read(./.env.*)",

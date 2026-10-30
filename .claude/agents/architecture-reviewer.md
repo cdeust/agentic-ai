@@ -26,7 +26,7 @@ Check, on the diff and the files it touches:
 
 **Guard integrity**
 
-- Run `npm run arch` and report its output. A change that loosens `.dependency-cruiser.cjs`, adds an exclusion, or deletes a case in `test/arch/guard.test.ts` must be justified in the PR or refused.
+- Run `npm run arch` and report its output. A change that loosens `.dependency-cruiser.cjs`, adds an exclusion, or deletes a fixture row in `features/arch/guard.feature` must be justified in the PR or refused.
 - A new boundary needs a rule and a fixture case.
 
 Report only noteworthy findings, each with file, line, the rule violated, and the smallest fix. If a claim cannot be confirmed from the code, say so instead of guessing.

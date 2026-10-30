@@ -49,6 +49,6 @@ Feature: SandboxRunner contract on the in-memory adapter
     Then it is refused with "NOT_A_WORKTREE"
 
   Scenario: srt adapter runInTerminal refuses when the descriptors are not terminals
-    Given an srt runner over a throwaway git repository
+    Given an srt runner over a throwaway git repository whose descriptors are not terminals
     When I try to run profile "builder" with command "cat" in the terminal
     Then it is refused with "TERMINAL_REQUIRED"

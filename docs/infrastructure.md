@@ -12,7 +12,7 @@ curl http://127.0.0.1:8080/healthz
 
 Services: `proxy` (Caddy), `gateway`, `memory`, `data`, `postgres` (`pgvector/pgvector:pg17`). Every long-running service drops all capabilities and sets `no-new-privileges`; `proxy`, `gateway` and `data` run with a read-only root filesystem.
 
-`docker compose config` validates the file. `test/infra/compose.test.ts` parses it and asserts the network zones in CI (CI does not start Docker).
+`docker compose config` validates the file. `features/infra/compose.feature` parses it and asserts the network zones in CI (CI does not start Docker).
 
 ## Gateway routes
 

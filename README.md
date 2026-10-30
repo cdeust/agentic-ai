@@ -29,7 +29,7 @@ npm ci
 npm run check      # typecheck, prettier, tests, architecture guard
 ```
 
-The end-to-end test (`test/integration/end-to-end.test.ts`) runs a `recall` through gateway, memory, worker and data in one process, with a scripted agent and no network.
+The end-to-end test (`features/integration/end-to-end.feature`) runs a `recall` through gateway, memory, worker and data in one process, with a scripted agent and no network.
 
 ## Local stack
 

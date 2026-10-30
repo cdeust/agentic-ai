@@ -13,6 +13,10 @@ export default {
   testRunner: 'cucumber',
   plugins: ['@stryker-mutator/cucumber-runner'],
   coverageAnalysis: 'perTest',
+  // Explicit, not the default (CPU count - 1): every test-runner worker may start its own disposable PostgreSQL
+  // (features/support/postgres.ts), each holding one SysV shared memory segment, and macOS allows only
+  // kern.sysv.shmmni=32. Four workers keep that bounded even when Stryker kills and restarts them.
+  concurrency: 4,
   mutate: plan.mutate,
   reporters: ['json', 'clear-text', 'progress'],
   jsonReporter: { fileName: 'reports/mutation/mutation.json' },

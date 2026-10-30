@@ -20,7 +20,7 @@
       "path": "tools/test-gate"
     },
     {
-      "path": "test/integration"
+      "path": "features"
     },
     {
       "path": "plugins/builder-guard"

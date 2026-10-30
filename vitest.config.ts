@@ -8,8 +8,10 @@ export default defineConfig({
     },
   },
   test: {
-    include: ['{packages,data,gateway,services,test}/**/test/**/*.test.ts', 'test/**/*.test.ts'],
-    exclude: ['**/node_modules/**', '**/dist/**', 'test/arch/fixtures/**'],
+    include: ['{packages,data,gateway,services}/**/test/**/*.test.ts'],
+    exclude: ['**/node_modules/**', '**/dist/**'],
     testTimeout: 30000,
+    // Every test is a Gherkin scenario now (cucumber-js); vitest is removed in the last step of brick 1a.2.
+    passWithNoTests: true,
   },
 });

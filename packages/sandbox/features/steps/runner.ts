@@ -95,6 +95,10 @@ Given('an srt runner over a throwaway git repository', function () {
   useSrt(this, () => ({}));
 });
 
+Given('an srt runner over a throwaway git repository whose descriptors are not terminals', function () {
+  useSrt(this, () => ({ isTerminal: () => false }));
+});
+
 Given('an srt runner over a throwaway git repository whose srt cli is missing', function () {
   useSrt(this, (repo) => ({ srtCli: join(repo.root, 'node_modules', 'srt', 'cli.js') }));
 });

@@ -2,5 +2,11 @@
   "extends": "../tsconfig.base.json",
   "compilerOptions": { "outDir": "dist", "rootDir": "." },
   "include": ["support", "steps"],
-  "references": [{ "path": "../packages/contracts" }]
+  "references": [
+    { "path": "../packages/contracts" },
+    { "path": "../data" },
+    { "path": "../gateway" },
+    { "path": "../services/memory" },
+    { "path": "../plugins/builder-guard" }
+  ]
 }

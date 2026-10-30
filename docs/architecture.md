@@ -35,7 +35,7 @@ src/main.ts: the composition root, the only place objects are built
 - Every port has a real adapter and an in-memory adapter; the in-memory ones make the whole system runnable in a single test process.
 - Components never import each other. They call each other over the network.
 
-The rules are enforced by `npm run arch` (`.dependency-cruiser.cjs`) and proved by `test/arch/guard.test.ts`, which writes temporary violating files and checks the guard turns red.
+The rules are enforced by `npm run arch` (`.dependency-cruiser.cjs`) and proved by `features/arch/guard.feature`, which writes temporary violating files and checks the guard turns red.
 
 ## Network zones
 
@@ -46,7 +46,7 @@ The rules are enforced by `npm run arch` (`.dependency-cruiser.cjs`) and proved 
 | `exec`   | memory, worker containers    | `internal: true`. Workers reach memory's internal tools and the secrets broker, nothing else. |
 | `data`   | data, postgres               | `internal: true`. Workers and the gateway cannot reach the database.                          |
 
-`test/infra/compose.test.ts` checks these memberships against `compose.yaml`.
+`features/infra/compose.feature` checks these memberships against `compose.yaml`.
 
 ## Path of a call (`recall`)
 
@@ -62,7 +62,7 @@ The rules are enforced by `npm run arch` (`.dependency-cruiser.cjs`) and proved 
 4. The worker (`services/memory/worker`) runs the agent with the system prompt `prompts/<tool>.md` and the internal tools of `INTERNAL_TOOLS` (`memory_search`, `memory_insert`) as its only tools; these call the memory service's internal endpoint `POST /internal/<tool>` on the `exec` network, which validates the input and runs the data operation the tool names.
 5. The gateway returns the service answer to the client unchanged.
 
-`test/integration/end-to-end.test.ts` runs this whole path in one process: real MCP between client, gateway and memory, an in-process runner executing the real worker core with a scripted agent, and the real data component with in-memory repositories behind its HTTP API.
+`features/integration/end-to-end.feature` runs this whole path in one process: real MCP between client, gateway and memory, an in-process runner executing the real worker core with a scripted agent, and the real data component with in-memory repositories behind its HTTP API.
 
 ## The `Result` contract
 
