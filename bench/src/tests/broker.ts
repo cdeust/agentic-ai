@@ -1,7 +1,5 @@
-// T-23 (broker adversarial) et constat de revue : un processus natif etranger, hors sandbox, joint-il le port du broker ?
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
-import { baseEnv, brief, cmdString, makeWorld, randomKey, record, runSrtJson, sandboxed, writeProfile, benchRoot, type Result } from '../lib/common.ts';
+// T-23 (broker adversarial). Le constat BROKER-FOREIGN est remplace par T-43.
+import { baseEnv, brief, cmdString, makeWorld, randomKey, record, runSrtJson, sandboxed, writeProfile, type Result } from '../lib/common.ts';
 import { startBroker, startUpstream, type Sanitize } from '../lib/fake-upstream.ts';
 
 const w = makeWorld('broker');
@@ -50,14 +48,7 @@ const refusedReply = (r: Reply | undefined): boolean => !!r && (r.error !== unde
       `verifs=${JSON.stringify(checks)} non_tenues=[${bad}] reponses=${JSON.stringify({ messages: j.messages, getModels: j.getModels, upstreamDirect: j.upstreamDirect, internet: j.internet, otherBroker: j.otherBroker })}`);
     record('T-23-ordinaire', 'POST /v1/messages ordinaire traverse le broker (200)', cmd, j.messages.status === 200 ? 'pass' : 'fail', JSON.stringify(j.messages));
   }
-  // Constat de revue : processus natif etranger, meme uid, hors sandbox.
-  const before = up.log.length;
-  const fr = await promisify(execFile)(process.execPath, [sandboxed('foreign-client.mjs'), String(b.port)], { cwd: benchRoot, env: { PATH: process.env['PATH'] ?? '' }, timeout: 30_000 }).catch((e: Error) => ({ stdout: `ECHEC ${e.message}`, stderr: '' }));
-  const parsed = (() => { try { return JSON.parse(fr.stdout.trim().split('\n').pop() ?? '') as { post: Reply; get: Reply }; } catch { return undefined; } })();
-  const reachedUpstream = up.log.slice(before).filter((l) => l.key === key).length;
-  record('BROKER-FOREIGN', 'processus natif etranger (hors sandbox, meme uid) vers le port du broker de la task', `node foreign-client.mjs ${b.port} (sans srt)`, 'finding',
-    `reponse POST=${JSON.stringify(parsed?.post)} GET=${JSON.stringify(parsed?.get)} ; requetes de l'etranger arrivees a l'amont avec la vraie cle=${reachedUpstream}. ` +
-    (parsed?.post.status === 200 ? 'CONSTAT : le broker repond a un processus qui n\'est pas la sandbox de la task ; le port seul n\'authentifie pas.' : 'Le broker n\'a pas repondu 200 a l\'etranger.'));
+  // BROKER-FOREIGN (constat de revue) est remplace par T-43 (tests/t43.ts), qui joue le natif etranger contre le broker a autorisation.
   b.close(); other?.close();
 }
 // Reflexion : trois variantes du retrait de cle dans la reponse (E-05c).

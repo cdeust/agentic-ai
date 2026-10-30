@@ -16,6 +16,8 @@ const SUITE: Array<{ file: string; timeoutMs: number }> = [
   { file: 'modules', timeoutMs: 240_000 },
   { file: 'broker', timeoutMs: 240_000 },
   { file: 't41', timeoutMs: 420_000 },
+  { file: 't42', timeoutMs: 420_000 },
+  { file: 't43', timeoutMs: 180_000 },
 ];
 const only = process.env['BENCH_ONLY']?.split(',');
 const outDir = path.join(benchRoot, 'reports');

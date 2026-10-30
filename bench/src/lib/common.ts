@@ -95,11 +95,16 @@ export interface ProfileOpts {
   allowLocalBinding?: boolean;
   /** Repertoires temporaires inscriptibles de la sandbox (defaut : w.tmp). */
   tmp?: string[];
+  /** network.tlsTerminate (experimental) : necessaire au mode mask. */
+  tlsTerminate?: Record<string, unknown>;
+  /** Bloc credentials de srt (T-42 : autorisation de task en mode mask). */
+  credentials?: Record<string, unknown>;
 }
 export function writeProfile(w: World, name: string, o: ProfileOpts): string {
   const net: Record<string, unknown> = { allowedDomains: o.allowedDomains ?? [], deniedDomains: [], strictAllowlist: true };
   if (o.allowUnixSockets) net['allowUnixSockets'] = o.allowUnixSockets;
   if (o.allowLocalBinding) net['allowLocalBinding'] = true;
+  if (o.tlsTerminate) net['tlsTerminate'] = o.tlsTerminate;
   const fsCfg: Record<string, unknown> = {
     denyRead: o.denyRead ?? ['~'],
     allowRead: o.allowRead ?? [w.work],
@@ -107,7 +112,7 @@ export function writeProfile(w: World, name: string, o: ProfileOpts): string {
     denyWrite: o.denyWrite ?? [],
   };
   const file = path.join(w.profiles, `${name}.srt.json`);
-  writeFileSync(file, JSON.stringify({ network: net, filesystem: fsCfg }, null, 2));
+  writeFileSync(file, JSON.stringify({ network: net, filesystem: fsCfg, ...(o.credentials ? { credentials: o.credentials } : {}) }, null, 2));
   return file;
 }
 
