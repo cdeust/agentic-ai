@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ai-architect.tools, architecture plateforme v3</title>
+<style>
+  :root { color-scheme: light dark; --accent: #c15a2e; --muted: #777; --line: #8884; --bg2: #8881; }
+  body { font-family: -apple-system, "Segoe UI", Inter, Roboto, sans-serif; max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; line-height: 1.45; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  h2 { font-size: 1.15rem; margin: 36px 0 10px; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+  h3 { font-size: 1rem; margin: 22px 0 6px; }
+  p.lead { color: var(--muted); margin-top: 0; }
+  figure { margin: 16px 0; }
+  figure svg { max-width: 100%; height: auto; display: block; }
+  figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.88rem; margin: 10px 0 18px; }
+  th, td { border: 1px solid var(--line); padding: 6px 8px; vertical-align: top; text-align: left; }
+  th { background: var(--bg2); }
+  code { font-size: 0.85em; background: var(--bg2); padding: 1px 4px; border-radius: 3px; }
+  pre { background: var(--bg2); padding: 12px 14px; border-radius: 6px; overflow-x: auto; font-size: 0.82rem; line-height: 1.4; }
+  pre code { background: none; padding: 0; }
+  .agent { color: var(--accent); font-weight: 600; }
+  .legend { font-size: 0.85rem; color: var(--muted); }
+  .legend span.sw { display: inline-block; width: 14px; height: 10px; border: 2px solid var(--accent); vertical-align: middle; margin-right: 4px; }
+  .legend span.sw2 { display: inline-block; width: 14px; height: 10px; border: 2px dashed currentColor; vertical-align: middle; margin: 0 4px 0 14px; }
+  .box { border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; margin: 10px 0; background: var(--bg2); }
+  ol li, ul li { margin: 3px 0; }
+  .toc { font-size: 0.9rem; columns: 2; }
+</style>
+</head>
+<body>
+
+<h1>ai-architect.tools, architecture plateforme v3</h1>
+<p class="lead">Version du 29 octobre 2026. Objectif unique de la refonte : réduire le contexte et les tokens consommés par tâche. Un seul chemin d'exécution pour le produit, le développement et la CI. Ce document sert de base au squelette du dépôt <code>platform</code> et à la mise en place de la CI avec claude-code-action, qui est la première brique.</p>
+
+<div class="toc">
+<ol>
+<li>Métriques et seuils</li>
+<li>Architecture complète (figure 1)</li>
+<li>Chemin d'un appel <code>execute</code> (figure 2)</li>
+<li>Mapping de l'existant vers les modules</li>
+<li>Squelette du dépôt <code>platform</code></li>
+<li>Contrat de plugin (manifeste)</li>
+<li>CI avec claude-code-action (figure 3, workflows)</li>
+<li>Ordre des briques et portes</li>
+<li>Décisions ouvertes</li>
+</ol>
+</div>
+
+<h2>1. Métriques et seuils</h2>
+<table>
+<tr><th>Métrique</th><th>Définition</th><th>Où elle est mesurée</th><th>Seuil d'acceptation</th></tr>
+<tr><td><strong>M1</strong> tokens de contexte client par tâche</td><td>Tokens entrés dans la fenêtre de Claude Code, Codex ou du runner CI, de la première requête à la fin de la tâche</td><td>Hooks client (ctxguard existant) → registre des exécutions</td><td>En baisse sur les 20 tâches de la baseline, à chaque brique</td></tr>
+<tr><td><strong>M2</strong> tokens totaux par tâche</td><td>Client + executor + conteneurs de task + Judge</td><td>Registre, colonne par couche et par modèle</td><td>Jamais en hausse quand M1 baisse</td></tr>
+<tr><td>Définitions chargées</td><td>Tokens de définitions de tools présents en début de session</td><td>Gateway, au premier appel de la session</td><td>≤ 1 500 tokens</td></tr>
+<tr><td>Recall</td><td>Taille de la réponse de <code>memory.recall</code></td><td>Module memory-recall</td><td>≤ 600 tokens par défaut, réglable par profil</td></tr>
+<tr><td>Résultat de tool</td><td>Taille d'un résultat renvoyé au client</td><td>Gateway, via <code>max_result_tokens</code> du manifeste</td><td>≤ 1 000 tokens sauf demande explicite, sinon résumé + handle</td></tr>
+<tr><td>Cache hit</td><td>Part des appels modèle dont le préfixe est servi par le cache de prompt</td><td>Registre</td><td>À mesurer, pas de seuil avant la baseline</td></tr>
+</table>
+<p>Protocole de baseline : vingt tâches représentatives (rappel mémoire, question sur une codebase, rédaction de spec, migration de schéma, revue de PR) jouées sur le harnais actuel, M1 et M2 relevés par tâche et consignés dans le wiki avant d'écrire une ligne de la plateforme.</p>
+
+<h2>2. Architecture complète</h2>
+<p class="legend"><span class="sw"></span> conteneur avec agent <span class="sw2"></span> appel asynchrone ou optionnel. Les autres conteneurs sont des workflows déterministes.</p>
+<figure>
+<svg viewBox="0 0 1180 800" role="img" aria-label="Architecture complète : clients, reverse proxy, gateway en front d'exécution de code, executor de session, modules par domaine, services modèles, Postgres. Le client n'importe que les modules dont il a besoin." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="12" fill="currentColor">
+<defs>
+  <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
+</defs>
+
+<!-- Clients -->
+<g stroke="currentColor" fill="none" stroke-width="1.2">
+  <rect x="20" y="16" width="230" height="44" rx="4"/>
+  <rect x="270" y="16" width="230" height="44" rx="4"/>
+  <rect x="520" y="16" width="230" height="44" rx="4"/>
+  <rect x="770" y="16" width="230" height="44" rx="4"/>
+  <rect x="1020" y="16" width="140" height="44" rx="4" stroke-dasharray="4 3"/>
+</g>
+<text x="135" y="42" text-anchor="middle">Claude Code</text>
+<text x="385" y="42" text-anchor="middle">Codex</text>
+<text x="635" y="36" text-anchor="middle">claude-code-action</text>
+<text x="635" y="52" text-anchor="middle" font-size="10">runner auto-hébergé, client seulement</text>
+<text x="885" y="36" text-anchor="middle">Mission Control (claude-mods)</text>
+<text x="885" y="52" text-anchor="middle" font-size="10">lit le registre, /app</text>
+<text x="1090" y="36" text-anchor="middle" font-size="11">[0] Stage 0 builder</text>
+<text x="1090" y="51" text-anchor="middle" font-size="10">image figée, hors chemin</text>
+<g stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)">
+  <line x1="135" y1="60" x2="135" y2="96"/>
+  <line x1="385" y1="60" x2="385" y2="96"/>
+  <line x1="635" y1="60" x2="635" y2="96"/>
+  <line x1="885" y1="60" x2="885" y2="96"/>
+</g>
+<text x="1010" y="82" text-anchor="end" font-size="10">HTTPS ; OAuth client credentials ; CI : federation OIDC</text>
+
+<!-- Proxy -->
+<rect x="20" y="96" width="1140" height="40" rx="4" stroke="currentColor" fill="none" stroke-width="1.2"/>
+<text x="590" y="121" text-anchor="middle">[1] Reverse proxy : TLS interne, limites de débit, /mcp → gateway, /app → dashboard</text>
+<line x1="590" y1="136" x2="590" y2="156" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+
+<!-- Gateway -->
+<rect x="20" y="156" width="1140" height="120" rx="4" stroke="currentColor" fill="none" stroke-width="1.6"/>
+<text x="32" y="178" font-weight="600">[2] Gateway, front d'exécution de code, stateless, un seul binaire</text>
+<text x="1148" y="178" text-anchor="end" font-size="10">repli : catalogue MCP classique pour les clients sans exécution</text>
+<g stroke="currentColor" fill="none" stroke-width="1">
+  <rect x="32" y="192" width="150" height="70" rx="3" stroke="#c15a2e" stroke-width="1.6"/>
+  <rect x="194" y="192" width="150" height="70" rx="3"/>
+  <rect x="356" y="192" width="150" height="70" rx="3"/>
+  <rect x="518" y="192" width="150" height="70" rx="3"/>
+  <rect x="680" y="192" width="150" height="70" rx="3"/>
+  <rect x="842" y="192" width="150" height="70" rx="3"/>
+  <rect x="1004" y="192" width="150" height="70" rx="3"/>
+</g>
+<g font-size="11" text-anchor="middle">
+  <text x="107" y="212" font-weight="600">search · describe · execute</text><text x="107" y="228">3 méta-tools, le reste</text><text x="107" y="243">est importé à la demande</text>
+  <text x="269" y="212">Profil par client</text><text x="269" y="228">→ modules importables</text><text x="269" y="243">→ modèle et effort</text>
+  <text x="431" y="212">DAG d'appels</text><text x="431" y="228">+ budget dans baggage</text><text x="431" y="243">profondeur, tokens, délai</text>
+  <text x="593" y="212">Jeton par task</text><text x="593" y="228">scope = allowlist</text><text x="593" y="243">révoqué à l'annulation</text>
+  <text x="755" y="212">max_result_tokens</text><text x="755" y="228">au-delà : résumé</text><text x="755" y="243">+ handle</text>
+  <text x="917" y="212">Tasks (extension)</text><text x="917" y="228">+ task.wait</text><text x="917" y="243">pour les clients sans tasks</text>
+  <text x="1079" y="212">Registre</text><text x="1079" y="228">trace, parent, verdict</text><text x="1079" y="243">tokens par couche, cache</text>
+</g>
+<line x1="590" y1="276" x2="590" y2="306" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+<text x="600" y="295" font-size="10">execute(code) → sandbox</text>
+
+<!-- Executor -->
+<rect x="20" y="306" width="820" height="70" rx="4" stroke="#c15a2e" fill="none" stroke-width="2"/>
+<text x="32" y="328" font-weight="600" fill="#c15a2e">[3] Executor de session, pool chaud, un par session client</text>
+<text x="32" y="346" font-size="11">exécute le code écrit par l'agent ; porte les clients MCP des modules importés ; filtre et agrège avant retour</text>
+<text x="32" y="362" font-size="11">aucune clé API, aucune URL Postgres ; brief = checkpoint (session-optimizer) ; modèle dimensionné par le profil</text>
+<rect x="860" y="306" width="300" height="70" rx="4" stroke="#c15a2e" fill="none" stroke-width="2" stroke-dasharray="6 3"/>
+<text x="872" y="328" font-weight="600" fill="#c15a2e">Conteneurs de task (longues)</text>
+<text x="872" y="346" font-size="11">profils zetetic-team-subagents :</text>
+<text x="872" y="362" font-size="11">scout · builder · zetetic-reviewer</text>
+<line x1="840" y1="341" x2="860" y2="341" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+
+<g stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)">
+  <line x1="157" y1="376" x2="157" y2="406"/>
+  <line x1="445" y1="376" x2="445" y2="406"/>
+  <line x1="733" y1="376" x2="733" y2="406"/>
+  <line x1="1021" y1="376" x2="1021" y2="406"/>
+</g>
+<text x="455" y="395" font-size="10">import de module + appel de tool, rien d'autre</text>
+
+<!-- Modules: 4 columns -->
+<g stroke="currentColor" fill="none" stroke-width="1.6">
+  <rect x="20" y="406" width="275" height="180" rx="4"/>
+  <rect x="308" y="406" width="275" height="180" rx="4"/>
+  <rect x="596" y="406" width="275" height="180" rx="4"/>
+  <rect x="884" y="406" width="276" height="180" rx="4"/>
+</g>
+<g font-weight="600">
+  <text x="32" y="426">[4] Domaine Mémoire</text>
+  <text x="320" y="426">[4] Domaine Code</text>
+  <text x="608" y="426">[4] Domaine Spec</text>
+  <text x="896" y="426">[4] Plateforme</text>
+</g>
+<!-- Memory modules -->
+<g stroke="currentColor" fill="none" stroke-width="1">
+  <rect x="30" y="436" width="255" height="42" rx="3"/>
+  <rect x="30" y="486" width="255" height="42" rx="3"/>
+  <rect x="30" y="536" width="255" height="42" rx="3"/>
+</g>
+<g font-size="11">
+  <text x="38" y="452" font-weight="600">memory-write</text><text x="38" y="467">Cortex ; Structurer ; écrit entries</text>
+  <text x="38" y="502" font-weight="600">memory-recall</text><text x="38" y="517">Cortex ; data tool ; ≤ 600 tokens ; lecture seule</text>
+  <text x="38" y="552" font-weight="600">memory-consolidate</text><text x="38" y="567">Cortex ; worker planifié ; écrit states, edges</text>
+</g>
+<!-- Code modules -->
+<g stroke="currentColor" fill="none" stroke-width="1">
+  <rect x="318" y="436" width="255" height="42" rx="3"/>
+  <rect x="318" y="486" width="255" height="42" rx="3"/>
+  <rect x="318" y="536" width="255" height="42" rx="3" stroke="#c15a2e" stroke-width="1.6"/>
+</g>
+<g font-size="11">
+  <text x="326" y="452" font-weight="600">code-index</text><text x="326" y="467">mcp-codebase ; tree-sitter ; aucun LLM</text>
+  <text x="326" y="502" font-weight="600">verify (validateurs de la plateforme)</text><text x="326" y="517">mcp-codebase ; checks déterministes, preuves</text>
+  <text x="326" y="552" font-weight="600" fill="#c15a2e">codebase-ask</text><text x="326" y="567">scout ; repo lecture seule ; citations vérifiées</text>
+</g>
+<!-- Spec modules -->
+<g stroke="currentColor" fill="none" stroke-width="1">
+  <rect x="606" y="436" width="255" height="42" rx="3" stroke="#c15a2e" stroke-width="1.6"/>
+  <rect x="606" y="486" width="255" height="42" rx="3"/>
+</g>
+<g font-size="11">
+  <text x="614" y="452" font-weight="600" fill="#c15a2e">spec-draft</text><text x="614" y="467">mcp-spec ; lit code + mémoire ; sans réseau</text>
+  <text x="614" y="502" font-weight="600">spec-lint</text><text x="614" y="517">mcp-spec ; format décision du wiki ; puis Judge</text>
+  <text x="614" y="552" font-style="italic" font-size="10">pipeline exigences → PRD → PR :</text>
+  <text x="614" y="566" font-style="italic" font-size="10">reproduit par la CI, étape par étape</text>
+</g>
+<!-- Platform modules -->
+<g stroke="currentColor" fill="none" stroke-width="1">
+  <rect x="894" y="436" width="256" height="42" rx="3" stroke="#c15a2e" stroke-width="1.6"/>
+  <rect x="894" y="486" width="256" height="42" rx="3" stroke="#c15a2e" stroke-width="1.6"/>
+  <rect x="894" y="536" width="256" height="42" rx="3"/>
+</g>
+<g font-size="11">
+  <text x="902" y="452" font-weight="600" fill="#c15a2e">web-scout</text><text x="902" y="467">seul egress (allowlist) ; écrit en quarantaine</text>
+  <text x="902" y="502" font-weight="600" fill="#c15a2e">db-migrator</text><text x="902" y="517">tout plugin qui écrit des tables ; base jetable</text>
+  <text x="902" y="552" font-weight="600">manifest-registry</text><text x="902" y="567">manifestes → modules importables + catalogue</text>
+</g>
+
+<!-- modules → services (dashed) and → Postgres -->
+<g stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arr)">
+  <line x1="157" y1="586" x2="157" y2="612"/>
+  <line x1="445" y1="586" x2="445" y2="612"/>
+  <line x1="733" y1="586" x2="733" y2="612"/>
+  <line x1="1021" y1="586" x2="1021" y2="612"/>
+</g>
+<text x="455" y="603" font-size="10">appels modèles</text>
+
+<!-- Services modèles -->
+<rect x="20" y="612" width="1140" height="56" rx="4" stroke="currentColor" fill="none" stroke-width="1.6"/>
+<g stroke="currentColor" fill="none" stroke-width="1">
+  <rect x="32" y="620" width="270" height="40" rx="3"/>
+  <rect x="318" y="620" width="270" height="40" rx="3"/>
+  <rect x="604" y="620" width="270" height="40" rx="3"/>
+  <rect x="890" y="620" width="258" height="40" rx="3"/>
+</g>
+<g font-size="11" text-anchor="middle">
+  <text x="167" y="636" font-weight="600">[5] Structurer, décodage contraint</text><text x="167" y="652">local (FM Apple ou open-weight) ; 0 token API</text>
+  <text x="453" y="636" font-weight="600">Judge, sortie typée</text><text x="453" y="652">Jev ou modèle local ; interface remplaçable</text>
+  <text x="739" y="636" font-weight="600">Embedder</text><text x="739" y="652">désactivé par défaut, activé par mesure</text>
+  <text x="1019" y="636" font-weight="600">Orchestrateur de conteneurs</text><text x="1019" y="652">pools, clés API injectées par task</text>
+</g>
+
+<g stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)">
+  <line x1="590" y1="668" x2="590" y2="698"/>
+</g>
+<text x="600" y="688" font-size="10">SQL depuis les modules seulement ; un écrivain par table</text>
+
+<!-- Postgres -->
+<rect x="20" y="698" width="1140" height="84" rx="4" stroke="currentColor" fill="none" stroke-width="1.6"/>
+<text x="32" y="718" font-weight="600">[6] Postgres 17+ : BM25 (extension), colonnes float[] en scan exact, pgvector installé mais désactivé au départ</text>
+<g stroke="currentColor" fill="none" stroke-width="1">
+  <rect x="32" y="732" width="270" height="36" rx="3"/>
+  <rect x="318" y="732" width="270" height="36" rx="3"/>
+  <rect x="604" y="732" width="270" height="36" rx="3"/>
+  <rect x="890" y="732" width="258" height="36" rx="3"/>
+</g>
+<g font-size="11" text-anchor="middle">
+  <text x="167" y="748">schéma memoire</text><text x="167" y="762" font-size="10">entries (write) · states, edges (consolidate)</text>
+  <text x="453" y="748">schéma code</text><text x="453" y="762" font-size="10">symbols, imports (index) · findings (verify)</text>
+  <text x="739" y="748">schéma spec</text><text x="739" y="762" font-size="10">specs, requirements (draft) · lint_results (lint)</text>
+  <text x="1019" y="748">schéma platform</text><text x="1019" y="762" font-size="10">executions (gateway) · quarantine (web-scout)</text>
+</g>
+</svg>
+<figcaption>Figure 1. Le client ne voit que trois méta-tools. Il écrit du code qui importe les modules utiles ; l'executor exécute ce code, appelle les modules, filtre, et ne renvoie que le résultat borné. Chaque module possède les tables qu'il écrit.</figcaption>
+</figure>
+
+<h2>3. Chemin d'un appel <code>execute</code></h2>
+<figure>
+<svg viewBox="0 0 1180 470" role="img" aria-label="Séquence : le client appelle execute avec un script, la gateway vérifie et émet un jeton, l'executor exécute le script en appelant les modules, les résultats sont filtrés, le registre reçoit tokens et verdict, le client reçoit un résultat borné ou un handle." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="11" fill="currentColor">
+<defs>
+  <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
+</defs>
+<g stroke="currentColor" fill="none" stroke-width="1.2">
+  <rect x="40" y="16" width="120" height="34" rx="3"/>
+  <rect x="240" y="16" width="120" height="34" rx="3"/>
+  <rect x="440" y="16" width="120" height="34" rx="3" stroke="#c15a2e" stroke-width="2"/>
+  <rect x="640" y="16" width="120" height="34" rx="3"/>
+  <rect x="840" y="16" width="120" height="34" rx="3"/>
+  <rect x="1020" y="16" width="120" height="34" rx="3"/>
+</g>
+<g text-anchor="middle" font-weight="600">
+  <text x="100" y="37">Client</text>
+  <text x="300" y="37">Gateway</text>
+  <text x="500" y="37" fill="#c15a2e">Executor</text>
+  <text x="700" y="37">Modules</text>
+  <text x="900" y="37">verify</text>
+  <text x="1080" y="37">Registre</text>
+</g>
+<g stroke="currentColor" stroke-width="1" stroke-dasharray="2 4">
+  <line x1="100" y1="50" x2="100" y2="460"/>
+  <line x1="300" y1="50" x2="300" y2="460"/>
+  <line x1="500" y1="50" x2="500" y2="460"/>
+  <line x1="700" y1="50" x2="700" y2="460"/>
+  <line x1="900" y1="50" x2="900" y2="460"/>
+  <line x1="1080" y1="50" x2="1080" y2="460"/>
+</g>
+<g stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)">
+  <line x1="100" y1="80" x2="300" y2="80"/>
+  <line x1="300" y1="150" x2="500" y2="150"/>
+  <line x1="500" y1="190" x2="700" y2="190"/>
+  <line x1="700" y1="225" x2="500" y2="225" stroke-dasharray="4 3"/>
+  <line x1="500" y1="260" x2="700" y2="260"/>
+  <line x1="700" y1="295" x2="500" y2="295" stroke-dasharray="4 3"/>
+  <line x1="500" y1="330" x2="900" y2="330"/>
+  <line x1="900" y1="365" x2="1080" y2="365"/>
+  <line x1="500" y1="400" x2="300" y2="400"/>
+  <line x1="300" y1="435" x2="100" y2="435"/>
+</g>
+<rect x="294" y="98" width="12" height="36" fill="currentColor" opacity="0.25"/>
+<g text-anchor="middle">
+  <text x="200" y="74">1. execute(script) ; script importe memory, code</text>
+  <text x="312" y="112" text-anchor="start">2. auth, profil, DAG, budget ; jeton de task ; trace id</text>
+  <text x="400" y="144">3. script + jeton + budget</text>
+  <text x="600" y="184">4. memory.recall(q, budget 600)</text>
+  <text x="600" y="219">5. entrées typées, ≤ 600 tokens</text>
+  <text x="600" y="254">6. code.symbols.find(...)</text>
+  <text x="600" y="289">7. résultats, filtrés dans le script</text>
+  <text x="700" y="324">8. sortie du script → verify (si code produit)</text>
+  <text x="990" y="359">9. validé / gradé, tokens par couche</text>
+  <text x="400" y="394">10. résultat agrégé</text>
+  <text x="200" y="429">11. ≤ max_result_tokens, sinon résumé + handle</text>
+</g>
+</svg>
+<figcaption>Figure 2. Les étapes 4 à 7 ne traversent jamais le contexte du client. Seul le résultat de l'étape 11 y entre, borné par le manifeste.</figcaption>
+</figure>
+
+<h2>4. Mapping de l'existant vers les modules</h2>
+<table>
+<tr><th>Dépôt existant</th><th>Devient</th><th>Ce qui change concrètement</th></tr>
+<tr><td><strong>cortex</strong> (hypermnesia-mcp)</td><td><code>memory-write</code>, <code>memory-recall</code>, <code>memory-consolidate</code></td><td>Trois manifestes dans le même dépôt, un écrivain par table. Le pipeline de consolidation à cinq étapes devient le worker planifié. Les hooks Claude de capture restent côté client mais n'appellent plus qu'un <code>memory.write</code> budgété. Le recall perd toute génération : SQL typé, BM25, Judge en rerank sur 50 candidats, sortie typée ≤ 600 tokens.</td></tr>
+<tr><td><strong>ai-architect-mcp-codebase</strong></td><td><code>code-index</code>, <code>verify</code>, <code>codebase-ask</code></td><td>Les checks déterministes fondés sur les preuves deviennent <code>verify</code>, le service de validation de toute la plateforme : toute sortie code, quel que soit le module qui l'a produite, y passe avant d'être « validée ». <code>codebase-ask</code> est le seul agent du domaine, avec un validateur de citations <code>fichier:ligne</code>.</td></tr>
+<tr><td><strong>ai-architect-mcp-spec</strong></td><td><code>spec-draft</code>, <code>spec-lint</code></td><td>Le linter devient un validateur réutilisable par la CI (check obligatoire sur une PR de spec). Format imposé : celui des décisions du wiki (modifications, raison, résultante), un ID et un critère d'acceptation par exigence, une source par affirmation.</td></tr>
+<tr><td><strong>zetetic-team-subagents</strong></td><td>Profils de conteneurs de task : <code>scout</code>, <code>builder</code>, <code>zetetic-reviewer</code></td><td>Les personas quittent le contexte du client. Chaque profil = image, allowlist de tools, egress, modèle et effort, budget. Le zetetic-reviewer est le profil utilisé par la CI de revue.</td></tr>
+<tr><td><strong>session-optimizer</strong></td><td>Règles de la gateway et de l'executor</td><td>Le checkpoint écrit quand la session est pleine devient le brief standard de tout conteneur de task. Le dimensionnement modèle et effort devient une règle du profil, appliquée par la gateway.</td></tr>
+<tr><td><strong>claude-mods</strong> (Mission Control)</td><td>Client du registre, servi sous <code>/app</code></td><td>L'onglet Mission lit le registre : tâches, tokens par couche, verdicts. La séparation utilisateur et agent est portée par le registre lui-même.</td></tr>
+<tr><td><strong>cortex-enterprise</strong></td><td>Runtime de l'executor et des conteneurs de task (Agent SDK)</td><td>Remis à jour pour servir d'image de base du pool.</td></tr>
+<tr><td><strong>pipeline agentique</strong> (exigences → PRD → PR)</td><td>Workflows CI</td><td>Chaque étape est un workflow claude-code-action qui appelle un module via la gateway. Voir section 7.</td></tr>
+</table>
+
+<h2>5. Squelette du dépôt <code>platform</code></h2>
+<p>Un monorepo pour la plateforme, les plugins restent dans leurs dépôts actuels et publient un manifeste. Un dépôt <code>marketplace</code> agrège les plugins pour l'input <code>plugins</code> de claude-code-action.</p>
+<pre><code>platform/
+├── CLAUDE.md                     # minimal : où sont les standards, comment appeler la gateway ; le reste par memory.recall
+├── compose.yaml                  # identique laptop et serveur ; proxy et tailles de pool seuls paramètres
+├── .github/workflows/
+│   ├── claude-review.yml         # revue de PR, automation, profil zetetic-reviewer
+│   ├── claude-mention.yml        # @claude sur issues et PR, tag mode
+│   ├── issue-to-spec.yml         # label "spec" → spec-draft → PR avec spec-lint en check
+│   ├── platform-build.yml        # stage 0 : build, tests, porte de tests, promotion
+│   └── agent-approval-check.yml  # 2 approbations humaines sur les commits d'agent
+├── gateway/                      # un binaire ; TypeScript
+│   ├── src/auth/                 # client credentials, jetons de task
+│   ├── src/profiles/             # profil client → modules, modèle, effort, budgets
+│   ├── src/codefront/            # search, describe, execute ; génération des modules importables
+│   ├── src/catalog/              # repli MCP classique
+│   ├── src/policy/               # DAG d'appels, budget baggage, max_result_tokens
+│   ├── src/tasks/                # extension tasks + task.wait
+│   ├── src/registry/             # écriture du registre, tokens par couche, OTel
+│   └── test/
+├── executor/                     # image du pool de session
+│   ├── Dockerfile                # base cortex-enterprise / Agent SDK ; aucun secret dans l'image
+│   ├── src/runtime/              # exécution du script, clients MCP des modules, filtrage
+│   └── src/brief/                # checkpoint (session-optimizer) → brief de task
+├── profiles/                     # conteneurs de task
+│   ├── scout.yaml
+│   ├── builder.yaml
+│   └── zetetic-reviewer.yaml
+├── modules/
+│   ├── manifest.schema.json      # contrat de plugin (section 6)
+│   ├── manifest-registry/        # lit les manifestes, génère modules TS + catalogue
+│   ├── db-migrator/              # agent de migration, Postgres jetable
+│   └── web-scout/                # seul egress, quarantaine
+├── services/
+│   ├── structurer/               # décodage contraint, local
+│   ├── judge/                    # interface + impl Jev + impl locale
+│   └── embedder/                 # off par défaut
+├── db/
+│   ├── schemas/platform/         # executions, quarantine ; migrations
+│   └── policy.md                 # un écrivain par table, règle d'extension
+├── stage0/
+│   ├── Dockerfile                # image builder figée
+│   └── fixpoint.sh               # vN+1 se reconstruit avec elle-même ; porte de tests (attendu = base + ajoutés − supprimés, tous verts)
+├── baseline/
+│   ├── tasks/                    # les 20 tâches de référence
+│   └── results/                  # M1, M2 par tâche, par brique
+└── decisions/                    # format du wiki : modifications, raison, résultante
+</code></pre>
+
+<h3>Dépôt d'un plugin (exemple : cortex)</h3>
+<pre><code>cortex/
+├── manifests/
+│   ├── memory-write.yaml
+│   ├── memory-recall.yaml
+│   └── memory-consolidate.yaml
+├── src/                          # MCP léger : data tools ; workers
+├── db/migrations/                # seulement les tables que ce plugin écrit
+├── test/                         # tests de contrat : chaque tool respecte son schéma et son max_result_tokens
+└── .github/workflows/claude-review.yml   # même workflow que platform, via la gateway
+</code></pre>
+
+<h2>6. Contrat de plugin (manifeste)</h2>
+<p>Le manifeste est la seule chose que la gateway lit. Il génère le module importable, le catalogue de repli, la politique de routage et les limites. Un plugin sans manifeste valide n'est pas routé.</p>
+<pre><code>name: memory-recall
+version: 1.2.0
+domain: memory
+owner: cortex
+transport: http            # MCP léger exposé au gateway
+tools:
+  - name: recall
+    description: Rappel typé, filtré en SQL, rerank par Judge
+    input_schema: ./schemas/recall.in.json
+    output_schema: ./schemas/recall.out.json
+    kind: data              # data | agent | workflow
+    max_result_tokens: 600
+    latency_budget_ms: 200
+    validator: schema       # schema | verify | spec-lint | none
+containers: []              # aucun pour un data tool
+writes_tables: []           # lecture seule
+reads_domains: [memory]
+calls_allowed: [judge]      # DAG : ce que ce plugin peut appeler
+egress: none
+model_min: none             # none | local | haiku | sonnet | opus
+</code></pre>
+<pre><code>name: codebase-ask
+version: 0.3.0
+domain: code
+owner: ai-architect-mcp-codebase
+tools:
+  - name: ask
+    kind: agent
+    max_result_tokens: 1000
+    validator: citations     # chaque fichier:ligne existe et contient le texte cité
+containers:
+  - profile: scout
+    mounts: [repo:ro]
+    egress: none
+    model_min: sonnet
+    budget_tokens: 40000
+writes_tables: []
+reads_domains: [code, memory]
+calls_allowed: [code-index, memory-recall]
+</code></pre>
+<p>Règles appliquées par la gateway à partir du manifeste : un tool <code>data</code> n'a pas de conteneur ; un tool <code>agent</code> crée une task ; <code>writes_tables</code> doit être disjoint entre tous les manifestes (un écrivain par table) ; <code>calls_allowed</code> doit former un graphe acyclique ; <code>egress</code> autre que <code>none</code> impose une écriture en quarantaine.</p>
+
+<h2>7. CI avec claude-code-action</h2>
+<p>Principe : le runner est un client MCP de la gateway, rien d'autre. Il n'exécute pas de code produit par un agent, il ne porte aucune clé Anthropic statique, et il ne voit que trois tools. Tout ce qui demande un conteneur a lieu dans la plateforme.</p>
+
+<figure>
+<svg viewBox="0 0 1180 250" role="img" aria-label="Flux CI : un événement GitHub déclenche claude-code-action sur un runner auto-hébergé, qui s'authentifie par federation OIDC et appelle la gateway avec les trois méta-tools ; l'executor exécute, verify valide, le résultat revient en commentaire ou commit. En dessous, platform-build construit l'image suivante avec le stage 0 et applique la porte de tests." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="11" fill="currentColor">
+<defs>
+  <marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
+</defs>
+<g stroke="currentColor" fill="none" stroke-width="1.2">
+  <rect x="20" y="40" width="200" height="60" rx="4"/>
+  <rect x="260" y="40" width="240" height="60" rx="4"/>
+  <rect x="540" y="40" width="180" height="60" rx="4"/>
+  <rect x="760" y="40" width="200" height="60" rx="4" stroke="#c15a2e" stroke-width="2"/>
+  <rect x="1000" y="40" width="160" height="60" rx="4"/>
+  <rect x="260" y="130" width="240" height="44" rx="4" stroke-dasharray="4 3"/>
+  <rect x="20" y="196" width="1140" height="40" rx="4"/>
+</g>
+<g text-anchor="middle">
+  <text x="120" y="62" font-weight="600">Événement GitHub</text>
+  <text x="120" y="78" font-size="10">PR ouverte, label, @claude</text>
+  <text x="120" y="92" font-size="10">workflow depuis la branche par défaut</text>
+  <text x="380" y="62" font-weight="600">Runner auto-hébergé</text>
+  <text x="380" y="78" font-size="10">checkout ; claude-code-action@v1 ; plugins</text>
+  <text x="380" y="92" font-size="10">allowedTools : search, describe, execute</text>
+  <text x="630" y="62" font-weight="600">Gateway</text>
+  <text x="630" y="78" font-size="10">client credentials du workflow</text>
+  <text x="630" y="92" font-size="10">profil ci-review</text>
+  <text x="860" y="62" font-weight="600" fill="#c15a2e">Executor + zetetic-reviewer</text>
+  <text x="860" y="78" font-size="10">code-index, codebase-ask, verify</text>
+  <text x="860" y="92" font-size="10">le code s'exécute ici, pas sur le runner</text>
+  <text x="1080" y="62" font-weight="600">Sortie</text>
+  <text x="1080" y="78" font-size="10">commentaire de revue, commit,</text>
+  <text x="1080" y="92" font-size="10">check obligatoire</text>
+  <text x="380" y="148" font-size="10">Federation OIDC : token GitHub → API Claude</text>
+  <text x="380" y="164" font-size="10">zéro clé statique dans les secrets</text>
+  <text x="590" y="220">platform-build.yml : stage 0 construit vN+1 → vN+1 se reconstruit elle-même → porte de tests (attendu = base + ajoutés − supprimés, tous verts) → promotion de vN+1 en stage 0 ; sinon vN reste</text>
+</g>
+<g stroke="currentColor" stroke-width="1.2" marker-end="url(#arr3)">
+  <line x1="220" y1="70" x2="260" y2="70"/>
+  <line x1="500" y1="70" x2="540" y2="70"/>
+  <line x1="720" y1="70" x2="760" y2="70"/>
+  <line x1="960" y1="70" x2="1000" y2="70"/>
+  <line x1="380" y1="130" x2="380" y2="100" stroke-dasharray="4 3"/>
+</g>
+</svg>
+<figcaption>Figure 3. Le runner déclenche et rapporte ; la plateforme exécute et valide. La construction de la plateforme elle-même passe par le stage 0 et la porte de tests.</figcaption>
+</figure>
+
+<h3>7.1 Ce que l'action fournit, vérifié dans sa documentation</h3>
+<ul>
+<li><strong>MCP</strong> : <code>claude_args</code> accepte <code>--mcp-config</code> (fichier ou JSON inline, plusieurs flags fusionnés) et <code>--allowedTools</code>. Les serveurs ajoutés fusionnent avec les serveurs GitHub intégrés de l'action.</li>
+<li><strong>Plugins</strong> : inputs <code>plugins</code> et <code>plugin_marketplaces</code>, listes séparées par retour à la ligne.</li>
+<li><strong>Auth sans clé</strong> : <code>anthropic_federation_rule_id</code>, <code>anthropic_organization_id</code>, <code>anthropic_service_account_id</code> (optionnel <code>anthropic_workspace_id</code>). Ce sont des identifiants, pas des secrets ; ils peuvent vivre dans le fichier de workflow. Le job doit avoir <code>id-token: write</code>. Ne pas mettre <code>anthropic_api_key</code> en parallèle, la clé statique prendrait le pas.</li>
+<li><strong>Modes</strong> : détection automatique. Mention <code>@claude</code> → mode tag ; événement PR ou issue avec <code>prompt</code> → automation. <code>track_progress</code> force le mode tag avec commentaire de suivi. L'input <code>mode</code> est déprécié.</li>
+<li><strong>Isolation du runner</strong> : scrub des secrets dans les sous-processus et PID namespace via bubblewrap sur runners Linux (variable <code>CLAUDE_CODE_SUBPROCESS_ENV_SCRUB</code>). La doc précise que cela réduit le risque d'injection sans l'éliminer, d'où la règle « le runner n'exécute pas ».</li>
+<li><strong>Garde-fou</strong> : <code>agent-approval-check</code> impose des approbations humaines sur les PR contenant des commits d'agent ; à déclarer en status check obligatoire. Le workflow s'exécute depuis la branche par défaut, une PR ne peut pas le modifier pour s'auto-approuver.</li>
+<li><strong>Limite</strong> : le token GitHub de l'app est limité au dépôt courant. Pour la CI de <code>platform</code> qui touche plusieurs dépôts, c'est le runner qui clone, pas Claude.</li>
+</ul>
+
+<h3>7.2 <code>claude-review.yml</code>, revue de PR via la gateway</h3>
+<pre><code>name: claude-review
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+
+jobs:
+  review:
+    runs-on: [self-hosted, platform]       # runner dans le même segment réseau que la gateway
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write                      # federation OIDC
+      actions: read
+    steps:
+      - uses: actions/checkout@v6
+        with: { fetch-depth: 1 }
+
+      - name: MCP config vers la gateway
+        run: |
+          cat &gt; /tmp/mcp.json &lt;&lt; EOF
+          {"mcpServers": {"gateway": {"type": "http",
+            "url": "https://gateway.internal/mcp",
+            "headers": {"Authorization": "Bearer ${{ secrets.GATEWAY_CI_TOKEN }}"}}}}
+          EOF
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_federation_rule_id: fdrl_xxxxxxxx
+          anthropic_organization_id: 00000000-0000-0000-0000-000000000000
+          anthropic_service_account_id: svac_xxxxxxxx
+          plugin_marketplaces: https://github.com/cdeust/marketplace.git
+          plugins: |
+            ai-architect-standards@cdeust
+          track_progress: true
+          use_sticky_comment: true
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR: ${{ github.event.pull_request.number }}
+            Revue selon les standards ai-architect.tools.
+            Utilise uniquement la gateway : execute un script qui importe code et memory,
+            appelle code.verify sur le diff, puis codebase.ask pour le contexte.
+            Toute affirmation cite fichier:ligne. Aucun fichier n'est exécuté sur ce runner.
+          claude_args: |
+            --mcp-config /tmp/mcp.json
+            --allowedTools mcp__gateway__search,mcp__gateway__describe,mcp__gateway__execute
+            --max-turns 15
+</code></pre>
+<p>Le jeton <code>GATEWAY_CI_TOKEN</code> est un client credential émis par la gateway pour le profil <code>ci-review</code>, limité aux modules <code>code-index</code>, <code>verify</code>, <code>codebase-ask</code>, <code>memory-recall</code>. C'est le seul secret du workflow, et il n'ouvre rien d'autre que ces quatre modules.</p>
+
+<h3>7.3 <code>claude-mention.yml</code>, mode tag</h3>
+<pre><code>name: claude-mention
+on:
+  issue_comment: { types: [created] }
+  pull_request_review_comment: { types: [created] }
+  issues: { types: [opened, assigned] }
+
+jobs:
+  claude:
+    if: contains(github.event.comment.body, '@claude') || contains(github.event.issue.body, '@claude')
+    runs-on: [self-hosted, platform]
+    permissions: { contents: write, pull-requests: write, issues: write, id-token: write, actions: read }
+    steps:
+      - uses: actions/checkout@v6
+      - name: MCP config
+        run: ... (identique à 7.2)
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_federation_rule_id: fdrl_xxxxxxxx
+          anthropic_organization_id: 00000000-0000-0000-0000-000000000000
+          plugin_marketplaces: https://github.com/cdeust/marketplace.git
+          plugins: ai-architect-standards@cdeust
+          claude_args: |
+            --mcp-config /tmp/mcp.json
+            --allowedTools mcp__gateway__search,mcp__gateway__describe,mcp__gateway__execute
+</code></pre>
+
+<h3>7.4 <code>issue-to-spec.yml</code>, étape du pipeline exigences → PRD</h3>
+<pre><code>name: issue-to-spec
+on:
+  issues: { types: [labeled] }
+
+jobs:
+  spec:
+    if: github.event.label.name == 'spec'
+    runs-on: [self-hosted, platform]
+    permissions: { contents: write, pull-requests: write, issues: write, id-token: write }
+    steps:
+      - uses: actions/checkout@v6
+      - name: MCP config
+        run: ... (profil ci-spec : spec-draft, spec-lint, memory-recall, codebase-ask)
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_federation_rule_id: fdrl_xxxxxxxx
+          anthropic_organization_id: 00000000-0000-0000-0000-000000000000
+          prompt: |
+            Issue #${{ github.event.issue.number }}.
+            execute : spec.draft(brief = corps de l'issue) puis spec.lint(handle).
+            Si lint échoue, spec.revise une fois. Ouvre une PR avec le markdown sous decisions/.
+          claude_args: |
+            --mcp-config /tmp/mcp.json
+            --allowedTools mcp__gateway__search,mcp__gateway__describe,mcp__gateway__execute
+</code></pre>
+<p>Un second workflow, sans Claude, exécute <code>spec-lint</code> comme check obligatoire sur toute PR touchant <code>decisions/</code>.</p>
+
+<h3>7.5 <code>platform-build.yml</code>, stage 0 et porte de tests (sans Claude)</h3>
+<pre><code>name: platform-build
+on:
+  push: { branches: [main] }
+  pull_request:
+
+jobs:
+  build:
+    runs-on: [self-hosted, platform]
+    container: ghcr.io/cdeust/stage0:current      # image figée, promue seulement par ce workflow
+    steps:
+      - uses: actions/checkout@v6
+      - run: make build test                         # vN+1 construite par stage0
+      - run: ./stage0/fixpoint.sh                    # vN+1 reconstruit vN+1 ; porte de tests (attendu = base + ajoutés − supprimés, tous verts)
+      - if: github.ref == 'refs/heads/main' &amp;&amp; success()
+        run: ./stage0/promote.sh                     # stage0:current ← vN+1
+</code></pre>
+<p>La seule porte de merge est le résultat des tests : nombre attendu = tests de la base + ajoutés − supprimés (exemple : 6445 + 30 − 10 = 6465), ajouts et suppressions dérivés du diff de la PR, pas déclarés. Le nombre exécuté doit égaler le nombre attendu et tous les tests doivent être verts, sinon pas de merge. Si la porte échoue, <code>stage0:current</code> ne bouge pas et la CI reste capable de reconstruire la plateforme. C'est la réponse au problème de bootstrap.</p>
+
+<h3>7.6 Runner auto-hébergé</h3>
+<ul>
+<li>Un runner par environnement, étiqueté <code>platform</code>, dans le même segment réseau que la gateway. Aucun accès sortant autre que GitHub et la gateway.</li>
+<li>Le runner n'a pas Docker exposé à Claude. Les conteneurs sont ceux de la plateforme.</li>
+<li>Le runner est jetable : image reconstruite par <code>platform-build</code>, pas de state entre deux jobs.</li>
+<li>Tous les workflows tournent depuis la branche par défaut (<code>pull_request</code>, pas <code>pull_request_target</code> sauf pour <code>agent-approval-check</code>, qui est conçu pour).</li>
+</ul>
+
+<h2>8. Ordre des briques et portes</h2>
+<table>
+<tr><th>#</th><th>Brique</th><th>Contenu</th><th>CI</th><th>Porte de sortie</th></tr>
+<tr><td>0</td><td>Baseline</td><td>20 tâches jouées sur le harnais actuel, M1 et M2 relevés</td><td>aucune</td><td>Chiffres écrits dans <code>baseline/results/</code> et dans le wiki</td></tr>
+<tr><td>1</td><td>Squelette + CI</td><td>Dépôt <code>platform</code> avec l'arborescence de la section 5, <code>platform-build.yml</code> avec stage 0, <code>agent-approval-check</code> en check obligatoire, federation OIDC, runner auto-hébergé</td><td>platform-build, agent-approval-check</td><td>Porte de tests vérifiée une fois (attendu = base + ajoutés − supprimés, tous verts) ; zéro clé statique dans les secrets</td></tr>
+<tr><td>2</td><td>Gateway catalogue + registre + recall budgété</td><td>Gateway en mode catalogue, registre, profil <code>ci-review</code>, <code>memory-recall</code> depuis Cortex avec budget</td><td>claude-review branché sur la gateway</td><td>recall ≤ 600 tokens, p50 &lt; 200 ms, M2 inchangé</td></tr>
+<tr><td>3</td><td>Front de code + executor</td><td><code>search</code>, <code>describe</code>, <code>execute</code>, génération des modules, pool d'executors</td><td>claude-review passe aux trois méta-tools</td><td>Définitions ≤ 1 500 tokens ; M1 en baisse sur les 20 tâches, M2 stable. <strong>Si cette porte ne s'ouvre pas, on s'arrête et on revoit.</strong></td></tr>
+<tr><td>4</td><td>Scission Cortex</td><td><code>memory-write</code>, <code>memory-consolidate</code>, un écrivain par table, migrations dans le plugin</td><td>claude-review sur cortex via la gateway</td><td>Tables à plusieurs écrivains = 0</td></tr>
+<tr><td>5</td><td>Domaine Code</td><td><code>code-index</code>, <code>verify</code>, <code>codebase-ask</code> depuis ai-architect-mcp-codebase</td><td>claude-review appelle verify avant tout jugement</td><td>Citations invalides = 0 ; part des sorties validées vs gradées suivie</td></tr>
+<tr><td>6</td><td>Domaine Spec</td><td><code>spec-draft</code>, <code>spec-lint</code></td><td>issue-to-spec ; spec-lint en check obligatoire</td><td>Specs acceptées sans révision humaine</td></tr>
+<tr><td>7</td><td>Mission Control</td><td>Onglet Mission branché sur le registre</td><td>aucune</td><td>Tokens par couche visibles par tâche</td></tr>
+<tr><td>8</td><td>Services modèles</td><td>Structurer local, Judge, <code>web-scout</code></td><td>aucune</td><td>Chaque service accepté seulement si M1 baisse sans hausse de M2</td></tr>
+</table>
+
+<h2>9. Décisions ouvertes</h2>
+<ul>
+<li>Support de l'extension tasks par Claude Code, Codex et claude-code-action : à tester en brique 2 ; <code>task.wait</code> reste tant que ce n'est pas confirmé.</li>
+<li>Jev : déploiement EU ou on-prem à obtenir par écrit ; sans réponse, Judge local sur toute donnée sensible.</li>
+<li>Serveurs on-prem Mac ou Linux pour le Structurer : recommandation open-weight contraint, pour garder un seul <code>compose</code>.</li>
+<li>Transport HTTP de la gateway dans <code>--mcp-config</code> : vérifier la syntaxe exacte attendue par la version de Claude Code installée par l'action au moment de la brique 2.</li>
+</ul>
+
+</body>
+</html>

@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ai-architect.tools, architecture plateforme v3 sous srt</title>
+<style>
+  :root { color-scheme: light dark; --accent: #c15a2e; --muted: #777; --line: #8884; --bg2: #8881; }
+  body { font-family: -apple-system, "Segoe UI", Inter, Roboto, sans-serif; max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; line-height: 1.45; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  h2 { font-size: 1.15rem; margin: 36px 0 10px; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+  h3 { font-size: 1rem; margin: 22px 0 6px; }
+  p.lead { color: var(--muted); margin-top: 0; }
+  figure { margin: 16px 0; }
+  figure svg { max-width: 100%; height: auto; display: block; }
+  figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.88rem; margin: 10px 0 18px; }
+  th, td { border: 1px solid var(--line); padding: 6px 8px; vertical-align: top; text-align: left; }
+  th { background: var(--bg2); }
+  code { font-size: 0.85em; background: var(--bg2); padding: 1px 4px; border-radius: 3px; }
+  pre { background: var(--bg2); padding: 12px 14px; border-radius: 6px; overflow-x: auto; font-size: 0.82rem; line-height: 1.4; }
+  pre code { background: none; padding: 0; }
+  .agent { color: var(--accent); font-weight: 600; }
+  .legend { font-size: 0.85rem; color: var(--muted); }
+  .legend span.sw { display: inline-block; width: 14px; height: 10px; border: 2px solid var(--accent); vertical-align: middle; margin-right: 4px; }
+  .legend span.sw2 { display: inline-block; width: 14px; height: 10px; border: 2px dashed currentColor; vertical-align: middle; margin: 0 4px 0 14px; }
+  .box { border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; margin: 10px 0; background: var(--bg2); }
+  ol li, ul li { margin: 3px 0; }
+  .toc { font-size: 0.9rem; columns: 2; }
+  .legend span.sw0 { display: inline-block; width: 14px; height: 10px; border: 1px solid currentColor; vertical-align: middle; margin: 0 4px 0 0; }
+  .legend span.sw3 { display: inline-block; width: 14px; height: 10px; background: currentColor; opacity: 0.2; vertical-align: middle; margin: 0 4px 0 14px; }
+  .legend span.sw2 { margin-left: 14px; }
+  .legend span.sw { margin-left: 14px; }
+</style>
+</head>
+<body>
+
+<h1>ai-architect.tools, architecture plateforme v3 sous srt</h1>
+<p class="lead">Diagrammes tirés de <code>docs/design/platform-v3-srt.md</code> (proposition du 30 octobre 2026, base <code>main</code> = <code>fbf100a</code>), qui amende la vision v3 du 29 octobre 2026 : tout ce qui était conteneur devient un processus sandboxé par <code>@anthropic-ai/sandbox-runtime</code> 0.0.81 (srt) ; la gateway, <code>data</code> et Postgres 17 restent des processus natifs. Les éléments marqués T-xx sont non vérifiés dans le document source.</p>
+
+<div class="toc">
+<ol>
+<li>Architecture complète sous srt (figure 1)</li>
+<li>Chemin d'un appel <code>execute</code> (figure 2)</li>
+<li>Porte de CI (figure 3)</li>
+<li>Processus, réseau, écritures et secrets</li>
+</ol>
+</div>
+
+<h2>1. Architecture complète sous srt</h2>
+<p class="legend"><span class="sw0"></span> processus natif (hors srt) <span class="sw"></span> processus sous srt <span class="sw2"></span> frontière srt <span class="sw3"></span> secret détenu par le processus. Une flèche double entre platformd et une sandbox est le canal JSON lines sur stdin et stdout.</p>
+<figure>
+<svg viewBox="0 0 1200 1030" role="img" aria-label="Architecture v3 sous srt : clients, gateway native, platformd, modules natifs, data, Postgres 17 sur socket Unix, et processus sandboxés par srt (executor, scout, builder, zetetic-reviewer, agent-worker, web-scout) reliés à platformd par JSON lines sur stdin et stdout, avec proxy srt vers api.anthropic.com et clé masquée." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="11" fill="currentColor">
+<defs>
+  <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
+</defs>
+<rect x="20" y="12" width="262" height="70" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="32" y="30" font-size="12" font-weight="600">marketplace architect-os</text>
+<text x="32" y="48" font-size="10" font-family="ui-monospace, Menlo, Consolas, monospace">.claude-plugin/marketplace.json</text>
+<text x="32" y="64" font-size="10">agentic-gateway · ai-architect-standards</text>
+<line x1="282" y1="47" x2="320" y2="47" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+<text x="301" y="41" font-size="10" text-anchor="middle">plugin</text>
+<rect x="320" y="12" width="300" height="70" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="332" y="30" font-size="12" font-weight="600">Claude Code</text>
+<text x="332" y="48" font-size="10">plugin d'entrée agentic-gateway</text>
+<text x="332" y="64" font-size="10">serveur MCP type http, jeton client</text>
+<rect x="650" y="12" width="150" height="70" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="725" y="52" font-size="12" text-anchor="middle" font-weight="600">Codex</text>
+<rect x="830" y="12" width="350" height="70" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="842" y="28" font-size="12" font-weight="600">claude-code-action</text>
+<text x="842" y="44" font-size="10">runner auto-hébergé (workflows Claude)</text>
+<text x="842" y="58" font-size="10">--mcp-config gateway ; fédération OIDC</text>
+<text x="842" y="72" font-size="10">plugins: ai-architect-standards@architect-os</text>
+<line x1="470" y1="82" x2="470" y2="146" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+<line x1="725" y1="82" x2="725" y2="146" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+<line x1="1005" y1="82" x2="1005" y2="146" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+<text x="735" y="108" font-size="10">HTTPS (serveur) ou HTTP 127.0.0.1 (laptop)</text>
+<rect x="10" y="118" width="1180" height="898" rx="6" fill="none" stroke="currentColor" stroke-width="1" stroke-opacity="0.55"/>
+<text x="24" y="135" font-size="11" font-weight="600">Hôte : processus NATIFS (hors srt)</text>
+<rect x="20" y="146" width="1160" height="34" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="32" y="168" font-size="11">[edge] serveur seulement ; TLS ; /mcp → gateway ; /app → dashboard</text>
+<rect x="1026" y="157" width="142" height="15" rx="2" fill="currentColor" fill-opacity="0.12" stroke="none"/>
+<text x="1031" y="168" font-size="10">secret : clé privée TLS</text>
+<line x1="600" y1="180" x2="600" y2="206" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+<text x="610" y="198" font-size="10" font-family="ui-monospace, Menlo, Consolas, monospace">127.0.0.1:8080</text>
+<rect x="20" y="206" width="1160" height="122" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+<text x="32" y="225" font-size="11" font-weight="600">[gateway] natif, hors srt ; utilisateur OS agentic-gw ; écoute 127.0.0.1:8080</text>
+<rect x="32" y="236" width="182" height="42" rx="3" fill="none" stroke="currentColor" stroke-width="1"/>
+<text x="123" y="253" font-size="10" text-anchor="middle" font-weight="600">search · describe · execute</text>
+<text x="123" y="268" font-size="10" text-anchor="middle">méta-tools</text>
+<rect x="222" y="236" width="182" height="42" rx="3" fill="none" stroke="currentColor" stroke-width="1"/>
+<text x="313" y="253" font-size="10" text-anchor="middle" font-weight="600">auth · profils</text>
+<text x="313" y="268" font-size="10" text-anchor="middle">table des clients</text>
+<rect x="412" y="236" width="182" height="42" rx="3" fill="none" stroke="currentColor" stroke-width="1"/>
+<text x="503" y="253" font-size="10" text-anchor="middle" font-weight="600">DAG calls_allowed</text>
+<text x="503" y="268" font-size="10" text-anchor="middle">budgets</text>
+<rect x="602" y="236" width="182" height="42" rx="3" fill="none" stroke="currentColor" stroke-width="1"/>
+<text x="693" y="253" font-size="10" text-anchor="middle" font-weight="600">jetons de task</text>
+<text x="693" y="268" font-size="10" text-anchor="middle">clé de signature</text>
+<rect x="792" y="236" width="182" height="42" rx="3" fill="none" stroke="currentColor" stroke-width="1"/>
+<text x="883" y="253" font-size="10" text-anchor="middle" font-weight="600">max_result_tokens</text>
+<text x="883" y="268" font-size="10" text-anchor="middle">résumé + handle</text>
+<rect x="982" y="236" width="182" height="42" rx="3" fill="none" stroke="currentColor" stroke-width="1"/>
+<text x="1073" y="253" font-size="10" text-anchor="middle" font-weight="600">registre</text>
+<text x="1073" y="268" font-size="10" text-anchor="middle">append-only</text>
+<rect x="32" y="285" width="522" height="15" rx="2" fill="currentColor" fill-opacity="0.12" stroke="none"/>
+<text x="37" y="296" font-size="10">secret : clé de signature des jetons de task, table des clients (remplace GATEWAY_TOKENS)</text>
+<text x="32" y="318" font-size="10">sortant : 127.0.0.1 seulement (modules, data, platformd) ; aucune lecture de ~ ; seul point de politique pour chaque call relayé</text>
+<line x1="330" y1="328" x2="330" y2="358" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)" marker-start="url(#arr)"/>
+<text x="340" y="348" font-size="10">call relayés, jeton de task</text>
+<line x1="925" y1="328" x2="925" y2="358" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+<text x="935" y="348" font-size="10">127.0.0.1:&lt;port&gt;, jeton de task</text>
+<rect x="20" y="358" width="620" height="112" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="32" y="376" font-size="11" font-weight="600">[platformd] superviseur ; utilisateur OS agentic-sup ; socket Unix de contrôle 0600</text>
+<text x="32" y="394" font-size="10">lance les processus natifs de topology/processes.yaml et les processus srt</text>
+<text x="32" y="410" font-size="10">limites CPU / mémoire / PID posées autour de srt (mécanisme non vérifié, T-09)</text>
+<text x="32" y="426" font-size="10">timeouts et mise à mort de l'arbre (T-06) ; relaie chaque call vers la gateway</text>
+<rect x="32" y="443" width="395" height="15" rx="2" fill="currentColor" fill-opacity="0.12" stroke="none"/>
+<text x="37" y="454" font-size="10">secret : ANTHROPIC_API_KEY (ou jeton fédéré) dans son environnement</text>
+<rect x="670" y="358" width="510" height="112" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="682" y="376" font-size="11" font-weight="600">[modules] un processus natif par module kind: data | workflow</text>
+<text x="682" y="394" font-size="10">memory-recall, code-index, … ; sandboxes: [] pour data et workflow</text>
+<text x="682" y="410" font-size="10">écoute 127.0.0.1:&lt;port&gt;</text>
+<text x="682" y="426" font-size="10">exige l'en-tête de jeton de task émis par la gateway</text>
+<rect x="682" y="443" width="320" height="15" rx="2" fill="currentColor" fill-opacity="0.12" stroke="none"/>
+<text x="687" y="454" font-size="10">secret : aucun (ni clé de signature, ni clé Anthropic)</text>
+<line x1="787" y1="470" x2="787" y2="500" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+<text x="797" y="490" font-size="10">opérations typées</text>
+<rect x="670" y="500" width="235" height="92" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="680" y="518" font-size="11" font-weight="600">[data] natif</text>
+<text x="680" y="534" font-size="10">seul importeur de pg</text>
+<text x="680" y="548" font-size="10">utilisateur OS agentic-data</text>
+<text x="680" y="562" font-size="10" font-family="ui-monospace, Menlo, Consolas, monospace">/run/agentic/pg/.s.PGSQL.5432</text>
+<text x="680" y="576" font-size="10">socket Unix, 0700 agentic-data</text>
+<line x1="905" y1="546" x2="945" y2="546" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+<rect x="945" y="500" width="235" height="92" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+<text x="955" y="518" font-size="11" font-weight="600">[postgres 17] natif</text>
+<text x="955" y="534" font-size="10" font-family="ui-monospace, Menlo, Consolas, monospace">listen_addresses = ''</text>
+<text x="955" y="548" font-size="10">pg_hba : local peer</text>
+<text x="955" y="562" font-size="10">agentic-data uniquement</text>
+<rect x="955" y="571" width="160" height="15" rx="2" fill="currentColor" fill-opacity="0.12" stroke="none"/>
+<text x="960" y="582" font-size="10">secret : aucun (auth peer)</text>
+<rect x="20" y="502" width="620" height="500" rx="6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="7 4"/>
+<text x="60" y="522" font-size="10">frontière srt : chaque processus lancé par platformd sous srt --settings &lt;profil&gt;.json</text>
+<text x="54" y="488" font-size="10">JSON lines stdin / stdout, un tube par processus</text>
+<rect x="96" y="534" width="532" height="70" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
+<text x="108" y="551" font-size="11" font-weight="600" fill="#c15a2e">executor de session · pool chaud, 1 par session</text>
+<rect x="520" y="540" width="96" height="15" rx="2" fill="currentColor" fill-opacity="0.12" stroke="none"/>
+<text x="525" y="551" font-size="10">secrets : aucun</text>
+<text x="108" y="567" font-size="10" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings executor.json -- node executor.js</text>
+<text x="108" y="581" font-size="10">réseau : AUCUN (allowedDomains: [], strictAllowlist: true)</text>
+<text x="108" y="595" font-size="10">lecture : runtime Node, dist executor, « . » ; ~ refusé ; écriture : « . » (session)</text>
+<line x1="44" y1="569" x2="96" y2="569" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)" marker-start="url(#arr)"/>
+<text x="70" y="564" font-size="10" text-anchor="middle">stdio</text>
+<rect x="96" y="612" width="532" height="70" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
+<text x="108" y="629" font-size="11" font-weight="600" fill="#c15a2e">task scout · 1 par task</text>
+<rect x="410" y="618" width="205" height="15" rx="2" fill="currentColor" fill-opacity="0.12" stroke="none"/>
+<text x="416" y="629" font-size="10">secret : ANTHROPIC_API_KEY masquée</text>
+<text x="108" y="645" font-size="10" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings scout.json -- node task.js</text>
+<text x="108" y="659" font-size="10">réseau : api.anthropic.com:443 seul ; TLS terminé par le proxy srt</text>
+<text x="108" y="673" font-size="10">lecture : repo en lecture seule + « . » ; écriture : « . » (scratch)</text>
+<line x1="44" y1="647" x2="96" y2="647" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)" marker-start="url(#arr)"/>
+<text x="70" y="642" font-size="10" text-anchor="middle">stdio</text>
+<rect x="96" y="690" width="532" height="70" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
+<text x="108" y="707" font-size="11" font-weight="600" fill="#c15a2e">task builder · 1 par task</text>
+<rect x="410" y="696" width="205" height="15" rx="2" fill="currentColor" fill-opacity="0.12" stroke="none"/>
+<text x="416" y="707" font-size="10">secret : ANTHROPIC_API_KEY masquée</text>
+<text x="108" y="723" font-size="10" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings builder.json -- node task.js</text>
+<text x="108" y="737" font-size="10">réseau : api.anthropic.com:443</text>
+<text x="108" y="751" font-size="10">écriture : copie de travail de la task uniquement (worktree jetable)</text>
+<line x1="44" y1="725" x2="96" y2="725" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)" marker-start="url(#arr)"/>
+<text x="70" y="720" font-size="10" text-anchor="middle">stdio</text>
+<rect x="96" y="768" width="532" height="70" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
+<text x="108" y="785" font-size="11" font-weight="600" fill="#c15a2e">task zetetic-reviewer · 1 par task</text>
+<rect x="410" y="774" width="205" height="15" rx="2" fill="currentColor" fill-opacity="0.12" stroke="none"/>
+<text x="416" y="785" font-size="10">secret : ANTHROPIC_API_KEY masquée</text>
+<text x="108" y="801" font-size="10" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings zetetic-reviewer.json -- node task.js</text>
+<text x="108" y="815" font-size="10">réseau : api.anthropic.com:443</text>
+<text x="108" y="829" font-size="10">lecture seule du repo + diff de la PR ; écriture : « . »</text>
+<line x1="44" y1="803" x2="96" y2="803" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)" marker-start="url(#arr)"/>
+<text x="70" y="798" font-size="10" text-anchor="middle">stdio</text>
+<rect x="96" y="846" width="532" height="70" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
+<text x="108" y="863" font-size="11" font-weight="600" fill="#c15a2e">worker kind: agent (agent-worker)</text>
+<rect x="410" y="852" width="205" height="15" rx="2" fill="currentColor" fill-opacity="0.12" stroke="none"/>
+<text x="416" y="863" font-size="10">secret : ANTHROPIC_API_KEY masquée</text>
+<text x="108" y="879" font-size="10" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings agent-worker.json -- node worker.js</text>
+<text x="108" y="893" font-size="10">réseau : api.anthropic.com:443 ; outils internes par stdio</text>
+<text x="108" y="907" font-size="10">comme scout, sans le repo ; aucun accès data / postgres</text>
+<line x1="44" y1="881" x2="96" y2="881" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)" marker-start="url(#arr)"/>
+<text x="70" y="876" font-size="10" text-anchor="middle">stdio</text>
+<rect x="96" y="924" width="532" height="70" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
+<text x="108" y="941" font-size="11" font-weight="600" fill="#c15a2e">web-scout · seul egress large</text>
+<rect x="548" y="930" width="68" height="15" rx="2" fill="currentColor" fill-opacity="0.12" stroke="none"/>
+<text x="554" y="941" font-size="10">aucune clé</text>
+<text x="108" y="957" font-size="10" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings web-scout.json -- node web-scout.js</text>
+<text x="108" y="971" font-size="10">réseau : allowlist du manifeste (egress) ; plages privées refusées</text>
+<text x="108" y="985" font-size="10">sortie en quarantaine via stdio → data</text>
+<line x1="44" y1="959" x2="96" y2="959" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)" marker-start="url(#arr)"/>
+<text x="70" y="954" font-size="10" text-anchor="middle">stdio</text>
+<line x1="44" y1="470" x2="44" y2="959" stroke="currentColor" stroke-width="1.2"/>
+<rect x="668" y="620" width="190" height="360" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="678" y="640" font-size="11" font-weight="600">proxy srt</text>
+<text x="678" y="660" font-size="10">HTTP / SOCKS, un couple</text>
+<text x="678" y="676" font-size="10">par processus srt, natif,</text>
+<text x="678" y="692" font-size="10">côté hôte, hors bac à sable</text>
+<text x="678" y="708" font-size="10">filtre allowedDomains</text>
+<text x="678" y="724" font-size="10">termine le TLS</text>
+<text x="678" y="740" font-size="10">(tlsTerminate, expérimental)</text>
+<text x="678" y="756" font-size="10">remplace la sentinelle</text>
+<text x="678" y="772" font-size="10">par la vraie clé :</text>
+<text x="678" y="788" font-size="10">credentials mask</text>
+<text x="678" y="804" font-size="10">+ injectHosts</text>
+<rect x="678" y="819" width="96" height="15" rx="2" fill="currentColor" fill-opacity="0.12" stroke="none"/>
+<text x="683" y="830" font-size="10">secret détenu :</text>
+<rect x="678" y="839" width="148" height="15" rx="2" fill="currentColor" fill-opacity="0.12" stroke="none"/>
+<text x="683" y="850" font-size="10">ANTHROPIC_API_KEY réelle</text>
+<line x1="628" y1="647" x2="668" y2="647" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+<line x1="628" y1="725" x2="668" y2="725" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+<line x1="628" y1="803" x2="668" y2="803" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+<line x1="628" y1="881" x2="668" y2="881" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+<line x1="628" y1="959" x2="668" y2="959" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+<line x1="858" y1="660" x2="940" y2="660" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+<text x="899" y="653" font-size="10" text-anchor="middle">clé réelle</text>
+<rect x="940" y="620" width="240" height="120" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="952" y="640" font-size="11" font-weight="600">api.anthropic.com:443</text>
+<text x="952" y="660" font-size="10">destination des profils scout,</text>
+<text x="952" y="675" font-size="10">builder, zetetic-reviewer et</text>
+<text x="952" y="690" font-size="10">agent-worker</text>
+<text x="952" y="705" font-size="10">reçoit la vraie clé (injectHosts)</text>
+<rect x="940" y="760" width="240" height="138" rx="4" fill="none" stroke="currentColor" stroke-width="1"/>
+<text x="952" y="779" font-size="10" font-weight="600">credentials.envVars[]</text>
+<text x="952" y="797" font-size="10" font-family="ui-monospace, Menlo, Consolas, monospace">name : ANTHROPIC_API_KEY</text>
+<text x="952" y="812" font-size="10" font-family="ui-monospace, Menlo, Consolas, monospace">mode : mask</text>
+<text x="952" y="827" font-size="10" font-family="ui-monospace, Menlo, Consolas, monospace">injectHosts :</text>
+<text x="952" y="842" font-size="10" font-family="ui-monospace, Menlo, Consolas, monospace">  [api.anthropic.com:443]</text>
+<text x="952" y="857" font-size="10">exige network.tlsTerminate</text>
+<text x="952" y="872" font-size="10">l'enfant voit une sentinelle</text>
+<text x="952" y="887" font-size="10">statut : non vérifié (T-04)</text>
+<line x1="858" y1="947" x2="940" y2="947" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+<rect x="940" y="912" width="240" height="70" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="952" y="930" font-size="10" font-weight="600">domaines du manifeste web-scout</text>
+<text x="952" y="945" font-size="10">(egress, allowlist)</text>
+<text x="952" y="960" font-size="10">plages privées refusées :</text>
+<text x="952" y="974" font-size="10" font-family="ui-monospace, Menlo, Consolas, monospace">deniedResolvedAddresses</text>
+</svg>
+<figcaption>Figure 1. La gateway, <code>data</code> et Postgres restent natifs. Chaque sandbox est un processus <code>srt --settings &lt;profil&gt;.json</code> lancé par <code>platformd</code>, qui lui parle uniquement par stdin et stdout. Seul le proxy srt, côté hôte, joint <code>api.anthropic.com:443</code>, et il substitue la vraie clé à la sentinelle vue par l'enfant. L'executor n'a aucun réseau.</figcaption>
+</figure>
+
+<h2>2. Chemin d'un appel <code>execute</code></h2>
+<figure>
+<svg viewBox="0 0 1200 770" role="img" aria-label="Séquence d&#x27;un appel execute sous srt : le client appelle execute, la gateway authentifie et émet un jeton de task, platformd envoie start à l&#x27;executor sous srt par stdin, chaque call de l&#x27;executor est relayé par platformd à la gateway puis aux modules, les résultats reviennent par stdin, l&#x27;executor filtre et renvoie output, la gateway journalise au registre et renvoie un résultat borné par max_result_tokens." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="11" fill="currentColor">
+<defs>
+  <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
+</defs>
+<rect x="25" y="12" width="150" height="40" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="100" y="36" font-size="11" text-anchor="middle" font-weight="600">Client</text>
+<line x1="100" y1="52" x2="100" y2="750" stroke="currentColor" stroke-width="1" stroke-dasharray="2 4"/>
+<rect x="265" y="12" width="150" height="40" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="340" y="30" font-size="11" text-anchor="middle" font-weight="600">Gateway</text>
+<text x="340" y="44" font-size="10" text-anchor="middle">native, hors srt</text>
+<line x1="340" y1="52" x2="340" y2="750" stroke="currentColor" stroke-width="1" stroke-dasharray="2 4"/>
+<rect x="525" y="12" width="150" height="40" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="600" y="30" font-size="11" text-anchor="middle" font-weight="600">Modules</text>
+<text x="600" y="44" font-size="10" text-anchor="middle">natifs, data | workflow</text>
+<line x1="600" y1="52" x2="600" y2="750" stroke="currentColor" stroke-width="1" stroke-dasharray="2 4"/>
+<rect x="785" y="12" width="150" height="40" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="860" y="30" font-size="11" text-anchor="middle" font-weight="600">platformd</text>
+<text x="860" y="44" font-size="10" text-anchor="middle">natif, superviseur</text>
+<line x1="860" y1="52" x2="860" y2="750" stroke="currentColor" stroke-width="1" stroke-dasharray="2 4"/>
+<rect x="1015" y="12" width="150" height="40" rx="3" fill="none" stroke="#c15a2e" stroke-width="2"/>
+<text x="1090" y="30" font-size="11" text-anchor="middle" font-weight="600" fill="#c15a2e">Executor</text>
+<text x="1090" y="44" font-size="10" text-anchor="middle">sous srt, réseau nul</text>
+<line x1="1090" y1="52" x2="1090" y2="750" stroke="currentColor" stroke-width="1" stroke-dasharray="2 4"/>
+<line x1="100" y1="86" x2="340" y2="86" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
+<text x="220" y="80" font-size="11" text-anchor="middle">1. execute(script)</text>
+<text x="220" y="100" font-size="10" text-anchor="middle">méta-tool</text>
+<rect x="334" y="120" width="12" height="36" rx="1" fill="currentColor" stroke="currentColor" stroke-width="1" fill-opacity="0.25"/>
+<text x="354" y="135" font-size="11">2. auth, profil, DAG, budgets</text>
+<text x="354" y="149" font-size="11">puis jeton de task</text>
+<line x1="340" y1="190" x2="860" y2="190" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
+<text x="730" y="184" font-size="11" text-anchor="middle">3. script + jeton de task</text>
+<line x1="860" y1="236" x2="1090" y2="236" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
+<text x="975" y="230" font-size="11" text-anchor="middle">4. stdin : start</text>
+<text x="975" y="250" font-size="10" text-anchor="middle">{run_id, tool, input, limits}</text>
+<line x1="1090" y1="282" x2="860" y2="282" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
+<text x="975" y="276" font-size="11" text-anchor="middle">5. stdout : call</text>
+<text x="975" y="296" font-size="10" text-anchor="middle">{id, target: memory.search, args}</text>
+<line x1="860" y1="328" x2="340" y2="328" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
+<text x="730" y="322" font-size="11" text-anchor="middle">6. call relayé, jeton de task</text>
+<text x="730" y="342" font-size="10" text-anchor="middle">seul point de politique</text>
+<line x1="340" y1="374" x2="600" y2="374" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
+<text x="470" y="368" font-size="11" text-anchor="middle">7. appel, en-tête jeton de task</text>
+<text x="470" y="388" font-size="10" text-anchor="middle">127.0.0.1:&lt;port&gt;</text>
+<line x1="600" y1="420" x2="340" y2="420" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arr2)"/>
+<text x="470" y="414" font-size="11" text-anchor="middle">8. résultat</text>
+<line x1="340" y1="462" x2="860" y2="462" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
+<text x="730" y="456" font-size="11" text-anchor="middle">9. résultat du call</text>
+<line x1="860" y1="508" x2="1090" y2="508" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
+<text x="975" y="502" font-size="11" text-anchor="middle">10. stdin : result</text>
+<text x="975" y="522" font-size="10" text-anchor="middle">{id, ok, value | code, message}</text>
+<rect x="1084" y="534" width="12" height="36" rx="1" fill="currentColor" stroke="currentColor" stroke-width="1" fill-opacity="0.25"/>
+<text x="1076" y="549" font-size="11" text-anchor="end">11. le script filtre</text>
+<text x="1076" y="563" font-size="11" text-anchor="end">et agrège les résultats</text>
+<line x1="1090" y1="600" x2="860" y2="600" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
+<text x="975" y="594" font-size="11" text-anchor="middle">12. stdout : output</text>
+<text x="975" y="614" font-size="10" text-anchor="middle">dernier message</text>
+<line x1="860" y1="646" x2="340" y2="646" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
+<text x="730" y="640" font-size="11" text-anchor="middle">13. résultat agrégé</text>
+<rect x="334" y="676" width="12" height="36" rx="1" fill="currentColor" stroke="currentColor" stroke-width="1" fill-opacity="0.25"/>
+<text x="354" y="691" font-size="11">14. registre :</text>
+<text x="354" y="705" font-size="11">calls journalisés</text>
+<line x1="340" y1="736" x2="100" y2="736" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
+<text x="220" y="730" font-size="11" text-anchor="middle">15. ≤ max_result_tokens</text>
+<text x="220" y="750" font-size="10" text-anchor="middle">sinon résumé + handle</text>
+</svg>
+<figcaption>Figure 2. Les étapes 5 à 11 se répètent pour chaque <code>call</code> du script. Chaque <code>call</code> est relayé par <code>platformd</code> à la gateway, qui reste le seul point de politique (DAG <code>calls_allowed</code>, budgets, <code>max_result_tokens</code>). L'identité de la task vient du tube que <code>platformd</code> associe à la task, jamais du message.</figcaption>
+</figure>
+
+<h2>3. Porte de CI</h2>
+<figure>
+<svg viewBox="0 0 1200 890" role="img" aria-label="Porte de CI : stage 0 puis trois familles de tests (e2e Gherkin, unitaires Gherkin, mutation Stryker), calcul attendu égal base plus ajoutés moins supprimés, exécutés verts égal attendu égal statique, chaque step PASSED, aucune comparaison de hash." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="11" fill="currentColor">
+<defs>
+  <marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
+</defs>
+<text x="20" y="22" font-size="12" font-weight="600">Stage 0 : paquet npm épinglé, vN+1 construite par stage 0, puis par elle-même, puis la même porte</text>
+<rect x="20" y="34" width="208" height="96" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="30" y="54" font-size="11" font-weight="600">stage 0 (vN)</text>
+<text x="30" y="71" font-size="10">paquet npm @architect-os/stage0</text>
+<text x="30" y="85" font-size="10">version exacte, épinglée</text>
+<text x="30" y="99" font-size="10">stage0/package.json + lockfile</text>
+<text x="30" y="113" font-size="10">amorçage : stage0@0.1.0</text>
+<line x1="228" y1="82" x2="258" y2="82" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr3)"/>
+<rect x="258" y="34" width="208" height="96" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="268" y="54" font-size="11" font-weight="600">build-1</text>
+<text x="268" y="71" font-size="10">stage 0 construit l'arbre</text>
+<line x1="466" y1="82" x2="496" y2="82" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr3)"/>
+<rect x="496" y="34" width="208" height="96" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="506" y="54" font-size="11" font-weight="600">build-2</text>
+<text x="506" y="71" font-size="10">l'outil de build de build-1</text>
+<text x="506" y="85" font-size="10">reconstruit l'arbre</text>
+<line x1="704" y1="82" x2="734" y2="82" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr3)"/>
+<rect x="734" y="34" width="208" height="96" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="744" y="54" font-size="11" font-weight="600">porte de tests</text>
+<text x="744" y="71" font-size="10">s'exécute sur build-2</text>
+<text x="744" y="85" font-size="10">aucune comparaison de</text>
+<text x="744" y="99" font-size="10">build-1 et build-2</text>
+<line x1="942" y1="82" x2="972" y2="82" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr3)"/>
+<rect x="972" y="34" width="208" height="96" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="982" y="54" font-size="11" font-weight="600">promotion</text>
+<text x="982" y="71" font-size="10">sur push vert de main :</text>
+<text x="982" y="85" font-size="10">publie @architect-os/stage0@N+1</text>
+<text x="982" y="99" font-size="10">puis PR auto, même porte</text>
+<line x1="838" y1="130" x2="838" y2="160" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr3)"/>
+<rect x="20" y="160" width="1160" height="72" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="32" y="180" font-size="11" font-weight="600">gate.yml sur pull_request et push vers main : jobs requis gate-linux (ubuntu-24.04) et gate-macos ; mutation sur Linux seulement</text>
+<text x="32" y="198" font-size="10">arbre testé : commit de merge refs/pull/&lt;n&gt;/merge (fetch-depth: 2), base = premier parent ; permissions: contents: read, aucun secret</text>
+<text x="32" y="214" font-size="10">la porte relance cucumber-js avec la configuration de la base ; code de la porte lu depuis la base (recommandation O-1, décision ouverte)</text>
+<line x1="200" y1="232" x2="200" y2="262" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr3)"/>
+<line x1="600" y1="232" x2="600" y2="262" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr3)"/>
+<line x1="1000" y1="232" x2="1000" y2="262" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr3)"/>
+<text x="215" y="252" font-size="10">trois familles, toutes vertes, sinon pas de merge</text>
+<rect x="20" y="262" width="360" height="138" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+<text x="32" y="284" font-size="12" font-weight="600">e2e de non-régression Gherkin</text>
+<text x="32" y="304" font-size="10" font-family="ui-monospace, Menlo, Consolas, monospace">features/**/*.feature</text>
+<text x="32" y="322" font-size="10">chemin d'appel complet, srt réel, Postgres réel</text>
+<text x="32" y="338" font-size="10">cucumber-js, formatter message (NDJSON)</text>
+<text x="32" y="354" font-size="10">reports/cucumber.ndjson (un par job et par OS)</text>
+<rect x="420" y="262" width="360" height="138" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+<text x="432" y="284" font-size="12" font-weight="600">unitaires Gherkin</text>
+<text x="432" y="304" font-size="10" font-family="ui-monospace, Menlo, Consolas, monospace">&lt;composant&gt;/features/**/*.feature</text>
+<text x="432" y="322" font-size="10">même runner cucumber-js, même rapport NDJSON</text>
+<text x="432" y="338" font-size="10">Feature / Scenario, Given / When / Then</text>
+<text x="432" y="354" font-size="10">unité comptée : le pickle (Scenario, ligne d'Examples)</text>
+<rect x="820" y="262" width="360" height="138" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+<text x="832" y="284" font-size="12" font-weight="600">mutation testing Stryker</text>
+<text x="832" y="304" font-size="10">@stryker-mutator/core + cucumber-runner</text>
+<text x="832" y="322" font-size="10">périmètre : plages du diff, code modifié par la PR</text>
+<text x="832" y="338" font-size="10">vert : 0 mutant survivant sur ce périmètre</text>
+<text x="832" y="354" font-size="10">reports/mutation/mutation.json</text>
+<line x1="200" y1="400" x2="200" y2="430" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr3)"/>
+<line x1="600" y1="400" x2="600" y2="430" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr3)"/>
+<line x1="1000" y1="400" x2="1000" y2="430" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr3)"/>
+<rect x="20" y="430" width="760" height="196" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="32" y="450" font-size="11" font-weight="600">Compte de la porte (par job)</text>
+<rect x="32" y="462" width="130" height="32" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="97" y="483" font-size="11" text-anchor="middle" font-weight="600">N_base</text>
+<text x="179" y="483" font-size="14" text-anchor="middle">+</text>
+<rect x="196" y="462" width="130" height="32" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="261" y="483" font-size="11" text-anchor="middle" font-weight="600">ajoutés</text>
+<text x="343" y="483" font-size="14" text-anchor="middle">−</text>
+<rect x="360" y="462" width="130" height="32" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="425" y="483" font-size="11" text-anchor="middle" font-weight="600">supprimés</text>
+<text x="507" y="483" font-size="14" text-anchor="middle">=</text>
+<rect x="524" y="462" width="130" height="32" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="589" y="483" font-size="11" text-anchor="middle" font-weight="600">attendu</text>
+<rect x="32" y="506" width="130" height="32" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="97" y="527" font-size="11" text-anchor="middle" font-weight="600">exécutés verts</text>
+<text x="179" y="527" font-size="14" text-anchor="middle">=</text>
+<rect x="196" y="506" width="130" height="32" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="261" y="527" font-size="11" text-anchor="middle" font-weight="600">attendu</text>
+<text x="343" y="527" font-size="14" text-anchor="middle">=</text>
+<rect x="360" y="506" width="130" height="32" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="425" y="527" font-size="11" text-anchor="middle" font-weight="600">statique</text>
+<text x="512" y="527" font-size="11">vert si les trois sont égaux</text>
+<text x="32" y="568" font-size="10">N_base : pickles verts du dernier run vert de main (gate-count.json) ; à défaut, compte statique de la base</text>
+<text x="32" y="584" font-size="10">ajoutés, supprimés : identités de pickles dérivées du diff des .feature (HEAD^1 → HEAD), renommages inclus</text>
+<text x="32" y="600" font-size="10">statique : pickles de tous les .feature de l'arbre testé ; exécutés verts : pickles verts du NDJSON</text>
+<text x="32" y="616" font-size="10">exemple de la décision : 6445 + 30 − 10 = 6465</text>
+<rect x="800" y="430" width="380" height="196" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="812" y="450" font-size="11" font-weight="600">Lecture du rapport Stryker</text>
+<text x="812" y="472" font-size="10">Killed, Timeout : tolérés</text>
+<text x="812" y="488" font-size="10">CompileError, RuntimeError : tolérés</text>
+<text x="812" y="504" font-size="10">Survived : échec</text>
+<text x="812" y="520" font-size="10">NoCoverage, Pending : échec</text>
+<text x="812" y="536" font-size="10">Ignored : toléré seulement avec le commentaire</text>
+<text x="812" y="552" font-size="10">« Stryker disable next-line … équivalent: … »</text>
+<text x="812" y="568" font-size="10">de forme valide, avec justification</text>
+<text x="812" y="584" font-size="10">all, disable sans next-line, restore : refusés</text>
+<line x1="400" y1="626" x2="400" y2="656" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr3)"/>
+<line x1="990" y1="626" x2="990" y2="656" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr3)"/>
+<rect x="20" y="656" width="1160" height="64" rx="4" fill="none" stroke="currentColor" stroke-width="2"/>
+<text x="32" y="678" font-size="12" font-weight="600">Vert si et seulement si exécutés verts = attendu = statique, aucun step non PASSED, cucumber-js sort 0, et mutation verte</text>
+<text x="32" y="698" font-size="10">aucune comparaison de hash ni d'empreinte ; le résumé du job affiche N_base + ajoutés − supprimés = attendu avec la liste des pickles ajoutés et supprimés</text>
+<rect x="20" y="744" width="380" height="132" rx="4" fill="none" stroke="currentColor" stroke-width="1"/>
+<text x="32" y="764" font-size="11" font-weight="600">Un pickle est vert si</text>
+<text x="32" y="783" font-size="10">un seul TestCase et un seul TestCaseStarted, attempt = 0</text>
+<text x="32" y="798" font-size="10">TestCaseFinished.willBeRetried = false</text>
+<text x="32" y="813" font-size="10">au moins un step de pickle</text>
+<text x="32" y="828" font-size="10">chaque TestStep, hooks Before / After compris, est PASSED</text>
+<text x="32" y="843" font-size="10">UNDEFINED, PENDING, SKIPPED, AMBIGUOUS,</text>
+<text x="32" y="858" font-size="10">UNKNOWN, FAILED : échec</text>
+<rect x="410" y="744" width="380" height="132" rx="4" fill="none" stroke="currentColor" stroke-width="1"/>
+<text x="422" y="764" font-size="11" font-weight="600">Configuration figée</text>
+<text x="422" y="783" font-size="10">cucumber.mjs : retry 0, strict true,</text>
+<text x="422" y="798" font-size="10">dryRun false, failFast false</text>
+<text x="422" y="813" font-size="10">aucun tags ni name : @wip et @skip sans effet</text>
+<text x="422" y="828" font-size="10">configuration de la base : une PR ne peut</text>
+<text x="422" y="843" font-size="10">pas ajouter de filtre</text>
+<text x="422" y="858" font-size="10">exécutés verts &lt; statique : échec</text>
+<rect x="800" y="744" width="380" height="132" rx="4" fill="none" stroke="currentColor" stroke-width="1"/>
+<text x="812" y="764" font-size="11" font-weight="600">Autres cas d'échec</text>
+<text x="812" y="783" font-size="10">step skipped (après un échec ou par hook)</text>
+<text x="812" y="798" font-size="10">scénario sans step ; attempt &gt; 0 (flaky)</text>
+<text x="812" y="813" font-size="10">TestRunFinished.success n'est jamais lu</text>
+<text x="812" y="828" font-size="10">(il compte SKIPPED comme succès)</text>
+<text x="812" y="843" font-size="10">base déplacée (attendu ≠ statique) :</text>
+<text x="812" y="858" font-size="10">échec explicite</text>
+</svg>
+<figcaption>Figure 3. Seul le résultat des tests fait foi : trois familles vertes, nombre attendu dérivé du diff, nombre exécuté égal au compte statique, chaque step <code>PASSED</code>, aucune comparaison de digest. Stage 0 est un paquet npm à version exacte ; vN+1 est construite par stage 0, puis par elle-même, puis soumise à la même porte.</figcaption>
+</figure>
+
+<h2>4. Processus, réseau, écritures et secrets</h2>
+<table>
+<tr><th>Processus</th><th>Sous srt ?</th><th>Réseau autorisé</th><th>Écriture autorisée</th><th>Secrets</th></tr>
+<tr><td><strong>edge</strong></td><td>non (natif, serveur seulement)</td><td>entrant : TLS, /mcp → gateway, /app → dashboard</td><td>non précisé</td><td>clé privée TLS</td></tr>
+<tr><td><strong>gateway</strong></td><td>non (natif, utilisateur agentic-gw)</td><td>sortant : 127.0.0.1 seulement (modules, data, platformd) ; écoute 127.0.0.1:8080</td><td>non précisé ; aucune lecture de ~</td><td>clé de signature des jetons de task, table des clients</td></tr>
+<tr><td><strong>platformd</strong></td><td>non (natif, utilisateur agentic-sup)</td><td>non précisé ; socket Unix de contrôle 0600</td><td>non précisé</td><td>ANTHROPIC_API_KEY (ou jeton fédéré) dans son environnement</td></tr>
+<tr><td><strong>modules data / workflow</strong></td><td>non (natifs)</td><td>écoute 127.0.0.1:&lt;port&gt; ; jeton de task exigé</td><td>non précisé</td><td>aucun</td></tr>
+<tr><td><strong>data</strong></td><td>non (natif, utilisateur agentic-data)</td><td>socket Unix Postgres /run/agentic/pg/.s.PGSQL.5432</td><td>via Postgres, par opérations typées</td><td>aucun mot de passe (auth peer)</td></tr>
+<tr><td><strong>postgres 17</strong></td><td>non (natif)</td><td>aucun TCP (listen_addresses = ''), socket Unix 0700</td><td>non précisé</td><td>aucun mot de passe (auth peer)</td></tr>
+<tr><td><strong>proxy srt (un couple HTTP / SOCKS par processus srt)</strong></td><td>non (côté hôte, hors bac à sable)</td><td>vers les destinations de l'allowlist du processus srt</td><td>sans objet</td><td>vraie valeur de ANTHROPIC_API_KEY (substitution, mask + injectHosts)</td></tr>
+<tr><td><strong>executor de session</strong></td><td>oui, executor.json</td><td>AUCUN (allowedDomains: [], strictAllowlist: true)</td><td>« . » (répertoire de session)</td><td>aucun</td></tr>
+<tr><td><strong>scout</strong></td><td>oui, scout.json</td><td>api.anthropic.com:443 seul ; TLS terminé par le proxy srt</td><td>« . » (scratch)</td><td>ANTHROPIC_API_KEY masquée (sentinelle)</td></tr>
+<tr><td><strong>builder</strong></td><td>oui, builder.json</td><td>api.anthropic.com:443</td><td>copie de travail de la task uniquement</td><td>ANTHROPIC_API_KEY masquée (sentinelle)</td></tr>
+<tr><td><strong>zetetic-reviewer</strong></td><td>oui, zetetic-reviewer.json</td><td>api.anthropic.com:443</td><td>« . »</td><td>ANTHROPIC_API_KEY masquée (sentinelle)</td></tr>
+<tr><td><strong>agent-worker (modules kind: agent)</strong></td><td>oui, agent-worker.json</td><td>api.anthropic.com:443 ; outils internes par stdio ; aucun accès data / postgres</td><td>identique à scout (« . »)</td><td>ANTHROPIC_API_KEY masquée (sentinelle)</td></tr>
+<tr><td><strong>web-scout</strong></td><td>oui, web-scout.json</td><td>allowlist du manifeste (egress) ; plages privées refusées (deniedResolvedAddresses)</td><td>sortie en quarantaine via stdio → data ; système de fichiers non précisé</td><td>aucune clé</td></tr>
+</table>
+<p class="legend">« non précisé » : le document source ne donne pas cette information. Les limites CPU, mémoire et PID ne sont pas portées par srt : <code>platformd</code> les pose autour du processus (mécanisme non vérifié, T-09).</p>
+
+</body>
+</html>
