@@ -41,6 +41,7 @@ export function countRule(input: CountInput): Count {
   const violations: Violation[] = [];
   const add = (text: string) => violations.push({ rule: 4, text });
   let base = parent.size;
+  if (input.executed < 0) add(`exécutés négatif : ${input.executed}`);
   let source: BaseSource = input.firstParent === null ? 'root' : 'fallback';
   if (input.base !== null && 'failure' in input.base) {
     add(`base illisible : ${input.base.failure}`);
