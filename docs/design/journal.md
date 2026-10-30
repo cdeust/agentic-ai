@@ -417,3 +417,74 @@ Arrêt sur ce point, comme prévu par la consigne : aucun chemin ouvert, aucun c
 - Pilote de preuve en `.ts` sous `tsx` : `await` de premier niveau refusé en sortie CJS ; renommé `.mts`.
 - Premier lancement de la TUI : sortie perdue (voir plus haut).
 - C-1 seul ne départageait pas `disableAllHooks` et l'échec du hook : X-HOOK, sans réseau, a départagé.
+
+## 15. Brique 1a.0, aucun secret dans la sandbox, 30 octobre 2026
+
+**Décision du propriétaire.** Elle remplace les options (a), (b) et (c) du §14 et l'usage du compte par le trousseau. Claude Code tourne sous srt avec un dossier de configuration propre et un jeton de session. Il ne joint le modèle que par un proxy d'authentification natif, seul détenteur de l'identifiant de l'hôte.
+
+**Sources lues.** Pages code.claude.com `env-vars`, `claude-directory`, `authentication`, `hooks` (`onFailure`), `plugins/org` (dossier de semences), `sandbox-environments`, et `vinta/blackwall` (`src/adapters/claude.js`). `CLAUDE_CONFIG_DIR` déplace aussi `.claude.json` et les données des plugins. `CLAUDE_CODE_OAUTH_TOKEN` passe avant le trousseau. `onFailure: "block"` se pose par hook (2.1.295 et plus).
+
+### Mise en œuvre
+
+| Élément | Choix |
+|---|---|
+| `CLAUDE_CONFIG_DIR` | Recréé **à chaque lancement** dans le dossier temporaire de la sandbox (le plus simple : aucun état d'un lancement à l'autre, rien à empoisonner). Le lanceur écrit `settings.json` (`sandbox.enabled: false`, protégé par `denyWrite`) et `.claude.json` (`hasCompletedOnboarding`, `hasTrustDialogAccepted` pour `<repo>` et le worktree), à partir du gabarit (`files`). Pas d'historique entre lancements |
+| `denyRead` | Ajoutés : `~/.claude`, `~/.claude.json`, `~/Library/Keychains` |
+| `allowWrite` | Retirés : les dossiers de session de `~/.claude`. Ajouté : le dossier de configuration |
+| Réseau | `127.0.0.1:<port du proxy>` et `registry.npmjs.org`. Retirés : `api.anthropic.com`, claude.ai, statsig, GitHub. GitHub n'est pas nécessaire : le lockfile ne résout que sur `registry.npmjs.org` (491 entrées), et `fetch` et `push` se font depuis l'hôte |
+| Environnement | `ANTHROPIC_BASE_URL=http://127.0.0.1:<port>`, `CLAUDE_CODE_OAUTH_TOKEN=<jeton de session>` et `CLAUDE_CONFIG_DIR`, posés depuis des variables du lanceur. Le schéma refuse toute valeur littérale pour ces noms. `NO_PROXY` est retiré dans la sandbox (`env -u`, après srt) |
+| Proxy | `src/auth-proxy.ts`. Lecture par `/usr/bin/security find-generic-password -s "Claude Code-credentials" -w` (`code.json`), en mémoire seulement, relue à l'approche de l'expiration. Seuls `POST /v1/messages` et `POST /v1/messages/count_tokens` passent ; le proxy ajoute `anthropic-beta: oauth-2025-04-20`. Une ligne d'`usage` par réponse dans `~/.local/state/architect-os/usage.jsonl` |
+| builder-guard | `--plugin-dir` depuis le checkout du lanceur (hors écriture, contrôlé), `onFailure: block`. **Écart** : pas de `CLAUDE_CODE_PLUGIN_SEED_DIR=~/.claude/plugins`. Semer builder-guard exige de l'installer sur l'hôte, ce qui modifie `~/.claude/settings.json` et l'applique à toutes les sessions hôte. Et rouvrir `~/.claude/plugins` en lecture exposerait les caches et les données des plugins du propriétaire |
+| CLAUDE.md, skills, agents, commands | Ceux du dépôt sont dans le worktree, donc lus comme réglages de projet : aucune copie. Ceux de `~/.claude` du propriétaire ne sont plus lus |
+| Renouvellement OAuth | **Non fait dans le proxy.** Le jeton de rafraîchissement change à chaque usage, et un renouvellement ici déconnecterait l'hôte (preuve f). Le proxy relit le trousseau ; une session `claude` de l'hôte renouvelle l'identifiant. Un identifiant expiré donne 503 |
+
+Montage des preuves : lanceur `tool-1a0`, worktree visé `<repo>/.claude/worktrees/probe-1a0b` (branche jetable `probe/1a0b`, retirés après). Chemins abrégés : `<repo>`, `~`.
+
+### Preuves
+
+| # | Preuve | Résultat | Sortie |
+|---|---|---|---|
+| a | `srt --settings <profil résolu> -- node -e "process.stdin.setRawMode(true)"` dans un pty | `allowPty: true` : accepté ; sans `allowPty` : refusé | `setRawMode-ok 120` ; `setRawMode-err EPERM` |
+| b | Éléments jetables sur l'hôte (`security add-generic-password -s srt-probe`, `git credential-osxkeychain store` pour `srt-probe.invalid`), lus par trois chemins | voir détail | voir détail |
+| b, hôte | lecture des deux éléments | les deux rendent le secret | `exit=0 secret-returned=True` |
+| b, srt sans `denyRead` du trousseau (témoin) | lecture des deux éléments | les deux rendent le secret | `exit=0 secret-returned=True` |
+| b, profil builder | lecture des deux éléments | **refusée** | `find-generic-password` : `exit=44 SecKeychainSearchCopyNext: The specified item could not be found in the keychain.` ; `credential-osxkeychain get` : `exit=0 secret-returned=False` |
+| b, nettoyage | suppression des deux éléments | supprimés | `find-*-password` : `exit=44` |
+| c | Appel réel C-2 : `git push origin main` | refusé par builder-guard | `builder-guard [push-main]: git push to main is refused` |
+| c | C-2 : `security find-generic-password -s aos-probe-nonexistent` | refusé par builder-guard | `builder-guard [keychain]: Keychain access is refused` |
+| c | Dossier de données du plugin | créé sous notre `CLAUDE_CONFIG_DIR`, jamais sous `~/.claude` | `ls $CLAUDE_CONFIG_DIR/plugins/data` donne `builder-guard-inline` ; liste de `~/.claude/plugins/data` identique avant et après |
+| d | `ls ~/.claude/shell-snapshots`, `ls ~/.claude/plugins/data` avant et après trois lancements (TUI, `-p`, TUI) | identiques | sommes égales, 4 instantanés |
+| d | `shasum ~/.claude.json` | **différente, sans lien avec la sandbox** : une veille de 180 s sans aucune sandbox l'a vu changer à +35 s | des sessions Claude Code de l'hôte l'écrivent. La sandbox ne peut ni le lire ni l'écrire : `cat ~/.claude.json` et `ls ~/.claude` donnent `Operation not permitted` |
+| d | Dialogue de confiance | absent aux deux lancements de la TUI | invite `❯` affichée directement |
+| e | Réponse de Claude Code sous srt via le proxy (C-2, `-p --model haiku`) | réussie | `success`, 8 tours, 0,0077 USD ; `apiKeySource: none` ; 8 lignes d'`usage` `status 200, route /v1/messages, model claude-haiku-5-5` |
+| e | Environnement : pilote sous le profil | seulement le jeton de session, l'URL du proxy et le dossier de configuration | `base=http://127.0.0.1:<port> token=<jeton de session>` ; aucune autre variable `ANTHROPIC_*` ni `CLAUDE_CODE_*`. Dans C-2, le Bash de Claude Code ne voit même pas `CLAUDE_CODE_OAUTH_TOKEN`, que Claude Code retire de l'environnement de ses commandes |
+| e | `curl -X POST https://api.anthropic.com/v1/messages` sous le profil | refusé par srt | `CONNECT tunnel failed, response 403` ; idem claude.ai, github.com ; `registry.npmjs.org` donne 200 |
+| e | Proxy réel (`startAuthProxy`, configuration de `code.json`), jeton valide | `GET /v1/messages`, `POST /v1/models`, `POST /api/oauth/token`, `POST /v1/messages/batches` refusés | `403` ×4, identifiant jamais lu (`credential reads: 0`) |
+| e | Proxy réel, sans jeton ; jeton révoqué ; proxy fermé | refusés | `401` ; `401` ; `ECONNRESET` |
+| e | Jeton de C-2 rejoué après la session, sur son port | refusé | `Failed to connect to 127.0.0.1 port 53584` |
+| f | `claude auth status` de l'hôte (somme), `~/.claude/.credentials.json` | identiques avant et après | somme égale ; fichier absent avant et après (#104359 non reproduit) |
+| g | Bash dans la sandbox (C-2) | fonctionne du premier coup | 5 commandes exécutées, aucun `dangerouslyDisableSandbox` dans les entrées d'outil |
+| h | TUI en pty, deux lancements, observation seule | invite affichée sans dialogue de confiance ni d'onboarding | `Claude Code v2.1.314 · Sonnet 5.5 · Claude API … ❯ ⏵⏵ auto mode on` ; aucun dialogue accepté ; après arrêt : aucun `sandbox-exec`, aucun dossier `aos-sandbox-*` |
+| | Profil, sous srt | inchangé par rapport au §14 | commit réussi ; `commondir` : `Operation not permitted` ; `update-ref refs/heads/main` : refusé ; `settings.json` de la configuration : `Operation not permitted` ; `.claude.json` et `plugins/data` de la configuration inscriptibles |
+
+### Observations
+
+- **Appel au démarrage de la TUI.** Chaque lancement de la TUI envoie une requête `POST /v1/messages` par le proxy avant toute saisie. Elle a reçu `429 rate_limit_error` deux fois (`usage.jsonl`), l'appel `-p` passant ensuite en `haiku`. Cause probable : une vérification de quota sur le modèle par défaut. Hors de l'outil ; le propriétaire verra si la session interactive s'en ressent.
+- **Bandeau de la TUI.** « Claude API » (base URL et jeton), « Auto-update failed » (réseau fermé), « gh auth login for PR status » (pas de GitHub) : informatifs.
+- **Témoin du trousseau, premier essai.** L'élément Internet créé par `security` puis lu par `git credential-osxkeychain` sur l'hôte a bloqué : le trousseau demandait une autorisation d'accès pour cette application. Le processus a été tué au bout de 90 s, **sans accepter le dialogue**. L'essai a été refait avec un élément créé par `git credential-osxkeychain store` lui-même et un délai de 20 s par commande (tableau b).
+- **`onFailure: block`.** Il est posé et validé (`claude plugin validate --strict`, schéma du test), et les hooks tournent et refusent (c). Le refus quand un hook ne peut pas tourner n'a pas été observé en réel. Il se prouvera au premier appel réel de 1a, dans un scénario de la porte.
+
+### Résidus
+
+- Le jeton de session vit dans l'environnement du processus `claude`. Un processus de la sandbox qui le lit (même uid) peut dépenser par le proxy, pendant la session et vers `/v1/messages` seulement. C'est R-4 appliqué à 1a.0.
+- Sorties possibles : le contenu envoyé au modèle (R-5), et les URL vers `registry.npmjs.org` (sans jeton npm, aucune publication).
+- Le reste de R-2 tient : code lancé par l'hôte dans le worktree, refs locales autres que `main` déplaçables.
+- L'outil lit l'identifiant de l'hôte à chaque lancement. Hors session, rien ne le détient en dehors du trousseau.
+
+### Tests
+
+`npm run check` est vert : 224 tests, 218 passés, 6 ignorés (Postgres). Le §14 en comptait 204. Ajouts :
+- `test/auth-proxy.test.ts` : faux amont, faux identifiant ; relais, remplacement de l'`Authorization`, `usage` sans contenu, 401, 403 ×6, révocation, 503 sans détail, identifiant expiré ou illisible.
+- Gabarit : réseau limité au proxy, jeton littéral refusé, base URL vers un autre hôte refusée, fichiers hors `allowWrite` refusés.
+- `code.json` : amont non HTTPS et route non ancrée refusés.
+- Hooks : `onFailure: block` exigé par le schéma.

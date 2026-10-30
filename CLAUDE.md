@@ -22,14 +22,14 @@ client -> proxy -> gateway -> services/<name> -> worker (container, exec network
                                    +-> data -> postgres (pgvector)
 ```
 
-| Dir                   | Role                                                                                                     |
-| --------------------- | -------------------------------------------------------------------------------------------------------- |
-| `proxy/`              | Caddyfile. Only exposed component: `/mcp` to the gateway, `/healthz`.                                    |
-| `gateway/`            | The single MCP server for clients. Auth, tool catalogue, routing per tool, quotas, audit. Nothing else.  |
-| `services/memory/`    | Intent tools `recall` / `remember`. `src/` is the MCP service, `worker/` is the agent image.             |
-| `data/`               | Only component that imports `pg`. Typed operations served from `sql/` by one executor; migrations.       |
-| `packages/contracts/` | Only shared package: `Result<T>`, `Run`, `RunEvent`, zod schemas of tools and data operations. No logic. |
-| `packages/sandbox/`   | `SandboxRunner` port, srt adapter, builder profile template, `npm run code` (brick 1a.0).                |
+| Dir                   | Role                                                                                                       |
+| --------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `proxy/`              | Caddyfile. Only exposed component: `/mcp` to the gateway, `/healthz`.                                      |
+| `gateway/`            | The single MCP server for clients. Auth, tool catalogue, routing per tool, quotas, audit. Nothing else.    |
+| `services/memory/`    | Intent tools `recall` / `remember`. `src/` is the MCP service, `worker/` is the agent image.               |
+| `data/`               | Only component that imports `pg`. Typed operations served from `sql/` by one executor; migrations.         |
+| `packages/contracts/` | Only shared package: `Result<T>`, `Run`, `RunEvent`, zod schemas of tools and data operations. No logic.   |
+| `packages/sandbox/`   | `SandboxRunner` port, srt adapter, builder profile template, host auth proxy, `npm run code` (brick 1a.0). |
 
 Details: `docs/architecture.md`, `docs/infrastructure.md`, `docs/design.md`, `docs/agents.md`, `docs/testing.md`.
 
@@ -89,7 +89,7 @@ Common bricks need no new TypeScript:
 - Dependencies are pinned to exact versions; verify with `npm view <pkg> version`; commit `package-lock.json`.
 - Never invent an SDK API: read the published `.d.ts` under `node_modules/<pkg>` and cite the file in the comment.
 - Failures are values: a tool call returns `Result` with `status: 'failed'` and a named `error.code`; do not throw across a service boundary.
-- Secrets go through the secrets broker only. Never put an API key, token or password in a worker container, an image, the repository, a log or a test.
+- Secrets go through the secrets broker only (brick 1a.0: the host auth proxy of `packages/sandbox` alone holds the owner's Claude credential; the sandbox gets a session token). Never put an API key, token or password in a worker container, an image, the repository, a log or a test.
 - Never compare a branch to `main` (no merge-base, no branch tip comparison, no update-branch) in CI, scripts or tools. Review the PR diff as GitHub presents it.
 - Commits: imperative subject, no attribution trailer.
 
