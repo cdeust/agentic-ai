@@ -1,0 +1,72 @@
+# Banc de preuve 1b.0 : srt sur Linux et macOS (docs/design/platform-v3-srt.md, section 15).
+# Exigences d'hote documentees par ce banc :
+#   Linux : bubblewrap, socat, ripgrep ; et kernel.apparmor_restrict_unprivileged_userns=0 sur Ubuntu 24.04+
+#           (sinon bwrap echoue : RTM_NEWADDR / setgroups, voir README srt et E-07). C'est une EXIGENCE D'HOTE REELLE
+#           pour les deploiements Linux, pas une particularite du runner.
+#   macOS : sandbox-exec (present). Aucun paquet.
+# Aucun secret, aucune cle, aucun appel a l'API Anthropic : faux amont local uniquement.
+name: bench-sandbox
+
+on:
+  push:
+    branches: [feat/bench-sandbox]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bench:
+    name: bench-sandbox (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-latest]
+    defaults:
+      run:
+        working-directory: bench
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 26.11.1
+
+      - name: Host dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends bubblewrap socat ripgrep
+          bwrap --version
+          socat -V | head -2
+          rg --version | head -1
+
+      - name: Host requirement (Linux) - allow unprivileged user namespaces with capabilities
+        if: runner.os == 'Linux'
+        run: |
+          echo "before: $(cat /proc/sys/kernel/apparmor_restrict_unprivileged_userns)"
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          echo "after: $(cat /proc/sys/kernel/apparmor_restrict_unprivileged_userns)"
+
+      - name: Install (lockfile, scripts disabled)
+        run: npm ci --ignore-scripts
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Bench
+        run: npm run bench:sandbox
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: bench-sandbox-${{ matrix.os }}
+          path: bench/reports/bench-sandbox-*.json
+          if-no-files-found: error

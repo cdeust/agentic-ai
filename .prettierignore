@@ -6,3 +6,4 @@ test/arch/fixtures
 .github/workflows/claude.yml
 .github/workflows/claude-code-review.yml
 docs/design
+bench
