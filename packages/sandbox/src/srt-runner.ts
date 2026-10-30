@@ -52,6 +52,8 @@ export interface SrtRunnerOptions {
   readonly canaryTimeoutMs?: number;
   /** Vérifie que 0, 1 et 2 sont des terminaux ; défaut : `isatty` réel. Injectable pour `runInTerminal`. */
   readonly isTerminal?: () => boolean;
+  /** `isatty` de la vérification par défaut (défaut : `node:tty`). Injectable pour la tester sans le stdio réel. */
+  readonly isatty?: (fd: number) => boolean;
 }
 
 interface Prepared {
@@ -64,7 +66,9 @@ interface Prepared {
 const CANARY_OUTPUT_LIMIT = 64 * 1024;
 const STOP_GRACE_MS = 2000;
 
-const standardStreamsAreTerminals = (): boolean => [0, 1, 2].every((fd) => isatty(fd));
+/** Vrai si les descripteurs 0, 1 et 2 sont tous trois des terminaux selon `isTerminalFd` (défaut : `isatty` réel). */
+export const standardStreamsAreTerminals = (isTerminalFd: (fd: number) => boolean = isatty): boolean =>
+  [0, 1, 2].every((fd) => isTerminalFd(fd));
 
 const killGroup = (pid: number | undefined, signal: NodeJS.Signals): void => {
   if (pid === undefined) return;
@@ -154,7 +158,8 @@ export class SrtSandboxRunner implements SandboxRunner {
    * `TIOCSTI` depuis la sandbox est refusé par srt sous macOS (journal, §14, X-TTY).
    */
   async runInTerminal(request: SandboxRequest): Promise<SandboxExit> {
-    if (!(this.options.isTerminal ?? standardStreamsAreTerminals)())
+    const isTerminal = this.options.isTerminal ?? (() => standardStreamsAreTerminals(this.options.isatty));
+    if (!isTerminal())
       throw new SandboxError('TERMINAL_REQUIRED', 'stdin, stdout et stderr doivent être des terminaux');
     const prepared = await this.prepare(request);
     const child = spawn(this.options.node, prepared.argv, {

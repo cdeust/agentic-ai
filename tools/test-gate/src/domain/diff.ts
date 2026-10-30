@@ -20,6 +20,7 @@ export function wholeFile(path: string, text: string): ChangedFile {
  */
 export function parseUnifiedDiff(text: string): ChangedFile[] {
   const files: { path: string; deleted: boolean; lines: number[] }[] = [];
+  // Stryker disable next-line StringLiteral,BooleanLiteral: équivalent: cet objet de départ n'entre jamais dans `files` (seul un en-tête en pousse un) : ni son path ni son deleted ne sont lus.
   let current = { path: '', deleted: false, lines: [] as number[] };
   for (const line of text.split('\n')) {
     const header = HEADER.exec(line);

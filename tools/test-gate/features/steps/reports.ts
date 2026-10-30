@@ -56,6 +56,14 @@ Given('the gate cucumber report is the fixture {string}', function (name: string
   repository(this).write(CUCUMBER, readFileSync(join(FIXTURES, 'reports', `${name}.ndjson`), 'utf8'));
 });
 
+Given(
+  'the gate cucumber report is the fixture {string} with a line of spaces between its envelopes',
+  function (name: string) {
+    const text = readFileSync(join(FIXTURES, 'reports', `${name}.ndjson`), 'utf8');
+    repository(this).write(CUCUMBER, text.split('\n').join('\n   \n'));
+  },
+);
+
 Given('the gate cucumber report reads:', function (text: string) {
   repository(this).write(CUCUMBER, text);
 });

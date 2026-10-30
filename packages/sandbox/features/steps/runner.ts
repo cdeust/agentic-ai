@@ -6,7 +6,11 @@ import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { InMemorySandboxRunner } from '../../src/in-memory.js';
 import type { Sandbox, SandboxExit, SandboxRunner } from '../../src/port.js';
-import { SrtSandboxRunner, type SrtRunnerOptions } from '../../src/srt-runner.js';
+import {
+  SrtSandboxRunner,
+  standardStreamsAreTerminals,
+  type SrtRunnerOptions,
+} from '../../src/srt-runner.js';
 import { Given, PKG, Then, When, messageMatches, stored, type SandboxWorld } from './helpers.js';
 
 // The steps of the SandboxRunner contract are shared by the scenarios of packages/sandbox/features (in-memory)
@@ -97,6 +101,48 @@ Given('an srt runner over a throwaway git repository', function () {
 
 Given('an srt runner over a throwaway git repository whose descriptors are not terminals', function () {
   useSrt(this, () => ({ isTerminal: () => false }));
+});
+
+Given(
+  'an srt runner over a throwaway git repository whose isatty says only descriptor 2 is not a terminal',
+  function () {
+    useSrt(this, () => ({ isatty: (fd: number) => fd !== 2 }));
+  },
+);
+
+Given(
+  'an srt runner over a throwaway git repository whose isatty says every descriptor is a terminal and whose srt cli is missing',
+  function () {
+    useSrt(this, (repo) => ({
+      isatty: () => true,
+      srtCli: join(repo.root, 'node_modules', 'srt', 'cli.js'),
+    }));
+  },
+);
+
+When('I check the standard streams with an isatty that accepts every descriptor', function () {
+  const asked: number[] = [];
+  this.state['asked'] = asked;
+  this.state['streams'] = standardStreamsAreTerminals((fd) => {
+    asked.push(fd);
+    return true;
+  });
+});
+
+When('I check the standard streams with an isatty that refuses descriptor {int}', function (refused: number) {
+  this.state['streams'] = standardStreamsAreTerminals((fd) => fd !== refused);
+});
+
+Then('the standard streams are terminals', function () {
+  assert.equal(this.state['streams'], true);
+});
+
+Then('the standard streams are not terminals', function () {
+  assert.equal(this.state['streams'], false);
+});
+
+Then('isatty was asked about the descriptors {string}', function (expected: string) {
+  assert.equal(stored<number[]>(this, 'asked').join(','), expected);
 });
 
 Given('an srt runner over a throwaway git repository whose srt cli is missing', function () {

@@ -110,6 +110,22 @@ Feature: Test gate, rules 1 and 3: unique identities, executed set equal to the 
     When the gate checks the "linux" job
     Then the gate verdict is green
 
+  Scenario: the macos job leaves out of the first parent the features outside its scope
+    Given the gate repository holds the fixture specs "green.feature, second.feature"
+    And the gate first parent is committed
+    And the gate head is committed
+    And the gate cucumber report is the fixture "green"
+    When the gate checks the "macos" job
+    Then the gate verdict is green
+    And the gate report has the line "- +0 −0"
+
+  Scenario: a cucumber report with lines of spaces between its envelopes is read
+    Given the gate repository holds the fixture specs "green.feature, second.feature"
+    And the gate head is committed
+    And the gate cucumber report is the fixture "green" with a line of spaces between its envelopes
+    When the gate checks the "linux" job
+    Then the gate verdict is green
+
   Scenario: the macos job counts and executes features/sandbox only, without mutation
     Given the gate repository holds the fixture specs "green.feature, second.feature"
     And the gate head is committed

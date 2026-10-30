@@ -52,3 +52,28 @@ Feature: SandboxRunner contract on the in-memory adapter
     Given an srt runner over a throwaway git repository whose descriptors are not terminals
     When I try to run profile "builder" with command "cat" in the terminal
     Then it is refused with "TERMINAL_REQUIRED"
+
+  Scenario: srt adapter runInTerminal uses the default descriptor check when isTerminal is absent and refuses
+    Given an srt runner over a throwaway git repository whose isatty says only descriptor 2 is not a terminal
+    When I try to run profile "builder" with command "cat" in the terminal
+    Then it is refused with "TERMINAL_REQUIRED"
+
+  Scenario: srt adapter runInTerminal goes past the default descriptor check when all three are terminals
+    Given an srt runner over a throwaway git repository whose isatty says every descriptor is a terminal and whose srt cli is missing
+    When I try to run profile "builder" with command "cat" in the terminal
+    Then it is refused with "ISOLATION_UNAVAILABLE"
+
+  Scenario: standard streams are terminals when isatty says so for descriptors 0, 1 and 2 and only those
+    When I check the standard streams with an isatty that accepts every descriptor
+    Then the standard streams are terminals
+    And isatty was asked about the descriptors "0,1,2"
+
+  Scenario Outline: standard streams are not terminals when descriptor <fd> is not
+    When I check the standard streams with an isatty that refuses descriptor <fd>
+    Then the standard streams are not terminals
+
+    Examples:
+      | fd |
+      | 0  |
+      | 1  |
+      | 2  |
