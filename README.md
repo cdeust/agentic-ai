@@ -26,7 +26,7 @@ Requires Node 26 LTS (`.nvmrc`) and npm.
 ```bash
 nvm use            # or any Node 26
 npm ci
-npm run check      # typecheck, prettier, tests, architecture guard
+npm run check      # every scenario: typecheck, prettier, tests, architecture guard
 ```
 
 The end-to-end test (`features/integration/end-to-end.feature`) runs a `recall` through gateway, memory, worker and data in one process, with a scripted agent and no network.

@@ -109,7 +109,7 @@ Then('the recorded statement {int} has the parameters {string}', function (index
   assert.deepEqual(scenario(this).calls[index]?.params, JSON.parse(expected));
 });
 
-// The answer as JSON, so an absent field and an undefined one are the same (vitest toEqual semantics).
+// The answer as JSON, so an absent field and an undefined one are the same (deep equality on the JSON form).
 Then('the answer as JSON equals:', function (expected: string) {
   assert.deepEqual(JSON.parse(JSON.stringify(scenario(this).answer)), JSON.parse(expected));
 });

@@ -83,7 +83,7 @@ export function text(data: DataScenario, value: string): string {
   return value.replace(/\$([a-z]+)/g, (match, name: string) => data.vars[name] ?? match);
 }
 
-/** Partial deep match, like vitest `toMatchObject`: objects by the expected keys, arrays by length and element. */
+/** Partial deep match, like a `toMatchObject`: objects by the expected keys, arrays by length and element. */
 export function assertMatches(actual: unknown, expected: unknown, path = 'value'): void {
   if (Array.isArray(expected)) {
     assert.ok(Array.isArray(actual), `${path} is not an array`);

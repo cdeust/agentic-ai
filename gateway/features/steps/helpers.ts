@@ -33,7 +33,7 @@ export function refusedWith(outcome: Attempt | undefined, code: string): void {
   assert.equal((outcome.error as { code?: unknown }).code, code);
 }
 
-/** Partial deep match, like vitest `toMatchObject`: objects by the expected keys, arrays by length and element. */
+/** Partial deep match, like a `toMatchObject`: objects by the expected keys, arrays by length and element. */
 export function assertMatches(actual: unknown, expected: unknown, path = 'value'): void {
   if (Array.isArray(expected)) {
     assert.ok(Array.isArray(actual), `${path} is not an array`);

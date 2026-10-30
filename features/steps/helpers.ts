@@ -20,7 +20,7 @@ export function stored<T>(world: ArchitectWorld, key: string): T {
   return value as T;
 }
 
-/** Partial deep match, like vitest `toMatchObject`: objects by the expected keys, arrays by length and element. */
+/** Partial deep match, like a `toMatchObject`: objects by the expected keys, arrays by length and element. */
 export function assertMatches(actual: unknown, expected: unknown, path = 'value'): void {
   if (Array.isArray(expected)) {
     assert.ok(Array.isArray(actual), `${path} is not an array`);

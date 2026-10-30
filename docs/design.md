@@ -56,7 +56,7 @@ Short ADRs. Format: context, decision, alternative rejected and why. Status of a
 
 ## 11. npm, TypeScript, descriptive files for Claude
 
-- Decision: npm workspaces, Node 26 LTS (`.nvmrc`), exact dependency versions, committed lockfile, tsc strict, prettier, vitest. Instruction files follow the Claude Code documentation: `CLAUDE.md`, `.claude/settings.json`, `.claude/agents/`, `.claude/commands/`; CI follows `anthropics/claude-code-action`.
+- Decision: npm workspaces, Node 26 LTS (`.nvmrc`), exact dependency versions, committed lockfile, tsc strict, prettier, Gherkin scenarios run by cucumber-js. Instruction files follow the Claude Code documentation: `CLAUDE.md`, `.claude/settings.json`, `.claude/agents/`, `.claude/commands/`; CI follows `anthropics/claude-code-action`.
 - Rejected: bun (Anthropic's repositories use it; this project chose npm). TypeScript 7.0.x: `dependency-cruiser@18.7.0` supports TypeScript below 7 (it reported `missing-tsc-transpiler` and cruised zero modules), so TypeScript is pinned to 6.0.3 until dependency-cruiser supports 7.
 - `CLAUDE.md` references `docs/` by path instead of `@docs/...` imports: the Claude Code memory documentation states that imports load with the importing file and do not reduce context cost.
 

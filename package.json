@@ -21,11 +21,10 @@
     "typecheck": "tsc -b",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "vitest run",
-    "test:features": "cucumber-js",
+    "test": "cucumber-js",
     "arch": "depcruise --config .dependency-cruiser.cjs packages data gateway services tools",
     "lint": "npm run format:check --silent && npm run typecheck --silent",
-    "check": "npm run typecheck && npm run format:check && npm run test && npm run test:features && npm run arch",
+    "check": "npm test",
     "gate": "sh tools/test-gate/gate.sh"
   },
   "devDependencies": {
@@ -39,7 +38,6 @@
     "prettier": "3.9.10",
     "tsx": "4.23.15",
     "typescript": "6.0.3",
-    "vitest": "5.0.5",
     "yaml": "2.9.1"
   }
 }

@@ -7,7 +7,7 @@ import { connectPostgres } from './infrastructure/pg-pool.js';
 import { loadStatementTable, SqlDataStore } from './infrastructure/sql-store.js';
 import { createDataApi } from './presentation/http-api.js';
 
-/** The package root (data/) from src/main.ts under vitest and from dist/src/main.js in the image. */
+/** The package root (data/) from src/main.ts under tsx and from dist/src/main.js in the image. */
 const ROOT = new URL(import.meta.url.includes('/dist/') ? '../../' : '../', import.meta.url);
 export const SQL_DIR = fileURLToPath(new URL('sql/', ROOT));
 export const MIGRATIONS_DIR = fileURLToPath(new URL('migrations/', ROOT));

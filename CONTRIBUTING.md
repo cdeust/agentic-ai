@@ -7,7 +7,7 @@ Thank you for contributing. Read `CLAUDE.md` first: it is the contract the revie
 1. Fork or branch from `main`. Work in a branch; never push to `main` directly.
 2. `nvm use && npm ci`.
 3. Make the change with its tests (see "Adding a brick" in `CLAUDE.md`).
-4. Run `npm run check` and make it pass: typecheck, prettier, tests, architecture guard. Run `npm run format` to fix formatting.
+4. Run `npm run check` and make it pass (`npm test`: typecheck, prettier, tests and architecture guard are all scenarios). Run `npm run format` to fix formatting.
 5. Open a pull request. A pull request is mandatory for every change. CI runs `npm run check`; the Claude review runs on the pull request and applies `CLAUDE.md`.
 6. Address review comments with new commits on the same branch.
 
