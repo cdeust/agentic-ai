@@ -4,12 +4,13 @@
 #           (sinon bwrap echoue : RTM_NEWADDR / setgroups, voir README srt et E-07). C'est une EXIGENCE D'HOTE REELLE
 #           pour les deploiements Linux, pas une particularite du runner.
 #   macOS : sandbox-exec (present). Aucun paquet.
+#   Les deux : openssl (certificat de banc de T-42) et Postgres 17 (T-45) ; le cluster est cree dans /tmp et supprime, rien n'est installe sur le poste local.
 # Aucun secret, aucune cle, aucun appel a l'API Anthropic : faux amont local uniquement.
 name: bench-sandbox
 
 on:
   push:
-    branches: [feat/bench-sandbox]
+    branches: [feat/bench-sandbox, feat/marketplace-srt]
   workflow_dispatch:
 
 permissions:
@@ -19,7 +20,7 @@ jobs:
   bench:
     name: bench-sandbox (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -53,6 +54,24 @@ jobs:
           echo "before: $(cat /proc/sys/kernel/apparmor_restrict_unprivileged_userns)"
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
           echo "after: $(cat /proc/sys/kernel/apparmor_restrict_unprivileged_userns)"
+
+      - name: PostgreSQL 17 (Linux, PGDG) pour T-45
+        if: runner.os == 'Linux'
+        working-directory: .
+        run: |
+          sudo apt-get install -y --no-install-recommends postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y --no-install-recommends postgresql-17
+          echo "PG_BIN=/usr/lib/postgresql/17/bin" >> "$GITHUB_ENV"
+          /usr/lib/postgresql/17/bin/postgres --version
+
+      - name: PostgreSQL 17 (macOS, Homebrew) pour T-45
+        if: runner.os == 'macOS'
+        working-directory: .
+        run: |
+          brew install postgresql@17
+          echo "PG_BIN=$(brew --prefix postgresql@17)/bin" >> "$GITHUB_ENV"
+          "$(brew --prefix postgresql@17)/bin/postgres" --version
 
       - name: Install (lockfile, scripts disabled)
         run: npm ci --ignore-scripts

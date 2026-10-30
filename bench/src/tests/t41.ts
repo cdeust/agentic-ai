@@ -97,7 +97,7 @@ async function runWorker(name: string, prompt: string, up: Upstream, opts: { onS
   record('T-41c', 'le worker ne peut pas lire ~/.ssh (faux HOME, canari) ni lister ~', cmd, sshOk ? 'pass' : 'fail', `ssh_read=${String(proofs['ssh_read'])} home_list=${String(proofs['home_list'])} home=${String(proofs['home'])} canari_visible_cote_hote=${r.output.includes(r.w.canary)}`);
 
   record('T-41d', 'sandbox imbriquee evitee : un seul srt (celui de l\'hote) ; le binaire Claude Code est un enfant simple du worker', cmd,
-    r.argv.filter((a) => a.includes('srt')).length === 0 && result === 'success:fin' ? 'pass' : 'fail',
+    r.argv.filter((a) => a.split('/').some((seg) => seg === 'srt' || seg === 'sandbox-runtime')).length === 0 && result === 'success:fin' ? 'pass' : 'fail',
     `argv du worker=${JSON.stringify(r.argv.map((a) => a.slice(-60)))} ; worker.ts n'appelle ni srt ni spawnClaudeCodeProcess (le SDK lance son binaire natif par defaut) ; restes apres sortie=${JSON.stringify((r as unknown as { survivors: number[] }).survivors)}`);
   up.close();
 }

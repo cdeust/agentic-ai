@@ -1,6 +1,7 @@
 // Utilitaires communs du banc 1b.0 : mondes jetables, profils srt, lancement borne, enregistrement des resultats.
 // Aucun shell : tout passe par spawn/execFile avec un argv. Aucune cle reelle : les cles sont generees a l'execution.
 import { spawn, execFile } from 'node:child_process';
+import { fstatSync } from 'node:fs';
 import {
   appendFileSync,
   chmodSync,
@@ -182,8 +183,33 @@ export const srtArgv = (settings: string, argv: string[]): string[] => ['--setti
 export const cmdString = (settings: string, argv: string[]): string =>
   `srt --settings ${path.basename(settings)} -- ${argv.map((a) => (a.length > 90 ? `${a.slice(0, 90)}...` : a)).join(' ')}`;
 
+
+/** Obligation de l'hote (§4.8 point 5) : fd 0 a 2 de la sandbox sont uniquement des tubes que l'hote cree. Le helper refuse tout autre type,
+ * y compris le cas T-07-fd0 (socket d'ecoute de l'hote en fd 0) que srt ne bloque pas sous Linux. Autorise : 'pipe' (cree par spawn),
+ * 'ignore' (/dev/null, rien a servir) et un fd numerique qui est un FIFO. Refuse : 'inherit' (type inconnu), handle/stream/objet, socket, fichier, 'ipc'. */
+export class StdioRefused extends Error {}
+export function assertStdioPipes(stdio: ReadonlyArray<unknown>): void {
+  for (let slot = 0; slot < 3; slot++) {
+    const v = stdio[slot];
+    if (v === 'pipe' || v === 'ignore' || v === undefined) continue;
+    if (typeof v === 'number') {
+      let kind = 'inconnu';
+      try {
+        const st = fstatSync(v);
+        kind = st.isFIFO() ? 'fifo' : st.isSocket() ? 'socket' : st.isFile() ? 'fichier' : 'autre';
+      } catch {
+        kind = 'fd invalide';
+      }
+      if (kind === 'fifo') continue;
+      throw new StdioRefused(`fd ${slot} : descripteur numerique de type ${kind}, tube exige`);
+    }
+    throw new StdioRefused(`fd ${slot} : ${typeof v === 'string' ? `'${v}'` : 'handle ou objet'} refuse, tube exige`);
+  }
+}
+
 /** Lance un processus sous srt, detache (groupe propre), avec delai maximal et mise a mort du groupe entier. */
 export function runSrt(o: RunOpts): Promise<RunResult> {
+  assertStdioPipes(o.stdio ?? ['ignore', 'pipe', 'pipe']);
   return new Promise((resolve) => {
     const child = spawn(srtBin, srtArgv(o.settings, o.argv), {
       cwd: o.cwd,

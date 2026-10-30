@@ -5,6 +5,7 @@ import { execFile, spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { arch, release, platform } from 'node:os';
 import path from 'node:path';
+import { findPgBin } from './lib/pg-cluster.ts';
 import { agentSdkVersion, benchRoot, killGroup, osName, srtVersion, type Rec } from './lib/common.ts';
 
 const SUITE: Array<{ file: string; timeoutMs: number }> = [
@@ -12,6 +13,8 @@ const SUITE: Array<{ file: string; timeoutMs: number }> = [
   { file: 'fs', timeoutMs: 240_000 },
   { file: 'tree', timeoutMs: 180_000 },
   { file: 'fd', timeoutMs: 90_000 },
+  { file: 'fdpipes', timeoutMs: 90_000 },
+  { file: 'paths', timeoutMs: 300_000 },
   { file: 'inverted', timeoutMs: 240_000 },
   { file: 'modules', timeoutMs: 240_000 },
   { file: 'broker', timeoutMs: 240_000 },
@@ -44,6 +47,9 @@ const meta = {
     rg: await probeTool('rg', ['--version']),
     sandboxExec: osName === 'macos' ? (existsSync('/usr/bin/sandbox-exec') ? '/usr/bin/sandbox-exec' : 'absent') : 'sans objet',
   },
+  postgres: await (async () => { const b = findPgBin(); return b ? probeTool(path.join(b, 'postgres'), ['--version']) : 'absent'; })(),
+  openssl: await probeTool('openssl', ['version']),
+  brokerLocalhost: await import('node:dns/promises').then((d) => d.lookup('broker.localhost', { all: true })).then((a) => JSON.stringify(a), (e: Error) => `ECHEC ${e.message}`),
   apparmorRestrictUnprivilegedUserns: osName === 'linux' ? readIf('/proc/sys/kernel/apparmor_restrict_unprivileged_userns') : 'sans objet',
   ci: process.env['GITHUB_ACTIONS'] === 'true',
   runUrl: process.env['GITHUB_SERVER_URL'] && process.env['GITHUB_RUN_ID'] ? `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}` : null,
