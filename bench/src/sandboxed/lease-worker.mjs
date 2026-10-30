@@ -4,11 +4,13 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
+const log = (m) => process.stderr.write(`[worker ${Date.now() % 100000}] ${m}\n`);
 const cfg = JSON.parse(process.argv[2]);
 const S = process.env.ANTHROPIC_API_KEY;
 const out = { sentinel: S ?? null, env: Object.entries(process.env).map(([k, v]) => `${k}=${v}`) };
 const B = `https://broker.localhost:${cfg.brokerPort}`;
 const call = async (name, url, init) => {
+  log(`appel ${name}`);
   try {
     const r = await fetch(url, { ...init, signal: AbortSignal.timeout(10000) });
     const body = await r.text();
@@ -20,6 +22,7 @@ const call = async (name, url, init) => {
 const post = (name, p, { headers = {}, body = '{"messages":[{"role":"user","content":"x"}]}' } = {}) =>
   call(name, `${B}${p}`, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body });
 const key = { 'x-api-key': S };
+log('debut');
 // Lecture de l'autorisation par tous les moyens du worker.
 const dump = [];
 if (process.platform === 'linux') {
@@ -35,6 +38,7 @@ const walk = (d, depth) => {
   for (const e of ents) { const p = path.join(d, e); try { const st = statSync(p); if (st.isDirectory()) walk(p, depth + 1); else if (st.size < 200000) files.push({ p, t: readFileSync(p, 'latin1').slice(0, 40000) }); } catch { /* illisible */ } }
 };
 for (const d of new Set([process.cwd(), process.env.TMPDIR, process.env.CLAUDE_CODE_TMPDIR, '/tmp'].filter(Boolean))) walk(d, 0);
+log('scan termine');
 out.dump = dump.join('\n').slice(0, 400000);
 out.filesRead = files.length;
 out.files = files.map((f) => `${f.p}: ${f.t}`).join('\n').slice(0, 8000000);

@@ -30,12 +30,12 @@ const argv = ['env', '-u', 'NO_PROXY', '-u', 'no_proxy', 'NODE_USE_ENV_PROXY=1',
 const env = baseEnv(w, { ANTHROPIC_API_KEY: lease, NODE_EXTRA_CA_CERTS: pki.certPath });
 type Call = { name: string; status?: number; error?: string; message?: string; headers?: Record<string, string>; body?: string };
 type Out = { sentinel: string | null; env: string[]; dump: string; files: string; filesRead: number; calls: Call[] };
-const { run, json } = await runSrtJson<Out>({ settings: profile, argv, cwd: w.work, env, timeoutMs: 120_000 });
+const { run, json } = await runSrtJson<Out>({ settings: profile, argv, cwd: w.work, env, timeoutMs: 240_000 });
 const cmd = cmdString(profile, argv);
 const ctx = `broker.localhost=${dns} ; ${pki.opensslVersion}`;
 
 if (!json) {
-  record('T-42', 'autorisation de task par mask + tlsTerminate + broker.localhost : le worker n\'a pas rendu de resultat', cmd, 'fail', `${ctx}\n${brief(run)}`);
+  record('T-42', 'autorisation de task par mask + tlsTerminate + broker.localhost : le worker n\'a pas rendu de resultat', cmd, 'fail', `${ctx}\n${brief(run)}\nFIN stderr: ${run.stderr.slice(-1500)}`);
 } else {
   const call = (n: string): Call => json.calls.find((c) => c.name === n) ?? { name: n, error: 'ABSENT' };
   const received = (c: Call): string => `${JSON.stringify(c.headers ?? {})}${c.body ?? ''}${c.error ?? ''}`;
