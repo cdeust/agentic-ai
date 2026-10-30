@@ -167,12 +167,12 @@
 <text x="44" y="906" font-size="10">réseau : broker de la task ; outils relayés vers la gateway</text>
 <text x="44" y="920" font-size="10">aucun accès data ni postgres</text>
 <rect x="610" y="620" width="560" height="72" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
-<text x="622" y="636" font-size="11" font-weight="600" fill="#c15a2e">web-scout · seul egress large, sans modèle (O-27, à confirmer)</text>
+<text x="622" y="636" font-size="11" font-weight="600" fill="#c15a2e">web-scout · seul egress large, sans modèle (O-27, décidée)</text>
 <text x="622" y="651" font-size="9.5" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings web-scout.srt.json -- node web-scout.js</text>
 <text x="622" y="666" font-size="10">réseau : allowlist du manifeste ; deniedResolvedAddresses sur plages privées</text>
 <text x="622" y="680" font-size="10">aucune clé ; sortie en quarantaine par tool MCP</text>
 <rect x="610" y="700" width="560" height="72" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
-<text x="622" y="716" font-size="11" font-weight="600" fill="#c15a2e">db-migrator · sans modèle (O-28, à confirmer)</text>
+<text x="622" y="716" font-size="11" font-weight="600" fill="#c15a2e">db-migrator · sans modèle (O-28, décidée)</text>
 <text x="622" y="731" font-size="9.5" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings db-migrator.srt.json -- …</text>
 <text x="622" y="746" font-size="10">Postgres jetable dans la sandbox, aucun accès à la base réelle</text>
 <text x="622" y="760" font-size="10">SQL de plugin ; brique 4 ; à prouver : T-49</text>
@@ -416,8 +416,8 @@
 <tr><td><strong>worker zetetic-reviewer</strong></td><td>oui, zetetic-reviewer.srt.json (T-41)</td><td>broker de la task</td><td>« . » sauf ./repo</td><td>sentinelle</td></tr>
 <tr><td><strong>agent-worker</strong></td><td>oui, agent-worker.srt.json (T-41)</td><td>broker de la task ; outils relayés à la gateway</td><td>« . »</td><td>sentinelle</td></tr>
 <tr><td><strong>repo-prepare</strong></td><td>oui, repo-prepare.srt.json</td><td>aucun</td><td>« . »</td><td>aucun</td></tr>
-<tr><td><strong>web-scout (O-27, à confirmer)</strong></td><td>oui, web-scout.srt.json</td><td>allowlist du manifeste ; plages privées refusées</td><td>« . » ; quarantaine par tool MCP</td><td>aucun</td></tr>
-<tr><td><strong>db-migrator (O-28, à confirmer)</strong></td><td>oui, db-migrator.srt.json (T-49)</td><td>aucun ; Postgres jetable dans la sandbox</td><td>« . »</td><td>aucun</td></tr>
+<tr><td><strong>web-scout (O-27, décidée)</strong></td><td>oui, web-scout.srt.json</td><td>allowlist du manifeste ; plages privées refusées</td><td>« . » ; quarantaine par tool MCP</td><td>aucun</td></tr>
+<tr><td><strong>db-migrator (O-28, décidée)</strong></td><td>oui, db-migrator.srt.json (T-49)</td><td>aucun ; Postgres jetable dans la sandbox</td><td>« . »</td><td>aucun</td></tr>
 <tr><td><strong>gate-tests (CI)</strong></td><td>oui, gate-tests.srt.json (T-50)</td><td>aucun vers l'extérieur ; Postgres de test et Stryker dans la sandbox</td><td>merge, reports/</td><td>aucun</td></tr>
 </table>
 <p class="legend">Les limites mémoire et PID ne sont pas portées par srt : Linux, <code>systemd-run</code> autour de srt (à prouver, T-09L, brique 1b) ; macOS, aucune par sandbox, résidu assumé (T-09). Sur un poste, gateway, broker et data partagent un uid : les utilisateurs dédiés ne valent que sur serveur (T-24, T-26).</p>

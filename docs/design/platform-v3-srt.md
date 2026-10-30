@@ -135,9 +135,9 @@ Tout s'est exécuté sur macOS 27 (`arm64`, Node 26.11.1, srt 0.0.81, MCP SDK 1.
     réseau : broker de CETTE task seul ; aucune clé ; lecture : "." ; ./repo en lecture seule
  srt --settings builder.srt.json …           écriture : copie de travail jetable "."
  srt --settings zetetic-reviewer.srt.json …  lecture de ./repo et du diff ; écriture "."
- srt --settings web-scout.srt.json -- node web-scout.js   recommandation à confirmer (O-27)
+ srt --settings web-scout.srt.json -- node web-scout.js   décidée (propriétaire, 2026-10-30, O-27)
     allowlist du manifeste, plages privées refusées, sans modèle
- srt --settings db-migrator.srt.json -- …                 recommandation à confirmer (O-28)
+ srt --settings db-migrator.srt.json -- …                 décidée (propriétaire, 2026-10-30, O-28)
     Postgres jetable dans la sandbox, sans modèle, aucun accès à la base réelle
  --------------------------------------------------------------------------------------
  Proxys srt : un couple HTTP/SOCKS par processus srt, côté hôte
@@ -918,7 +918,7 @@ Mécanisme : `mutate` sur les fichiers atteints, la porte juge les mutants dont 
 
 **Ce que le code de la PR ne peut pas faire** : modifier `gate.yml`, le code de la porte, `cucumber.mjs` ou `stryker.config.json` utilisés ; ajouter un filtre ; atteindre le réseau ou un secret ; écrire dans `gate/` [À PROUVER: T-35, sentinelle, brique 1a].
 
-**Ce que le code de la PR peut faire, prouvé par T-44** : remplacer les step definitions par du code qui n'affirme rien et qui fait échouer tout mutant actif. cucumber-js sort 0, chaque pickle est `PASSED`, tous les mutants sont `Killed`, le rapport est authentique et la porte est **verte** sur un code bogué. Aucune forgerie de fichier n'est nécessaire. **La porte protège donc contre les suppressions accidentelles et certaines manipulations, pas contre un contributeur hostile.** La manipulation reste visible dans le diff, sans être impossible. Le modèle de confiance (§11.1) couvre ce cas : contributeurs fiables d'abord, et `CODEOWNERS` sur `features/steps/` possible (O-23). Pas de refonte de la CI : `pull_request` avec séparation en deux jobs n'apporterait rien, le workflow viendrait de la PR.
+**Ce que le code de la PR peut faire, prouvé par T-44** : remplacer les step definitions par du code qui n'affirme rien et qui fait échouer tout mutant actif. cucumber-js sort 0, chaque pickle est `PASSED`, tous les mutants sont `Killed`, le rapport est authentique et la porte est **verte** sur un code bogué. Aucune forgerie de fichier n'est nécessaire. **La porte protège donc contre les suppressions accidentelles et certaines manipulations, pas contre un contributeur hostile.** La manipulation reste visible dans le diff, sans être impossible. Le modèle de confiance (§11.1) couvre ce cas : contributeurs fiables d'abord, et `CODEOWNERS` sur `features/steps/` et `gate.yml` décidé (O-23, propriétaire, 2026-10-30) : cela réduit le risque de T-44 sans le fermer. Pas de refonte de la CI : `pull_request` avec séparation en deux jobs n'apporterait rien, le workflow viendrait de la PR.
 
 Dépôt : public, 0 ruleset à ce jour [T-19]. Les workflows Claude restent sur le runner auto-hébergé, non requis.
 
@@ -945,7 +945,7 @@ Règles : un `it` → un `Scenario` ; `it.each` littéral → `Scenario Outline`
 
 Les portes de sortie sont des scénarios Gherkin prouvant un **mécanisme** ; les métriques v3 sont relevées, non bloquantes (D-7, §15.1).
 
-**Ordre d'exécution : 1a.1 (épinglage) → 1b.0 (banc Linux et macOS) → 1a.2 à 1a.7 (migration complète) → 1b.1 et suite.** Le banc passe avant la migration complète pour qu'une conception à revoir ne coûte pas la migration. Les critères de sortie des briques ne changent pas.
+**Ordre d'exécution : 1a.1 (épinglage) → 1b.0 (banc Linux et macOS) → 1a.2 à 1a.8 (migration complète) → 1b.1 et suite.** Le banc passe avant la migration complète pour qu'une conception à revoir ne coûte pas la migration. Les critères de sortie des briques ne changent pas.
 
 ### Brique 1a : Gherkin + porte
 
@@ -958,6 +958,7 @@ Les portes de sortie sont des scénarios Gherkin prouvant un **mécanisme** ; le
 | 1a.5 | Purger la dette de mutation : 474 mutants tués ou marqués | scénarios, commentaires |
 | 1a.6 | Amender `CLAUDE.md` (O-2, C-2, C-12) ; retirer vitest et `vitest.config.ts`, `scripts/gate.sh` du `.gitignore` | `CLAUDE.md`, `.gitignore` |
 | 1a.7 | Activer la porte, `N_base` initial ; `npm run gate` en une commande | |
+| 1a.8 | `CODEOWNERS` sur `features/steps/` et `gate.yml` (O-23, décidée par le propriétaire le 2026-10-30) : réduit le risque de T-44 par la revue, sans le fermer | `.github/CODEOWNERS` |
 
 **Porte de sortie** : 0 `*.test.ts` ; vitest retiré ; `exécutés_verts = attendu = statique` sur `main` ; les 119 cas présents dans la table ; 0 mutant non tué hors équivalents marqués sur tout le dépôt.
 **Test externe (I-8)** : PR sentinelles, **rouges** : step non défini ; step `pending` ; filtre `tags` ajouté ; `.feature` exclu par la config ; scénario sans step ; mutant survivant sur ligne modifiée ; assertion retirée d'un step (T-22) ; `Stryker disable all` ; `gate.yml` ou code de porte modifié sans effet (T-35) ; écriture dans `gate/` depuis un step (T-35). Et une PR saine **verte**. La PR hostile de T-44 reste **verte** : elle documente la limite et ne compte pas comme un échec de la brique.
@@ -1050,16 +1051,16 @@ Pages signalées et non lues à ce stade, à lire en brique 1b : `agent-sdk/type
 
 | # | Question | Recommandation |
 |---|---|---|
-| O-27 | web-scout | **Recommandation à confirmer par le propriétaire** : `kind: workflow` sous srt, sans modèle (v3 : conteneur avec agent). Change le profil et la règle de manifeste du §10 |
-| O-28 | db-migrator | **Recommandation à confirmer par le propriétaire** : `kind: workflow` sous srt, sans modèle, base jetable dans la sandbox, brique 4 (v3 : « agent de migration »). `agent` seulement si la génération de migrations est voulue |
-| O-29 | remember / memory-write | **Recommandation à confirmer par le propriétaire** : `kind: agent` jusqu'à la brique 4, puis `workflow` avec Structurer, comme en v3 |
+| O-27 | web-scout | **Décidée (propriétaire, 2026-10-30)** : `kind: workflow` sous srt, sans modèle (v3 : conteneur avec agent). Change le profil et la règle de manifeste du §10 |
+| O-28 | db-migrator | **Décidée (propriétaire, 2026-10-30)** : `kind: workflow` sous srt, sans modèle, base jetable dans la sandbox, brique 4 (v3 : « agent de migration »). `agent` seulement si la génération de migrations est voulue |
+| O-29 | remember / memory-write | **Décidée (propriétaire, 2026-10-30)** : `kind: agent` jusqu'à la brique 4, puis `workflow` avec Structurer, comme en v3 |
 | O-30 | Si T-41 échoue sur un OS ciblé | Blocage soumis au propriétaire, §4.11. Aucune option de repli n'est présélectionnée |
 | O-21 | Fusionner `describe` dans `search(detail: name\|summary\|schema)`, comme le propose l'article | **Proposition, non décidée.** Trois méta-tools d'ici là. Mesurée en brique 3, une variable à la fois, avec résultat borné par `max_result_tokens`. Pas nécessaire au modèle Code Execution |
 | O-22 | Multi-utilisateur : srt seul, ou VM | **Bloqué aujourd'hui.** Après §11.4 : srt pour utilisateurs fiables ; pour contenu hostile, Kata Containers à évaluer selon le §4.11. gVisor, conseillé par Anthropic, échoue au seul critère de pérennité « un seul éditeur » à ce jour ; le test est rejoué au déclenchement |
-| O-23 | `CODEOWNERS` sur `features/steps/` et `gate.yml` contre une PR hostile (T-44) | **Oui**, résidu §13.8 ; réduit le risque par la revue, sans fermer le contournement |
-| O-24 | Lancer T-04R avec une vraie clé | **Oui en 1b**, sur un compte d'essai, requêtes invalides seulement |
+| O-23 | `CODEOWNERS` sur `features/steps/` et `gate.yml` contre une PR hostile (T-44) | **Décidée (propriétaire, 2026-10-30)** : **oui**, `CODEOWNERS` sur `features/steps/` et `gate.yml`, tâche de la brique 1a. Résidu §13.8 : cela **réduit le risque de T-44 par la revue, sans le fermer** |
+| O-24 | Lancer T-04R avec une vraie clé | **Décidée (propriétaire, 2026-10-30)** : **oui**, T-04R avec une vraie clé, en brique 1b, sur un compte d'essai, requêtes invalides seulement |
 | O-25 | Autoriser le sysctl AppArmor dans la VM Docker locale pour rejouer le banc Linux sur ce poste | **Non nécessaire** : `gate-linux` le prouve en 1b.0 |
-| O-26 | Dette de mutation de 474 mutants traitée dans 1a | **Oui**, condition de l'extension |
+| O-26 | Dette de mutation de 474 mutants traitée dans 1a | **Décidée (propriétaire, 2026-10-30)** : **oui**, traitée en brique 1a (1a.5), condition de l'extension |
 
 ## 18. Contradictions relevées
 
