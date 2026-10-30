@@ -2,6 +2,8 @@
 
 Ce paquet contient le port `SandboxRunner`, l'adaptateur srt (`@anthropic-ai/sandbox-runtime` 0.0.81), le proxy d'authentification de l'hôte et l'outil de code isolé de la brique 1a.0 ([`docs/design/platform-v3-srt.md`](../../docs/design/platform-v3-srt.md), §6 et §8). Les preuves sont dans [`docs/design/journal.md`](../../docs/design/journal.md), §14 et §15.
 
+Les scénarios Gherkin du paquet sont dans `features/` (étapes dans `features/steps`) : proxy d'authentification, profil, `code.json`, worktree, contrat `SandboxRunner` sur l'adaptateur en mémoire. Ceux qui lancent de vraies sandboxes srt sont dans `features/sandbox/` à la racine du dépôt, sous macOS comme sous Linux ; ils échouent, sans jamais être sautés, quand srt ne peut pas tourner. Le faux srt sans isolation est `fixtures/no-isolation-srt.mjs`.
+
 ## La commande
 
 Depuis un worktree du dépôt, `<repo>/.claude/worktrees/<w>` :

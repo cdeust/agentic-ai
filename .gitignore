@@ -8,5 +8,5 @@ coverage/
 .claude/settings.local.json
 scripts/gate.sh
 .claude/worktrees/
-reports/
-.stryker-tmp/
+/reports/
+/.stryker-tmp/

@@ -1,0 +1,21 @@
+{"meta":{"protocolVersion":"32.2.0","implementation":{"version":"12.9.0","name":"cucumber-js"},"cpu":{"name":"arm64"},"os":{"name":"darwin","version":"27.0.0"},"runtime":{"name":"node.js","version":"26.11.1"}}}
+{"source":{"data":"Feature: Empty fixture\n\n  Scenario: a scenario without steps\n","uri":"specs/empty.feature","mediaType":"text/x.cucumber.gherkin+plain"}}
+{"gherkinDocument":{"feature":{"tags":[],"location":{"line":1,"column":1},"language":"en","keyword":"Feature","name":"Empty fixture","description":"","children":[{"scenario":{"id":"5d4c46c6-eee7-4353-b1ec-936e02bdd0d2","tags":[],"location":{"line":3,"column":3},"keyword":"Scenario","name":"a scenario without steps","description":"","steps":[],"examples":[]}}]},"comments":[],"uri":"specs/empty.feature"}}
+{"pickle":{"id":"94d0b33e-e674-46f9-9e01-3fc74e62cda8","uri":"specs/empty.feature","location":{"line":3,"column":3},"astNodeIds":["5d4c46c6-eee7-4353-b1ec-936e02bdd0d2"],"tags":[],"name":"a scenario without steps","language":"en","steps":[]}}
+{"stepDefinition":{"id":"ee36fe06-a95c-45a1-8367-5396e67dafea","pattern":{"source":"a passing step","type":"CUCUMBER_EXPRESSION"},"sourceReference":{"uri":"specs/steps/steps.mjs","location":{"line":10}}}}
+{"stepDefinition":{"id":"67f42e0a-d968-458e-b02e-0c75446b679d","pattern":{"source":"a step with value {int}","type":"CUCUMBER_EXPRESSION"},"sourceReference":{"uri":"specs/steps/steps.mjs","location":{"line":12}}}}
+{"stepDefinition":{"id":"23e56d20-32fb-457e-aec0-171a771a771f","pattern":{"source":"a pending step","type":"CUCUMBER_EXPRESSION"},"sourceReference":{"uri":"specs/steps/steps.mjs","location":{"line":17}}}}
+{"stepDefinition":{"id":"2f320bf9-7445-4aef-901e-fdc92387b2ea","pattern":{"source":"a skipped step","type":"CUCUMBER_EXPRESSION"},"sourceReference":{"uri":"specs/steps/steps.mjs","location":{"line":19}}}}
+{"stepDefinition":{"id":"7fcdfa95-c755-405b-8196-9627af5aec8c","pattern":{"source":"an ambiguous step","type":"CUCUMBER_EXPRESSION"},"sourceReference":{"uri":"specs/steps/steps.mjs","location":{"line":21}}}}
+{"stepDefinition":{"id":"dd47c5a8-b084-4a2c-8bd4-c9fb7db159be","pattern":{"source":"^an ambiguous (step)$","type":"REGULAR_EXPRESSION"},"sourceReference":{"uri":"specs/steps/steps.mjs","location":{"line":23}}}}
+{"stepDefinition":{"id":"bb6b0960-d7d6-4431-a282-373737ededaa","pattern":{"source":"a failing step","type":"CUCUMBER_EXPRESSION"},"sourceReference":{"uri":"specs/steps/steps.mjs","location":{"line":25}}}}
+{"stepDefinition":{"id":"776d1fea-bfc2-49af-9041-aff1b6df7655","pattern":{"source":"a step that passes on its second attempt","type":"CUCUMBER_EXPRESSION"},"sourceReference":{"uri":"specs/steps/steps.mjs","location":{"line":29}}}}
+{"hook":{"id":"434905a5-acf2-4500-b015-f0c4feebaf4f","type":"BEFORE_TEST_CASE","tagExpression":"@broken-hook","sourceReference":{"uri":"specs/steps/steps.mjs","location":{"line":34}}}}
+{"hook":{"id":"84daed72-3e12-47cc-9f55-14d63e5812d0","type":"AFTER_TEST_RUN","sourceReference":{"uri":"specs/steps/steps.mjs","location":{"line":38}}}}
+{"testRunStarted":{"id":"f6fa61e3-8d56-4ad3-9ee0-e15b5032cd97","timestamp":{"seconds":1793383505,"nanos":561000000}}}
+{"testCase":{"testRunStartedId":"f6fa61e3-8d56-4ad3-9ee0-e15b5032cd97","pickleId":"94d0b33e-e674-46f9-9e01-3fc74e62cda8","id":"02b1598b-d7e9-4ed2-9a73-2b604f953889","testSteps":[]}}
+{"testCaseStarted":{"attempt":0,"testCaseId":"02b1598b-d7e9-4ed2-9a73-2b604f953889","id":"1bdf2e3d-6e32-4071-8acd-1dd69749bf06","timestamp":{"seconds":1793383505,"nanos":561000000}}}
+{"testCaseFinished":{"testCaseStartedId":"1bdf2e3d-6e32-4071-8acd-1dd69749bf06","timestamp":{"seconds":1793383505,"nanos":561000000},"willBeRetried":false}}
+{"testRunHookStarted":{"testRunStartedId":"f6fa61e3-8d56-4ad3-9ee0-e15b5032cd97","id":"037dd343-f2fe-48b2-9d6f-b4b3c8aa7150","hookId":"84daed72-3e12-47cc-9f55-14d63e5812d0","timestamp":{"seconds":1793383505,"nanos":561000000}}}
+{"testRunHookFinished":{"testRunHookStartedId":"037dd343-f2fe-48b2-9d6f-b4b3c8aa7150","result":{"duration":{"seconds":0,"nanos":85208},"status":"PASSED"},"timestamp":{"seconds":1793383505,"nanos":561000000}}}
+{"testRunFinished":{"testRunStartedId":"f6fa61e3-8d56-4ad3-9ee0-e15b5032cd97","timestamp":{"seconds":1793383505,"nanos":561000000},"success":true}}
