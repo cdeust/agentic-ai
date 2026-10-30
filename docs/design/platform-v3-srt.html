@@ -36,7 +36,7 @@
 <body>
 
 <h1>ai-architect.tools, architecture plateforme v3 sous srt</h1>
-<p class="lead">Diagrammes tirés de <code>docs/design/platform-v3-srt.md</code> (révision du 30 octobre 2026, base <code>1746cc8</code>), qui amende la vision v3 du 29 octobre 2026. Plus de <code>platformd</code>, plus de protocole JSON lines : MCP stdio et Agent SDK officiels, broker seul détenteur de la clé Anthropic, profils au format Claude Code. Multi-utilisateur bloqué tant que la suite d’évasion ne passe pas sur Linux et macOS. <code>architect-os</code> est un nom provisoire. Les expériences T-xx et E-xx sont consignées au journal du document source ; rien n’a été prouvé sur Linux à ce stade (brique 1b.0).</p>
+<p class="lead">Diagrammes tirés de <code>docs/design/platform-v3-srt.md</code> (révision du 30 octobre 2026, base <code>1746cc8</code>, amendée depuis <code>584ac03</code>), qui amende la vision v3 du 29 octobre 2026. Aucune exécution hors du conteneur : un conteneur v3 = un processus srt, quatre exceptions prouvées. Plus de <code>platformd</code>, plus de protocole JSON lines : MCP stdio et Agent SDK officiels, broker seul détenteur de la clé Anthropic, profils au format Claude Code. Multi-utilisateur bloqué tant que la suite d’évasion ne passe pas sur Linux et macOS. <code>architect-os</code> est un nom provisoire. Les expériences T-xx et E-xx sont consignées au journal du document source ; rien n’a été prouvé sur Linux à ce stade (brique 1b.0).</p>
 
 <div class="toc">
 <ol>
@@ -44,13 +44,14 @@
 <li>Chemin d'un appel <code>execute</code> (figure 2)</li>
 <li>Porte de CI (figure 3)</li>
 <li>Processus, réseau, écritures et secrets</li>
+<li>Repli srt</li>
 </ol>
 </div>
 
 <h2>1. Architecture complète sous srt</h2>
-<p class="legend"><span class="sw0"></span> processus natif (hors srt) <span class="sw"></span> processus sous srt <span class="sw2"></span> frontière srt <span class="sw3"></span> secret détenu par le processus. Une flèche double vers une sandbox est un canal stdio : canal de l’Agent SDK, ou MCP stdio aux rôles inversés.</p>
+<p class="legend"><span class="sw0"></span> processus natif (hors srt) <span class="sw"></span> processus sous srt <span class="sw2"></span> frontière srt <span class="sw3"></span> secret détenu par le processus. Une flèche double vers une sandbox est un canal MCP stdio, le seul lien entre la gateway et un enfant.</p>
 <figure>
-<svg viewBox="0 0 1200 1000" role="img" aria-label="Architecture v3 sous srt : clients, gateway native seul point de politique, modules natifs reliés en MCP, data et Postgres sur socket Unix, broker seul détenteur de la clé Anthropic avec un port par task, et processus sous srt reliés aux modules par stdio uniquement, sans clé ni jeton." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="11" fill="currentColor">
+<svg viewBox="0 0 1200 1124" role="img" aria-label="Architecture v3 sous srt : clients, gateway native seul parent des sandboxes et seule autorité de lancement, broker, data et Postgres natifs, et sous srt l'executor, chaque module data ou workflow, le worker agent entier, web-scout et db-migrator, reliés par MCP stdio uniquement." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="11" fill="currentColor">
 <defs>
   <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
 </defs>
@@ -75,19 +76,19 @@
 <line x1="725" y1="82" x2="725" y2="136" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
 <line x1="1005" y1="82" x2="1005" y2="136" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
 <text x="735" y="104" font-size="10">MCP http ; 127.0.0.1 sur un poste ; TLS par le déploiement sur un serveur (hors plateforme)</text>
-<rect x="10" y="116" width="1180" height="872" rx="4" fill="none" stroke="currentColor" stroke-width="1" stroke-opacity="0.55"/>
-<text x="24" y="131" font-size="11" font-weight="600">Hôte : processus NATIFS (hors srt)</text>
-<rect x="20" y="138" width="1160" height="108" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
-<text x="32" y="156" font-size="11" font-weight="600">[gateway] natif ; écoute 127.0.0.1:8080 ; seul point de politique ; ni pg, ni Agent SDK, ni clé Anthropic</text>
+<rect x="10" y="116" width="1180" height="356" rx="4" fill="none" stroke="currentColor" stroke-width="1" stroke-opacity="0.55"/>
+<text x="24" y="131" font-size="11" font-weight="600">Hôte : quatre exceptions NATIVES, chacune prouvée (§4.7 du document). Rien d'autre ne s'exécute hors srt.</text>
+<rect x="20" y="138" width="1160" height="186" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+<text x="32" y="156" font-size="11" font-weight="600">[gateway] native (T-07) ; écoute 127.0.0.1:8080 ; seul point de politique ; seul parent des sandboxes ; ni pg, ni Agent SDK, ni clé Anthropic</text>
 <rect x="32" y="164" width="182" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1"/>
 <text x="123" y="180" font-size="10" text-anchor="middle" font-weight="600">search · describe · execute</text>
-<text x="123" y="195" font-size="10" text-anchor="middle">méta-tools</text>
+<text x="123" y="195" font-size="10" text-anchor="middle">méta-tools (O-21 : proposition)</text>
 <rect x="222" y="164" width="182" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1"/>
 <text x="313" y="180" font-size="10" text-anchor="middle" font-weight="600">auth · profils</text>
 <text x="313" y="195" font-size="10" text-anchor="middle">table des clients</text>
 <rect x="412" y="164" width="182" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1"/>
 <text x="503" y="180" font-size="10" text-anchor="middle" font-weight="600">DAG calls_allowed</text>
-<text x="503" y="195" font-size="10" text-anchor="middle">budgets</text>
+<text x="503" y="195" font-size="10" text-anchor="middle">budgets, capacité</text>
 <rect x="602" y="164" width="182" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1"/>
 <text x="693" y="180" font-size="10" text-anchor="middle" font-weight="600">jetons d'appel</text>
 <text x="693" y="195" font-size="10" text-anchor="middle">Ed25519, un par appel</text>
@@ -96,173 +97,175 @@
 <text x="883" y="195" font-size="10" text-anchor="middle">résumé + handle</text>
 <rect x="982" y="164" width="182" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1"/>
 <text x="1073" y="180" font-size="10" text-anchor="middle" font-weight="600">registre</text>
-<text x="1073" y="195" font-size="10" text-anchor="middle">append-only</text>
-<rect x="32" y="215" width="430" height="15" rx="2" fill="currentColor" fill-opacity="0.12" stroke="none"/>
-<text x="37" y="226" font-size="10">secrets : clé privée des jetons d'appel, table des clients (remplace GATEWAY_TOKENS)</text>
-<text x="480" y="226" font-size="10">lit topology/modules.mcp.json (format .mcp.json) ; serveur : utilisateur architect-os-gateway</text>
-<line x1="600" y1="246" x2="600" y2="274" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)" marker-start="url(#arr)"/>
-<text x="610" y="262" font-size="10">MCP, jeton d'appel vérifié par le module. Local : stdio, aucun port. Distant : http, un champ à changer</text>
-<rect x="20" y="276" width="270" height="92" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
-<text x="30" y="294" font-size="11" font-weight="600">[modules] kind: data | workflow</text>
-<text x="30" y="310" font-size="10">memory-recall, code-index, … ;</text>
-<text x="30" y="324" font-size="10">sandboxes: [] ; sans modèle</text>
-<rect x="30" y="345" width="250" height="15" rx="2" fill="currentColor" fill-opacity="0.12" stroke="none"/>
-<text x="35" y="356" font-size="10">secret : aucun (clé publique)</text>
-<rect x="300" y="276" width="270" height="92" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
-<text x="310" y="294" font-size="11" font-weight="600">[broker] module</text>
-<text x="310" y="310" font-size="10">un listener 127.0.0.1:&lt;éphémère&gt; par task</text>
-<text x="310" y="324" font-size="10">POST /v1/messages seul ; réserve, réconcilie</text>
-<rect x="310" y="345" width="250" height="15" rx="2" fill="currentColor" fill-opacity="0.12" stroke="none"/>
-<text x="315" y="356" font-size="10">secret : clé Anthropic, détenteur unique</text>
-<rect x="580" y="276" width="290" height="92" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
-<text x="590" y="294" font-size="11" font-weight="600">[data] module, seul importeur de pg</text>
-<text x="590" y="310" font-size="10">opérations typées en tools MCP ;</text>
-<text x="590" y="324" font-size="10">budget.*, capacity.* ; socket Unix, peer</text>
-<rect x="590" y="345" width="270" height="15" rx="2" fill="currentColor" fill-opacity="0.12" stroke="none"/>
-<text x="595" y="356" font-size="10">secret : aucun (auth peer)</text>
-<rect x="880" y="276" width="300" height="92" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
-<text x="890" y="294" font-size="11" font-weight="600">[postgres 17] natif</text>
-<text x="890" y="310" font-size="10">listen_addresses = '' ; pg_hba : local peer</text>
-<text x="890" y="324" font-size="10">/run/architect-os/pg/.s.PGSQL.5432</text>
-<rect x="890" y="345" width="280" height="15" rx="2" fill="currentColor" fill-opacity="0.12" stroke="none"/>
-<text x="895" y="356" font-size="10">secret : aucun</text>
-<line x1="870" y1="322" x2="880" y2="322" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
-<rect x="20" y="380" width="560" height="92" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
-<text x="32" y="398" font-size="11" font-weight="600">[modules] kind: agent</text>
-<text x="32" y="414" font-size="10">query() et handlers createSdkMcpServer dans CE processus, hors sandbox ; profil agents/&lt;nom&gt;.md</text>
-<text x="32" y="428" font-size="10">aucun accès pg ; rappelle la gateway avec un jeton d'appel ; spawnClaudeCodeProcess enveloppe le seul binaire</text>
-<rect x="32" y="449" width="330" height="15" rx="2" fill="currentColor" fill-opacity="0.12" stroke="none"/>
-<text x="37" y="460" font-size="10">secret : aucun (ni clé Anthropic, ni clé privée)</text>
-<rect x="600" y="380" width="570" height="92" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
-<text x="612" y="398" font-size="11" font-weight="600">[executor-host] module</text>
-<text x="612" y="414" font-size="10">un McpServer par session, posé sur les tubes de l'enfant srt</text>
-<text x="612" y="428" font-size="10">StdioServerTransport(child.stdout, child.stdin) ; identité = fermeture du handler ; child.stdin.on('error')</text>
-<rect x="612" y="449" width="120" height="15" rx="2" fill="currentColor" fill-opacity="0.12" stroke="none"/>
-<text x="617" y="460" font-size="10">secret : aucun</text>
-<text x="222" y="492" font-size="10">packages/sandbox : argv, profil validé, kill(-pgid) puis contrôle, terminaison vérifiée ; pas de démon, pas de socket de contrôle</text>
-<line x1="200" y1="472" x2="200" y2="526" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)" marker-start="url(#arr)"/>
-<text x="210" y="512" font-size="10">stdio Agent SDK (fd 0-2 seulement)</text>
-<line x1="880" y1="472" x2="880" y2="526" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)" marker-start="url(#arr)"/>
-<text x="890" y="512" font-size="10">MCP stdio inversé (fd 0-2 seulement)</text>
-<rect x="20" y="520" width="1160" height="456" rx="4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="7 4"/>
-<text x="34" y="538" font-size="10.5" font-weight="600">frontière srt : processus lancés sous srt --settings &lt;profil&gt;.srt.json ; aucun secret, aucun jeton, aucun descripteur hérité</text>
-<rect x="32" y="548" width="560" height="72" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
-<text x="44" y="564" font-size="11" font-weight="600" fill="#c15a2e">task scout · 1 par task</text>
-<text x="44" y="579" font-size="9.5" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings scout.srt.json -- env -u NO_PROXY -u no_proxy claude …</text>
-<text x="44" y="594" font-size="10">réseau : 127.0.0.1:&lt;port broker de CETTE task&gt; seul, par le proxy srt</text>
-<text x="44" y="608" font-size="10">lecture : « . », ./repo jetable en lecture seule ; ~ refusé ; écriture : « . »</text>
-<rect x="32" y="628" width="560" height="72" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
-<text x="44" y="644" font-size="11" font-weight="600" fill="#c15a2e">task builder · 1 par task</text>
-<text x="44" y="659" font-size="9.5" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings builder.srt.json -- … claude …</text>
-<text x="44" y="674" font-size="10">réseau : broker de la task</text>
-<text x="44" y="688" font-size="10">écriture : copie de travail jetable « . » ; srt installé hors de tout chemin inscriptible</text>
-<rect x="32" y="708" width="560" height="72" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
-<text x="44" y="724" font-size="11" font-weight="600" fill="#c15a2e">task zetetic-reviewer · 1 par task</text>
-<text x="44" y="739" font-size="9.5" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings zetetic-reviewer.srt.json -- … claude …</text>
-<text x="44" y="754" font-size="10">réseau : broker de la task</text>
-<text x="44" y="768" font-size="10">lecture de ./repo et du diff ; écriture : « . »</text>
-<rect x="32" y="788" width="560" height="72" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
-<text x="44" y="804" font-size="11" font-weight="600" fill="#c15a2e">agent-worker (modules kind: agent)</text>
-<text x="44" y="819" font-size="9.5" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings agent-worker.srt.json -- … claude …</text>
-<text x="44" y="834" font-size="10">réseau : broker de la task ; outils en SDK MCP, côté hôte</text>
-<text x="44" y="848" font-size="10">aucun accès data ni postgres</text>
-<rect x="610" y="548" width="560" height="72" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
-<text x="622" y="564" font-size="11" font-weight="600" fill="#c15a2e">executor de session · 1 par session</text>
-<text x="622" y="579" font-size="9.5" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings executor.srt.json -- node executor.js</text>
-<text x="622" y="594" font-size="10">réseau : AUCUN ; client MCP sur ses stdin/stdout ; aucun port</text>
-<text x="622" y="608" font-size="10">lecture : « . », dist executor ; ~ refusé ; écriture : « . » (session)</text>
-<rect x="610" y="628" width="560" height="72" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
-<text x="622" y="644" font-size="11" font-weight="600" fill="#c15a2e">web-scout · seul egress large</text>
-<text x="622" y="659" font-size="9.5" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings web-scout.srt.json -- …</text>
-<text x="622" y="674" font-size="10">réseau : allowlist du manifeste ; deniedResolvedAddresses sur plages privées</text>
-<text x="622" y="688" font-size="10">aucune clé ; sortie en quarantaine par tool MCP</text>
-<rect x="610" y="708" width="560" height="152" rx="4" fill="none" stroke="currentColor" stroke-width="1"/>
-<text x="622" y="726" font-size="11" font-weight="600">Modèle de confiance</text>
-<text x="622" y="744" font-size="10">srt n'est pas tenu pour équivalent à une VM ni à un conteneur renforcé.</text>
-<text x="622" y="761" font-size="10">Usage local ou utilisateurs fiables d'abord.</text>
-<text x="622" y="778" font-size="10">Multi-utilisateur BLOQUÉ tant que la suite d'évasion, secrets et intersessions</text>
-<text x="622" y="795" font-size="10">ne passe pas sur Linux ET macOS.</text>
-<text x="622" y="812" font-size="10">Résidus macOS : enfant setsid survivant (T-06b), pas de limite par sandbox (T-09).</text>
-<text x="622" y="829" font-size="10">Preuves Linux portées par la brique 1b.0 sur ubuntu-24.04.</text>
-<rect x="32" y="872" width="1138" height="92" rx="4" fill="none" stroke="currentColor" stroke-width="1"/>
-<text x="44" y="890" font-size="11" font-weight="600">Chemin du modèle</text>
-<text x="44" y="908" font-size="10">claude sous srt → proxy srt (côté hôte, allowlist de la task) → 127.0.0.1:&lt;port broker&gt; → le broker pose la clé réelle et transmet POST /v1/messages → api.anthropic.com:443</text>
-<text x="44" y="924" font-size="10">Le masquage srt (credentials mask, tlsTerminate) est écarté : T-04 montre que la sentinelle est remplacée dans le corps de la requête, donc qu'elle peut atteindre le modèle.</text>
-<text x="44" y="940" font-size="10">Le port est l'identité : une task ne peut joindre que son broker (T-03). Budget : réservation atomique avant transmission, réconciliation sur usage (T-20).</text>
+<text x="1073" y="195" font-size="10" text-anchor="middle">verdict, tokens par couche</text>
+<rect x="32" y="212" width="560" height="62" rx="4" fill="none" stroke="#c15a2e" stroke-width="1.6"/>
+<text x="44" y="228" font-size="11" font-weight="600" fill="#c15a2e">SandboxRunner : seule autorité de lancement, adaptateur srt</text>
+<text x="44" y="244" font-size="10">start({ profile, task, lease }) : nom de profil figé, UUID, autorisation du broker</text>
+<text x="44" y="258" font-size="10">aucun script, prompt ni argument ; argv statique ; flux jamais lus par l'adaptateur</text>
+<rect x="604" y="212" width="564" height="62" rx="4" fill="none" stroke="currentColor" stroke-width="1"/>
+<text x="616" y="228" font-size="11" font-weight="600">un serveur MCP par sandbox, un client MCP par module</text>
+<text x="616" y="244" font-size="10">identité = fermeture du handler ; enveloppes validées, contenu jamais interprété</text>
+<text x="616" y="258" font-size="10">mort de la gateway : EOF, modules et workers s'arrêtent</text>
+<rect x="32" y="284" width="470" height="15" rx="2" fill="currentColor" fill-opacity="0.12" stroke="none"/>
+<text x="37" y="295" font-size="10">secrets : clé privée des jetons d'appel, table des clients (remplace GATEWAY_TOKENS)</text>
+<text x="516" y="295" font-size="10">lit topology/modules.mcp.json : srt partout, seuls broker et data natifs</text>
+<text x="32" y="316" font-size="10">serveur : utilisateur architect-os-gateway</text>
+<rect x="20" y="336" width="380" height="126" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="30" y="354" font-size="11" font-weight="600">[broker] natif (T-07, clé), D-10</text>
+<text x="30" y="370" font-size="10">un listener et une autorisation par task (T-42, T-43)</text>
+<text x="30" y="384" font-size="10">le port route, il n'identifie pas ; POST /v1/messages seul</text>
+<text x="30" y="398" font-size="10">réservation persistée avant envoi : reserved, observed,</text>
+<text x="30" y="412" font-size="10">unknown jamais libérée, settled, settled_admin</text>
+<rect x="30" y="438" width="300" height="15" rx="2" fill="currentColor" fill-opacity="0.12" stroke="none"/>
+<text x="35" y="449" font-size="10">secret : clé Anthropic, détenteur unique</text>
+<rect x="412" y="336" width="380" height="126" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="422" y="354" font-size="11" font-weight="600">[data] natif, seul importeur de pg</text>
+<text x="422" y="370" font-size="10">opérations typées en tools MCP ; budget.*, capacity.*</text>
+<text x="422" y="384" font-size="10">task et capacités pris du jeton, au point d'effet</text>
+<text x="422" y="398" font-size="10">Linux : allowUnixSockets ignoré, donc hors srt</text>
+<rect x="422" y="438" width="200" height="15" rx="2" fill="currentColor" fill-opacity="0.12" stroke="none"/>
+<text x="427" y="449" font-size="10">secret : aucun (auth peer)</text>
+<rect x="804" y="336" width="376" height="126" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="814" y="354" font-size="11" font-weight="600">[postgres 17] natif (D-5)</text>
+<text x="814" y="370" font-size="10">listen_addresses = '' ; pg_hba : local peer</text>
+<text x="814" y="384" font-size="10">/run/architect-os/pg/.s.PGSQL.5432</text>
+<rect x="814" y="438" width="120" height="15" rx="2" fill="currentColor" fill-opacity="0.12" stroke="none"/>
+<text x="819" y="449" font-size="10">secret : aucun</text>
+<line x1="792" y1="400" x2="804" y2="400" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+<line x1="600" y1="472" x2="600" y2="520" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)" marker-start="url(#arr)"/>
+<text x="610" y="492" font-size="10">MCP stdio, fd 0-2 seulement (T-07) ; executor et worker : client MCP de la gateway ; module : serveur MCP de la gateway</text>
+<rect x="20" y="512" width="1160" height="600" rx="4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="7 4"/>
+<text x="34" y="530" font-size="10.5" font-weight="600">frontière srt : un conteneur v3 = un processus srt (D-8). Aucune clé, aucun descripteur hérité, un seul parent</text>
+<rect x="610" y="540" width="560" height="72" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
+<text x="622" y="556" font-size="11" font-weight="600" fill="#c15a2e">executor de session · 1 par session</text>
+<text x="622" y="571" font-size="9.5" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings executor.srt.json -- node executor.js</text>
+<text x="622" y="586" font-size="10">réseau : AUCUN ; client MCP sur stdin/stdout ; sans modèle ; aucun jeton</text>
+<text x="622" y="600" font-size="10">lecture : « . », dist executor ; ~ refusé ; écriture : « . » (session)</text>
+<rect x="32" y="540" width="560" height="72" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
+<text x="44" y="556" font-size="11" font-weight="600" fill="#c15a2e">module data | workflow, plugins compris · 1 par module</text>
+<text x="44" y="571" font-size="9.5" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings module-&lt;nom&gt;.srt.json -- node module.js</text>
+<text x="44" y="586" font-size="10">memory-recall, code-index, verify, manifest-registry, Structurer, Judge</text>
+<text x="44" y="600" font-size="10">réseau : gateway par le proxy srt, rien d'autre (T-38) ; jeton de l'appel en cours</text>
+<rect x="32" y="620" width="560" height="72" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
+<text x="44" y="636" font-size="11" font-weight="600" fill="#c15a2e">worker agent entier : task scout · 1 par task</text>
+<text x="44" y="651" font-size="9.5" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings scout.srt.json -- env -u NO_PROXY -u no_proxy node worker.js</text>
+<text x="44" y="666" font-size="10">query(), handlers minces, binaire Claude Code enfant ; à prouver : T-41</text>
+<text x="44" y="680" font-size="10">réseau : broker de CETTE task ; ./repo jetable en lecture seule ; ~ refusé</text>
+<rect x="32" y="700" width="560" height="72" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
+<text x="44" y="716" font-size="11" font-weight="600" fill="#c15a2e">worker agent entier : task builder</text>
+<text x="44" y="731" font-size="9.5" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings builder.srt.json -- … node worker.js</text>
+<text x="44" y="746" font-size="10">réseau : broker de la task</text>
+<text x="44" y="760" font-size="10">écriture : copie de travail jetable « . » ; srt hors de tout chemin inscriptible</text>
+<rect x="32" y="780" width="560" height="72" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
+<text x="44" y="796" font-size="11" font-weight="600" fill="#c15a2e">worker agent entier : task zetetic-reviewer</text>
+<text x="44" y="811" font-size="9.5" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings zetetic-reviewer.srt.json -- … node worker.js</text>
+<text x="44" y="826" font-size="10">réseau : broker de la task</text>
+<text x="44" y="840" font-size="10">lecture de ./repo et du diff ; écriture : « . »</text>
+<rect x="32" y="860" width="560" height="72" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
+<text x="44" y="876" font-size="11" font-weight="600" fill="#c15a2e">agent-worker (codebase-ask, spec-draft, remember jusqu'à la brique 4)</text>
+<text x="44" y="891" font-size="9.5" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings agent-worker.srt.json -- … node worker.js</text>
+<text x="44" y="906" font-size="10">réseau : broker de la task ; outils relayés vers la gateway</text>
+<text x="44" y="920" font-size="10">aucun accès data ni postgres</text>
+<rect x="610" y="620" width="560" height="72" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
+<text x="622" y="636" font-size="11" font-weight="600" fill="#c15a2e">web-scout · seul egress large, sans modèle (O-27, à confirmer)</text>
+<text x="622" y="651" font-size="9.5" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings web-scout.srt.json -- node web-scout.js</text>
+<text x="622" y="666" font-size="10">réseau : allowlist du manifeste ; deniedResolvedAddresses sur plages privées</text>
+<text x="622" y="680" font-size="10">aucune clé ; sortie en quarantaine par tool MCP</text>
+<rect x="610" y="700" width="560" height="72" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
+<text x="622" y="716" font-size="11" font-weight="600" fill="#c15a2e">db-migrator · sans modèle (O-28, à confirmer)</text>
+<text x="622" y="731" font-size="9.5" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings db-migrator.srt.json -- …</text>
+<text x="622" y="746" font-size="10">Postgres jetable dans la sandbox, aucun accès à la base réelle</text>
+<text x="622" y="760" font-size="10">SQL de plugin ; brique 4 ; à prouver : T-49</text>
+<rect x="610" y="780" width="560" height="152" rx="4" fill="none" stroke="currentColor" stroke-width="1"/>
+<text x="622" y="798" font-size="11" font-weight="600">Modèle de confiance</text>
+<text x="622" y="816" font-size="10">srt n'est pas tenu pour équivalent à une VM ni à un conteneur renforcé.</text>
+<text x="622" y="833" font-size="10">Usage local ou utilisateurs fiables d'abord.</text>
+<text x="622" y="850" font-size="10">Multi-utilisateur BLOQUÉ tant que la suite d'évasion, secrets et intersessions</text>
+<text x="622" y="867" font-size="10">ne passe pas sur Linux ET macOS. Gateway compromise = compromission totale.</text>
+<text x="622" y="884" font-size="10">Résidus macOS : enfant setsid survivant (T-06b), pas de limite par sandbox (T-09).</text>
+<text x="622" y="901" font-size="10">Banc Linux et macOS en brique 1b.0, avant la migration complète 1a.</text>
+<rect x="32" y="944" width="1138" height="92" rx="4" fill="none" stroke="currentColor" stroke-width="1"/>
+<text x="44" y="962" font-size="11" font-weight="600">Chemin du modèle</text>
+<text x="44" y="980" font-size="10">claude sous srt, sentinelle → proxy srt (côté hôte) : pose l'autorisation de task → https://broker.localhost:&lt;port&gt; → le broker compare, pose la clé réelle → api.anthropic.com:443</text>
+<text x="44" y="996" font-size="10">Le masquage reste écarté pour la clé Anthropic (T-04) ; il ne porte qu'une autorisation de faible valeur. Une autorisation hors de x-api-key est refusée (LEASE_OUT_OF_PLACE).</text>
+<text x="44" y="1012" font-size="10">Un processus natif étranger qui connaît le port reçoit 401 (T-43). Socket Unix avec identifiants du pair : écarté, allowUnixSockets est ignoré sous Linux (§11.2).</text>
+<rect x="32" y="1046" width="1138" height="54" rx="4" fill="none" stroke="currentColor" stroke-width="1"/>
+<text x="44" y="1064" font-size="11" font-weight="600">Repli srt (§4.11)</text>
+<text x="44" y="1082" font-size="10">Un seul port SandboxRunner, srt comme unique adaptateur ; aucun second adaptateur codé. Candidats évalués au déclenchement, sans décision.</text>
 </svg>
-<figcaption>Figure 1. La gateway reste le seul point de politique, et cette propriété vient de l’exécution : aucun port de module en local, réseau de sandbox réduit à son broker, descripteurs limités à 0-2. Le broker est le seul à détenir la clé Anthropic ; aucune sandbox ne détient de clé, de sentinelle ou de jeton. <code>query()</code> et les handlers restent hors sandbox, seul le binaire Claude Code est sous srt. L’executor n’a aucun réseau.</figcaption>
+<figcaption>Figure 1. Un conteneur v3 = un processus srt (D-8). Quatre exceptions natives, prouvées : gateway, broker, data, Postgres. La gateway est le seul point de politique et le seul parent : <code>SandboxRunner</code> ne reçoit qu'un nom de profil, une task et une autorisation, jamais du contenu. <code>query()</code>, les handlers minces et le binaire Claude Code tournent ensemble sous srt ; cette réunion reste à prouver (T-41, brique 1b.0). L’executor n’a aucun réseau. Web-scout et db-migrator sont des recommandations à confirmer par le propriétaire.</figcaption>
 </figure>
 
 <h2>2. Chemin d'un appel <code>execute</code></h2>
 <figure>
-<svg viewBox="0 0 1200 800" role="img" aria-label="Séquence d&#x27;un appel execute : le client appelle execute, la gateway authentifie, réserve le budget et émet un jeton d&#x27;appel, l&#x27;executor-host lance l&#x27;enfant sous srt, l&#x27;enfant appelle les tools en MCP stdio, l&#x27;hôte rappelle la gateway qui contrôle calls_allowed et émet un jeton pour le module cible, qui le vérifie." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="11" fill="currentColor">
+<svg viewBox="0 0 1200 810" role="img" aria-label="Séquence d'un appel execute : le client appelle execute, la gateway contrôle et lance l'executor sous srt sans script en argv, l'executor appelle les tools en MCP stdio, la gateway émet un jeton par appel vers le module sous srt, le script filtre, verify valide, le registre reçoit verdict et tokens, le client reçoit un résultat borné." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="11" fill="currentColor">
 <defs>
   <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
 </defs>
-<rect x="25" y="12" width="150" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<rect x="20" y="12" width="160" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
 <text x="100" y="30" font-size="11" text-anchor="middle" font-weight="600">Client</text>
-<line x1="100" y1="52" x2="100" y2="780" stroke="currentColor" stroke-width="1" stroke-dasharray="2 4"/>
-<rect x="245" y="12" width="150" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
-<text x="320" y="30" font-size="11" text-anchor="middle" font-weight="600">Gateway</text>
-<text x="320" y="44" font-size="10" text-anchor="middle">native, hors srt</text>
-<line x1="320" y1="52" x2="320" y2="780" stroke="currentColor" stroke-width="1" stroke-dasharray="2 4"/>
-<rect x="465" y="12" width="150" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
-<text x="540" y="30" font-size="11" text-anchor="middle" font-weight="600">Module cible</text>
-<text x="540" y="44" font-size="10" text-anchor="middle">vérifie le jeton</text>
-<line x1="540" y1="52" x2="540" y2="780" stroke="currentColor" stroke-width="1" stroke-dasharray="2 4"/>
-<rect x="725" y="12" width="150" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
-<text x="800" y="30" font-size="11" text-anchor="middle" font-weight="600">executor-host</text>
-<text x="800" y="44" font-size="10" text-anchor="middle">natif, McpServer</text>
-<line x1="800" y1="52" x2="800" y2="780" stroke="currentColor" stroke-width="1" stroke-dasharray="2 4"/>
-<rect x="985" y="12" width="150" height="40" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
-<text x="1060" y="30" font-size="11" text-anchor="middle" font-weight="600" fill="#c15a2e">Executor</text>
-<text x="1060" y="44" font-size="10" text-anchor="middle">sous srt, réseau nul</text>
-<line x1="1060" y1="52" x2="1060" y2="780" stroke="currentColor" stroke-width="1" stroke-dasharray="2 4"/>
-<line x1="100" y1="80" x2="320" y2="80" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
-<text x="210.0" y="74" font-size="11" text-anchor="middle">1. execute(script)</text>
-<text x="210.0" y="94" font-size="10" text-anchor="middle">méta-tool</text>
-<line x1="320" y1="164" x2="800" y2="164" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
-<text x="560.0" y="158" font-size="11" text-anchor="middle">3. tools/call, jeton d'appel (aud=executor-host)</text>
-<text x="560.0" y="178" font-size="10" text-anchor="middle">budget réservé, capacité acquise</text>
-<line x1="1060" y1="248" x2="800" y2="248" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
-<text x="930.0" y="242" font-size="11" text-anchor="middle">5. stdout : initialize, tools/list</text>
-<text x="930.0" y="262" font-size="10" text-anchor="middle">seulement les tools du profil</text>
-<line x1="1060" y1="290" x2="800" y2="290" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
-<text x="930.0" y="284" font-size="11" text-anchor="middle">6. tools/call task_input</text>
-<text x="930.0" y="304" font-size="10" text-anchor="middle">entrée de la task</text>
-<line x1="1060" y1="332" x2="800" y2="332" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
-<text x="930.0" y="326" font-size="11" text-anchor="middle">7. tools/call memory_search</text>
-<text x="930.0" y="346" font-size="10" text-anchor="middle">identité = fermeture du handler, pas le message</text>
-<line x1="800" y1="374" x2="320" y2="374" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
-<text x="560.0" y="368" font-size="11" text-anchor="middle">8. rappel, jeton d'appel présenté</text>
-<text x="560.0" y="388" font-size="10" text-anchor="middle">127.0.0.1:8080 ; contrôle calls_allowed</text>
-<line x1="320" y1="416" x2="540" y2="416" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
-<text x="430.0" y="410" font-size="11" text-anchor="middle">9. tools/call, nouveau jeton (aud=module)</text>
-<text x="430.0" y="430" font-size="10" text-anchor="middle">audience, capacité, expiration, jti vérifiés au module</text>
-<line x1="540" y1="458" x2="320" y2="458" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arr2)"/>
-<text x="430.0" y="452" font-size="11" text-anchor="middle">10. résultat (réconciliation du budget)</text>
-<line x1="320" y1="500" x2="800" y2="500" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
-<text x="560.0" y="494" font-size="11" text-anchor="middle">11. résultat du call</text>
-<line x1="800" y1="542" x2="1060" y2="542" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
-<text x="930.0" y="536" font-size="11" text-anchor="middle">12. stdin : résultat</text>
-<line x1="1060" y1="626" x2="800" y2="626" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
-<text x="930.0" y="620" font-size="11" text-anchor="middle">14. tools/call task_complete</text>
-<text x="930.0" y="640" font-size="10" text-anchor="middle">sortie du script</text>
-<line x1="800" y1="668" x2="320" y2="668" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
-<text x="560.0" y="662" font-size="11" text-anchor="middle">15. résultat agrégé ; arbre srt tué et contrôlé</text>
-<line x1="320" y1="752" x2="100" y2="752" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
-<text x="210.0" y="746" font-size="11" text-anchor="middle">17. ≤ max_result_tokens</text>
-<text x="210.0" y="766" font-size="10" text-anchor="middle">sinon résumé + handle</text>
-<text x="334" y="122" font-size="11">2. auth, profil, DAG, budget.reserve</text>
-<text x="334" y="136" font-size="11">jeton d'appel</text>
-<text x="786" y="206" font-size="11" text-anchor="end">4. spawn srt (detached), profil validé</text>
-<text x="786" y="220" font-size="11" text-anchor="end">aucune clé, aucun jeton dans l'enfant</text>
-<text x="1046" y="584" font-size="11" text-anchor="end">13. le script filtre</text>
-<text x="1046" y="598" font-size="11" text-anchor="end">et agrège</text>
-<text x="334" y="710" font-size="11">16. registre, budget.settle</text>
-<text x="334" y="724" font-size="11">calls journalisés (task, jti)</text>
+<line x1="100" y1="52" x2="100" y2="800" stroke="currentColor" stroke-width="1" stroke-dasharray="2 4"/>
+<rect x="220" y="12" width="160" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="300" y="30" font-size="11" text-anchor="middle" font-weight="600">Gateway</text>
+<text x="300" y="44" font-size="10" text-anchor="middle">native, hors srt</text>
+<line x1="300" y1="52" x2="300" y2="800" stroke="currentColor" stroke-width="1" stroke-dasharray="2 4"/>
+<rect x="430" y="12" width="160" height="40" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
+<text x="510" y="30" font-size="11" text-anchor="middle" font-weight="600" fill="#c15a2e">Executor</text>
+<text x="510" y="44" font-size="10" text-anchor="middle">sous srt, réseau nul</text>
+<line x1="510" y1="52" x2="510" y2="800" stroke="currentColor" stroke-width="1" stroke-dasharray="2 4"/>
+<rect x="630" y="12" width="160" height="40" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
+<text x="710" y="30" font-size="11" text-anchor="middle" font-weight="600" fill="#c15a2e">Module</text>
+<text x="710" y="44" font-size="10" text-anchor="middle">sous srt, vérifie le jeton</text>
+<line x1="710" y1="52" x2="710" y2="800" stroke="currentColor" stroke-width="1" stroke-dasharray="2 4"/>
+<rect x="820" y="12" width="160" height="40" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
+<text x="900" y="30" font-size="11" text-anchor="middle" font-weight="600" fill="#c15a2e">verify</text>
+<text x="900" y="44" font-size="10" text-anchor="middle">sous srt</text>
+<line x1="900" y1="52" x2="900" y2="800" stroke="currentColor" stroke-width="1" stroke-dasharray="2 4"/>
+<rect x="1010" y="12" width="160" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="1090" y="30" font-size="11" text-anchor="middle" font-weight="600">Registre</text>
+<text x="1090" y="44" font-size="10" text-anchor="middle">via data, natif</text>
+<line x1="1090" y1="52" x2="1090" y2="800" stroke="currentColor" stroke-width="1" stroke-dasharray="2 4"/>
+<line x1="100" y1="80" x2="300" y2="80" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
+<text x="200.0" y="74" font-size="11" text-anchor="middle">1. execute(script)</text>
+<text x="200.0" y="94" font-size="10" text-anchor="middle">méta-tool</text>
+<text x="314" y="118" font-size="11">2. auth, profil, DAG, budget.reserve, capacity.acquire</text>
+<text x="314" y="142" font-size="11">3. SandboxRunner.start : profil, task ; aucun script en argv</text>
+<line x1="510" y1="180" x2="300" y2="180" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
+<text x="405.0" y="174" font-size="11" text-anchor="middle">4. initialize, tools/list</text>
+<text x="405.0" y="194" font-size="10" text-anchor="middle">limité au profil</text>
+<line x1="510" y1="222" x2="300" y2="222" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
+<text x="405.0" y="216" font-size="11" text-anchor="middle">task_input</text>
+<text x="405.0" y="236" font-size="10" text-anchor="middle">rend le script</text>
+<line x1="510" y1="270" x2="300" y2="270" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
+<text x="405.0" y="264" font-size="11" text-anchor="middle">5. tools/call memory.recall</text>
+<text x="405.0" y="284" font-size="10" text-anchor="middle">identité = fermeture</text>
+<line x1="300" y1="316" x2="710" y2="316" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
+<text x="505.0" y="310" font-size="11" text-anchor="middle">6. tools/call, jeton neuf (aud=module)</text>
+<text x="505.0" y="330" font-size="10" text-anchor="middle">calls_allowed à la gateway ; aud, cap, exp, jti au module</text>
+<text x="722" y="356" font-size="10">exécution sous srt, effet vérifié ici</text>
+<line x1="710" y1="392" x2="300" y2="392" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arr2)"/>
+<text x="505.0" y="386" font-size="11" text-anchor="middle">7. résultat typé, ≤ budget du module</text>
+<line x1="300" y1="430" x2="510" y2="430" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
+<text x="405.0" y="424" font-size="11" text-anchor="middle">résultat</text>
+<text x="522" y="462" font-size="11">8. le script filtre et agrège ; 5 à 8 se répètent</text>
+<line x1="510" y1="508" x2="300" y2="508" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
+<text x="405.0" y="502" font-size="11" text-anchor="middle">9. task_complete</text>
+<text x="405.0" y="522" font-size="10" text-anchor="middle">arbre srt arrêté, contrôlé</text>
+<line x1="300" y1="560" x2="900" y2="560" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
+<text x="600.0" y="554" font-size="11" text-anchor="middle">10. tools/call verify, si du code est produit</text>
+<line x1="900" y1="606" x2="300" y2="606" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arr2)"/>
+<text x="600.0" y="600" font-size="11" text-anchor="middle">verdict : validé ou gradé</text>
+<line x1="300" y1="652" x2="1090" y2="652" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
+<text x="695.0" y="646" font-size="11" text-anchor="middle">11. verdict, tokens par couche et par modèle, appels (task, jti), budget.settle</text>
+<line x1="300" y1="730" x2="100" y2="730" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr2)"/>
+<text x="200.0" y="724" font-size="11" text-anchor="middle">12. ≤ max_result_tokens</text>
+<text x="200.0" y="744" font-size="10" text-anchor="middle">sinon résumé + handle</text>
+<rect x="330" y="690" width="740" height="70" rx="4" fill="none" stroke="#c15a2e" stroke-width="1.2" stroke-dasharray="6 3"/>
+<text x="342" y="708" font-size="11" font-weight="600" fill="#c15a2e">Hors du contexte du client : étapes 4 à 10. Aucun tool visible ajouté, aucun tour de raisonnement.</text>
+<text x="342" y="726" font-size="10">Gouvernance déterministe à l'exécution : jeton, DAG, budget, capacité, vérifiés sans le modèle.</text>
+<text x="342" y="742" font-size="10">kind: agent, pour le non stabilisable seulement : tools/call à l'étape 6 → worker entier sous srt.</text>
 </svg>
-<figcaption>Figure 2. Les étapes 7 à 13 se répètent pour chaque appel du script. L’enfant ne détient aucun jeton : son identité est la fermeture du handler côté hôte. Chaque appel relayé reçoit un jeton lié à une audience, une tâche, des capacités, une expiration et un budget, vérifié par le module cible et non rejouable. Les budgets sont réservés avant exécution et réconciliés au résultat.</figcaption>
+<figcaption>Figure 2. Seul le résultat de l’étape 12 entre dans le contexte du client, borné par le manifeste ; les étapes 4 à 10 ne le traversent jamais (I-9, T-48). L’enfant ne détient aucun jeton : son identité est la fermeture du handler. Chaque appel relayé reçoit un jeton neuf, lié à une audience, une tâche, des capacités, une échéance et un budget, vérifié par le module cible et non rejouable. Une réservation interrompue passe <code>unknown</code> et n’est jamais libérée comme si elle n’avait rien coûté.</figcaption>
 </figure>
 
 <h2>3. Porte de CI</h2>
@@ -395,29 +398,41 @@
 <text x="812" y="843" font-size="10">base déplacée (attendu ≠ statique) :</text>
 <text x="812" y="858" font-size="10">échec explicite</text>
 </svg>
-<figcaption>Figure 3. Seul le résultat des tests fait foi : trois familles vertes, nombre attendu dérivé du diff, nombre exécuté égal au compte statique, chaque step <code>PASSED</code>, aucune comparaison de digest entre builds (refus motivé au §1.1). Une PR qui change un <code>.feature</code> ou une step definition étend le périmètre de mutation au code couvert. Stage 0 apporte une validation fonctionnelle par reconstruction, pas une reproductibilité.</figcaption>
+<figcaption>Figure 3. Seul le résultat des tests fait foi : trois familles vertes, nombre attendu dérivé du diff, nombre exécuté égal au compte statique, chaque step <code>PASSED</code>, aucune comparaison de digest entre builds (refus motivé au §1.1). Une PR qui change un <code>.feature</code> ou une step definition étend le périmètre de mutation au code couvert. Stage 0 apporte une validation fonctionnelle par reconstruction, pas une reproductibilité. La porte protège contre les suppressions accidentelles et certaines manipulations, pas contre un contributeur hostile : une PR dont les steps n’affirment rien et font échouer tout mutant actif passe, verte (T-44).</figcaption>
 </figure>
 
 <h2>4. Processus, réseau, écritures et secrets</h2>
 <table>
 <tr><th>Processus</th><th>Sous srt ?</th><th>Réseau autorisé</th><th>Écriture autorisée</th><th>Secrets</th></tr>
-<tr><td><strong>gateway</strong></td><td>non ; serveur : utilisateur architect-os-gateway</td><td>écoute 127.0.0.1:8080 ; lance les modules en stdio, ou les joint en http</td><td>aucune</td><td>clé privée des jetons d'appel, table des clients</td></tr>
-<tr><td><strong>modules data / workflow</strong></td><td>non</td><td>aucun port en local (stdio) ; rappelle la gateway</td><td>aucune</td><td>aucun (clé publique)</td></tr>
-<tr><td><strong>modules agent</strong></td><td>non ; le binaire Claude Code l'est</td><td>aucun port en local ; rappelle la gateway</td><td>répertoires de task</td><td>aucun</td></tr>
-<tr><td><strong>executor-host</strong></td><td>non ; l'executor l'est</td><td>aucun port en local</td><td>répertoires de session</td><td>aucun</td></tr>
-<tr><td><strong>broker</strong></td><td>non ; serveur : utilisateur architect-os-broker</td><td>un listener 127.0.0.1 par task ; sortant : api.anthropic.com:443</td><td>aucune</td><td>clé Anthropic, détenteur unique</td></tr>
-<tr><td><strong>data</strong></td><td>non ; serveur : utilisateur architect-os-data</td><td>socket Unix Postgres /run/architect-os/pg/.s.PGSQL.5432</td><td>via Postgres, opérations typées</td><td>aucun (auth peer)</td></tr>
-<tr><td><strong>postgres 17</strong></td><td>non</td><td>aucun TCP (listen_addresses = ''), socket Unix</td><td>son répertoire de données</td><td>aucun (auth peer)</td></tr>
-<tr><td><strong>proxy srt (un couple HTTP / SOCKS par processus srt)</strong></td><td>non, côté hôte</td><td>allowlist du processus srt</td><td>sans objet</td><td>aucun</td></tr>
+<tr><td><strong>gateway</strong></td><td>non, exception : T-07 ; serveur : utilisateur architect-os-gateway</td><td>écoute 127.0.0.1:8080 ; parent de tous les enfants</td><td>aucune</td><td>clé privée des jetons d'appel, table des clients</td></tr>
+<tr><td><strong>broker</strong></td><td>non, exception : T-07, clé ; serveur : utilisateur architect-os-broker</td><td>un listener et une autorisation par task ; sortant : api.anthropic.com:443</td><td>aucune</td><td>clé Anthropic, détenteur unique ; autorisations de task</td></tr>
+<tr><td><strong>data</strong></td><td>non, exception : socket Unix, allowUnixSockets ignoré sous Linux ; serveur : utilisateur architect-os-data</td><td>socket Unix Postgres /run/architect-os/pg/.s.PGSQL.5432</td><td>via Postgres, opérations typées</td><td>aucun (auth peer)</td></tr>
+<tr><td><strong>postgres 17</strong></td><td>non, exception : D-5</td><td>aucun TCP (listen_addresses = ''), socket Unix</td><td>son répertoire de données</td><td>aucun (auth peer)</td></tr>
+<tr><td><strong>proxy srt (un couple HTTP / SOCKS par processus srt)</strong></td><td>non, côté hôte, partie de srt</td><td>allowlist du processus srt</td><td>sans objet</td><td>autorisation de task de ce processus</td></tr>
 <tr><td><strong>executor de session</strong></td><td>oui, executor.srt.json</td><td>AUCUN</td><td>« . » (session)</td><td>aucun</td></tr>
-<tr><td><strong>scout</strong></td><td>oui, scout.srt.json</td><td>127.0.0.1:&lt;port broker de la task&gt; seul</td><td>« . » sauf ./repo</td><td>aucun</td></tr>
-<tr><td><strong>builder</strong></td><td>oui, builder.srt.json</td><td>broker de la task</td><td>copie jetable « . »</td><td>aucun</td></tr>
-<tr><td><strong>zetetic-reviewer</strong></td><td>oui, zetetic-reviewer.srt.json</td><td>broker de la task</td><td>« . » sauf ./repo</td><td>aucun</td></tr>
-<tr><td><strong>agent-worker</strong></td><td>oui, agent-worker.srt.json</td><td>broker de la task ; outils côté hôte</td><td>« . »</td><td>aucun</td></tr>
-<tr><td><strong>web-scout</strong></td><td>oui, web-scout.srt.json</td><td>allowlist du manifeste ; plages privées refusées</td><td>« . » ; quarantaine par tool MCP</td><td>aucun</td></tr>
-<tr><td><strong>gate-tests (CI)</strong></td><td>oui, gate-tests.srt.json</td><td>aucun, sauf socket Postgres nommée</td><td>merge, reports/</td><td>aucun</td></tr>
+<tr><td><strong>modules data / workflow, plugins compris</strong></td><td>oui, module-&lt;nom&gt;.srt.json (T-38)</td><td>gateway par le proxy srt, rien d'autre</td><td>« . »</td><td>jeton de l'appel en cours</td></tr>
+<tr><td><strong>worker scout : query(), handlers, binaire</strong></td><td>oui, scout.srt.json (T-41)</td><td>broker de la task seul</td><td>« . » sauf ./repo</td><td>sentinelle</td></tr>
+<tr><td><strong>worker builder</strong></td><td>oui, builder.srt.json (T-41)</td><td>broker de la task</td><td>copie jetable « . »</td><td>sentinelle</td></tr>
+<tr><td><strong>worker zetetic-reviewer</strong></td><td>oui, zetetic-reviewer.srt.json (T-41)</td><td>broker de la task</td><td>« . » sauf ./repo</td><td>sentinelle</td></tr>
+<tr><td><strong>agent-worker</strong></td><td>oui, agent-worker.srt.json (T-41)</td><td>broker de la task ; outils relayés à la gateway</td><td>« . »</td><td>sentinelle</td></tr>
+<tr><td><strong>repo-prepare</strong></td><td>oui, repo-prepare.srt.json</td><td>aucun</td><td>« . »</td><td>aucun</td></tr>
+<tr><td><strong>web-scout (O-27, à confirmer)</strong></td><td>oui, web-scout.srt.json</td><td>allowlist du manifeste ; plages privées refusées</td><td>« . » ; quarantaine par tool MCP</td><td>aucun</td></tr>
+<tr><td><strong>db-migrator (O-28, à confirmer)</strong></td><td>oui, db-migrator.srt.json (T-49)</td><td>aucun ; Postgres jetable dans la sandbox</td><td>« . »</td><td>aucun</td></tr>
+<tr><td><strong>gate-tests (CI)</strong></td><td>oui, gate-tests.srt.json (T-50)</td><td>aucun vers l'extérieur ; Postgres de test et Stryker dans la sandbox</td><td>merge, reports/</td><td>aucun</td></tr>
 </table>
-<p class="legend">Les limites mémoire et PID ne sont pas portées par srt : Linux, <code>systemd-run</code> autour de srt (à prouver, T-09L, brique 1b) ; macOS, aucune par sandbox, résidu assumé (T-09). Sur un poste, tous les processus natifs partagent un uid : les utilisateurs dédiés ne valent que sur serveur (T-24, T-26).</p>
+<p class="legend">Les limites mémoire et PID ne sont pas portées par srt : Linux, <code>systemd-run</code> autour de srt (à prouver, T-09L, brique 1b) ; macOS, aucune par sandbox, résidu assumé (T-09). Sur un poste, gateway, broker et data partagent un uid : les utilisateurs dédiés ne valent que sur serveur (T-24, T-26).</p>
+
+<h2>5. Repli srt</h2>
+<p>Un seul port <code>SandboxRunner</code>, srt comme unique adaptateur, aucun second adaptateur codé. Le repli s'ouvre si T-41 échoue pour une raison structurelle sur un OS ciblé, si un test d'évasion réussit sans correction possible dans srt, ou si une montée de version casse une propriété prouvée. Tout est à évaluer au déclenchement, sans décision, et le test de pérennité (mesure du 30 octobre 2026) est alors rejoué : détail au §4.11 du document source.</p>
+<table>
+<tr><th>Cas</th><th>Candidats à évaluer</th></tr>
+<tr><td>Échec propre à Linux</td><td>Podman rootless</td></tr>
+<tr><td>Contenu hostile ou multi-utilisateur (O-22)</td><td>Kata Containers</td></tr>
+<tr><td>Échec sur macOS</td><td><code>podman machine</code></td></tr>
+<tr><td>srt abandonné ou divergent</td><td>Fork de srt (Apache-2.0), ou adaptateur fin écrit par nous sur Seatbelt, bubblewrap, Landlock, seccomp</td></tr>
+<tr><td>Le propriétaire ne veut plus gérer l'isolation</td><td>Sandbox hébergé par Anthropic : non open source, hors critères</td></tr>
+</table>
+<p class="legend">Écartés par le test de pérennité, un seul éditeur : gVisor, Firecracker, <code>apple/container</code>. Quel que soit le code, la suite d'évasion reste la preuve indispensable.</p>
 
 </body>
 </html>
