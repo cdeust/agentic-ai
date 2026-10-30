@@ -35,7 +35,7 @@ const files = [];
 const walk = (d, depth) => {
   if (depth > 3 || files.length > 300) return;
   let ents; try { ents = readdirSync(d); } catch { return; }
-  for (const e of ents) { const p = path.join(d, e); try { const st = statSync(p); if (st.isDirectory()) walk(p, depth + 1); else if (st.size < 200000) files.push({ p, t: readFileSync(p, 'latin1').slice(0, 40000) }); } catch { /* illisible */ } }
+  for (const e of ents) { const p = path.join(d, e); try { const st = statSync(p); if (st.isDirectory()) walk(p, depth + 1); else if (st.isFile() && st.size < 200000) files.push({ p, t: readFileSync(p, 'latin1').slice(0, 40000) }); } catch { /* illisible */ } }
 };
 for (const d of new Set([process.cwd(), process.env.TMPDIR, process.env.CLAUDE_CODE_TMPDIR, '/tmp'].filter(Boolean))) walk(d, 0);
 log('scan termine');
