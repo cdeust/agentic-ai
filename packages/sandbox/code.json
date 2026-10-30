@@ -1,0 +1,6 @@
+{
+  "description": "Outil de code isolé de la brique 1a.0 : `srt --settings <profil résolu> claude`, avec le plugin de protection chargé pour la session.",
+  "profile": "builder",
+  "command": ["claude"],
+  "pluginDirs": ["plugins/builder-guard"]
+}

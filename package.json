@@ -16,6 +16,7 @@
     "services/memory"
   ],
   "scripts": {
+    "code": "node --import tsx packages/sandbox/src/code.ts",
     "typecheck": "tsc -b",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
