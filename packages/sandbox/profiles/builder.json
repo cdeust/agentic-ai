@@ -1,0 +1,79 @@
+{
+  "description": "Profil builder de la brique 1a.0 (docs/design/platform-v3-srt.md, §8 ; journal, profil C). Gabarit : les variables ${home}, ${repo}, ${worktree}, ${worktreeName} et ${tmp} sont résolues par l'adaptateur, qui écrit le profil résolu hors de tout chemin inscriptible.",
+  "srt": {
+    "network": {
+      "allowedDomains": [
+        "api.anthropic.com",
+        "claude.ai",
+        "*.claude.ai",
+        "console.anthropic.com",
+        "platform.claude.com",
+        "statsig.anthropic.com",
+        "registry.npmjs.org",
+        "github.com",
+        "api.github.com",
+        "*.githubusercontent.com"
+      ],
+      "deniedDomains": []
+    },
+    "filesystem": {
+      "denyRead": [
+        "${home}/.ssh",
+        "${home}/.aws",
+        "${home}/.gnupg",
+        "${home}/.config/gh",
+        "${home}/.npmrc",
+        "${home}/.netrc"
+      ],
+      "allowWrite": [
+        "${worktree}",
+        "${repo}/.git/worktrees/${worktreeName}",
+        "${repo}/.git/objects",
+        "${repo}/.git/refs",
+        "${repo}/.git/logs",
+        "${home}/.cache",
+        "${home}/.claude/projects",
+        "${home}/.claude/todos",
+        "${home}/.claude/session-env",
+        "${home}/.claude/shell-snapshots",
+        "${home}/.claude/file-history",
+        "${home}/.claude/debug",
+        "${home}/.claude/statsig",
+        "${home}/.claude/cache",
+        "${home}/.claude/tasks",
+        "${home}/.claude/plans",
+        "${tmp}"
+      ],
+      "denyWrite": [
+        "${repo}/.git/hooks",
+        "${repo}/.git/config",
+        "${repo}/.git/worktrees/${worktreeName}/commondir",
+        "${repo}/.git/worktrees/${worktreeName}/gitdir",
+        "${repo}/.git/worktrees/${worktreeName}/config.worktree",
+        "${repo}/.git/refs/heads/main",
+        "${worktree}/.claude/settings.json",
+        "${worktree}/.claude/settings.local.json"
+      ]
+    },
+    "allowPty": true
+  },
+  "env": {
+    "pass": [
+      "HOME",
+      "USER",
+      "LOGNAME",
+      "PATH",
+      "SHELL",
+      "TERM",
+      "COLORTERM",
+      "TERM_PROGRAM",
+      "LANG",
+      "LC_ALL",
+      "LC_CTYPE"
+    ],
+    "set": {
+      "CLAUDE_CODE_TMPDIR": "${tmp}",
+      "npm_config_cache": "${home}/.cache/npm"
+    }
+  }
+}
