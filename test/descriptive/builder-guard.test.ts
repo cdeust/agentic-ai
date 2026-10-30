@@ -35,7 +35,15 @@ const HooksSchema = z.strictObject({
       .array(
         z.strictObject({
           matcher: z.string().min(1),
-          hooks: z.array(z.strictObject({ type: z.literal('command'), command: z.string().min(1) })).min(1),
+          hooks: z
+            .array(
+              z.strictObject({
+                type: z.literal('command'),
+                command: z.string().min(1),
+                onFailure: z.literal('block'),
+              }),
+            )
+            .min(1),
         }),
       )
       .length(1),

@@ -1,10 +1,16 @@
 {
-  "description": "Minimal protection set of decision 2 (docs/design/platform-v3-srt.md, §4 and §8): rules in rules.json, applied by guard.ts.",
+  "description": "Minimal protection set of decision 2 (docs/design/platform-v3-srt.md, §4 and §8): rules in rules.json, applied by guard.ts. onFailure: block, a hook that cannot run refuses the call instead of letting it through.",
   "hooks": {
     "PreToolUse": [
       {
         "matcher": "Bash|Read|Write|Edit|MultiEdit|NotebookEdit|Grep|Glob",
-        "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/guard.ts\"" }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/guard.ts\"",
+            "onFailure": "block"
+          }
+        ]
       }
     ]
   }
