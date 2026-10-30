@@ -7,3 +7,5 @@ package-lock.json
 docs/design
 bench
 docs/communication/deck
+/.stryker-tmp
+/reports

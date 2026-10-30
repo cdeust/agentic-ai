@@ -2,8 +2,8 @@
 // node_modules/@stryker-mutator/api/dist/src-generated/stryker-core.d.ts; cucumber runner options:
 // node_modules/@stryker-mutator/cucumber-runner/dist/src-generated/cucumber-runner-options.d.ts.
 // `mutate` comes from reports/gate-plan.json, written by `test-gate plan` (the perimeter of rule 5); a
-// `--mutate` on the command line overrides it. The runner reads cucumber.mjs (default profile): every feature runs
-// in the dry run, so `coveredBy` (perTest coverage) is known for every mutant.
+// `--mutate` on the command line overrides it. The runner reads cucumber.mjs (profile `mutation`, below): every
+// feature but features/repository runs in the dry run, so `coveredBy` (perTest coverage) is known for every mutant.
 import { existsSync, readFileSync } from 'node:fs';
 
 const PLAN = 'reports/gate-plan.json';
@@ -12,6 +12,10 @@ const plan = existsSync(PLAN) ? JSON.parse(readFileSync(PLAN, 'utf8')) : { mutat
 export default {
   testRunner: 'cucumber',
   plugins: ['@stryker-mutator/cucumber-runner'],
+  // The `mutation` profile of cucumber.mjs: the default profile minus features/repository (typecheck and format run
+  // tsc and prettier in child processes, kill no mutant, and fail on the instrumented sandbox copy).
+  // Option `cucumber.profile`: node_modules/@stryker-mutator/cucumber-runner/dist/src-generated/cucumber-runner-options.d.ts.
+  cucumber: { profile: 'mutation' },
   coverageAnalysis: 'perTest',
   // Explicit, not the default (CPU count - 1): every test-runner worker may start its own disposable PostgreSQL
   // (features/support/postgres.ts), each holding one SysV shared memory segment, and macOS allows only
