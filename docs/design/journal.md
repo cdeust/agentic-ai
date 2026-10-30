@@ -213,3 +213,40 @@ Faites par un agent en parallèle, reçues du coordinateur, non rejouées ici.
 [Building effective agents](https://www.anthropic.com/engineering/building-effective-agents), [Code execution with MCP](https://www.anthropic.com/engineering/code-execution-with-mcp), [Writing effective tools](https://www.anthropic.com/engineering/writing-tools-for-agents), [Context engineering](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents), [Long-running harnesses](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents), [Best practices](https://code.claude.com/docs/en/best-practices), [Plugins](https://code.claude.com/docs/en/plugins-reference), [Secure deployment](https://code.claude.com/docs/en/agent-sdk/secure-deployment), [Hosting](https://code.claude.com/docs/en/agent-sdk/hosting), [SDK overview](https://code.claude.com/docs/en/agent-sdk/overview) (connexion claude.ai non offerte à des tiers, d'où la clé API), [Cost tracking](https://code.claude.com/docs/en/agent-sdk/cost-tracking), [Sandboxing](https://code.claude.com/docs/en/sandboxing), [Sandbox environments](https://code.claude.com/docs/en/sandbox-environments), [GitHub Actions](https://code.claude.com/docs/en/github-actions), README de srt 0.0.81.
 
 Écart assumé : ces articles conseillent de partir du plus simple ; la plateforme part de l'Agent SDK, par directive de suivre l'amont. Évaluation des tools reportée avec la baseline.
+
+## 10. Audit et décisions du propriétaire, 30 octobre 2026
+
+**Audit en lecture seule de la passe du §7.** La séparation des processus est conservée, mais la gateway a été amputée (DAG d'appels avec profondeur et délai, `trace` et `parent` au registre, `writes_tables` à l'opération) et `manifest-registry` effacé, ses fonctions données à la gateway. Aucun composant de la figure 1 de v3 n'avait de décision écrite du propriétaire pour cela. D'où un intangible : chaque composant de cette figure est un processus séparé, aucune passe ne fusionne ni ne retire un composant sans décision écrite du propriétaire (document, §9, A).
+
+**Correctif validé par le propriétaire, inscrit au document.**
+
+| Point | Avant | Après |
+|---|---|---|
+| `manifest-registry` | Absent, la gateway lisait les manifestes | Module sous srt, réseau nul ; la gateway ne lit que sa sortie validée. Structurer, Judge, Embedder nommés modules workflow sous srt |
+| Rappel d'un module | Jeton opaque de module, `task` déclarée par le module (R-10) | Identifiant d'appel opaque, sans cryptographie, par `tools/call`, relié à {task, parent, profondeur, échéance}, invalidé au retour. R-10 fermé |
+| DAG | Profondeur non suivie, bornée par timeout | Profondeur maximale et échéance portées par l'identifiant ; un appel sans modèle est borné par échéance, profondeur, `max_result_tokens`, plafond d'octets |
+| Registre | Verdict et tokens | `trace`, `parent`, verdict, tokens par couche |
+| `writes_tables` | Au chargement seulement | Aussi à chaque opération, par la gateway, d'après le module appelant |
+| Serveur | Un uid pour toute la plateforme | Un uid propre au broker ; gateway et `data` peuvent partager un uid ; R-8 dit ce qu'une gateway compromise lit ou non |
+| Concurrence | Compteur en mémoire, non qualifié | Écart au « stateless » de v3 accepté : il ne compte que des enfants qui meurent avec la gateway ; dans `data`, une écriture par appel et une fuite à chaque arrêt brutal. Mort des enfants avec la gateway à prouver (`spawn.feature`) |
+| Profils | « La seule variable est le réseau » | Réseau et lectures en plus ; cwd jetable par session, par task, par processus de module |
+| Budget | Gateway et broker cités tous deux comme décideurs | La gateway fixe le plafond, le broker exécute |
+
+**Décisions du propriétaire.** Remplacent les statuts « à confirmer » du §4, qui restent tels qu'écrits à leur date.
+
+| # | Décision | Statut |
+|---|---|---|
+| 1 | Profil builder de 1a.0, avec R-1, R-2 et les `denyWrite` sur `.claude/settings.json` et `settings.local.json` du worktree | Adoptée |
+| 2 | Jeu minimal de hooks `PreToolUse`, dans un plugin de la marketplace, jamais dans `~/.claude/settings.json`. Tests à la sortie de 1a.0 : chargement, application à la TUI sous srt, impossibilité de couper depuis le worktree, `main` et config git commune intouchables ; sinon risque accepté écrit | Adoptée ; les deux risques du §8 (hook de worktree, dossiers de session partagés) restent à prouver à la même sortie |
+| 3 | O-33 `zod` sans override, profil hors chemin inscriptible ; `.max()` sur `evidence`, plafond d'octets sur stdout | Adoptée |
+| 4 | Workflows épinglés par SHA, garde sur l'acteur, ruleset sur `main` avec contournement du propriétaire, en 1a | Adoptée |
+| 5 | O-1, O-23, O-26 | Retirées ; détection d'assertions affaiblies refusée, reste dans R-6 |
+| 6 | Stage 0 publié et `fixpoint.sh` | Retirés ; aucune affirmation de reproductibilité |
+| 7 | Base de la porte lue dans le dernier run vert de `main` | Adoptée ; remplace « base comptée au premier parent » du §7 ; `exécutés = statique` conservé |
+| 8 | Budgets : table de réservations, `settle` par `DELETE … RETURNING` | Adoptée, à prouver (T-45 rejoué : concurrence, rejeu, interblocage `reserve` × `settle`) |
+| 9 | Nettoyage du banc | Tâche inscrite ; ces résultats restent ici |
+| 10 | Marque `ai-architect.tools` | Rétablie au titre ; `architect-os` provisoire |
+
+**Règle d'arrêt des revues**, inscrite en tête des décisions ouvertes : consensus quand une revue ne trouve plus ni défaut de correction fonctionnelle ni contradiction avec les décisions du propriétaire ; un risque nommé et accepté ne bloque pas ; un mécanisme supplémentaire proposé n'est pas un défaut.
+
+**Choix de rédaction à relire.** La base de la porte exige que le run vert de `main` porte le SHA du premier parent du commit de merge, faute de quoi l'identité échoue à tort ; la porte est alors rouge et se relance. R-10 garde un résidu nommé : un module compromis qui sert deux appels à la fois peut présenter l'un pour l'autre. L'Orchestrateur de conteneurs de v3 n'est pas un processus séparé : il est le port `SandboxRunner` de la gateway, couvert par D-9 et D-10. L'annexe de `platform-v3-srt.md` reste octet pour octet l'entrée de T-45 jusqu'à la tâche 9.

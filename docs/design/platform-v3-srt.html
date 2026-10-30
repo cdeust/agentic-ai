@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Plateforme v3 sous srt</title>
+<title>ai-architect.tools, plateforme v3</title>
 <style>
   :root { color-scheme: light dark; --accent: #c15a2e; --muted: #777; --line: #8884; --bg2: #8881; }
   body { font-family: -apple-system, "Segoe UI", Inter, Roboto, sans-serif; max-width: 1100px; margin: 0 auto; padding: 24px 16px 60px; line-height: 1.45; }
@@ -24,13 +24,13 @@
 </head>
 <body>
 
-<h1>Plateforme v3 sous srt</h1>
-<p class="lead">Figures de <code>platform-v3-srt.md</code>, qui fait foi ; historique dans <code>journal.md</code>. Un conteneur v3 est un processus srt, avec quatre exceptions natives. Le modèle repose sur la confiance et sur des risques acceptés par écrit. <code>architect-os</code> est un nom provisoire.</p>
+<h1>ai-architect.tools : plateforme v3 sous srt</h1>
+<p class="lead">Figures de <code>platform-v3-srt.md</code>, qui fait foi ; historique dans <code>journal.md</code>. Un conteneur v3 est un processus srt, avec quatre exceptions natives. Le modèle repose sur la confiance et sur des risques acceptés par écrit. <code>ai-architect.tools</code> est la marque ; <code>architect-os</code> reste le nom provisoire.</p>
 
 <h2>1. Topologie</h2>
-<p class="legend">Trait noir : processus natif. Trait orange : processus sous srt. Pointillé : frontière srt. Tous les liens gateway-enfants sont MCP stdio.</p>
+<p class="legend">Trait noir : processus natif. Trait orange : processus sous srt. Pointillé : frontière srt. Tous les liens gateway-enfants sont MCP stdio. Chaque composant de la figure 1 de v3 est un processus séparé (décision A).</p>
 <figure>
-<svg viewBox="0 0 1000 560" role="img" aria-label="Topologie : le client parle en MCP http à la gateway native. Gateway, broker, data et Postgres sont natifs. Sous srt, l'executor sans réseau, les modules qui rappellent la gateway, les workers qui joignent le broker, web-scout et db-migrator. Tous les liens avec la gateway sont MCP stdio." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="13" fill="currentColor">
+<svg viewBox="0 0 1000 600" role="img" aria-label="Topologie : le client parle en MCP http à la gateway native. Gateway, broker, data et Postgres sont natifs. Sous srt, l'executor sans réseau, les modules dont Structurer, Judge et Embedder qui rappellent la gateway avec un identifiant d'appel, manifest-registry qui génère modules importables et catalogue, les workers qui joignent le broker, web-scout et db-migrator. Tous les liens avec la gateway sont MCP stdio." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="13" fill="currentColor">
 <defs>
   <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
 </defs>
@@ -39,75 +39,101 @@
 <line x1="500" y1="56" x2="500" y2="96" stroke="currentColor" marker-end="url(#a1)"/>
 <text x="510" y="81">MCP http : search, describe, execute</text>
 
-<rect x="30" y="98" width="500" height="112" rx="4" fill="none" stroke="currentColor" stroke-width="1.4"/>
+<rect x="30" y="98" width="500" height="134" rx="4" fill="none" stroke="currentColor" stroke-width="1.4"/>
 <text x="46" y="122" font-weight="600">gateway : seul point de décision, seul parent</text>
-<text x="46" y="146">auth, profils, calls_allowed, registre, max_result_tokens</text>
-<text x="46" y="168">SandboxRunner : srt, Docker par configuration là où srt manque</text>
-<text x="46" y="190">aucun pg, aucun Agent SDK, aucune clé API</text>
+<text x="46" y="144" font-size="12">auth, profils, calls_allowed, writes_tables, max_result_tokens</text>
+<text x="46" y="164" font-size="12">identifiant d'appel : task, parent, profondeur, échéance</text>
+<text x="46" y="184" font-size="12">budgets : décision du plafond ; registre : trace, parent, verdict</text>
+<text x="46" y="204" font-size="12">lit la seule sortie validée de manifest-registry</text>
+<text x="46" y="224" font-size="12">SandboxRunner : srt, Docker par configuration ; aucun pg, aucune clé</text>
 
-<rect x="570" y="98" width="400" height="80" rx="4" fill="none" stroke="currentColor" stroke-width="1.4"/>
+<rect x="570" y="98" width="400" height="94" rx="4" fill="none" stroke="currentColor" stroke-width="1.4"/>
 <text x="586" y="122" font-weight="600">broker : seul détenteur de la clé API</text>
-<text x="586" y="144">POST /v1/messages seul ; jeton de task → budget</text>
-<text x="586" y="164">vers api.anthropic.com uniquement</text>
+<text x="586" y="144" font-size="12">exécute réserve et règlement ; jeton de task</text>
+<text x="586" y="164" font-size="12">POST /v1/messages seul, vers api.anthropic.com</text>
+<text x="586" y="184" font-size="12">sur serveur : uid propre au broker</text>
 
-<rect x="30" y="224" width="240" height="56" rx="4" fill="none" stroke="currentColor" stroke-width="1.4"/>
-<text x="46" y="247" font-weight="600">data</text>
-<text x="46" y="267">seul importeur de pg</text>
-<rect x="290" y="224" width="240" height="56" rx="4" fill="none" stroke="currentColor" stroke-width="1.4"/>
-<text x="306" y="247" font-weight="600">Postgres 17</text>
-<text x="306" y="267">socket Unix, peer, pas de TCP</text>
-<line x1="270" y1="252" x2="290" y2="252" stroke="currentColor" marker-end="url(#a1)"/>
-<line x1="150" y1="210" x2="150" y2="224" stroke="currentColor" marker-end="url(#a1)"/>
+<rect x="30" y="246" width="240" height="56" rx="4" fill="none" stroke="currentColor" stroke-width="1.4"/>
+<text x="46" y="269" font-weight="600">data</text>
+<text x="46" y="289">seul importeur de pg</text>
+<rect x="290" y="246" width="240" height="56" rx="4" fill="none" stroke="currentColor" stroke-width="1.4"/>
+<text x="306" y="269" font-weight="600">Postgres 17</text>
+<text x="306" y="289">socket Unix, peer, pas de TCP</text>
+<line x1="270" y1="274" x2="290" y2="274" stroke="currentColor" marker-end="url(#a1)"/>
+<line x1="150" y1="232" x2="150" y2="246" stroke="currentColor" marker-end="url(#a1)"/>
 
-<rect x="20" y="312" width="960" height="236" rx="6" fill="none" stroke="currentColor" stroke-dasharray="7 4" stroke-width="1.4"/>
-<text x="36" y="334" font-weight="600">Sous srt : base.srt.json, une variable réseau</text>
+<rect x="20" y="334" width="960" height="250" rx="6" fill="none" stroke="currentColor" stroke-dasharray="7 4" stroke-width="1.4"/>
+<text x="36" y="356" font-weight="600">Sous srt : base.srt.json ; variables : réseau et lectures en plus ; cwd jetable</text>
 
-<rect x="36" y="348" width="210" height="184" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
-<text x="50" y="372" font-weight="600" fill="#c15a2e">executor</text>
-<text x="50" y="396">1 par session</text>
-<text x="50" y="418">réseau nul</text>
-<text x="50" y="440">client MCP sur stdin/stdout</text>
-<text x="50" y="462">aucun secret</text>
+<rect x="36" y="370" width="170" height="200" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
+<text x="48" y="394" font-weight="600" fill="#c15a2e">executor</text>
+<text x="48" y="416" font-size="12">1 par session</text>
+<text x="48" y="436" font-size="12">réseau nul</text>
+<text x="48" y="456" font-size="12">client MCP sur</text>
+<text x="48" y="476" font-size="12">stdin/stdout</text>
+<text x="48" y="496" font-size="12">aucun secret</text>
+<text x="48" y="516" font-size="12">lit les modules</text>
+<text x="48" y="536" font-size="12">importables</text>
 
-<rect x="262" y="348" width="210" height="184" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
-<text x="276" y="372" font-weight="600" fill="#c15a2e">modules</text>
-<text x="276" y="396">data, workflow, plugins</text>
-<text x="276" y="418">serveur MCP stdio</text>
-<text x="276" y="440">réseau : gateway</text>
-<text x="276" y="462">jeton opaque de module</text>
+<rect x="218" y="370" width="230" height="200" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
+<text x="230" y="394" font-weight="600" fill="#c15a2e">modules</text>
+<text x="230" y="416" font-size="12">data, workflow, plugins</text>
+<text x="230" y="436" font-size="12">memory-*, code-index,</text>
+<text x="230" y="456" font-size="12">verify, spec-lint</text>
+<text x="230" y="476" font-size="12">Structurer, Judge, Embedder</text>
+<text x="230" y="496" font-size="12">serveur MCP stdio</text>
+<text x="230" y="516" font-size="12">réseau : gateway</text>
+<text x="230" y="536" font-size="12">rappel : identifiant d'appel,</text>
+<text x="230" y="556" font-size="12">le temps de l'appel</text>
 
-<rect x="488" y="348" width="240" height="184" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
-<text x="502" y="372" font-weight="600" fill="#c15a2e">worker, kind: agent</text>
-<text x="502" y="396">1 par task</text>
-<text x="502" y="418">query(), handlers, binaire</text>
-<text x="502" y="440">réseau : broker</text>
-<text x="502" y="462">jeton de task, jamais la clé</text>
-<text x="502" y="484">scout, builder, reviewer</text>
+<rect x="460" y="370" width="160" height="200" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
+<text x="472" y="394" font-weight="600" fill="#c15a2e">manifest-registry</text>
+<text x="472" y="416" font-size="12">lit les manifestes</text>
+<text x="472" y="436" font-size="12">écrit modules</text>
+<text x="472" y="456" font-size="12">importables</text>
+<text x="472" y="476" font-size="12">et catalogue</text>
+<text x="472" y="496" font-size="12">réseau nul</text>
+<text x="472" y="516" font-size="12">la gateway valide</text>
+<text x="472" y="536" font-size="12">sa sortie</text>
 
-<rect x="744" y="348" width="222" height="184" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
-<text x="758" y="372" font-weight="600" fill="#c15a2e">web-scout, db-migrator</text>
-<text x="758" y="396">sans modèle</text>
-<text x="758" y="418">allowlist du manifeste,</text>
-<text x="758" y="440">sortie en quarantaine</text>
-<text x="758" y="462">ou réseau nul,</text>
-<text x="758" y="484">Postgres jetable</text>
+<rect x="632" y="370" width="170" height="200" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
+<text x="644" y="394" font-weight="600" fill="#c15a2e">worker, kind: agent</text>
+<text x="644" y="416" font-size="12">1 par task</text>
+<text x="644" y="436" font-size="12">query(), handlers,</text>
+<text x="644" y="456" font-size="12">binaire</text>
+<text x="644" y="476" font-size="12">réseau : broker</text>
+<text x="644" y="496" font-size="12">jeton de task,</text>
+<text x="644" y="516" font-size="12">jamais la clé</text>
+<text x="644" y="536" font-size="12">codebase-ask, spec-draft,</text>
+<text x="644" y="556" font-size="12">scout, builder, reviewer</text>
 
-<path d="M 530 170 H 550 V 296" fill="none" stroke="currentColor"/>
-<line x1="140" y1="296" x2="855" y2="296" stroke="currentColor"/>
-<line x1="140" y1="296" x2="140" y2="346" stroke="currentColor" marker-end="url(#a1)"/>
-<line x1="367" y1="296" x2="367" y2="346" stroke="currentColor" marker-end="url(#a1)"/>
-<line x1="580" y1="296" x2="580" y2="346" stroke="currentColor" marker-end="url(#a1)"/>
-<line x1="855" y1="296" x2="855" y2="346" stroke="currentColor" marker-end="url(#a1)"/>
-<text x="150" y="292" font-size="12">MCP stdio, créé par l'adaptateur</text>
-<path d="M 680 346 L 680 240 L 770 240 L 770 178" fill="none" stroke="#c15a2e" stroke-dasharray="5 3" marker-end="url(#a1)"/>
-<text x="688" y="232" font-size="12">HTTP par le proxy srt</text>
+<rect x="814" y="370" width="152" height="200" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
+<text x="826" y="394" font-weight="600" fill="#c15a2e">web-scout,</text>
+<text x="826" y="414" font-weight="600" fill="#c15a2e">db-migrator</text>
+<text x="826" y="436" font-size="12">sans modèle</text>
+<text x="826" y="456" font-size="12">allowlist du</text>
+<text x="826" y="476" font-size="12">manifeste,</text>
+<text x="826" y="496" font-size="12">quarantaine</text>
+<text x="826" y="516" font-size="12">ou réseau nul,</text>
+<text x="826" y="536" font-size="12">Postgres jetable</text>
+
+<path d="M 530 170 H 550 V 318" fill="none" stroke="currentColor"/>
+<line x1="121" y1="318" x2="890" y2="318" stroke="currentColor"/>
+<line x1="121" y1="318" x2="121" y2="368" stroke="currentColor" marker-end="url(#a1)"/>
+<line x1="333" y1="318" x2="333" y2="368" stroke="currentColor" marker-end="url(#a1)"/>
+<line x1="540" y1="318" x2="540" y2="368" stroke="currentColor" marker-end="url(#a1)"/>
+<line x1="717" y1="318" x2="717" y2="368" stroke="currentColor" marker-end="url(#a1)"/>
+<line x1="890" y1="318" x2="890" y2="368" stroke="currentColor" marker-end="url(#a1)"/>
+<text x="130" y="314" font-size="12">MCP stdio, créé par l'adaptateur</text>
+<path d="M 780 368 L 780 240 L 830 240 L 830 194" fill="none" stroke="#c15a2e" stroke-dasharray="5 3" marker-end="url(#a1)"/>
+<text x="772" y="262" font-size="12" text-anchor="end">HTTP par le proxy srt</text>
 </svg>
-<figcaption>Figure 1. Sous srt, un processus ne sert pas de listener joignable par l'hôte (T-39b, T-07) : gateway et broker restent natifs. Sous Linux, <code>allowUnixSockets</code> est ignoré : data et Postgres aussi (E-09). Un module rappelle la gateway par le proxy srt (T-38). Un worker complet sous srt est prouvé sur les deux OS avec un faux amont (T-41).</figcaption>
+<figcaption>Figure 1. Sous srt, un processus ne sert pas de listener joignable par l'hôte (T-39b, T-07) : gateway et broker restent natifs. Sous Linux, <code>allowUnixSockets</code> est ignoré : data et Postgres aussi (E-09). Un module rappelle la gateway par le proxy srt (T-38) avec l'identifiant d'appel que la gateway lui a passé dans <code>_meta</code>, invalidé au retour. <code>manifest-registry</code> lit les manifestes ; la gateway ne lit que sa sortie validée. Un worker complet sous srt est prouvé sur les deux OS avec un faux amont (T-41). Reverse proxy Caddy natif en brique D, non dessiné.</figcaption>
 </figure>
 
 <h2>2. Chemin d'un appel <code>execute</code></h2>
 <figure>
-<svg viewBox="0 0 1000 560" role="img" aria-label="Séquence : le client appelle execute ; la gateway contrôle et lance l'executor sans script en argv ; l'executor récupère le script et appelle les tools en MCP stdio ; la gateway contrôle calls_allowed et appelle le module ; le script filtre ; verify valide si du code est produit ; le registre reçoit verdict et tokens ; le client reçoit un résultat borné." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="13" fill="currentColor">
+<svg viewBox="0 0 1000 560" role="img" aria-label="Séquence : le client appelle execute ; la gateway contrôle et lance l'executor sans script en argv ; l'executor récupère le script et appelle les tools en MCP stdio ; la gateway contrôle calls_allowed et la profondeur, crée un identifiant d'appel et appelle le module ; le script filtre ; verify valide si du code est produit ; le registre reçoit trace, parent, verdict et tokens ; le client reçoit un résultat borné." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="13" fill="currentColor">
 <defs>
   <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
 </defs>
@@ -122,29 +148,29 @@
 </g>
 <rect x="282" y="58" width="690" height="384" rx="4" fill="#c15a2e" fill-opacity="0.06" stroke="none"/>
 <line x1="80" y1="74" x2="270" y2="74" stroke="currentColor" marker-end="url(#a2)"/><text x="175" y="67" text-anchor="middle">1. execute(script)</text>
-<text x="284" y="96">2. auth, profil, concurrence</text>
+<text x="284" y="96">2. auth, profil, concurrence ; trace, parent, plafond</text>
 <text x="284" y="118">3. SandboxRunner.start(profil, task)</text>
 <line x1="470" y1="146" x2="270" y2="146" stroke="currentColor" marker-end="url(#a2)"/><text x="370" y="139" text-anchor="middle">4. tools/list, task_input</text>
 <line x1="470" y1="190" x2="270" y2="190" stroke="currentColor" marker-end="url(#a2)"/><text x="370" y="183" text-anchor="middle">5. tools/call</text>
-<line x1="270" y1="232" x2="660" y2="232" stroke="currentColor" marker-end="url(#a2)"/><text x="465" y="225" text-anchor="middle">6. calls_allowed, puis tools/call sur stdio</text>
+<line x1="270" y1="232" x2="660" y2="232" stroke="currentColor" marker-end="url(#a2)"/><text x="465" y="225" text-anchor="middle" font-size="12">6. calls_allowed, profondeur ; identifiant d'appel ; tools/call</text>
 <line x1="660" y1="274" x2="470" y2="274" stroke="currentColor" stroke-dasharray="4 3" marker-end="url(#a2)"/><text x="565" y="267" text-anchor="middle">7. résultat typé</text>
 <text x="482" y="300">8. le script filtre ; 5 à 8 se répètent</text>
 <line x1="470" y1="332" x2="270" y2="332" stroke="currentColor" marker-end="url(#a2)"/><text x="370" y="325" text-anchor="middle">9. task_complete</text>
 <line x1="270" y1="376" x2="810" y2="376" stroke="currentColor" marker-end="url(#a2)"/><text x="540" y="369" text-anchor="middle">10. verify, si du code est produit</text>
-<line x1="270" y1="424" x2="930" y2="424" stroke="currentColor" marker-end="url(#a2)"/><text x="600" y="417" text-anchor="middle">11. verdict, tokens par couche et par modèle</text>
+<line x1="270" y1="424" x2="930" y2="424" stroke="currentColor" marker-end="url(#a2)"/><text x="600" y="417" text-anchor="middle">11. trace, parent, verdict, tokens par couche et par modèle</text>
 <line x1="270" y1="480" x2="80" y2="480" stroke="currentColor" marker-end="url(#a2)"/><text x="175" y="473" text-anchor="middle">12. ≤ max_result_tokens</text>
 <text x="175" y="498" text-anchor="middle" font-size="12">sinon résumé + handle</text>
 <text x="290" y="470" font-weight="600" fill="#c15a2e">Zone teintée : étapes 2 à 11, hors du contexte du client.</text>
-<text x="290" y="492" font-size="12">kind: agent, pour le non stabilisable : tools/call à l'étape 6, worker sous srt, budget au broker.</text>
+<text x="290" y="492" font-size="12">kind: agent, pour le non stabilisable : tools/call à l'étape 6, worker sous srt ; plafond de la gateway, appliqué au broker.</text>
 <text x="290" y="512" font-size="12">À prouver : code-front.feature, brique 3.</text>
 </svg>
-<figcaption>Figure 2. Seul le résultat de l'étape 12 entre dans le contexte du client. Le script n'est jamais en argv, et l'identité de l'enfant est la fermeture du handler (E-02, E-03).</figcaption>
+<figcaption>Figure 2. Seul le résultat de l'étape 12 entre dans le contexte du client. Le script n'est jamais en argv, et l'identité de l'enfant est la fermeture du handler (E-02, E-03). À l'étape 6, l'identifiant d'appel porte task, parent, profondeur et échéance ; le module le présente à son rappel, la gateway l'invalide au retour (à prouver : gateway.feature, 1b.4).</figcaption>
 </figure>
 
 <h2>3. Outil de code, brique 1a.0</h2>
-<p><code>srt --settings builder.json claude</code>, dans le worktree habituel. C'est le stage 0 simplifié : le reste de la plateforme se construit dedans. Le profil ci-dessous attend la décision du propriétaire.</p>
+<p><code>srt --settings builder.json claude</code>, dans le worktree habituel. C'est le stage 0 simplifié : le reste de la plateforme se construit dedans. Profil et jeu minimal de hooks adoptés par le propriétaire le 30 octobre (décisions 1 et 2), avec R-1 et R-2.</p>
 <figure>
-<svg viewBox="0 0 1000 400" role="img" aria-label="Outil de code : Claude Code tourne sous srt avec le compte du propriétaire, dans un worktree du dépôt. Il écrit dans le worktree et les parties git nécessaires au commit ; les hooks, la configuration et les pointeurs du worktree sont refusés. Le réseau va vers Anthropic, npm et GitHub. Le trousseau reste lisible. Des hooks PreToolUse réduisent le risque sans former de frontière." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="13" fill="currentColor">
+<svg viewBox="0 0 1000 400" role="img" aria-label="Outil de code : Claude Code tourne sous srt avec le compte du propriétaire, dans un worktree du dépôt. Il écrit dans le worktree et les parties git nécessaires au commit ; les hooks, la configuration et les pointeurs du worktree sont refusés. Le réseau va vers Anthropic, npm et GitHub. Le trousseau reste lisible. Des hooks PreToolUse, livrés dans un plugin de la marketplace, réduisent le risque sans former de frontière." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="13" fill="currentColor">
 <defs>
   <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
 </defs>
@@ -173,29 +199,30 @@
 <text x="716" y="238">exécute du code de la sandbox</text>
 <rect x="700" y="270" width="280" height="114" rx="4" fill="none" stroke="currentColor"/>
 <text x="716" y="293" font-weight="600">Réduction, pas frontière</text>
-<text x="716" y="315">hooks PreToolUse, non inscriptibles :</text>
+<text x="716" y="315">hooks PreToolUse, plugin :</text>
 <text x="716" y="334" font-size="12">push main ou forcé, trousseau, secrets,</text>
 <text x="716" y="351" font-size="12">.git/hooks, .git/config</text>
-<text x="716" y="372">ruleset sur main</text>
+<text x="716" y="372">ruleset sur main, côté GitHub</text>
 </svg>
-<figcaption>Figure 3. Vérifié sur le poste macOS en <code>-p</code>, avec un appel réel minimal. Le profil initial, limité à <code>.git/hooks</code> et <code>.git/config</code>, cassait <code>git commit</code> et laissait une évasion par <code>commondir</code>. Les hooks <code>PreToolUse</code> réduisent le risque sans former de frontière : un Bash obfusqué leur échappe, et ceux d'un <code>.claude/settings.json</code> de worktree ne comptent pas. À prouver : la TUI au premier lancement et le jeu de hooks, à confirmer par le propriétaire.</figcaption>
+<figcaption>Figure 3. Vérifié sur le poste macOS en <code>-p</code>, avec un appel réel minimal. Le profil initial, limité à <code>.git/hooks</code> et <code>.git/config</code>, cassait <code>git commit</code> et laissait une évasion par <code>commondir</code>. Les hooks <code>PreToolUse</code> réduisent le risque sans former de frontière : un Bash obfusqué leur échappe, et ceux d'un <code>.claude/settings.json</code> de worktree ne comptent pas. À prouver à la sortie de 1a.0 : la TUI ; le plugin chargé, appliqué à la TUI sous srt, impossible à couper depuis le worktree ; <code>main</code> et la config git commune intouchables, directement ou par une commande git autorisée, sinon risque accepté écrit ; les dossiers de session partagés.</figcaption>
 </figure>
 
 <h2>4. Processus, réseau, secrets</h2>
 <div class="wrap">
 <table>
 <tr><th>Processus</th><th>Sous srt</th><th>Réseau</th><th>Secret</th></tr>
-<tr><td>gateway</td><td>non</td><td>écoute 127.0.0.1:8080</td><td>table des clients et des jetons</td></tr>
-<tr><td>broker</td><td>non</td><td>un listener ; sortie api.anthropic.com</td><td>clé API</td></tr>
+<tr><td>gateway</td><td>non</td><td>écoute 127.0.0.1:8080</td><td>table des clients, jetons de task émis, identifiants d'appel en cours</td></tr>
+<tr><td>broker</td><td>non</td><td>un listener ; sortie api.anthropic.com</td><td>clé API ; uid propre sur serveur</td></tr>
 <tr><td>data, Postgres 17</td><td>non</td><td>socket Unix</td><td>aucun, peer</td></tr>
 <tr><td>executor</td><td>oui</td><td>aucun</td><td>aucun</td></tr>
-<tr><td>module</td><td>oui</td><td>gateway</td><td>jeton opaque de module</td></tr>
+<tr><td>module, dont Structurer, Judge, Embedder</td><td>oui</td><td>gateway</td><td>identifiant d'appel, le temps de l'appel</td></tr>
+<tr><td>manifest-registry</td><td>oui</td><td>aucun</td><td>aucun</td></tr>
 <tr><td>worker</td><td>oui</td><td>broker</td><td>jeton de task</td></tr>
 <tr><td>web-scout</td><td>oui</td><td>allowlist du manifeste</td><td>aucun</td></tr>
 <tr><td>db-migrator</td><td>oui</td><td>aucun</td><td>aucun</td></tr>
 </table>
 </div>
-<p class="legend">Docker remplace srt seulement là où srt n'est pas supporté, par configuration explicite, derrière le même port <code>SandboxRunner</code>.</p>
+<p class="legend">Docker remplace srt seulement là où srt n'est pas supporté, par configuration explicite, derrière le même port <code>SandboxRunner</code>. Sur serveur, un uid propre au broker ; gateway et data peuvent partager un uid (R-8).</p>
 
 </body>
 </html>
