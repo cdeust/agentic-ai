@@ -36,7 +36,7 @@
 <body>
 
 <h1>ai-architect.tools, architecture plateforme v3 sous srt</h1>
-<p class="lead">Diagrammes tirés de <code>docs/design/platform-v3-srt.md</code> (révision du 30 octobre 2026, base <code>1746cc8</code>, amendée depuis <code>584ac03</code>), qui amende la vision v3 du 29 octobre 2026. Aucune exécution hors du conteneur : un conteneur v3 = un processus srt, quatre exceptions prouvées. Plus de <code>platformd</code>, plus de protocole JSON lines : MCP stdio et Agent SDK officiels, broker seul détenteur de la clé Anthropic, profils au format Claude Code. Multi-utilisateur bloqué tant que la suite d’évasion ne passe pas sur Linux et macOS. <code>architect-os</code> est un nom provisoire. Les expériences T-xx et E-xx sont consignées au journal du document source ; rien n’a été prouvé sur Linux à ce stade (brique 1b.0).</p>
+<p class="lead">Diagrammes tirés de <code>docs/design/platform-v3-srt.md</code> (révision du 30 octobre 2026, base <code>1746cc8</code>, amendée depuis <code>584ac03</code>), qui amende la vision v3 du 29 octobre 2026. Aucune exécution hors du conteneur : un conteneur v3 = un processus srt, quatre exceptions prouvées. Plus de <code>platformd</code>, plus de protocole JSON lines : MCP stdio et Agent SDK officiels, broker seul détenteur de la clé Anthropic, profils au format Claude Code. Multi-utilisateur bloqué tant que la suite d’évasion ne passe pas sur Linux et macOS. <code>architect-os</code> est un nom provisoire. Les expériences T-xx et E-xx sont consignées au journal du document source ; le banc 1b.0 a tourné sur Linux et macOS (run 41038015293) : T-38, T-39 et T-41 prouvés, trois échecs Linux conservés (T-02e, T-02e2, T-07-fd0), le natif étranger joint le broker (BROKER-FOREIGN, P0 ouvert jusqu’à T-42) ; restent T-42, T-43 et T-45.</p>
 
 <div class="toc">
 <ol>
@@ -145,12 +145,12 @@
 <text x="44" y="556" font-size="11" font-weight="600" fill="#c15a2e">module data | workflow, plugins compris · 1 par module</text>
 <text x="44" y="571" font-size="9.5" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings module-&lt;nom&gt;.srt.json -- node module.js</text>
 <text x="44" y="586" font-size="10">memory-recall, code-index, verify, manifest-registry, Structurer, Judge</text>
-<text x="44" y="600" font-size="10">réseau : gateway par le proxy srt, rien d'autre (T-38) ; jeton de l'appel en cours</text>
+<text x="44" y="600" font-size="10">egress aucun ; interne : gateway (T-38, prouvé) ; jeton de l'appel en cours</text>
 <rect x="32" y="620" width="560" height="72" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
 <text x="44" y="636" font-size="11" font-weight="600" fill="#c15a2e">worker agent entier : task scout · 1 par task</text>
 <text x="44" y="651" font-size="9.5" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings scout.srt.json -- env -u NO_PROXY -u no_proxy node worker.js</text>
-<text x="44" y="666" font-size="10">query(), handlers minces, binaire Claude Code enfant ; à prouver : T-41</text>
-<text x="44" y="680" font-size="10">réseau : broker de CETTE task ; ./repo jetable en lecture seule ; ~ refusé</text>
+<text x="44" y="666" font-size="10">query(), handlers minces, binaire Claude Code enfant ; T-41 prouvé (banc 1b.0)</text>
+<text x="44" y="680" font-size="10">interne : broker de CETTE task ; egress aucun ; ./repo jetable en lecture seule ; ~ refusé</text>
 <rect x="32" y="700" width="560" height="72" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
 <text x="44" y="716" font-size="11" font-weight="600" fill="#c15a2e">worker agent entier : task builder</text>
 <text x="44" y="731" font-size="9.5" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings builder.srt.json -- … node worker.js</text>
@@ -183,7 +183,7 @@
 <text x="622" y="850" font-size="10">Multi-utilisateur BLOQUÉ tant que la suite d'évasion, secrets et intersessions</text>
 <text x="622" y="867" font-size="10">ne passe pas sur Linux ET macOS. Gateway compromise = compromission totale.</text>
 <text x="622" y="884" font-size="10">Résidus macOS : enfant setsid survivant (T-06b), pas de limite par sandbox (T-09).</text>
-<text x="622" y="901" font-size="10">Banc Linux et macOS en brique 1b.0, avant la migration complète 1a.</text>
+<text x="622" y="901" font-size="10">Banc 1b.0 joué : T-38, T-39, T-41 ; reste T-42, T-43, T-45.</text>
 <rect x="32" y="944" width="1138" height="92" rx="4" fill="none" stroke="currentColor" stroke-width="1"/>
 <text x="44" y="962" font-size="11" font-weight="600">Chemin du modèle</text>
 <text x="44" y="980" font-size="10">claude sous srt, sentinelle → proxy srt (côté hôte) : pose l'autorisation de task → https://broker.localhost:&lt;port&gt; → le broker compare, pose la clé réelle → api.anthropic.com:443</text>
@@ -193,7 +193,7 @@
 <text x="44" y="1064" font-size="11" font-weight="600">Repli srt (§4.11)</text>
 <text x="44" y="1082" font-size="10">Un seul port SandboxRunner, srt comme unique adaptateur ; aucun second adaptateur codé. Candidats évalués au déclenchement, sans décision.</text>
 </svg>
-<figcaption>Figure 1. Un conteneur v3 = un processus srt (D-8). Quatre exceptions natives, prouvées : gateway, broker, data, Postgres. La gateway est le seul point de politique et le seul parent : <code>SandboxRunner</code> ne reçoit qu'un nom de profil, une task et une autorisation, jamais du contenu. <code>query()</code>, les handlers minces et le binaire Claude Code tournent ensemble sous srt ; cette réunion reste à prouver (T-41, brique 1b.0). L’executor n’a aucun réseau. Web-scout et db-migrator sont des recommandations à confirmer par le propriétaire.</figcaption>
+<figcaption>Figure 1. Un conteneur v3 = un processus srt (D-8). Quatre exceptions natives, prouvées : gateway, broker, data, Postgres. La gateway est le seul point de politique et le seul parent : <code>SandboxRunner</code> ne reçoit qu'un nom de profil, une task et une autorisation, jamais du contenu. <code>query()</code>, les handlers minces et le binaire Claude Code tournent ensemble sous srt ; cette réunion est prouvée au banc 1b.0 sur Linux et macOS, avec un faux amont et sans appel réel à Anthropic (T-41 ; T-04R reste à jouer en 1b). L’executor n’a aucun réseau. Web-scout et db-migrator sont des recommandations à confirmer par le propriétaire.</figcaption>
 </figure>
 
 <h2>2. Chemin d'un appel <code>execute</code></h2>
@@ -423,7 +423,7 @@
 <p class="legend">Les limites mémoire et PID ne sont pas portées par srt : Linux, <code>systemd-run</code> autour de srt (à prouver, T-09L, brique 1b) ; macOS, aucune par sandbox, résidu assumé (T-09). Sur un poste, gateway, broker et data partagent un uid : les utilisateurs dédiés ne valent que sur serveur (T-24, T-26).</p>
 
 <h2>5. Repli srt</h2>
-<p>Un seul port <code>SandboxRunner</code>, srt comme unique adaptateur, aucun second adaptateur codé. Le repli s'ouvre si T-41 échoue pour une raison structurelle sur un OS ciblé, si un test d'évasion réussit sans correction possible dans srt, ou si une montée de version casse une propriété prouvée. Tout est à évaluer au déclenchement, sans décision, et le test de pérennité (mesure du 30 octobre 2026) est alors rejoué : détail au §4.11 du document source.</p>
+<p>Un seul port <code>SandboxRunner</code>, srt comme unique adaptateur, aucun second adaptateur codé. Le repli s'ouvre si T-41 échoue pour une raison structurelle sur un OS ciblé (non déclenché : T-41 passe sur les deux OS), si un test d'évasion réussit sans correction possible dans srt, ou si une montée de version casse une propriété prouvée. Tout est à évaluer au déclenchement, sans décision, et le test de pérennité (mesure du 30 octobre 2026) est alors rejoué : détail au §4.11 du document source.</p>
 <table>
 <tr><th>Cas</th><th>Candidats à évaluer</th></tr>
 <tr><td>Échec propre à Linux</td><td>Podman rootless</td></tr>

@@ -1,6 +1,6 @@
 # Plateforme v3 sous sandbox-runtime (srt) : document de conception
 
-Statut : proposition, révision du 30 octobre 2026, amendée par la décision D-8 du propriétaire et par la deuxième revue externe (§1.2). Aucun code applicatif n'est modifié par ce document ; l'implémentation commence par l'épinglage 1a.1 puis le banc 1b.0 (§15).
+Statut : proposition, révision du 30 octobre 2026, amendée par la décision D-8 du propriétaire et par les deuxième et troisième revues externes (§1.2, §1.3). Aucun code applicatif n'est modifié par ce document ; le banc 1b.0 a tourné sur Linux et macOS (T-38, T-39, T-41 joués, §19.1) ; l'implémentation continue par l'épinglage 1a.1 puis la suite de 1b.0 : T-42, T-43, T-45 (§15).
 
 Nom : `ai-architect.tools` reste la marque. `architect-os` est un **nom provisoire**, le choix définitif est suspendu par le propriétaire ; son isolation est décrite au §7.2 pour qu'un renommage reste mécanique.
 Base : `feat/marketplace-srt` à `1746cc8`, amendée depuis `584ac03`. Cible : la vision « ai-architect.tools, architecture plateforme v3 » (29 octobre 2026), ci-après **v3** (`docs/design/platform-v3.html`, inchangé), amendée par les décisions du §1.
@@ -11,7 +11,7 @@ Conventions de preuve, appliquées à chaque affirmation technique :
 - **[E-xx] / [T-xx]** : expérience exécutée en isolation, consignée au §20 avec commande et sortie, échecs compris.
 - **[À PROUVER: T-xx, banc, brique]** : pas encore de preuve. Le test, le banc et la brique sont nommés ; rien de ce qui est ainsi marqué n'est livré avant que le test ait tourné.
 
-Tout s'est exécuté sur macOS 27 (`arm64`, Node 26.11.1, srt 0.0.81, MCP SDK 1.32.2, Agent SDK 0.3.312, Claude Code 2.1.312). **Aucun appel réel à l'API Anthropic n'a eu lieu** : le binaire Claude Code a parlé à un faux amont TLS local, et le profil srt ne laissait passer que lui. Linux n'est pas prouvé ici, voir E-07 au §20.
+Les expériences E-xx et T-xx de ce document ont d'abord tourné sur macOS 27 (`arm64`, Node 26.11.1, srt 0.0.81, MCP SDK 1.32.2, Agent SDK 0.3.312, Claude Code 2.1.312). Le banc 1b.0 (`bench/`, journal `bench/JOURNAL.md`) a ensuite tourné sur `ubuntu-24.04` et `macos-latest` : run https://github.com/cdeust/architect-os/actions/runs/41038015293 (conclusion `failure`, job Linux rouge), commit `b6fc924`, résultats au §19.1 et au §20, échecs compris. **Aucun appel réel à l'API Anthropic n'a eu lieu**, ni sur le poste ni sur le banc : le binaire Claude Code a parlé à un faux amont local, et le profil srt ne laissait passer que le broker du banc. Le banc Linux a **trois échecs réels** (T-02e, T-02e2, T-07-fd0), conservés ; le premier essai Linux de E-07 (§20) est levé par ce banc.
 
 ---
 
@@ -21,9 +21,9 @@ Tout s'est exécuté sur macOS 27 (`arm64`, Node 26.11.1, srt 0.0.81, MCP SDK 1.
 |---|---|---|
 | Protocole JSON lines maison entre `platformd` et les sandboxes | **Supprimé.** MCP stdio avec le SDK officiel pour l'executor, le worker et les modules ; le SDK garde son canal vers le binaire, dans la sandbox | E-01, E-02, E-04 |
 | `platformd`, démon superviseur avec socket de contrôle et clé Anthropic | **Supprimé** (D-9). Une bibliothèque de lancement, port `SandboxRunner`, appelée par la seule gateway (§4.8), et une table de modules au format `.mcp.json` | E-02, E-05, E-06 ; [À PROUVER: T-47, Gherkin, brique 1b] |
-| Clé masquée par srt (`mask` + `tlsTerminate`), repli broker | **Inversé** (D-10). Broker par task, seul détenteur de la clé Anthropic. Le masquage est écarté pour cette clé ; une autorisation de task, de faible valeur, remplace le port comme identité (§11.2) | T-04 (échec adversarial), E-05, T-23 ; [À PROUVER: T-42, T-43, banc, 1b.0] |
-| Worker Node dans la sandbox, stdin/stdout JSON, outils relayés en HTTP | **Worker entier sous srt** (D-8) : `query()`, handlers minces et binaire Claude Code dans la même sandbox. stdin/stdout portent MCP vers la gateway, sur le patron de l'executor. Plus de JSON maison ni de HTTP interne | E-02 pour le transport ; E-04, E-05 pour le SDK et le binaire ; [À PROUVER: T-41, banc, 1b.0] |
-| Modules `kind: data\|workflow` natifs | **Sous srt, en stdio, plugins compris** (D-8) | E-01 pour le transport ; [À PROUVER: T-38, banc, 1b.0] |
+| Clé masquée par srt (`mask` + `tlsTerminate`), repli broker | **Inversé** (D-10). Broker par task, seul détenteur de la clé Anthropic. Le masquage est écarté pour cette clé ; une autorisation de task, de faible valeur, remplace le port comme identité (§11.2) | T-04 (échec adversarial), E-05, T-23 ; [À PROUVER: T-42, T-43, banc, 1b.0 ; BROKER-FOREIGN confirmé sur les deux OS, §19.1] |
+| Worker Node dans la sandbox, stdin/stdout JSON, outils relayés en HTTP | **Worker entier sous srt** (D-8) : `query()`, handlers minces et binaire Claude Code dans la même sandbox. stdin/stdout portent MCP vers la gateway, sur le patron de l'executor. Plus de JSON maison ni de HTTP interne | E-02 pour le transport ; E-04, E-05 pour le SDK et le binaire ; [V: T-41, banc 1b.0, §19.1] |
+| Modules `kind: data\|workflow` natifs | **Sous srt, en stdio, plugins compris** (D-8) | E-01 pour le transport ; [V: T-38, banc 1b.0, §19.1] |
 | Profils de task propriétaires | Fichiers `agents/<nom>.md` au format Claude Code + profil srt JSON statique | E-04b, E-08 |
 | Gabarits `{{runtime}}`, `{{repo}}` | **Supprimés.** Chemins relatifs à la task, `~` natif | T-02c à T-02i |
 | `@cucumber/cucumber` 13.3.0 | **12.9.0**, 13.x casse le runner Stryker | T-14 |
@@ -71,6 +71,19 @@ Tout s'est exécuté sur macOS 27 (`arm64`, Node 26.11.1, srt 0.0.81, MCP SDK 1.
 | « Agent SDK hors sandbox, cohérent » | **Rejeté par le propriétaire** (D-8) | Le SDK tourne dans la frontière. Anthropic le dit aussi : l'application Agent SDK « runs inside the isolation boundary » [V: https://code.claude.com/docs/en/agent-sdk/secure-deployment#isolation-technologies] |
 | Pas de digest, 0 mutant survivant, retrait de `platformd` | **Conservés** | §1.1, §13.6, D-9 |
 
+### 1.3 Troisième revue externe
+
+Écrite sans les résultats du banc 1b.0. Chaque constat a été vérifié contre le texte de la révision précédente avant intégration.
+
+| Constat | Vérification dans le texte | Sort | Traitement |
+|---|---|---|---|
+| §4.5 budgets (P0) : `UPDATE budgets` puis `INSERT … ON CONFLICT DO NOTHING` peut retenir le budget alors que l'insertion est ignorée ; `budget.settle` rejouable | **Exact, par lecture du SQL** (ancien §4.5, `budget.reserve` : le `NOT EXISTS` lit l'instantané de l'instruction, deux appels au même `reservation_id` passent tous deux avant l'insertion, le second `INSERT` est ignoré après que l'`UPDATE` a retenu le montant ; `budget.settle` : ni identifiant de réservation, ni garde d'état, montant et coût pris des paramètres). Défaut **non rejoué** : T-45 jouera l'ancien SQL comme témoin | **Accepté** | SQL réécrit en une transaction, §4.5 ; non prouvé jusqu'à T-45 |
+| §10 (P1) : `egress: [gateway]` et `egress: none` dans le même manifeste, alors que la règle impose l'égalité de `egress` avec le réseau du profil | **Exact** : l'exemple `memory-recall` portait les deux, et `codebase-ask` portait `egress: [broker]` | **Accepté** | `egress` = sortie externe seule ; accès interne = champ `internal_access`, §10 et §9.2 |
+| §11.2 (P1) : la garantie du broker reposait sur le retrait de la clé dans les réponses | **Exact** : « le broker retire la clé des réponses » était présenté comme le mécanisme ; une valeur transformée, encodée, fragmentée ou répartie dans un flux SSE échappe à un retrait | **Accepté** | Garantie reformulée en amont ; retrait = défense supplémentaire ; T-42 conservé, §11.2 |
+| Le broker devrait tourner sous la même frontière srt que le worker | La revue a été écrite sans les résultats du banc | **Non retenu** : contraire à D-8 (le broker est une des quatre exceptions natives, détenteur de la clé), à T-07 et à T-39b (un processus sous srt ne sert pas un listener joignable par l'hôte : macOS `EPERM`, Linux `ECONNREFUSED` côté hôte) | Le broker reste natif ; T-41 a été prouvé ainsi sur les deux OS |
+
+**État réel au 30 octobre 2026.** T-41 et T-38 sont passés (§19.1). T-42, T-43 et T-45 ne sont pas encore joués : ils forment la suite de 1b.0. Ordre demandé par la revue : 1a.1, puis la suite de 1b.0, ce qu'écrit déjà le §15.
+
 ## 2. Trois piliers
 
 | Pilier | Statut |
@@ -83,12 +96,12 @@ Tout s'est exécuté sur macOS 27 (`arm64`, Node 26.11.1, srt 0.0.81, MCP SDK 1.
 
 | Élément v3 | Version srt | Raison |
 |---|---|---|
-| `compose.yaml` « identique laptop et serveur » | `topology/modules.mcp.json` au format `.mcp.json` : chaque module y est `type: stdio`, `command: srt` ; seuls `broker` et `data` sont déclarés natifs, le schéma refuse tout autre. Mêmes processus, sémantiques OS différentes (Seatbelt, bubblewrap) | D-1, D-8. Format de Claude Code [V: https://code.claude.com/docs/en/mcp]. Un module `type: http` est refusé par schéma tant que T-39 n'a pas tourné |
+| `compose.yaml` « identique laptop et serveur » | `topology/modules.mcp.json` au format `.mcp.json` : chaque module y est `type: stdio`, `command: srt` ; seuls `broker` et `data` sont déclarés natifs, le schéma refuse tout autre. Mêmes processus, sémantiques OS différentes (Seatbelt, bubblewrap) | D-1, D-8. Format de Claude Code [V: https://code.claude.com/docs/en/mcp]. Un module `type: http` est refusé par schéma : T-39b montre qu'un module sous srt ne peut pas servir en HTTP à la gateway (macOS : `EPERM` ; Linux : `listen` accepté, mais l'hôte reçoit `ECONNREFUSED`) |
 | [1] Reverse proxy | Hors plateforme, serveur seulement, un `Caddyfile` descriptif ; aucun code n'en dépend | §5.1 |
-| [2] Gateway en conteneur | Processus natif ; ne peut pas tourner sous srt | T-07 : fd ≥ 3 non transmis, `listen` sur fd 0 refusé |
+| [2] Gateway en conteneur | Processus natif ; ne peut pas tourner sous srt | T-07 : fd ≥ 3 non transmis sur les deux OS ; `listen` sur fd 0 refusé sur macOS, **mais utilisable sous Linux (T-07-fd0, échec)** ; T-39b |
 | [3] Executor, pool chaud | `srt -- node executor.js`, réseau nul, client MCP sur ses stdin/stdout ; le serveur en face est la gateway | E-02 ; T-10 : surcoût de lancement 211 ms |
-| Conteneurs de task | Worker entier sous srt : `srt -- node worker.js`, avec `query()`, handlers minces et binaire Claude Code ; profil `agents/<nom>.md` + `<nom>.srt.json` | D-8 ; E-04, E-05 ; [À PROUVER: T-41, banc, 1b.0] |
-| [4] Modules en conteneur (légende v3 §2 : « les autres conteneurs sont des workflows déterministes ») | Un processus srt par module, en stdio, plugins compris. Le `containers: []` de v3 §6 visait le conteneur de task, pas le module | D-8 ; E-01 ; [À PROUVER: T-38, banc, 1b.0] |
+| Conteneurs de task | Worker entier sous srt : `srt -- node worker.js`, avec `query()`, handlers minces et binaire Claude Code ; profil `agents/<nom>.md` + `<nom>.srt.json` | D-8 ; E-04, E-05 ; [V: T-41, banc 1b.0, §19.1] |
+| [4] Modules en conteneur (légende v3 §2 : « les autres conteneurs sont des workflows déterministes ») | Un processus srt par module, en stdio, plugins compris. Le `containers: []` de v3 §6 visait le conteneur de task, pas le module | D-8 ; E-01 ; [V: T-38, banc 1b.0, §19.1] |
 | [5] Structurer, Judge, Embedder en conteneur | Modules workflow sous srt, placés au §4.7, décidés en brique 8 | D-8 |
 | Orchestrateur, « clés API injectées par task » | **Aucune clé dans une task.** Broker hors sandbox, un listener et une autorisation par task | T-04, E-05, T-23 ; [À PROUVER: T-42, banc, 1b.0] ; [V: https://code.claude.com/docs/en/agent-sdk/secure-deployment#the-proxy-pattern] |
 | « Jeton par task, révoqué à l'annulation » | Jeton d'appel Ed25519 vérifié par le module cible. L'executor et le worker n'en détiennent aucun ; un module sous srt détient seulement celui de son appel en cours | T-21, §4.4 |
@@ -129,10 +142,10 @@ Tout s'est exécuté sur macOS 27 (`arm64`, Node 26.11.1, srt 0.0.81, MCP SDK 1.
     réseau : AUCUN ; client MCP sur stdin/stdout ; aucun secret, aucun jeton
  srt --settings module-<nom>.srt.json -- node module.js   (1 par module data|workflow)
     memory-recall, code-index, verify, manifest-registry, plugins, Structurer, Judge
-    serveur MCP sur stdin/stdout ; réseau : gateway par le proxy srt, rien d'autre
+    serveur MCP sur stdin/stdout ; egress : aucun ; accès interne : gateway par le proxy srt, rien d'autre
  srt --settings scout.srt.json -- env -u NO_PROXY -u no_proxy node worker.js (1 par task)
     query(), handlers minces, binaire Claude Code enfant ; client MCP sur stdin/stdout
-    réseau : broker de CETTE task seul ; aucune clé ; lecture : "." ; ./repo en lecture seule
+    egress : aucun ; accès interne : broker de CETTE task seul ; aucune clé ; lecture : "." ; ./repo en lecture seule
  srt --settings builder.srt.json …           écriture : copie de travail jetable "."
  srt --settings zetetic-reviewer.srt.json …  lecture de ./repo et du diff ; écriture "."
  srt --settings web-scout.srt.json -- node web-scout.js   décidée (propriétaire, 2026-10-30, O-27)
@@ -176,7 +189,7 @@ await client.connect(new StdioServerTransport());
 
 Les trois messages JSON lines disparaissent : `start` devient le tool `task_input`, `call` devient `tools/call`, `output` devient `task_complete`. Ces tools vivent sur les tubes de l'enfant, jamais dans le catalogue du client. Résultats : 1 000 allers-retours en 45 ms sous srt contre 38 ms sans, charge de 8 Mio passée, deux tasks concurrentes sans mélange, `tools/list` limité au profil, tool hors profil refusé. Un `_meta.task` forgé par l'enfant est ignoré, la gateway ne lit que la fermeture [E-03]. Un enfant hostile qui écrit du faux JSON ou une ligne de 11 Mio produit une erreur de transport, l'hôte reste vivant [E-03]. Le sens standard (hôte client, enfant serveur) marche aussi [E-01] et sert aux modules, qui exposent des tools ; il ne permet pas à l'enfant d'appeler des tools : MCP ne prévoit de requêtes serveur vers client que pour l'échantillonnage, l'élicitation et les racines. D'où le sens inversé pour l'executor et le worker, et le rappel de la gateway par le proxy srt pour un module (T-38).
 
-**Agents, même patron.** Le worker entier est l'enfant : `query()`, ses handlers et le binaire Claude Code que le SDK lance tournent dans la sandbox. Il est client MCP de la gateway sur ses stdin/stdout, le SDK garde ses propres tubes vers le binaire. Chaque handler de `createSdkMcpServer` ne fait que relayer vers la gateway. E-04 et E-05 prouvent le SDK, le binaire et le broker sous srt, E-02 prouve le transport ; leur réunion dans une seule sandbox n'a jamais tourné : [À PROUVER: T-41, banc, 1b.0].
+**Agents, même patron.** Le worker entier est l'enfant : `query()`, ses handlers et le binaire Claude Code que le SDK lance tournent dans la sandbox. Il est client MCP de la gateway sur ses stdin/stdout, le SDK garde ses propres tubes vers le binaire. Chaque handler de `createSdkMcpServer` ne fait que relayer vers la gateway. E-04 et E-05 prouvent le SDK, le binaire et le broker sous srt, E-02 prouve le transport ; leur réunion dans une seule sandbox a tourné au banc 1b.0 sur Linux et macOS, avec un faux amont et une seule couche srt (T-41a à T-41d, §19.1). Limites : aucun appel réel à Anthropic (T-04R reste à jouer en 1b) ; T-41 a utilisé `allowedDomains: ["127.0.0.1:<port>"]` vers le broker du banc, pas l'autorisation de task, donc il ne prouve rien du mécanisme de T-42.
 
 ```ts
 // worker.ts, sous srt : aucun secret, aucun canal hors stdio et le broker
@@ -206,50 +219,83 @@ Chaque appel relayé par la gateway porte un jeton Ed25519 signé pour cet appel
 
 ### 4.5 Budgets
 
-Chaque requête vers le modèle, et chaque appel budgété, passe par une **réservation identifiée, idempotente et persistée avant le premier octet transmis**. Si `data` est injoignable, le broker refuse : pas de réservation, pas d'envoi. Opérations typées de `data`, en fichiers `.sql` (`CLAUDE.md` : SQL seulement dans `data/`), identifiant `reservation_id` choisi par l'appelant :
+Chaque requête vers le modèle, et chaque appel budgété, passe par une **réservation identifiée, idempotente et persistée avant le premier octet transmis**, dans **une seule transaction** qui verrouille d'abord la task, crée la réservation, change l'état une fois et actualise le budget. Si `data` est injoignable, le broker refuse : pas de réservation, pas d'envoi. Opérations typées de `data`, en fichiers `.sql` (`CLAUDE.md` : SQL seulement dans `data/`), identifiant `reservation_id` choisi par l'appelant :
 
 | État | Sens | Effet sur le disponible | Transitions |
 |---|---|---|---|
 | `reserved` | Persistée, envoi possible | Montant retenu | `observed`, `unknown`, `settled` (`not_sent` seulement) |
-| `observed` | `usage` lu dans la réponse complète | Montant observé retenu | `settled`, `settled_admin` |
+| `observed` | `usage` lu dans la réponse complète | Montant réservé retenu ; l'`usage` lu est consigné et appliqué au règlement | `settled`, `settled_admin` |
 | `unknown` | Interruption : broker mort, flux coupé, réponse sans `usage` | **Montant réservé retenu, jamais libéré** | `settled`, `settled_admin` |
 | `settled` | Réconciliation définitive, source `usage`, `invoice` ou `not_sent` | Coût final | Terminal |
 | `settled_admin` | Réconciliation administrative, avec auteur et motif | Coût décidé | Terminal |
 
-- **Idempotence** : rejouer `budget.reserve` avec le même `reservation_id` renvoie la ligne existante, ne réserve rien de plus.
-- **`not_sent`** : seul le broker peut l'écrire, et seulement s'il prouve qu'aucun octet n'a quitté le processus. Tout autre doute donne `unknown`.
+- **Idempotence** : rejouer `budget.reserve` avec le même `reservation_id` renvoie la ligne existante et ne retient rien de plus, **y compris en parallèle**. Ce n'est pas un `NOT EXISTS` qui le garantit (il lit un instantané), c'est le verrou de la ligne de budget de la task, pris avant toute lecture, puis l'`INSERT … ON CONFLICT DO NOTHING` sur l'identifiant.
+- **Règlement unique** : `budget.settle` est identifié par `reservation_id`. La task et le montant retenu viennent de la **ligne persistée**, jamais des paramètres de réconciliation (qui ne fournissent que la source, le coût réel, et pour `settled_admin` l'auteur et le motif). La transition d'état se fait **une seule fois**, dans la même instruction que l'actualisation du budget ; un rejeu ne trouve plus de transition permise et ne débite rien.
+- **`not_sent`** : seul le broker peut l'écrire, et seulement s'il prouve qu'aucun octet n'a quitté le processus. Tout autre doute donne `unknown`. Une migration impose `settled_cost = 0` quand la source est `not_sent`.
 - **Reprise** : au démarrage du broker, chaque `reserved` encore ouverte passe `unknown`.
 - **Autorité** : une `unknown` se règle sur l'API Usage and Cost ou la Console, sinon par décision administrative. Aucune tâche de fond ne l'efface pour libérer le budget.
 - **Facture supérieure à la réservation** : `spent` enregistre le montant réel, même au-delà du plafond. La tâche passe `overdrawn`, toute nouvelle réservation est refusée, et `BUDGET_OVERRUN` entre au registre. Le dépassement n'est ni absorbé ni tronqué : il attend une décision administrative.
 
+SQL exact, une transaction par opération, `READ COMMITTED` (chaque instruction voit les écritures déjà validées une fois le verrou obtenu). **Non prouvé : ce SQL n'a jamais tourné, jusqu'à T-45.**
+
 ```sql
--- budget.reserve : ne retient le montant qu'une fois, une ligne si et seulement si la réservation existe
-WITH held AS (
-  UPDATE platform.budgets SET reserved = reserved + $3
-   WHERE task = $1 AND NOT overdrawn AND reserved + spent + $3 <= cap
-     AND NOT EXISTS (SELECT 1 FROM platform.budget_reservations WHERE id = $2)
-   RETURNING 1)
-INSERT INTO platform.budget_reservations (id, task, amount, state)
-SELECT $2, $1, $3, 'reserved' FROM held ON CONFLICT (id) DO NOTHING;
-SELECT state FROM platform.budget_reservations WHERE id = $2;
--- budget.settle : amount retiré de reserved, coût réel ajouté à spent, overdrawn si spent dépasse cap
-UPDATE platform.budgets SET reserved = reserved - $2, spent = spent + $3, overdrawn = spent + $3 > cap WHERE task = $1;
+-- budget.reserve($1 task, $2 reservation_id, $3 amount)
+BEGIN;
+-- 1. verrou de la ligne de budget : sérialise toute réservation et tout règlement de cette task
+SELECT cap FROM platform.budgets WHERE task = $1 FOR UPDATE;
+-- 2. création unique de la réservation, seulement si le plafond tient ; un identifiant déjà présent ne crée rien
+--    3. le budget n'est actualisé que pour une ligne réellement insérée, dans la même instruction
+WITH ins AS (
+  INSERT INTO platform.budget_reservations (id, task, amount, state)
+  SELECT $2, b.task, $3, 'reserved'
+    FROM platform.budgets b
+   WHERE b.task = $1 AND NOT b.overdrawn AND b.reserved + b.spent + $3 <= b.cap
+  ON CONFLICT (id) DO NOTHING
+  RETURNING task, amount)
+UPDATE platform.budgets b SET reserved = b.reserved + ins.amount FROM ins WHERE b.task = ins.task;
+-- 4. résultat : la ligne persistée, nouvelle ou existante ; zéro ligne = refus (plafond, task inconnue)
+SELECT id, task, amount, state FROM platform.budget_reservations WHERE id = $2;
+COMMIT;
+-- l'appelant compare task et amount à sa demande : une ligne existante qui diffère donne RESERVATION_CONFLICT
+
+-- budget.settle($1 reservation_id, $2 source, $3 coût réel, $4 auteur, $5 motif)
+-- task et montant retenu viennent de la ligne persistée ; aucun paramètre ne les fournit
+BEGIN;
+WITH tr AS (
+  UPDATE platform.budget_reservations r
+     SET state = CASE WHEN $2 = 'admin' THEN 'settled_admin' ELSE 'settled' END,
+         settled_source = $2, settled_cost = $3, settled_by = $4, settled_reason = $5
+   WHERE r.id = $1
+     AND EXISTS (SELECT 1 FROM platform.budget_transitions x
+                  WHERE x.from_state = r.state AND x.source = $2)
+  RETURNING r.task, r.amount)
+UPDATE platform.budgets b
+   SET reserved = b.reserved - tr.amount,
+       spent = b.spent + $3,
+       overdrawn = b.overdrawn OR b.spent + $3 > b.cap
+  FROM tr WHERE b.task = tr.task
+RETURNING b.task, b.reserved, b.spent, b.overdrawn;
+COMMIT;
+-- zéro ligne rendue : règlement déjà fait ou transition interdite, rien n'a été débité ;
+-- l'appelant lit la ligne : même source et même coût = rejeu accepté, sinon RESERVATION_CONFLICT
 ```
 
-La transition d'état est contrainte en migration (`data/migrations`), chaque changement écrit une ligne append-only, et l'ancien `CHECK (reserved + spent <= cap)` disparaît : il rendrait une facture réelle impossible à enregistrer. Le plafond est tenu à la réservation. T-20, Postgres réel, garde sa valeur pour l'atomicité : 300 réservations parallèles de 10 sur un plafond de 1 000 donnent exactement 100 acceptées ; après réconciliation à un coût réel de 7, 30 nouvelles passent. États, idempotence et reprise : [À PROUVER: T-45, Gherkin, brique 1b]. Facture supérieure : [À PROUVER: T-46, Gherkin, brique 1b]. Le broker réserve avant de transmettre et réconcilie à partir de `usage` ; `maxBudgetUsd` et `maxTurns` restent en second rempart. `total_cost_usd` est une estimation côté client, l'autorité étant l'API Usage and Cost ou la Console [V: https://code.claude.com/docs/en/agent-sdk/cost-tracking] : la facturation ne s'appuie jamais dessus.
+`platform.budget_transitions (from_state, source)` est une table de migration : `(reserved, not_sent)`, `(observed, usage)`, `(observed, invoice)`, `(unknown, usage)`, `(unknown, invoice)`, `(observed, admin)`, `(unknown, admin)`. Elle est l'unique endroit où la table des états ci-dessus est écrite. `budget.observe` et `budget.mark_unknown` sont des `UPDATE` gardés de la même forme, sans toucher à `budgets` : le montant retenu reste celui de la réservation jusqu'au règlement, et l'`usage` lu est consigné sur la ligne.
+
+Une migration (`data/migrations`) contraint les états et les colonnes, chaque changement écrit une ligne append-only, `settled_by` et `settled_reason` sont obligatoires pour `settled_admin`, et l'ancien `CHECK (reserved + spent <= cap)` disparaît : il rendrait une facture réelle impossible à enregistrer. Le plafond est tenu à la réservation. **T-20 a mesuré l'ancien SQL** (Postgres réel, 300 réservations parallèles de 10 sur un plafond de 1 000 : exactement 100 acceptées ; après réconciliation à un coût réel de 7, 30 nouvelles passent) : ce résultat **ne vaut pas pour le SQL ci-dessus, T-20 est à rejouer dessus**. Il ne couvrait ni le rejeu concurrent d'un même `reservation_id`, ni le règlement rejoué. **T-45, banc sur Postgres réel en 1b.0 puis scénario Gherkin en 1b.3, couvre ensemble** : N `budget.reserve` simultanés au même identifiant (le budget n'est retenu qu'une fois), N `budget.settle` simultanés de la même réservation (un seul débit), des réservations distinctes sous plafond (T-20 rejoué), l'absence d'interblocage entre `reserve` (verrou du budget, puis insertion) et `settle` (verrou de la réservation, puis du budget), et le **témoin** : l'ancien SQL doit échouer ces deux premiers cas, sinon le test ne prouve rien. Reprise, états : [À PROUVER: T-45]. Facture supérieure : [À PROUVER: T-46, Gherkin, brique 1b]. Le broker réserve avant de transmettre et réconcilie à partir de `usage` ; `maxBudgetUsd` et `maxTurns` restent en second rempart. `total_cost_usd` est une estimation côté client, l'autorité étant l'API Usage and Cost ou la Console [V: https://code.claude.com/docs/en/agent-sdk/cost-tracking] : la facturation ne s'appuie jamais dessus.
 
 ### 4.6 Ce que `platformd` détenait, et où cela va
 
 | Fonction | Devient | Preuve |
 |---|---|---|
 | Clé Anthropic | `broker`, seul détenteur ; `platformd` n'existe plus | E-05, T-23 |
-| Relais des appels | La gateway : serveur MCP de chaque enfant, client MCP de chaque module, politique dans le même processus. Un relais unique, celui du point de politique | E-02, E-01 ; [À PROUVER: T-38, banc, 1b.0] |
+| Relais des appels | La gateway : serveur MCP de chaque enfant, client MCP de chaque module, politique dans le même processus. Un relais unique, celui du point de politique | E-02, E-01 ; [V: T-38, banc 1b.0, §19.1] |
 | Lancement de srt | Port `SandboxRunner`, adaptateur srt dans `packages/sandbox`, appelé par la seule gateway (§4.8) | T-06 ; [À PROUVER: T-47, Gherkin, brique 1b] |
 | Socket de contrôle | Supprimée | sans objet, plus rien à contrôler |
 | `topology/processes.yaml` | `topology/modules.mcp.json`, format Claude Code | [V: mcp.md] ; lecture par la gateway [À PROUVER: T-29, Gherkin, brique 1b] |
-| Quotas par tâche | Budgets §4.5 | T-20 |
-| Concurrence globale | Même mécanisme que les budgets : `capacity.acquire` avec expiration, `capacity.release` | Mécanisme T-20 ; [À PROUVER: T-27, Gherkin, brique 1b] |
-| Terminaison | `detached: true`, `kill(-pgid)`, contrôle `pgrep -g`, puis `SIGKILL` ; erreur nommée `WORKER_TIMEOUT` | T-06, résidu macOS T-06b |
+| Quotas par tâche | Budgets §4.5 | T-20 (ancien SQL, à rejouer) ; T-45 |
+| Concurrence globale | Même mécanisme que les budgets : `capacity.acquire` avec expiration, `capacity.release` | Mécanisme de §4.5 (T-45) ; [À PROUVER: T-27, Gherkin, brique 1b] |
+| Terminaison | `detached: true`, `kill(-pgid)`, contrôle `pgrep -g`, puis `SIGKILL` ; erreur nommée `WORKER_TIMEOUT` | T-06 : sur les deux OS, tuer le groupe ne laisse aucun descendant (T-06-g) ; tuer `srt` seul en laisse (SIGKILL : 10 sur 11 sous Linux, 2 sur 3 sous macOS ; SIGTERM : 0 et 1), donc l'adaptateur tue toujours le groupe. Résidu macOS T-06b |
 | Redémarrage | Tableau ci-dessous | [À PROUVER: T-30, Gherkin, brique 1b] |
 | Isolement des pannes | Un enfant par task : la mort de l'un ne touche pas les autres | E-06 |
 
@@ -267,17 +313,17 @@ Toute ligne absente de ce tableau n'a pas le droit de s'exécuter. Un écart est
 | Traitement | Lieu | v3 | Code exécuté ou contenu non fiable | Preuve |
 |---|---|---|---|---|
 | Code soumis à `execute` | **srt**, réseau nul | Conteneur | Exécute le code écrit par le modèle | E-02, I-2 |
-| Boucle `query()` et handlers minces | **srt**, dans le worker | Conteneur | Sortie de modèle, arguments d'outil | [À PROUVER: T-41, banc, 1b.0] |
+| Boucle `query()` et handlers minces | **srt**, dans le worker | Conteneur | Sortie de modèle, arguments d'outil | [V: T-41, banc 1b.0, §19.1] |
 | Binaire Claude Code | **srt**, enfant du worker | Conteneur | Tools, dépôt, diff | E-04 ; T-41 |
 | Tasks scout, builder, zetetic-reviewer | **srt**, un worker par task | Conteneur | Dépôt, code du builder, diff de PR | T-41 |
-| Modules data et workflow, plugins compris : memory-recall, memory-write, memory-consolidate, code-index, verify, spec-lint, manifest-registry | **srt**, un processus par module | Conteneur | Dépôt (tree-sitter), mémoire, sorties de code, code de plugin | E-01 ; [À PROUVER: T-38, banc, 1b.0] |
+| Modules data et workflow, plugins compris : memory-recall, memory-write, memory-consolidate, code-index, verify, spec-lint, manifest-registry | **srt**, un processus par module | Conteneur | Dépôt (tree-sitter), mémoire, sorties de code, code de plugin | E-01 ; [V: T-38, banc 1b.0, §19.1] |
 | Agents de module : codebase-ask, spec-draft, remember jusqu'à la brique 4 | **srt**, worker par task | Conteneur | Comme les tasks | T-41 |
 | Structurer, Judge, Embedder | **srt**, modules workflow ; Judge distant : allowlist du manifeste | Conteneur | Contenu à structurer ou reclasser | Brique 8 ; Embedder désactivé par défaut |
 | web-scout (O-27) | **srt**, sans modèle | Conteneur | Web hostile, sortie en quarantaine | Brique 8 |
 | db-migrator (O-28) | **srt**, sans modèle, Postgres jetable dans la sandbox | Conteneur | SQL de plugin | [À PROUVER: T-49, Gherkin, brique 4] |
 | Copie jetable `./repo` | **srt**, profil `repo-prepare` | Conteneur | Dépôt cloné | T-38 |
-| **gateway, exception** | **Natif** | Conteneur | Enveloppes MCP, résultats comptés et bornés, jamais interprétés (§4.8) | T-07 : `listen` refusé ; T-03f : `allowLocalBinding` ouvre tout le loopback ; §11.7 |
-| **broker, exception** | **Natif** | Absent | Corps de requête et de réponse, retrait de la clé, lecture de `usage` | Même refus d'écoute T-07 ; détenteur de la clé, E-05, T-23 |
+| **gateway, exception** | **Natif** | Conteneur | Enveloppes MCP, résultats comptés et bornés, jamais interprétés (§4.8) | T-07 : `listen` refusé sur macOS, mais fd 0 utilisable sous Linux (T-07-fd0), d'où l'obligation de l'adaptateur (§4.8) ; T-39b ; T-03f : `allowLocalBinding` ouvre tout le loopback sur macOS ; §11.7 |
+| **broker, exception** | **Natif** | Absent | Corps de requête et de réponse, retrait de la clé, lecture de `usage` | Mêmes raisons (T-07, T-39b) ; détenteur de la clé, E-05, T-23 |
 | **data, exception** | **Natif** | Absent | Paramètres typés, SQL fixe | Socket Unix Postgres : sous Linux `allowUnixSockets` est ignoré [V: README srt, « Unix Socket Settings »], et `allowAllUnixSockets` est interdit par schéma (§11.3). `pg` ne passe pas par le proxy. E-09 ne vaut que sur macOS |
 | **Postgres 17, exception** | **Natif** | Conteneur | Requêtes de `data` | D-5, mêmes raisons que `data` |
 
@@ -297,9 +343,10 @@ interface SandboxRunner {
 Comment ce code ignore le contenu non fiable :
 
 1. **Par la signature.** Aucun paramètre ne peut recevoir un script, un prompt, un argument d'outil ou une sortie de modèle. Le contenu arrive plus tard, sur stdin, quand l'enfant appelle `task_input`.
-2. **Par l'argv.** `command` et `args` viennent du profil statique, `cwd` = `~/.architect-os/tasks/<TaskId>/`, l'environnement est une liste fermée. Aucun shell, aucune interpolation.
+2. **Par l'argv.** `command` et `args` viennent du profil statique, `cwd` = `~/.architect-os/tasks/<TaskId>/`, l'environnement est une liste fermée, où figure `CLAUDE_CODE_TMPDIR` : un dossier temporaire créé par l'hôte pour cette seule sandbox (§9.2). Aucun shell, aucune interpolation.
 3. **Par l'absence de lecture.** L'adaptateur renvoie des flux qu'il ne lit pas. Il ne contient ni parseur JSON ni import du SDK MCP. Il observe seulement le code de sortie et l'arbre de processus (`detached`, `kill(-pgid)`, contrôle `pgrep -g`, puis `SIGKILL`).
 4. **Par la garde d'architecture.** `child_process` et `@anthropic-ai/sandbox-runtime` ne s'importent que dans cet adaptateur, le port ne s'importe que dans `gateway/src/infrastructure`, le scénario échoue sinon.
+5. **Par les descripteurs (obligation de l'hôte).** fd 0 à 2 de l'enfant sont uniquement des tubes que l'adaptateur crée ; il n'hérite d'aucun socket, notamment en fd 0. Le banc a montré que srt ne l'impose pas sous Linux (T-07-fd0 : une sandbox a servi un client depuis un socket d'écoute reçu en fd 0). **La contre-mesure n'est pas encore testée** ; le test est à écrire en 1b.1.
 
 La gateway, elle, lit le contenu qu'elle relaie. Elle s'en tient aux enveloppes : validation de schéma, `calls_allowed`, compte des tokens, résumé déterministe avec handle. Elle ne fait aucun `eval`, aucun accès fichier ni requête construits depuis un argument. Une compromission de la gateway reste totale, elle détient déjà la clé de signature : c'est le résidu écrit au §11.1, et la raison de garder son code court. Sur serveur, `--permission` doit être compatible avec ce lancement (§11.7). Preuves : [À PROUVER: T-47, Gherkin, brique 1b], enfant hostile [À PROUVER: T-40, Gherkin, brique 1b].
 
@@ -346,7 +393,7 @@ Preuve : [À PROUVER: T-51, Gherkin, briques 1b et 5] : argument bien typé mais
 
 **Déclenchement.** Le repli s'ouvre si l'un de ces faits est établi, et le propriétaire décide :
 
-1. T-41 échoue pour une raison structurelle sur un OS ciblé.
+1. T-41 échoue pour une raison structurelle sur un OS ciblé. **État au 30 octobre 2026 : non déclenché.** T-41 passe sur Linux et macOS avec un faux amont et une seule couche srt (§19.1) ; O-30 est sans objet. Limite : aucun appel réel à Anthropic, T-04R reste à jouer en 1b.
 2. Un test d'évasion réussit (fichiers, réseau, secrets, autre session), et srt ne peut pas le corriger.
 3. Une montée de version de srt casse une propriété prouvée, ce que détecte le banc rejoué à chaque montée de version [À PROUVER: T-54, `npm run bench:sandbox`, brique 1b].
 
@@ -593,27 +640,29 @@ Champs reconnus et clés inconnues ignorées [V: sub-agents#frontmatter-referenc
 ```json
 {
   "network": { "allowedDomains": [], "deniedDomains": [], "strictAllowlist": true },
-  "filesystem": { "denyRead": ["~"], "allowRead": ["."], "allowWrite": ["."], "denyWrite": ["./repo"] }
+  "filesystem": { "denyRead": ["~"], "allowRead": ["."], "allowWrite": ["."],
+                  "denyWrite": ["./repo", ".git/hooks", ".git/config", ".mcp.json", ".claude"] }
 }
 ```
 
 Faits établis :
 
 - **Clés inconnues tolérées** : `strictAllowlistt` passe sans erreur, donc un schéma zod strict du dépôt, en scénario Gherkin, est obligatoire. Fichier absent ou type invalide : srt refuse de démarrer [T-01].
-- `denyRead: ["~"]` masque le home, Node démarre, `allowRead` rouvre `.` et `~/inst`, un `denyRead` plus spécifique reste refusé, un chemin relatif `../x` est accepté [T-02].
+- `denyRead: ["~"]` masque le home, Node démarre, `allowRead` rouvre `.` et `~/inst`, un `denyRead` plus spécifique reste refusé, un chemin relatif `../x` est accepté [T-02]. **Le refus n'a pas la même forme selon l'OS** : macOS répond `EPERM`, Linux monte un `tmpfs` à la place de `~` (`ENOENT` sur `~/.ssh`, liste de `~` = le seul dossier de travail, écritures éphémères) [T-38, T-41c, banc 1b.0]. Les assertions portent donc sur « rien de sensible visible, rien de persisté sur l'hôte » (T-02b, T-02d2, T-02e*), jamais sur un code d'erreur précis.
 - Tâche = répertoire jetable sous `~/.architect-os/tasks/<id>/`, `cwd` de la sandbox. Le home étant refusé, l'état de la plateforme et les autres tasks le sont aussi. `./repo` est une copie jetable, faite elle-même sous srt (profil `repo-prepare`) depuis une source déclarée par le profil client, donc aucun chemin variable, aucun gabarit.
 - L'adaptateur ajoute au profil validé la seule valeur dynamique, le port du broker, et écrit le résultat **hors** de `allowWrite`. Il passe toujours `--settings` : sans lui, le runtime démarre sur ses réglages par défaut [V: https://code.claude.com/docs/en/sandbox-environments#what-the-runtime-blocks-on-its-own].
 - srt doit être installé hors de tout chemin inscriptible : une copie dans un `node_modules` inscriptible serait réécrite puis exécutée sans sandbox [V: README srt, « Where This Package Is Installed »]. Scénario d'évasion dédié.
-- Écritures refusées même dans `.` : `.git/hooks`, `.mcp.json`, `.claude/agents` [T-02e].
+- **Chemins protégés : règle de profil.** Les chemins sensibles (`.git/hooks`, `.git/config`, `.mcp.json`, `.claude`, à la racine de la copie **et** dans un dépôt imbriqué `repo/.git/…`) sont **nommés en `denyWrite`**, chacun en chemin littéral, jamais laissés à la protection automatique de srt. Sous Linux, srt ne protège que ce qui existe au lancement : **T-02e et T-02e2 ont échoué** au banc (une sandbox a écrit `.git/hooks/pre-commit` et `repo/.git/config`, qui **persistent sur l'hôte**, où un `git` exécuté hors sandbox les lira ou les exécutera). T-02e3 (dépôt présent à la racine au lancement) tient. **T-02e4, avec `denyWrite` explicite, passe sur les deux OS** (Linux : `ENOENT`, `EROFS`, `EACCES` ; macOS : `EPERM` ; rien ne persiste). La règle s'applique au profil builder et à **tout profil qui écrit** (executor, modules, scout, zetetic-reviewer, agent-worker, repo-prepare, web-scout, db-migrator, gate-tests). L'adaptateur écrit ces chemins en absolus sous le `cwd` de la task, comme T-02e4. Le schéma strict du profil refuse un profil avec écriture dépourvu de ces `denyWrite`. À faire en 1b.1, avec son scénario ; le banc ne teste que la forme absolue.
+- **Dossier temporaire par sandbox.** srt fixe `TMPDIR=/tmp/claude` dans la sandbox sans le créer ; `tsx` (Linux : `ENOENT` sur `mkdir /tmp/claude/tsx-1001`) et le binaire Claude Code (macOS : `EPERM` sur `mkdir /tmp/claude-501`, absent du runner et présent sur le poste, d'où un faux vert local) y font un `mkdir` non récursif. L'adaptateur crée donc **un dossier temporaire par sandbox**, le passe par `CLAUDE_CODE_TMPDIR` et l'ajoute à `allowWrite`. Le banc ne les nettoie pas ; l'adaptateur doit les retirer à l'arrêt (test à écrire en 1b.1).
 
-Sous Linux : `allowWrite` et `denyWrite` n'acceptent que des chemins littéraux, et un `denyRead` ne masque que ce qui existe à l'emballage [V: README, « Path Syntax (Linux) »]. D'où [À PROUVER: T-02L, `gate-linux`, brique 1b].
+Sous Linux : `allowWrite` et `denyWrite` n'acceptent que des chemins littéraux, et un `denyRead` ne masque que ce qui existe à l'emballage [V: README, « Path Syntax (Linux) »]. D'où T-02L, joué au banc 1b.0 : T-02e et T-02e2 en échec, T-02e4 en correctif (ci-dessus) ; rejoué par `gate-linux`, brique 1b.
 
 | Profil | Réseau | Lecture | Écriture | Modèle |
 |---|---|---|---|---|
 | executor | aucun | `.`, dist de l'executor | `.` (session) | aucun |
 | module-`<nom>` (data, workflow, plugin) | gateway `127.0.0.1:8080` par le proxy srt | `.`, dist du module, ressources du manifeste | `.` | aucun, sauf Structurer et Judge selon manifeste |
 | scout | broker de la task | `.`, `./repo` | `.` sauf `./repo` | sonnet |
-| builder | broker de la task | `.` | copie jetable `.`, sans `node_modules` inscriptible | sonnet |
+| builder | broker de la task | `.` | copie jetable `.`, sans `node_modules` inscriptible ; `denyWrite` nommés des chemins protégés (T-02e4) | sonnet |
 | zetetic-reviewer | broker de la task | `.`, `./repo`, diff | `.` sauf `./repo` | opus |
 | agent-worker | broker de la task | `.` | `.` | selon manifeste |
 | repo-prepare | aucun | source déclarée par le profil client | `.` | aucun |
@@ -621,7 +670,17 @@ Sous Linux : `allowWrite` et `denyWrite` n'acceptent que des chemins littéraux,
 | db-migrator (O-28) | aucun ; Postgres jetable dans la sandbox | `.`, migrations du plugin | `.` | aucun |
 | gate-tests (CI) | aucun vers l'extérieur ; Postgres de test et serveur interne de Stryker dans la sandbox (C-17) | merge, `node_modules` | merge, `reports/` | aucun |
 
-Dépendances hôte Linux : `bubblewrap`, `socat`, `ripgrep`. Ubuntu 24.04 : `kernel.apparmor_restrict_unprivileged_userns=0` ou profil AppArmor dédié [V: README] ; `claude-code-action` pose ce sysctl lui-même [V: `action.yml`]. Appelant non root recommandé [V: README, « Running as root »].
+La colonne « Réseau » nomme l'accès **interne** (gateway, broker) ; elle ne dit rien de l'`egress` du manifeste, qui ne désigne que la sortie externe (§10).
+
+**Exigences d'hôte, établies par le banc 1b.0** :
+
+| OS | Exigences | Remarque |
+|---|---|---|
+| Linux (`ubuntu-24.04`, bubblewrap 0.9.0) | `bubblewrap`, `socat`, `ripgrep`, et `kernel.apparmor_restrict_unprivileged_userns=0` | Ce sysctl est **global** : il lève, pour tous les processus de l'hôte, la restriction des espaces de noms utilisateur non privilégiés, donc il affaiblit une protection de l'hôte. À porter dans le STRIDE (§11.3), la brique D et la décision ouverte O-31. `claude-code-action` le pose lui-même [V: `action.yml`]. Alternative documentée : profil AppArmor dédié [V: README], non testée ici |
+| macOS | `sandbox-exec` (`/usr/bin/sandbox-exec`) | Aucun paquet. `ripgrep` était absent du runner et les tests ont passé : il n'est pas exigé sur macOS |
+| Les deux | Un dossier temporaire par sandbox (`CLAUDE_CODE_TMPDIR` et `allowWrite`) | Voir ci-dessus |
+
+Appelant non root recommandé [V: README, « Running as root »].
 
 ## 10. Manifeste de module
 
@@ -630,7 +689,7 @@ name: memory-recall
 version: 1.2.0
 domain: memory
 owner: cortex
-transport: stdio             # toujours ; http refusé par schéma tant que T-39 n'a pas tourné
+transport: stdio             # toujours ; http refusé par schéma (T-39b : impossible sous srt)
 tools:
   - name: recall
     description: Rappel typé, filtré en SQL, rerank par Judge
@@ -644,11 +703,11 @@ tools:
     validator: schema        # schema | verify | spec-lint | citations | none
 sandboxes:
   - profile: module-memory-recall   # module data|workflow : un processus srt permanent
-    egress: [gateway]
+    internal_access: [gateway]      # accès interne : 127.0.0.1:8080 par le proxy srt ; ce n'est pas un egress
+    egress: none                    # sortie externe : aucune, appliquée par le profil
 writes_tables: []
 reads_domains: [memory]
 calls_allowed: [judge]
-egress: none                 # rien au-delà de la gateway, appliqué par le profil
 model_min: none
 ```
 
@@ -665,7 +724,8 @@ tools:
     validator: citations
 sandboxes:
   - profile: scout            # agents/scout.md + sandboxes/profiles/scout.srt.json
-    egress: [broker]
+    internal_access: [broker]   # le broker de CETTE task ; le worker parle à la gateway en stdio, sans réseau
+    egress: none                # sortie externe : aucune
     model_min: sonnet
     budget_tokens: 40000
     timeout_ms: 120000
@@ -675,7 +735,7 @@ reads_domains: [code, memory]
 calls_allowed: [code-index, memory-recall]
 ```
 
-`annotations` : `readOnlyHint` autorise le parallélisme, `idempotentHint` une relance HTTP [V: mcp#mark-tools-that-are-safe-to-call-twice]. `response_format` et pagination suivent « Writing effective tools » (§16). Règles, chacune un scénario Gherkin : tout tool a une sandbox, aucun manifeste ne peut déclarer un processus natif ; tool `data`/`workflow` ⇒ un profil de module sans broker, permanent, ou un profil à la demande sans modèle (web-scout, db-migrator) ; tool `agent` ⇒ un worker par task ; `writes_tables` disjoints ; `calls_allowed` acyclique ; `egress` du manifeste égal au réseau du profil ; `egress` ≠ `none` ⇒ quarantaine ; un tool `agent` déclaré `stable: true` est refusé (D-4). Le changement de `kind` de `memory-recall` de `data` à `workflow` relève de D-4 et C-5.
+`annotations` : `readOnlyHint` autorise le parallélisme, `idempotentHint` une relance HTTP [V: mcp#mark-tools-that-are-safe-to-call-twice]. `response_format` et pagination suivent « Writing effective tools » (§16). Règles, chacune un scénario Gherkin : tout tool a une sandbox, aucun manifeste ne peut déclarer un processus natif ; tool `data`/`workflow` ⇒ un profil de module sans broker, permanent, ou un profil à la demande sans modèle (web-scout, db-migrator) ; tool `agent` ⇒ un worker par task ; `writes_tables` disjoints ; `calls_allowed` acyclique ; **`egress` ne désigne que la sortie externe** (`none` ou une allowlist de domaines) et égale les domaines externes de `network.allowedDomains` du profil ; **`internal_access`** désigne l'accès interne, énumération fermée `gateway` | `broker`, et égale les entrées de loopback du profil (gateway `127.0.0.1:8080`, port du broker de la task) ; une valeur hors énumération, ou un accès interne absent du manifeste mais présent dans le profil, est refusé ; `egress` ≠ `none` ⇒ quarantaine, **`internal_access` seul n'impose aucune quarantaine** (communication MCP interne, bornée par le jeton d'appel et le DAG) ; un tool `agent` déclaré `stable: true` est refusé (D-4). Le changement de `kind` de `memory-recall` de `data` à `workflow` relève de D-4 et C-5. Aucun fichier de schéma de manifeste n'existe encore dans le dépôt : le champ `internal_access` et son énumération sont fixés ici et entrent dans le schéma zod de `packages/contracts` avec le chargeur de manifeste (1b.4) [À PROUVER: scénario Gherkin, 1b.4].
 
 ## 11. Sécurité : modèle de confiance, STRIDE, invariants
 
@@ -689,11 +749,11 @@ Résidus assumés sous ce modèle :
 
 | Résidu | Fait | Fermeture |
 |---|---|---|
-| macOS : un enfant `setsid` survit à la mise à mort du groupe, garde son profil Seatbelt et devient orphelin (PPID 1) | T-06b | Linux : espace PID de bubblewrap, [À PROUVER: T-06L, `gate-linux`, brique 1b]. macOS : aucune, poste de développement seulement |
+| macOS : un enfant `setsid` survit à la mise à mort du groupe, garde son profil Seatbelt et devient orphelin (PPID 1) | T-06b | Linux : espace PID de bubblewrap, **fait au banc 1b.0 : 0 survivant** (T-06b), à rejouer par `gate-linux`, brique 1b. macOS : survivant constaté (`après kill du groupe : 1`), aucune fermeture, poste de développement seulement |
 | macOS : aucune limite mémoire ou PID par sandbox. `ulimit -u` compte par utilisateur, donc inapplicable par task, et le shell est lui-même refusé à 200 | T-09 | Linux : `systemd-run`, [À PROUVER: T-09L, `gate-linux`, brique 1b]. macOS : timeout, budgets |
 | Poste : gateway, broker et data partagent un uid ; modules et workers sont sous srt | T-24 sous Linux ; `ps eww` sur macOS 27 ne montre pas l'environnement mais ne vaut pas frontière | Serveur : utilisateurs dédiés, T-26 |
 | Exfiltration par un domaine autorisé | [V: README, « Security Limitations »] | Sandbox de modèle : seul le broker, `POST /v1/messages` ; le contenu reste un canal vers l'API |
-| Amont qui refléterait l'en-tête `x-api-key` | E-05c | Le broker retire la clé des réponses, §11.2 ; [À PROUVER: T-23b, Gherkin, brique 1b] |
+| Amont qui refléterait l'en-tête `x-api-key` | E-05c | Frontière : le broker n'envoie la clé que dans le seul `x-api-key` vers l'hôte amont fixe (§11.2). Retrait dans les réponses : défense supplémentaire, contournable ; T-23d sur les deux OS ; [À PROUVER: T-23b, Gherkin, brique 1b ; T-04R] |
 | Gateway compromise : compromission totale, elle signe les jetons et lance les sandboxes | §4.8 | Code court, enveloppes seules, enfant hostile T-40. Aucune fermeture sous ce modèle : usage local ou utilisateurs fiables |
 | Autorisation de task lisible par un processus natif du même uid, dans l'environnement du processus srt (mécanisme T-24) | Sous Linux, poste | Valable pour une task, plafonnée par sa réservation, révoquée à la fin. Serveur : utilisateurs dédiés |
 | Un module sous srt détient le jeton de son appel en cours | §4.4 | Audience, capacités et échéance limités à cet appel |
@@ -722,7 +782,8 @@ Autres défauts relevés sur le document précédent : `injectHosts: ["api.anthr
 - **Un listener par task : le port route, il n'identifie pas.** Seul le profil srt de cette task autorise ce port, ce qui sépare les sandboxes entre elles (T-03 : direct refusé, port non listé refusé, port listé accepté). Mais n'importe quel processus natif peut joindre un listener en loopback. L'identité vient donc de l'autorisation de task, ci-dessous.
 - `POST /v1/messages*` seulement ; `/v1/models` et `GET` : 403 ; amont direct et internet : refusés [T-23].
 - L'Agent SDK fonctionne intégralement par ce chemin, outils et sortie structurée compris [E-05].
-- Réflexion : le broker retire la clé des réponses et l'en-tête `content-length`. Le banc a montré que sans ce retrait un amont réfléchissant renvoie la clé (`FUITE`), et qu'un retrait qui garde `content-length` coupe la connexion (`UND_ERR_SOCKET`, pas de fuite) [E-05c]. Implémentation correcte [À PROUVER: T-23b, Gherkin, brique 1b]. Comportement réel de `api.anthropic.com` sur requêtes invalides [À PROUVER: T-04R, banc avec clé, brique 1b].
+- **Garantie.** Le broker ne transmet **jamais ses propres informations d'authentification à l'amont, ni dans le corps ni dans un en-tête non autorisé**. Il construit lui-même la requête amont : la clé réelle est posée dans le seul `x-api-key`, tout en-tête d'authentification venu du client est écarté, le corps est transmis tel quel. Le corps ne peut pas la contenir : la sandbox n'a jamais eu la clé, et une autorisation de task trouvée ailleurs que dans `x-api-key` est refusée (`LEASE_OUT_OF_PLACE`, ci-dessous). C'est cette construction, côté requête, qui est la frontière. Corps sans clé : [T-23, deux OS]. Construction complète, en-têtes compris : [À PROUVER: T-23b, Gherkin, brique 1b].
+- **Retrait dans les réponses : défense supplémentaire, pas frontière principale.** Le broker retire aussi la clé des réponses et l'en-tête `content-length`. Le banc a montré que sans ce retrait un amont réfléchissant renvoie la clé (`FUITE`, témoin T-23d-none), qu'un retrait qui garde `content-length` coupe la connexion (`UND_ERR_SOCKET`, pas de fuite) [E-05c], et que le retrait complet ne laisse rien passer sur les deux OS (T-23d-keep-length, T-23d-full). Mais une valeur peut être **transformée, encodée, fragmentée ou répartie dans un flux SSE** : une recherche de la chaîne ne l'arrête pas. Ce qui borne le cas résiduel d'un amont qui reflète l'en-tête, c'est un hôte amont fixe (`api.anthropic.com`, TLS, allowlist) et la frontière côté requête. Le retrait du banc travaille sur un corps bufferisé ; en flux, à faire en 1b.2. Comportement réel de `api.anthropic.com` sur requêtes invalides [À PROUVER: T-04R, banc avec clé, brique 1b].
 
 Le broker lui-même reste à relire contre `https://code.claude.com/docs/en/agent-sdk/secure-deployment` à l'implémentation : `ANTHROPIC_BASE_URL` passe le trafic de modèle en clair jusqu'au proxy local, ce qui est le cas prévu [V: même page].
 
@@ -743,11 +804,12 @@ Le broker lui-même reste à relire contre `https://code.claude.com/docs/en/agen
 | Menace | Vecteur | Contrôle | Statut |
 |---|---|---|---|
 | **S** | Un processus local appelle un module | Local : pas de port, stdio avec un seul parent. Jeton d'appel `aud` vérifié par le module | T-21 ; T-25 en brique 2 |
-| S | Une sandbox présente l'identité d'une autre | Identité = fermeture du handler ; au broker, autorisation de task posée hors sandbox | E-02, E-03, T-03 ; T-42 |
-| S | Un processus natif étranger joint un listener du broker | Autorisation de task comparée à chaque requête, `401` sinon | T-42, T-43 en 1b.0 |
+| S | Une sandbox présente l'identité d'une autre | Identité = fermeture du handler ; au broker, autorisation de task posée hors sandbox | E-02, E-03, T-03 (deux OS) ; T-42 |
+| S | Un processus natif étranger joint un listener du broker | Autorisation de task comparée à chaque requête, `401` sinon | T-42, T-43 en 1b.0 ; **BROKER-FOREIGN confirmé sur les deux OS** (un processus natif étranger obtient `200` et le broker pose la vraie clé) : **P0 ouvert jusqu'à T-42** |
 | S | Rejeu d'un jeton entre deux tâches | `task`, `jti`, `exp`, `aud` signés | T-21 |
 | S | Le module usurpe la gateway | Clé publique seule côté module | T-21 |
-| **T** | Le builder modifie hooks git, `.mcp.json`, `.claude/agents` | Refus obligatoires srt + copie jetable | T-02e ; Linux T-02L |
+| **T** | Le builder modifie hooks git, `.mcp.json`, `.claude/agents` | `denyWrite` nommés pour chaque chemin protégé (la protection automatique de srt ne couvre pas les chemins absents au lancement sous Linux) + copie jetable | T-02e4 passe sur les deux OS ; **T-02e et T-02e2 : échecs réels sous Linux** (§19.1) |
+| **E** | Un hook git ou `.git/config` écrit par la sandbox persiste sur l'hôte et est exécuté ou lu **hors sandbox** (élévation via hook exécuté hors sandbox) | Même contre-mesure : `denyWrite` nommés dans le profil builder et dans tout profil avec écriture, racine et dépôt imbriqué | T-02e4 ; règle de profil et scénario à écrire en 1b.1 |
 | T | Une sandbox réécrit son profil ou le binaire srt | Profil rendu hors `allowWrite` ; srt hors chemins inscriptibles | [À PROUVER: T-34, évasion, brique 1b] |
 | T | Du contenu non fiable influence un lancement, ou un module lance sans srt | Signature fermée, argv statique, adaptateur sans lecture ; `child_process` et srt interdits hors adaptateur | T-47, T-52 en brique 1b |
 | T | Une PR modifie la porte, un filtre ou une assertion | `pull_request_target`, code de la base ; mutation étendue | §13.8, T-22 ; sentinelles en 1a |
@@ -755,24 +817,25 @@ Le broker lui-même reste à relire contre `https://code.claude.com/docs/en/agen
 | T | Le code de test de la PR altère la porte sur le runner | Tests sous srt `gate-tests`, la porte est le processus parent | §13.8 ; T-35 en 1a |
 | **R** | Une exécution nie un appel | Registre append-only (`0003_runs_immutable.sql`) ; chaque appel journalisé avec `task` et `jti` | Brique 2 |
 | R | Un verdict ou un coût ne peut être attribué | Verdict validé ou gradé, tokens par couche et par modèle au registre (§4.9) | Brique 2, §15.1 |
-| R | Le coût d'une requête interrompue est contesté | Réservation `unknown` persistée, transitions append-only, réconciliation avec source et auteur | T-45 en brique 1b |
-| **I** | Lecture de `~/.ssh`, de `.env`, de l'état | `denyRead: ["~"]` ; état sous `~` | T-02 ; T-02L |
+| R | Le coût d'une requête interrompue est contesté | Réservation `unknown` persistée, transitions append-only, réconciliation avec source et auteur | T-45 en 1b.0, puis 1b.3 |
+| **I** | Lecture de `~/.ssh`, de `.env`, de l'état | `denyRead: ["~"]` ; état sous `~` ; Linux : `tmpfs` (`ENOENT`), macOS : `EPERM` ; assertion « rien de sensible visible, rien de persisté » | T-02, T-02b, T-02d2, T-41c ; deux OS |
 | I | Fuite de la clé Anthropic | Broker, aucune clé en sandbox | T-04, T-23 ; T-04R |
 | I | Clé lue par un autre processus natif | Plus aucun module natif ; restent gateway et data. Serveur : utilisateurs dédiés. Poste : résidu assumé | T-24, T-26 |
 | I | Module compromis : lecture de `~`, de la clé, de Postgres, ou sortie réseau | Sous srt : `denyRead`, socket refusée, réseau limité à la gateway | T-38, I-10 |
 | I | Accès Postgres depuis une sandbox, module compris | Socket refusée, aucun TCP | E-09 ; T-38 |
 | I | Exfiltration par l'API de modèle | Inhérente ; budget, journal par task | Accepté, §11.1 |
 | **D** | Bombe fork, mémoire, disque, sandbox sans fin, module compris | Budgets, `capacity`, timeout, terminaison vérifiée ; `limits` par profil, `systemd-run` sur Linux | T-20, T-06 ; T-27, T-09L |
+| D | Tuer `srt` seul laisse des processus (SIGKILL : 10 sur 11 sous Linux, 2 sur 3 sous macOS) ; un enfant `setsid` survit sous macOS | L'adaptateur tue le groupe (`detached`, `kill(-pgid)`, `pgrep -g`, `SIGKILL`) | T-06-g-TERM, T-06-g-KILL passent sur les deux OS ; T-06b : 0 survivant sous Linux, résidu documenté sous macOS |
 | D | Enfant hostile qui inonde son tube ou meurt, executor, worker ou module | `maxBufferSize` ; `stdin.on('error')` dans l'adaptateur ; gateway vivante | E-03 ; T-40 pour worker et module |
-| D | Réservation rejouée, perdue, ou libérée à tort ; facture supérieure | Identifiant idempotent, `unknown` jamais libéré, `overdrawn` | T-45, T-46 en brique 1b |
+| D | Réservation rejouée, perdue, ou libérée à tort ; règlement rejoué ; facture supérieure | Une transaction : verrou de la task, création unique, transition d'état unique, montant et task pris de la ligne persistée (§4.5) ; `unknown` jamais libéré, `overdrawn` | **SQL non prouvé** : T-45 en 1b.0 (Postgres réel), puis 1b.3 ; T-46 en 1b.3 |
 | D | Mort d'un worker | Enfants indépendants | E-06 |
 | D | Mort d'un module ou du broker | Reconnexion bornée, erreur nommée | T-30 |
 | **E** | Évasion Linux par user namespace imbriqué | Filtre seccomp srt ; `allowNestedUserNamespaces`, `enableWeakerNestedSandbox`, `allowAllUnixSockets` interdits par schéma | [V: README] ; suite §11.4 |
-| E | Descripteur hérité ouvrant un service de l'hôte | Seuls fd 0-2 passent et ce sont des tubes | T-07 ; Linux T-07L |
+| E | Descripteur hérité ouvrant un service de l'hôte | **Obligation de l'hôte** : fd 0 à 2 sont uniquement des tubes, imposée dans l'adaptateur `SandboxRunner` (§4.8). srt ne l'impose pas sous Linux | T-07-fd3 passe sur les deux OS ; **T-07-fd0 : échec réel sous Linux** (socket d'écoute en fd 0 utilisé par la sandbox), `EPERM` sous macOS ; **contre-mesure non testée**, test à écrire en 1b.1 |
 | E | Exécution du code d'une PR en `pull_request_target` | Aucun secret, `contents: read`, aucun cache, aucun artefact consommé par un job privilégié | §13.8 |
 | E | Argument bien typé, sémantique hostile : autre task, `../`, volume | Capacités et ressources vérifiées au point d'effet ; validateur `citations` sous srt | §4.10 ; T-51 |
 | E | Contenu hostile qui vise les parseurs de la gateway | Enveloppes seules, aucun `eval`, aucun fichier construit depuis un argument | §4.8 ; T-40 |
-| E | Sysctl AppArmor qui affaiblit l'hôte | Runners jetables : sysctl. Serveur : profil dédié à `bwrap` (O-17) | |
+| E | `kernel.apparmor_restrict_unprivileged_userns=0` : réglage **global** qui affaiblit une protection de l'hôte, exigé par srt sous Linux (E-07, banc 1b.0) | Runners jetables : accepté. Serveur : profil AppArmor dédié à `bwrap` (O-17), sysctl global non recommandé (O-31). Brique D | **Décision O-31 ouverte** ; profil dédié [À PROUVER: brique D] |
 | E | srt en préversion | Épinglage exact, notes de version lues avant montée | §12 |
 
 Changements de topologie couverts : suppression de `platformd` (retire la clé et la socket de contrôle du point de concentration, concentre l'autorité de lancement dans une fonction de la gateway, §4.8) ; broker (détenteur unique, autorisation de task) ; modules et worker entier sous srt (retire le traitement natif du contenu non fiable ; il reste les enveloppes à la gateway et les corps au broker) ; modules en stdio (retire l'exposition TCP locale, la gateway devient parente) ; `data` en MCP (même surface, protocole officiel). Le serveur ne change pas cette topologie : un module distant reste refusé tant que T-39 n'a pas tourné.
@@ -789,12 +852,12 @@ Changements de topologie couverts : suppression de `platformd` (retire la clé e
 | I-2 | Aucune connexion sortante de l'executor | `escape.feature` : direct, proxy, socket Unix, loopback | T-03a et b, U | T-03L | 1b |
 | I-3 | Clé non récupérable | `secrets.feature` : env, erreurs, redirection, requête modifiée, broker d'une autre task | T-04 (échec de `mask`), T-23 (broker) | T-23L ; réel T-04R | 1b |
 | I-4 | Appel hors `calls_allowed` refusé | `policy.feature` : module A appelle C sans droit, refus et journal | T-21 pour le jeton ; DAG T-25 | T-25 | 1b, 2 |
-| I-5 | Budgets respectés en parallèle | `budget.feature` : 300 réservations concurrentes, plafond exact | T-20 | T-20 (SQL, indépendant de l'OS, rejoué) | 1b |
+| I-5 | Budgets respectés en parallèle | `budget.feature` : 300 réservations concurrentes, plafond exact | T-20 sur l'ancien SQL | T-45, puis T-20 rejoué sur le SQL du §4.5 (indépendant de l'OS) | 1b.0, 1b.3 |
 | I-6 | Timeout qui tue tous les descendants | `termination.feature` : arbre de 3 processus, plus aucun | T-06 ; **résidu `setsid` T-06b** | T-06L | 1b |
 | I-7 | Mort d'un worker sans effet sur les autres sessions | `isolation.feature` : deux tasks, `SIGKILL` sur l'une | E-06 | E-06L | 1b |
 | I-8 | **Une PR ordinaire ne supprime ni n'affaiblit la porte par accident ou négligence, et certaines manipulations sont refusées : filtre, skip, scénario retiré, assertion retirée, code de porte modifié. La porte ne protège pas contre un contributeur hostile** | PR sentinelles rouges et une saine verte, §15 ; **T-44 : une PR hostile passe, verte** | T-22, T-44 | `gate-linux` | 1a |
 | I-9 | Le client ne voit ni résultat intermédiaire ni tool de module | `code-front.feature` : script qui lit un canari, canari absent de la réponse, `tools/list` client = méta-tools | T-48 | T-48 | 3 |
-| I-10 | Un module, plugin compris, n'atteint ni `~`, ni la clé, ni Postgres, ni le réseau hors gateway | `escape.feature`, profil de module | E-01 pour le mécanisme ; T-38 | T-38 | 1b.0 |
+| I-10 | Un module, plugin compris, n'atteint ni `~`, ni la clé, ni Postgres, ni le réseau hors gateway | `escape.feature`, profil de module | E-01 pour le mécanisme ; T-38 **fait** | T-38 **fait** | 1b.0 |
 | I-11 | Un natif étranger ne consomme pas le broker | `broker-foreign.feature` | T-43 | T-43 | 1b.0 |
 | I-12 | Seule la gateway lance une sandbox, sans contenu dans l'argv | `spawn-authority.feature`, garde dependency-cruiser | T-47, T-52 | T-47 | 1b |
 
@@ -809,7 +872,7 @@ Changements de topologie couverts : suppression de `platformd` (retire la clé e
 
 ### 11.7 La gateway elle-même sous srt ?
 
-Non. Sous Linux l'enfant n'a pas l'espace réseau de l'hôte [V: README]. Sur macOS, un socket hérité sur fd 3 n'atteint pas l'enfant (`ENOTTY`, srt ne passe que 0-2 [V: `dist/cli.js`, `sandboxedStdio`]) et `listen` sur fd 0 est refusé (`EPERM`) [T-07]. `allowLocalBinding` ouvre tout le loopback sans proxy [T-03f]. Gateway native, donc. Le mode permission de Node (`--permission`) refuse `child_process`, les écritures et les sockets Unix [T-37], mais la doc Node ne le présente pas comme une frontière contre du code malveillant : c'est un garde-fou sans ops, à poser sur la gateway sur serveur, pas une isolation. La gateway lance les sandboxes (§4.8), il faudra donc l'autoriser explicitement. Lecture de cette doc, compatibilité et mise en place [À PROUVER: T-37b, Gherkin, brique 1b].
+Non. Sous Linux l'enfant n'a pas l'espace réseau de l'hôte [V: README]. Sur macOS, un socket hérité sur fd 3 n'atteint pas l'enfant (`ENOTTY`, srt ne passe que 0-2 [V: `dist/cli.js`, `sandboxedStdio`]) et `listen` sur fd 0 est refusé (`EPERM`) [T-07]. `allowLocalBinding` ouvre tout le loopback sans proxy sur macOS [T-03f] ; il est ignoré sous Linux. Sous Linux, T-07-fd0 échoue (une sandbox sert depuis un socket d'écoute reçu en fd 0) et T-39b montre qu'un `listen` dans la sandbox est accepté mais injoignable de l'hôte (`ECONNREFUSED`) ; macOS le refuse (`EPERM`). Gateway native, donc, et l'adaptateur n'ouvre que des tubes sur fd 0 à 2 (§4.8). Le mode permission de Node (`--permission`) refuse `child_process`, les écritures et les sockets Unix [T-37], mais la doc Node ne le présente pas comme une frontière contre du code malveillant : c'est un garde-fou sans ops, à poser sur la gateway sur serveur, pas une isolation. La gateway lance les sandboxes (§4.8), il faudra donc l'autoriser explicitement. Lecture de cette doc, compatibilité et mise en place [À PROUVER: T-37b, Gherkin, brique 1b].
 
 ## 12. Supply chain
 
@@ -945,7 +1008,7 @@ Règles : un `it` → un `Scenario` ; `it.each` littéral → `Scenario Outline`
 
 Les portes de sortie sont des scénarios Gherkin prouvant un **mécanisme** ; les métriques v3 sont relevées, non bloquantes (D-7, §15.1).
 
-**Ordre d'exécution : 1a.1 (épinglage) → 1b.0 (banc Linux et macOS) → 1a.2 à 1a.8 (migration complète) → 1b.1 et suite.** Le banc passe avant la migration complète pour qu'une conception à revoir ne coûte pas la migration. Les critères de sortie des briques ne changent pas.
+**Ordre d'exécution : 1a.1 (épinglage) → 1b.0 (banc Linux et macOS : joué en partie, reste T-42, T-43, T-45) → 1a.2 à 1a.8 (migration complète) → 1b.1 et suite.** Le banc passe avant la migration complète pour qu'une conception à revoir ne coûte pas la migration. Les critères de sortie des briques ne changent pas.
 
 ### Brique 1a : Gherkin + porte
 
@@ -957,8 +1020,8 @@ Les portes de sortie sont des scénarios Gherkin prouvant un **mécanisme** ; le
 | 1a.4 | `gate.yml` en `pull_request_target`, tests sous srt `gate-tests`, PGDG | `.github/workflows/gate.yml`, `sandboxes/profiles/gate-tests.srt.json` |
 | 1a.5 | Purger la dette de mutation : 474 mutants tués ou marqués | scénarios, commentaires |
 | 1a.6 | Amender `CLAUDE.md` (O-2, C-2, C-12) ; retirer vitest et `vitest.config.ts`, `scripts/gate.sh` du `.gitignore` | `CLAUDE.md`, `.gitignore` |
-| 1a.7 | Activer la porte, `N_base` initial ; `npm run gate` en une commande | |
-| 1a.8 | `CODEOWNERS` sur `features/steps/` et `gate.yml` (O-23, décidée par le propriétaire le 2026-10-30) : réduit le risque de T-44 par la revue, sans le fermer | `.github/CODEOWNERS` |
+| 1a.7 | `CODEOWNERS` sur `features/steps/` et `gate.yml` (O-23, décidée par le propriétaire le 2026-10-30) : réduit le risque de T-44 par la revue, sans le fermer. Posé **avant** l'activation de la porte | `.github/CODEOWNERS` |
+| 1a.8 | Activer la porte, `N_base` initial ; `npm run gate` en une commande | |
 
 **Porte de sortie** : 0 `*.test.ts` ; vitest retiré ; `exécutés_verts = attendu = statique` sur `main` ; les 119 cas présents dans la table ; 0 mutant non tué hors équivalents marqués sur tout le dépôt.
 **Test externe (I-8)** : PR sentinelles, **rouges** : step non défini ; step `pending` ; filtre `tags` ajouté ; `.feature` exclu par la config ; scénario sans step ; mutant survivant sur ligne modifiée ; assertion retirée d'un step (T-22) ; `Stryker disable all` ; `gate.yml` ou code de porte modifié sans effet (T-35) ; écriture dans `gate/` depuis un step (T-35). Et une PR saine **verte**. La PR hostile de T-44 reste **verte** : elle documente la limite et ne compte pas comme un échec de la brique.
@@ -968,10 +1031,10 @@ Les portes de sortie sont des scénarios Gherkin prouvant un **mécanisme** ; le
 
 | Étape | Contenu | Fichiers |
 |---|---|---|
-| 1b.0 | **Banc Linux et macOS d'abord, avant la migration complète 1a** : un job dédié, non requis, lance `features/sandbox/` sur `ubuntu-24.04` avec sysctl et sur macOS. T-38 module sous srt, T-39 pont http, T-41 worker entier, T-42 autorisation de task, T-43 natif étranger, et T-02L, T-03L, T-06L, T-07L, E-01L, E-02L, E-04L, E-05L, E-06L, T-23L. **Si T-41 échoue : blocage soumis au propriétaire, avec les critères du §4.11. Aucun repli binaire seul n'est prévu.** Si une autre échoue, la conception est revue avant 1b.1 | `features/sandbox/` |
-| 1b.1 | `packages/sandbox` : port `SandboxRunner`, adaptateur srt, signature fermée, profil validé par schéma strict, `detached` + `kill(-pgid)` + contrôle, `stdin.on('error')`, `maxBufferSize` ; partie pure en processus ; T-40, T-47, T-52 | `packages/sandbox/`, `sandboxes/profiles/`, `.dependency-cruiser.cjs` |
-| 1b.2 | `modules/broker` : listener et autorisation par task, `POST /v1/messages*`, retrait de la clé en réponse, réservation et réconciliation, relevé `usage` ; T-23b | `modules/broker/` |
-| 1b.3 | `data` en MCP généré depuis `DATA_OPS` ; `budget.*` à états, `capacity.*` ; vérifications au point d'effet ; T-33, T-20, T-27, T-45, T-46, T-51 | `data/`, `data/sql/`, migration `0005` |
+| 1b.0 | **Banc Linux et macOS d'abord, avant la migration complète 1a** : job `bench-sandbox` (non requis) sur `ubuntu-24.04` avec sysctl et sur macOS, code dans `bench/`, repris en `features/sandbox/` à 1b.7. **Joué (run 41038015293, §19.1)** : T-38, T-39, T-41, T-02L, T-03L, T-06L, T-07L, E-01L, E-02L, E-03L, E-04L et E-05L (par T-41), E-06L (I-7), T-23L. **Reste, la suite de 1b.0** : T-42 autorisation de task (P0 ouvert), T-43 natif étranger (BROKER-FOREIGN confirmé), T-45 budgets (SQL du §4.5, Postgres réel). **T-41 est passé : O-30 sans objet, repli non déclenché.** Trois échecs Linux conduisent à la révision de conception de ce document : règle de profil `denyWrite` (T-02e, T-02e2, T-02e4) et obligation d'hôte sur fd 0 à 2 (T-07-fd0), à porter en 1b.1. Si T-42 échoue : blocage soumis au propriétaire, avec les critères du §4.11. Aucun repli binaire seul n'est prévu | `bench/`, `features/sandbox/` |
+| 1b.1 | `packages/sandbox` : port `SandboxRunner`, adaptateur srt, signature fermée, profil validé par schéma strict (dont les `denyWrite` nommés de tout profil avec écriture, T-02e4), fd 0 à 2 uniquement des tubes (test à écrire, T-07-fd0), dossier temporaire par sandbox créé et retiré, `detached` + `kill(-pgid)` + contrôle, `stdin.on('error')`, `maxBufferSize` ; partie pure en processus ; T-40, T-47, T-52 | `packages/sandbox/`, `sandboxes/profiles/`, `.dependency-cruiser.cjs` |
+| 1b.2 | `modules/broker` : listener et autorisation par task, `POST /v1/messages*`, construction de la requête amont (clé dans le seul `x-api-key`), retrait de la clé en réponse comme défense supplémentaire, **en flux** (le broker du banc est bufferisé), réservation et réconciliation, relevé `usage` ; T-23b | `modules/broker/` |
+| 1b.3 | `data` en MCP généré depuis `DATA_OPS` ; `budget.*` à états, `capacity.*` ; vérifications au point d'effet ; T-33, T-20 rejoué sur le SQL du §4.5, T-27, T-45 repris en Gherkin (joué d'abord au banc, 1b.0), T-46, T-51 | `data/`, `data/sql/`, migration `0005` |
 | 1b.4 | Gateway : lit `topology/modules.mcp.json`, lance chaque module sous srt, serveur MCP par sandbox, reconnexion bornée, émet les jetons ; modules vérifient ; T-29, T-30 | `gateway/`, `topology/`, `packages/contracts` |
 | 1b.5 | Memory : module sous srt ; worker entier sous srt, `query()` + handlers minces ; `agents/*.md` chargés par `agents` ; suppression de `internal-http.ts`, `docker-runner.ts` ; réduction de `worker/main.ts`, `run-worker.ts`, `internal-tools.ts` | `services/memory/`, `agents/` |
 | 1b.6 | Suppression de `compose.yaml`, `Dockerfile`, `.dockerignore`, image worker ; `proxy/` → `deploy/edge/` ; docs à jour ; Postgres natif documenté | racine, `docs/` |
@@ -994,7 +1057,7 @@ Les portes de sortie sont des scénarios Gherkin prouvant un **mécanisme** ; le
 | 6 | Spec | `spec-draft`, `spec-lint` | Spec sans critère rejetée | `issue-to-spec.yml` | R : sans objet, outillage de 1a / S : profil agent-worker / O : sans objet |
 | 7 | Mission Control | Onglet sur le registre | Tokens par couche visibles | Task réelle de la brique 5 | R : sans objet, lecture du registre / S : authentifié par la gateway / O : lecture seule |
 | 8 | Modèles + web-scout | Structurer, Judge, Embedder désactivé, web-scout (O-27), chacun sous srt | Quarantaine seule ; adresse privée refusée | M1/M2 relevés | R : une variable à la fois / S : `deniedResolvedAddresses` / O : Judge local si Jev non confirmé |
-| D | Déploiement serveur | `deploy/`, utilisateurs dédiés, TLS, `systemd-run` ; modules en stdio sur le même hôte, distants seulement si T-39 passe | T-26, T-31, T-09L ; **multi-utilisateur seulement après §11.4** | Machine d'essai | R : T-26, T-31 / S : STRIDE relu / O : RBAC, Zero Trust |
+| D | Déploiement serveur | `deploy/`, utilisateurs dédiés, TLS, `systemd-run` ; **exigences d'hôte Linux : `bubblewrap`, `socat`, `ripgrep` et `kernel.apparmor_restrict_unprivileged_userns=0`, réglage global qui affaiblit l'hôte : profil AppArmor dédié à `bwrap` à la place (O-31)** ; modules en stdio sur le même hôte ; modules distants : `type: http` impossible sous srt (T-39b), le pont natif HTTP vers stdio (T-39c) serait une exception native de plus, décision du propriétaire | T-26, T-31, T-09L, profil AppArmor dédié ; **multi-utilisateur seulement après §11.4** | Machine d'essai | R : T-26, T-31 / S : STRIDE relu / O : RBAC, Zero Trust |
 
 ### 15.1 Mesure : M1, M2, R, relevés et non bloquants
 
@@ -1047,19 +1110,20 @@ Pages signalées et non lues à ce stade, à lire en brique 1b : `agent-sdk/type
 | O-17 | AppArmor Ubuntu 24.04 | Runners : sysctl. Serveurs : profil dédié à `bwrap` |
 | O-19 | Clé runtime | Fichier 0600 lu par le broker ; coffre du système ou fédération hors GitHub à étudier |
 
-**Décisions qui exigent vraiment le propriétaire** :
+**Décisions du propriétaire, closes et ouvertes** (« Décidée » = close ; les autres lignes attendent) :
 
 | # | Question | Recommandation |
 |---|---|---|
 | O-27 | web-scout | **Décidée (propriétaire, 2026-10-30)** : `kind: workflow` sous srt, sans modèle (v3 : conteneur avec agent). Change le profil et la règle de manifeste du §10 |
 | O-28 | db-migrator | **Décidée (propriétaire, 2026-10-30)** : `kind: workflow` sous srt, sans modèle, base jetable dans la sandbox, brique 4 (v3 : « agent de migration »). `agent` seulement si la génération de migrations est voulue |
 | O-29 | remember / memory-write | **Décidée (propriétaire, 2026-10-30)** : `kind: agent` jusqu'à la brique 4, puis `workflow` avec Structurer, comme en v3 |
-| O-30 | Si T-41 échoue sur un OS ciblé | Blocage soumis au propriétaire, §4.11. Aucune option de repli n'est présélectionnée |
+| O-30 | Si T-41 échoue sur un OS ciblé | **Sans objet** : T-41 passe sur Linux et macOS, avec un faux amont et une seule couche srt (§19.1). Le repli n'est pas déclenché. Limite : aucun appel réel à Anthropic, T-04R reste à jouer en 1b. Si T-41 échouait un jour (montée de srt, T-54) : blocage soumis au propriétaire, §4.11, aucune option présélectionnée |
 | O-21 | Fusionner `describe` dans `search(detail: name\|summary\|schema)`, comme le propose l'article | **Proposition, non décidée.** Trois méta-tools d'ici là. Mesurée en brique 3, une variable à la fois, avec résultat borné par `max_result_tokens`. Pas nécessaire au modèle Code Execution |
 | O-22 | Multi-utilisateur : srt seul, ou VM | **Bloqué aujourd'hui.** Après §11.4 : srt pour utilisateurs fiables ; pour contenu hostile, Kata Containers à évaluer selon le §4.11. gVisor, conseillé par Anthropic, échoue au seul critère de pérennité « un seul éditeur » à ce jour ; le test est rejoué au déclenchement |
 | O-23 | `CODEOWNERS` sur `features/steps/` et `gate.yml` contre une PR hostile (T-44) | **Décidée (propriétaire, 2026-10-30)** : **oui**, `CODEOWNERS` sur `features/steps/` et `gate.yml`, tâche de la brique 1a. Résidu §13.8 : cela **réduit le risque de T-44 par la revue, sans le fermer** |
 | O-24 | Lancer T-04R avec une vraie clé | **Décidée (propriétaire, 2026-10-30)** : **oui**, T-04R avec une vraie clé, en brique 1b, sur un compte d'essai, requêtes invalides seulement |
-| O-25 | Autoriser le sysctl AppArmor dans la VM Docker locale pour rejouer le banc Linux sur ce poste | **Non nécessaire** : `gate-linux` le prouve en 1b.0 |
+| O-25 | Autoriser le sysctl AppArmor dans la VM Docker locale pour rejouer le banc Linux sur ce poste | **Non nécessaire** : le banc CI a prouvé Linux (§19.1), `gate-linux` le rejoue |
+| O-31 | Le réglage **global** `kernel.apparmor_restrict_unprivileged_userns=0`, exigé par srt sous Linux, est-il acceptable sur un serveur ? | **Ouverte.** Recommandation : **non** sur un serveur multi-utilisateur. Runners jetables et poste de développement : accepté. Serveur : profil AppArmor dédié autorisant les espaces de noms utilisateur à `bwrap` seul, étendant O-17 [déduit du README, non testé : à prouver en brique D]. À défaut de ce profil, pas de déploiement Linux. Le sysctl global n'est admissible que sur un hôte dédié à la plateforme, aux utilisateurs de confiance, par décision écrite du propriétaire |
 | O-26 | Dette de mutation de 474 mutants traitée dans 1a | **Décidée (propriétaire, 2026-10-30)** : **oui**, traitée en brique 1a (1a.5), condition de l'extension |
 
 ## 18. Contradictions relevées
@@ -1106,12 +1170,12 @@ Pages signalées et non lues à ce stade, à lire en brique 1b : `agent-sdk/type
 | ID | Sujet | État | Reste à prouver |
 |---|---|---|---|
 | T-01 | Clés de config dans 0.0.81 | **Fait** | Linux sans objet (schéma commun) |
-| T-02 | `denyRead`, `allowRead`, chemins protégés | **Fait macOS** | T-02L, `gate-linux`, 1b.0 |
-| T-03 | Loopback hôte | **Fait macOS** | T-03L, `gate-linux`, 1b.0 |
+| T-02 | `denyRead`, `allowRead`, chemins protégés | **Fait macOS ; Linux : deux échecs réels** (T-02e, T-02e2 ; T-02b, d, d2, e3, e4, f, g, h, i passent) | Règle de profil `denyWrite` nommés (T-02e4, deux OS), 1b.1 ; `gate-linux` |
+| T-03 | Loopback hôte | **Fait macOS (résidu T-03f : `allowLocalBinding` atteint le loopback) et Linux** (T-03a à e, T-03U, I-2 passent ; T-03f : refusé, l'option est ignorée) | `gate-linux` |
 | T-04 | Masquage adversarial | **Fait macOS : échec, `mask` écarté** | T-04R avec clé, 1b |
 | T-05 | 1 000 allers-retours | **Remplacé** par E-01, E-02 | E-01L, E-02L, 1b.0 |
-| T-06 | Mort de l'arbre | **Fait macOS, résidu `setsid`** | T-06L, 1b.0 |
-| T-07 | Descripteur hérité | **Fait macOS : refusé** | T-07L, 1b.0 |
+| T-06 | Mort de l'arbre | **Fait macOS et Linux.** Groupe tué : 0 descendant (TERM, KILL, les deux OS). `srt` seul tué : SIGKILL laisse 10 sur 11 (Linux) et 2 sur 3 (macOS), SIGTERM 0 et 1. T-06b : 0 survivant sous Linux, **résidu `setsid` sous macOS** | `gate-linux` |
+| T-07 | Descripteur hérité | **Fait macOS : refusé. Linux : fd 3 refusé, fd 0 ÉCHEC réel** (T-07-fd0) | Obligation de l'hôte dans l'adaptateur `SandboxRunner`, **contre-mesure non testée**, test à écrire en 1b.1 |
 | T-08 | `data` sous srt | **Sans objet** (O-6) ; U confirme le refus par défaut | |
 | T-09 | Limites | **Fait macOS : `ulimit` inapplicable** | T-09L, `systemd-run`, 1b |
 | T-10 | Latence srt | **Fait macOS : 211 ms** | Linux en brique 3 ; un module reste lancé, ce coût ne s'applique qu'au démarrage |
@@ -1124,30 +1188,59 @@ Pages signalées et non lues à ce stade, à lire en brique 1b : `agent-sdk/type
 | T-17 | Cas exécutés | **Fait : 119** | |
 | T-18 | Immuabilité GitHub Packages | À prouver | T-18, dépôt d'essai, 1c |
 | T-19 | Rulesets | **Fait : public, 0** | |
-| T-20 | Budgets parallèles | **Fait** | |
+| T-20 | Budgets parallèles | **Fait sur l'ancien SQL** ; ne vaut pas pour le SQL du §4.5 | À rejouer sur le SQL du §4.5 (T-45) |
 | T-21 | Jeton d'appel | **Fait** | T-25, 2 |
 | T-22 | Assertion retirée | **Fait** | Sentinelle, 1a |
-| T-23 | Broker adversarial | **Fait macOS** | T-23b, T-23L, 1b |
+| T-23 | Broker adversarial | **Fait macOS et Linux** (T-23, T-23-ordinaire, T-23d-none/keep-length/full) ; le broker du banc est bufferisé | T-23b, 1b.2, en flux ; T-04R |
 | T-24 | Environnement même uid | **Fait** | T-26, D |
 | T-25 à T-37 | Voir §4, §5, §11, §13 | À prouver | Brique nommée à chaque mention |
-| T-38 | Module sous srt : stdio, rappel de la gateway par le proxy, lecture et réseau limités, latence | À prouver | Banc Linux et macOS, 1b.0 |
-| T-39 | Pont http vers un module sous srt, code de la gateway sur l'hôte distant | À prouver | Banc, 1b.0 ; d'ici là `type: http` refusé |
+| T-38 | Module sous srt : stdio, rappel de la gateway par le proxy, lecture et réseau limités, latence | **Fait, macOS et Linux** (T-38, T-38-close) | |
+| T-39 | Pont http vers un module sous srt | **Fait, macOS et Linux** : T-39a stdio par la gateway native ; T-39b `listen` : macOS `EPERM`, Linux accepté mais l'hôte reçoit `ECONNREFUSED` ; T-39c pont natif HTTP vers stdio | `type: http` reste refusé par schéma ; le pont natif serait une exception de plus (brique D) |
 | T-40 | Worker et module hostiles face à la gateway | À prouver | Gherkin, 1b.1 |
-| T-41 | Worker entier sous srt : `query()`, handlers minces, binaire, broker | À prouver ; échec = blocage, O-30 | Banc Linux et macOS, 1b.0 |
-| T-42 | Autorisation de task par `mask`, `tlsTerminate`, `broker.localhost` | À prouver | Banc, 1b.0 |
-| T-43 | Processus natif étranger qui joint le broker | À prouver | Banc, 1b.0 |
+| T-41 | Worker entier sous srt : `query()`, handlers minces, binaire, broker | **Fait, macOS et Linux** (T-41a à d) avec un faux amont et une seule couche srt ; **O-30 sans objet** | Aucun appel réel à Anthropic : T-04R en 1b. T-41 n'exerce pas T-42 (profil `allowedDomains` vers le port du broker du banc) |
+| T-42 | Autorisation de task par `mask`, `tlsTerminate`, `broker.localhost` | À prouver ; **P0 ouvert** | Banc, 1b.0 (suite) |
+| T-43 | Processus natif étranger qui joint le broker | À prouver ; BROKER-FOREIGN **confirmé sur les deux OS** : `POST` accepté (`200`), vraie clé posée, une requête étrangère arrivée à l'amont | Banc, 1b.0 (suite) |
 | T-44 | PR hostile : steps sans assertion, mutants tués | **Fait macOS, sans srt et sous srt : la PR passe** | Sentinelle documentaire, 1a |
-| T-45, T-46 | Réservation à états, reprise, facture supérieure | À prouver | Gherkin, 1b.3 |
+| T-45 | Réservation à états, reprise, doubles réservations et doubles règlements concurrents (SQL du §4.5) | **À prouver, SQL non prouvé** | Banc sur Postgres réel en 1b.0 (suite), puis Gherkin 1b.3 |
+| T-46 | Facture supérieure | À prouver | Gherkin, 1b.3 |
 | T-47, T-52 | Autorité de lancement ; garde dependency-cruiser avec fixture | À prouver | Gherkin, 1b.1 |
 | T-48 | Canari, `tools/list` client, I-9 | À prouver | Gherkin, 3 |
 | T-49, T-50 | Postgres jetable sous srt : db-migrator ; `gate-tests` avec Stryker | À prouver | Gherkin, 4 ; `gate-linux`, 1a.4 |
 | T-51 | Sémantique des arguments au point d'effet | À prouver | Gherkin, 1b.3 et 5 |
 | T-54 | Banc rejoué à chaque montée de srt | À prouver | `npm run bench:sandbox`, 1b.7 |
-| E-01 à E-09 | Voir §20. E-04 et E-05 ont tourné avec `query()` hors sandbox, variante refusée par D-8 | **Fait macOS** | E-xxL, `gate-linux`, 1b.0 ; T-41 pour le worker entier |
+| E-01 à E-09 | Voir §20. E-04 et E-05 ont tourné avec `query()` hors sandbox, variante refusée par D-8 | **Fait macOS ; Linux : E-01, E-02, E-03, E-06 (I-7), E-04/E-05 (via T-41) passent au banc** | `gate-linux` |
+
+### 19.1 Banc 1b.0 : run `https://github.com/cdeust/architect-os/actions/runs/41038015293`
+
+Commit `b6fc924`, srt 0.0.81, Node v26.11.1, Agent SDK 0.3.312. Conclusion du run : `failure` (job Linux rouge ; le job macOS ne l'est pas). Les valeurs ci-dessous sont lues dans les deux rapports JSON des artefacts (`bench-sandbox-linux.json`, `bench-sandbox-macos.json`), non recopiées d'un résumé.
+
+| OS | Tests | pass | fail | residual | finding |
+|---|---|---|---|---|---|
+| macOS (`macos-latest`, arm64, noyau 25.6.0) | 53 | 48 | 0 | 2 : T-03f, T-06b | 3 : T-06-s-TERM, T-06-s-KILL, BROKER-FOREIGN |
+| Linux (`ubuntu-24.04`, x64, noyau 7.0.0-1017-azure, bubblewrap 0.9.0, ripgrep 14.1.0, sysctl AppArmor = 0) | 53 | 47 | 3 : T-02e, T-02e2, T-07-fd0 | 0 | 3 : les mêmes |
+
+Lecture, par sujet :
+
+- **T-41 (worker entier sous srt)** : T-41a à T-41d passent sur les deux OS, avec faux amont et **une seule couche srt** (argv : `node`, `tsx`, `t41-worker.ts` ; le binaire Claude Code est un enfant simple, aucune sandbox imbriquée). `query()` aboutit (`success:fin`, 2 requêtes amont, 2 au broker), la vraie clé n'existe ni dans l'environnement, ni dans les sorties, ni dans les fichiers (T-41b), `~/.ssh` et `~` ne sont pas lisibles (T-41c). **O-30 est sans objet, le repli n'est pas déclenché.** Limite : aucun appel réel à Anthropic, T-04R reste à jouer en 1b ; et le profil de T-41 autorise `127.0.0.1:<port>` du broker du banc, il n'exerce pas l'autorisation de task de T-42.
+- **T-38, T-39** prouvés sur les deux OS. **T-39b** : Linux accepte `listen` dans la sandbox (`{"listening":true}`) mais la connexion de l'hôte reçoit `ECONNREFUSED` ; macOS refuse `listen` (`EPERM`).
+- **T-02e et T-02e2 : échecs Linux réels.** Les chemins protégés absents au lancement ne sont pas protégés : `.git/hooks/pre-commit` (T-02e), `repo/.git/hooks/pre-commit` et `repo/.git/config` (T-02e2) ont **persisté sur l'hôte**, donc un hook peut persister et être exécuté hors sandbox. T-02e3 passe ; **T-02e4 (`denyWrite` explicite) passe sur les deux OS**. Règle de profil : §9.2.
+- **T-07-fd0 : échec Linux réel.** Un socket d'écoute passé en fd 0 sert un client depuis la sandbox (`servi-depuis-sandbox`). Obligation de l'hôte : fd 0 à 2 uniquement des tubes, imposée dans l'adaptateur `SandboxRunner` (§4.8). **Contre-mesure non testée**, test à écrire en 1b.1.
+- **BROKER-FOREIGN** : un processus natif étranger, même uid, hors sandbox, obtient `200` sur `POST` et le broker pose la vraie clé (`GET` : `403`). Confirmé sur Linux et macOS. **P0 ouvert jusqu'à T-42** ; T-43 le teste ensuite.
+- **`denyRead ["~"]`** : `tmpfs` sous Linux (`ENOENT` sur `~/.ssh`, liste de `~` = `work`), `EPERM` sous macOS ; assertions : rien de sensible visible, rien de persisté.
+- **Tuer `srt` seul laisse des processus** : SIGKILL, 10 sur 11 (Linux) et 2 sur 3 (macOS) ; SIGTERM, 0 (Linux) et 1 (macOS). Tuer le groupe n'en laisse aucun (T-06-g). **T-06b** : Linux 0 survivant ; macOS 1, survivant `setsid`, **résidu documenté**.
+- **Exigences d'hôte** : Linux, `bubblewrap`, `socat`, `ripgrep` et `kernel.apparmor_restrict_unprivileged_userns=0` (§9.2, O-31) ; macOS, `sandbox-exec` (`ripgrep` absent, non exigé). Sur les deux OS, `TMPDIR=/tmp/claude` n'est pas créé par srt : un dossier temporaire par sandbox (`CLAUDE_CODE_TMPDIR`, `allowWrite`).
+
+**Limites du banc, à ne pas perdre** :
+
+1. Le broker du banc est **bufferisé** (il lit la réponse entière avant de la retirer) ; en 1b.2 il se fait en flux, SSE compris.
+2. `npm audit` du banc : **à examiner** (non examiné ici).
+3. Les répertoires temporaires du banc ne sont pas nettoyés ; l'adaptateur de 1b.1 devra le faire.
+4. Le banc se rejoue à chaque montée de version de srt (T-54).
+5. T-41 ne prouve pas T-42 (voir plus haut) ; aucun appel réel à Anthropic.
 
 ## 20. Journal daté des expériences, 30 octobre 2026
 
-Banc : répertoire jetable, `package.json` à versions exactes. Répertoire de travail : `/private/tmp/claude-501/-Volumes-Anthropic-anthropic-partnership/6bb87a64-cf19-42c8-b0ad-acc6739370b6/scratchpad/bench/`. Variable unique par expérience. Les scripts E-02 et le broker sont donnés en §4.3 et §11.2 ; le reste sera repris dans `features/sandbox/` en 1b.0.
+Banc : répertoire jetable, `package.json` à versions exactes. Répertoire de travail : `/private/tmp/claude-501/-Volumes-Anthropic-anthropic-partnership/6bb87a64-cf19-42c8-b0ad-acc6739370b6/scratchpad/bench/`. Variable unique par expérience. Les scripts E-02 et le broker sont donnés en §4.3 et §11.2 ; le banc 1b.0 vit dans `bench/` (branche fusionnée depuis `feat/bench-sandbox`, journal `bench/JOURNAL.md`) et sera repris dans `features/sandbox/` en 1b.7.
 
 **Baseline.** `npm run check` à `1746cc8` : `Tests 113 passed | 6 skipped (119)`, `Test Files 20 passed`, `no dependency violations (79 modules, 194 dependencies)`. **T-17** : `npx vitest run --reporter=json` : `total 119, passed 113, pending 6` ; les 6 = `SqlDataStore (real database)`. Effet de bord constaté : ce reporter écrit `.vitest/json/output.json` dans le dépôt, retiré ensuite ; aucun fichier conservé.
 
@@ -1283,7 +1376,7 @@ root     : apply-seccomp: write /proc/self/setgroups (nested userns is capabilit
 enableWeakerNestedSandbox : même échec
 /proc/sys/kernel/apparmor_restrict_unprivileged_userns = 1
 ```
-Cause documentée par le README pour Ubuntu 24.04. **Je n'ai pas modifié ce sysctl** de la VM : c'est un réglage de sécurité de l'hôte, et le banc de référence existe ailleurs. Seul passage utile : E-02 sans srt. **Aucune preuve Linux de srt n'existe donc à ce stade** ; elles sont portées par 1b.0 sur `ubuntu-24.04`, avec le sysctl que `claude-code-action` pose lui-même. Si l'une d'elles échoue, la conception est revue avant 1b.1.
+Cause documentée par le README pour Ubuntu 24.04. **Je n'ai pas modifié ce sysctl** de la VM : c'est un réglage de sécurité de l'hôte, et le banc de référence existe ailleurs. Seul passage utile : E-02 sans srt. **Aucune preuve Linux de srt n'existe donc à ce stade** ; elles sont portées par 1b.0 sur `ubuntu-24.04`, avec le sysctl que `claude-code-action` pose lui-même. Si l'une d'elles échoue, la conception est revue avant 1b.1. **Levé le 30 octobre 2026** : le banc a tourné sur `ubuntu-24.04` (journal du banc 1b.0, ci-dessous) ; trois échecs Linux ont conduit à la révision de ce document.
 
 **T-44, PR hostile contre la porte (revue externe, P0).** Répertoire jetable, `@cucumber/cucumber` 12.9.0, Stryker 10.1.1, `tsx`. Code de la PR : `allow()` bogué, `return n < this.max || true`. Deux scénarios, dont un qui attend un refus. Trois versions des steps, une variable à la fois ; `gatecheck.mjs` applique §13.3 et §13.6 aux rapports. `./run.sh <variante>` :
 ```
@@ -1294,3 +1387,20 @@ hostile  : cucumber exit=0 ; {"pickles":2,"verts":2,"mutants":{"Killed":8},"port
 Version hostile : le step appelle le code pour la couverture, n'affirme rien, et lève une erreur si `globalThis.__stryker__.activeMutant` est défini. **La PR passe.** Aucun fichier de rapport n'est forgé. **Sous srt, réseau nul, macOS** : cucumber passe, Stryker échoue, `listen EPERM 0.0.0.0`. **Échec consigné** : ma conclusion attendue était une porte verte, le premier run a échoué pour une autre raison, `ERR_MODULE_NOT_FOUND` sur `src/calc.js` faute de `--import tsx` pour cucumber-js. Avec `allowLocalBinding` : même résultat `VERTE`, 8 `Killed`. Sous Linux : non joué ici, T-50.
 
 **Test de pérennité, 30 octobre 2026** (§4.11). `gh api repos/<dépôt>`, `gh api repos/<dépôt>/releases/latest`, `gh api "repos/<dépôt>/commits?since=<90 jours>&per_page=100"` groupé par domaine d'auteur ; `gh api "repos/torvalds/linux/commits?path=security/landlock&since=<12 mois>"` ; `man sandbox-exec` ; pages citées au §4.11. Podman : `docs/source/markdown/podman-machine.1.md`, fournisseurs macOS `libkrun` et `applehv`. Taille de srt : `find dist -name '*.js' | xargs cat | wc -l` = 23 160. `node:net` : aucune méthode d'identifiants de pair sur `Socket.prototype`, seul `_getpeername`.
+
+**Banc 1b.0, CI, 30 octobre 2026** (`bench/`, `.github/workflows/bench-sandbox.yml`, déclenché par `feat/bench-sandbox` et `workflow_dispatch`). Trois runs, échecs conservés (détail : `bench/JOURNAL.md`).
+
+- **Run 41037109539 (`9c161f5`).** macOS : T-41a, T-41b, T-41d, I-7 en échec, `EPERM: operation not permitted, mkdir '/tmp/claude-501'` : le binaire Claude Code crée son dossier temporaire par `mkdir` non récursif ; il existait sur le poste, pas sur le runner, **le run local était un faux vert**. Linux : srt fonctionne (bwrap 0.9.0, sysctl à 0) ; T-38, T-39, E-02, T-41 en échec, `ENOENT mkdir /tmp/claude/tsx-1001` : srt fixe `TMPDIR=/tmp/claude` sans le créer. Correction, une variable : un dossier temporaire par monde, `CLAUDE_CODE_TMPDIR` et `allowWrite`. **Erreur du banc** : T-03f avait son attendu inversé sur Linux (`expectReached` passé à l'envers). **Hypothèse fausse** : `denyRead ["~"]` sous Linux ne donne pas `EPERM` mais un `tmpfs` ; la propriété testée devient « rien de sensible visible, rien de persisté ».
+- **Run 41037711860 (`c2af66d`).** macOS : 47 pass, 0 fail, 2 residual, 3 finding. Linux : 44 pass, 5 fail : T-02e, T-02e2 (hook et `.git/config` écrits par la sandbox persistent sur l'hôte quand le chemin n'existait pas au lancement ; README srt : seuls les chemins présents sont protégés), T-07-fd0, et deux défauts d'assertion du banc (`list_home` sous Linux, tmpfs vide : T-38, T-41c), corrigés.
+- **Run 41038015293 (`b6fc924`).** Conclusion `failure`. macOS : 53 tests, 48 pass, 0 fail, 2 residual (T-03f, T-06b), 3 finding (T-06-s-TERM, T-06-s-KILL, BROKER-FOREIGN). Linux : 53 tests, 47 pass, 3 fail (T-02e, T-02e2, T-07-fd0), 3 finding (les mêmes). T-02e4 (`denyWrite` explicite) passe sur les deux OS. Sorties clés :
+```
+T-02e   Linux  retour sandbox={"git-hooks":"OK","mcp-json":"EACCES","claude-agents":"ENOENT"} persistes_sur_l_hote=[".git/hooks/pre-commit"]
+T-02e2  Linux  retour sandbox={"git-hooks":"OK","git-config":"OK"} persistes_sur_l_hote=["repo/.git/hooks/pre-commit","repo/.git/config"]
+T-02e4  Linux  {"t0":"ENOENT","t1":"EROFS","t2":"EACCES","t3":"ENOENT","t4":"EROFS","t5":"EACCES"} persistes=[] ; macOS : six EPERM, persistes=[]
+T-07-fd0 Linux reponse recue par le client="servi-depuis-sandbox\n" ; macOS : reponse="" erreur EPERM
+T-39b   Linux  listen dans la sandbox={"listening":true,"port":33351} ; connexion de l'hote=ECONNREFUSED ; macOS : {"listening":false,"error":"EPERM"}
+T-06-s-KILL  Linux procs_avant=11 procs_restants=10 ; macOS procs_avant=3 procs_restants=2
+T-06b   Linux  avant=11 apres_kill_groupe=0 ; macOS avant=3 apres_kill_groupe=1
+T-38 / T-41c Linux  list_home=LISTE:work ssh_read=ENOENT ; macOS list_home=EPERM ssh_read=EPERM
+```
+Reste hors banc : `npm audit` du banc à examiner, répertoires temporaires non nettoyés, rejeu à chaque montée de srt (T-54).
