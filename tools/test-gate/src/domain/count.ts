@@ -32,12 +32,17 @@ export interface CountInput {
   readonly base: BaseInput;
 }
 
+/** The ids of `from` absent from `minus`, sorted. */
+function difference(from: ReadonlySet<string>, minus: ReadonlySet<string>): string[] {
+  return [...from].filter((id) => !minus.has(id)).sort();
+}
+
 /** Rule 4: executed = base + added - removed, added and removed derived from the two static sets, never declared. */
 export function countRule(input: CountInput): Count {
   const now = new Set(input.now);
   const parent = new Set(input.parent);
-  const added = [...now].filter((id) => !parent.has(id)).sort();
-  const removed = [...parent].filter((id) => !now.has(id)).sort();
+  const added = difference(now, parent);
+  const removed = difference(parent, now);
   const violations: Violation[] = [];
   const add = (text: string) => violations.push({ rule: 4, text });
   let base = parent.size;
