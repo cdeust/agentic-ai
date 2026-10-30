@@ -122,12 +122,14 @@ Les arguments restent non fiables : Zod protège la structure, pas la sémantiqu
 | Le client ne voit ni résultat intermédiaire ni tool de module | §3 | [à prouver : `code-front.feature`, 3] |
 | Écrire un hook ou `.git/config` nommés est refusé | `denyWrite` nommés | [T-02e4, deux OS] |
 
+**Hooks de protection : une couche de réduction, à côté de srt, pas une frontière.** Pour l'outil 1a.0, des hooks Claude Code `PreToolUse`, simples et descriptifs, refusent les erreurs et les injections ordinaires avant que srt n'ait à répondre. Un Bash obfusqué ou un script lancé par `npm test` leur échappe : ils réduisent le risque, ils ne le ferment pas. Ils vivent dans `~/.claude/settings.json` ou un plugin de la marketplace, jamais dans un fichier que la sandbox peut écrire. Les hooks d'un `.claude/settings.json` de worktree ne comptent pas comme protection. Les workers de plateforme n'en dépendent pas (`settingSources: []`).
+
 ### 4.1 STRIDE
 
 | Menace | Vecteur réel | Réponse | Sinon |
 |---|---|---|---|
 | **S** | Processus local qui joint le broker ou la gateway | Jeton opaque, `401` | R-3 |
-| **T** | Une sandbox réécrit un hook, `.git/config`, son profil ou srt | `denyWrite` nommés ; profil et srt hors chemins inscriptibles | R-2 |
+| **T** | Une sandbox réécrit un hook, `.git/config`, son profil ou srt | `denyWrite` nommés ; profil et srt hors chemins inscriptibles ; hooks `PreToolUse` en 1a.0 | R-2 |
 | **T** | Une PR affaiblit la porte | Visible au diff, revue, ruleset sur `main` | R-6 |
 | **R** | Coût ou verdict non attribuable | Registre append-only (`0003_runs_immutable.sql`) | |
 | **I** | Exfiltration par un domaine autorisé | Sandbox de plateforme : seul le broker. Outil 1a.0 : accepté | R-1, R-5 |
@@ -140,8 +142,8 @@ Les arguments restent non fiables : Zod protège la structure, pas la sémantiqu
 
 | # | Risque | Pourquoi on vit avec | Ce qui le borne | On le rouvre si |
 |---|---|---|---|---|
-| R-1 | Outil 1a.0 : le trousseau est lisible depuis la sandbox, donc le jeton Claude et possiblement GitHub ; exfiltration et push possibles par les domaines autorisés (README srt, « Security Limitations ») | Outil personnel, poste du propriétaire, simplicité d'usage réel | Révocation ; réseau limité à trois fournisseurs ; `denyRead` ciblés ; ruleset sur `main` comme limite | Tout usage par un tiers |
-| R-2 | Tout ce que l'hôte lance dans le worktree exécute du code écrit par la sandbox : `git`, scripts npm, `.claude/settings.json`, `.envrc`. Sous Linux, un hook écrit dans un dépôt imbriqué non nommé persiste [T-34h, T-34i, T-02e, T-02e2] | Même risque qu'aujourd'hui avec tout code d'agent ; la lecture du diff précède le lancement | `denyWrite` du dépôt principal ; revue | Un incident réel |
+| R-1 | Outil 1a.0 : le trousseau est lisible depuis la sandbox, donc le jeton Claude et possiblement GitHub ; exfiltration et push possibles par les domaines autorisés (README srt, « Security Limitations ») | Outil personnel, poste du propriétaire, simplicité d'usage réel | Révocation ; réseau limité à trois fournisseurs ; `denyRead` ciblés ; hooks `PreToolUse` ; ruleset sur `main` comme limite | Tout usage par un tiers |
+| R-2 | Tout ce que l'hôte lance dans le worktree exécute du code écrit par la sandbox : `git`, scripts npm, `.claude/settings.json`, `.envrc`. Sous Linux, un hook écrit dans un dépôt imbriqué non nommé persiste [T-34h, T-34i, T-02e, T-02e2]. Les dossiers de session de `~/.claude` restent inscriptibles et partagés avec les sessions hôte hors sandbox (à prouver, §8) | Même risque qu'aujourd'hui avec tout code d'agent ; la lecture du diff précède le lancement | `denyWrite` du dépôt principal ; revue | Un incident réel |
 | R-3 | Un natif du même uid lit la clé ou un jeton [T-24, T-43d] | Il lirait déjà tout le reste du poste | Un uid dédié à la plateforme sur serveur | Serveur partagé |
 | R-4 | Le modèle lit le jeton de sa task | Il n'atteint que le broker de sa task, plafonné par son budget, et ne vaut rien ailleurs | Budget, fin de task | |
 | R-5 | Évasion de srt, faille du noyau, exfiltration du contenu par l'API de modèle (inhérente) | Aucune correction totale possible ; utilisateurs fiables | Banc rejoué à chaque montée de srt, `escape.feature`, version exacte | Un test d'évasion réussit (§6) |
@@ -274,15 +276,18 @@ Un fichier `builder.json` par worktree, hors de tout chemin inscriptible, une co
 | Élément | Choix, sous réserve de la décision 1 |
 |---|---|
 | `allowWrite` | Le worktree ; `<repo>/.git/worktrees/<w>`, `.git/objects`, `.git/refs`, `.git/logs` ; `~/.cache` et les dossiers de session de `~/.claude` |
-| `denyWrite` | `<repo>/.git/hooks`, `<repo>/.git/config`, `worktrees/<w>/commondir`, `gitdir`, `config.worktree`, `refs/heads/main` |
+| `denyWrite` | `<repo>/.git/hooks`, `<repo>/.git/config`, `worktrees/<w>/commondir`, `gitdir`, `config.worktree`, `refs/heads/main` ; `<worktree>/.claude/settings.json` et `settings.local.json` |
 | `denyRead` | `~/.ssh`, `~/.aws`, `~/.gnupg`, `~/.config/gh`, `~/.npmrc`, `~/.netrc` |
 | Réseau | Anthropic, npm, GitHub |
 | Authentification | Le compte Claude du propriétaire ; `CLAUDE_CONFIG_DIR` non défini ; srt installé hors du worktree |
+| Hooks `PreToolUse`, jeu minimal à confirmer | Refuser `git push` vers `main` et les push forcés ; l'accès au trousseau et aux identifiants (`security find-*`, fichiers de secrets) ; les écritures dans `.git/hooks` et `.git/config` |
 | Résidus | R-1, R-2 ; les objets écrits par la sandbox sont lus par le `git` de l'hôte ; `main` est tenue par un ruleset |
 
 **Faisabilité, vérifiée sur le poste macOS** : la commande fonctionne en `-p` avec le compte Claude, un appel réel minimal. Le profil initial, limité à `.git/hooks` et `.git/config`, casse `git commit` et permet une évasion prouvée par réécriture de `.git/worktrees/<w>/commondir` : d'où les lignes ci-dessus. **À prouver : la TUI au premier lancement.**
 
-**Sortie** : la TUI répond dans la sandbox ; un commit réussit dans le worktree ; l'écriture de `.git/hooks/x`, `.git/config` et `worktrees/<w>/commondir` est refusée ; `~/.ssh` est illisible ; `npm ci` passe ; un domaine hors liste est refusé. Essai consigné au journal. **Test externe** : la brique 1a démarre dans l'outil.
+**Pourquoi les réglages du worktree sont refusés.** `~/.claude/settings.json` et les scripts ou plugins de hooks restent hors de `allowWrite` (profil relu) : srt y refuse l'écriture par défaut. Mais srt ne protège pas `.claude/settings.json`, seulement `.claude/commands` et `.claude/agents`. Or un fichier de projet a priorité sur l'utilisateur et se recharge en cours de session (doc Claude Code, settings et hooks) : un `disableAllHooks: true` écrit dans le worktree couperait les hooks de `~/.claude/settings.json`. Ce cas se déduit de la doc et reste à prouver. D'où les deux `denyWrite` ; ne pas ajouter `~/.claude.json` ni `~/.claude/settings.json` à `allowWrite` pour faire passer la TUI.
+
+**Sortie** : la TUI répond dans la sandbox ; un commit réussit dans le worktree ; l'écriture de `.git/hooks/x`, `.git/config`, `worktrees/<w>/commondir`, `~/.claude/settings.json` et `<worktree>/.claude/settings.json` est refusée, y compris en renommant `.claude` ; chaque hook du jeu minimal refuse son cas nominal ; une session hôte hors sandbox n'exécute rien écrit par la sandbox dans `~/.claude/shell-snapshots` ou `session-env`, sinon ces dossiers sortent de `allowWrite` ; `~/.ssh` est illisible ; `npm ci` passe ; un domaine hors liste est refusé. Essai consigné au journal. **Test externe** : la brique 1a démarre dans l'outil.
 
 ### 1a Gherkin et porte
 
@@ -322,7 +327,7 @@ Un fichier `builder.json` par worktree, hors de tout chemin inscriptible, une co
 
 | # | Question | Recommandation |
 |---|---|---|
-| 1 | Profil 1a.0 du §8, plus large que celui demandé, et risques R-1, R-2 tels qu'écrits | Accepter : le profil demandé casse `git commit` et laisse une évasion prouvée. Réponse du propriétaire attendue |
+| 1 | Profil 1a.0 du §8, plus large que celui demandé, risques R-1, R-2 tels qu'écrits, jeu minimal de hooks et son emplacement | Accepter : le profil demandé casse `git commit` et laisse une évasion prouvée. Hooks dans un plugin de la marketplace : `~/.claude/settings.json` s'appliquerait aussi à toutes les sessions hors de l'outil. Réponse du propriétaire attendue |
 | 2 | Revenir sur O-1 (`pull_request_target`), O-23 (`CODEOWNERS`), O-26 (purge des 474 mutants, condition de la mutation étendue) | Confirmer : §7 applique les trois retraits. v3 elle-même demande `pull_request` et un run sur `pull_request_target` exécute le code d'une PR avec plus de droits. `CODEOWNERS` revient au second mainteneur |
 | 3 | Retirer la reconstruction de stage 0 de v3 (`fixpoint.sh`, image ou paquet promu) | Confirmer : la plateforme n'est pas un compilateur, `npm ci` sur lockfile et `tsc -b` sont reproductibles par la porte, et le problème d'amorçage disparaît sans image à promouvoir |
 | 4 | Passe de code sur le banc : le SQL de l'annexe vers `bench/sql/`, retrait de T-42, T-43, T-45 du banc, correction d'E-03-huge | Oui, une PR courte ; le banc rejoué à chaque montée de srt n'a pas à payer des mécanismes retirés |

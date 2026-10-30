@@ -144,7 +144,7 @@
 <h2>3. Outil de code, brique 1a.0</h2>
 <p><code>srt --settings builder.json claude</code>, dans le worktree habituel. C'est le stage 0 simplifié : le reste de la plateforme se construit dedans. Le profil ci-dessous attend la décision du propriétaire.</p>
 <figure>
-<svg viewBox="0 0 1000 400" role="img" aria-label="Outil de code : Claude Code tourne sous srt avec le compte du propriétaire, dans un worktree du dépôt. Il écrit dans le worktree et les parties git nécessaires au commit ; les hooks, la configuration et les pointeurs du worktree sont refusés. Le réseau va vers Anthropic, npm et GitHub. Le trousseau reste lisible." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="13" fill="currentColor">
+<svg viewBox="0 0 1000 400" role="img" aria-label="Outil de code : Claude Code tourne sous srt avec le compte du propriétaire, dans un worktree du dépôt. Il écrit dans le worktree et les parties git nécessaires au commit ; les hooks, la configuration et les pointeurs du worktree sont refusés. Le réseau va vers Anthropic, npm et GitHub. Le trousseau reste lisible. Des hooks PreToolUse réduisent le risque sans former de frontière." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="13" fill="currentColor">
 <defs>
   <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
 </defs>
@@ -158,7 +158,7 @@
 <text x="36" y="192">~/.cache, dossiers de session de ~/.claude</text>
 <text x="36" y="226" font-weight="600">Écriture refusée</text>
 <text x="36" y="248">.git/hooks, .git/config, refs/heads/main</text>
-<text x="36" y="270">worktrees/&lt;w&gt;/commondir, gitdir, config.worktree</text>
+<text x="36" y="270">worktrees/&lt;w&gt;/commondir, gitdir, config.worktree ; &lt;w&gt;/.claude/settings*.json</text>
 <text x="36" y="304" font-weight="600">Lecture refusée</text>
 <text x="36" y="326">~/.ssh, ~/.aws, ~/.gnupg, ~/.config/gh, ~/.npmrc, ~/.netrc</text>
 <text x="36" y="360" fill="#c15a2e" font-weight="600">Reste lisible : le trousseau (R-1)</text>
@@ -171,11 +171,14 @@
 <text x="716" y="197">R-1 : exfiltration et push possibles</text>
 <text x="716" y="219">R-2 : l'hôte qui lance dans le worktree</text>
 <text x="716" y="238">exécute du code de la sandbox</text>
-<rect x="700" y="282" width="280" height="60" rx="4" fill="none" stroke="currentColor"/>
-<text x="716" y="307" font-weight="600">Limite</text>
-<text x="716" y="328">ruleset sur main</text>
+<rect x="700" y="270" width="280" height="114" rx="4" fill="none" stroke="currentColor"/>
+<text x="716" y="293" font-weight="600">Réduction, pas frontière</text>
+<text x="716" y="315">hooks PreToolUse, non inscriptibles :</text>
+<text x="716" y="334" font-size="12">push main ou forcé, trousseau, secrets,</text>
+<text x="716" y="351" font-size="12">.git/hooks, .git/config</text>
+<text x="716" y="372">ruleset sur main</text>
 </svg>
-<figcaption>Figure 3. Vérifié sur le poste macOS en <code>-p</code>, avec un appel réel minimal. Le profil initial, limité à <code>.git/hooks</code> et <code>.git/config</code>, cassait <code>git commit</code> et laissait une évasion par <code>commondir</code>. À prouver : la TUI au premier lancement.</figcaption>
+<figcaption>Figure 3. Vérifié sur le poste macOS en <code>-p</code>, avec un appel réel minimal. Le profil initial, limité à <code>.git/hooks</code> et <code>.git/config</code>, cassait <code>git commit</code> et laissait une évasion par <code>commondir</code>. Les hooks <code>PreToolUse</code> réduisent le risque sans former de frontière : un Bash obfusqué leur échappe, et ceux d'un <code>.claude/settings.json</code> de worktree ne comptent pas. À prouver : la TUI au premier lancement et le jeu de hooks, à confirmer par le propriétaire.</figcaption>
 </figure>
 
 <h2>4. Processus, réseau, secrets</h2>

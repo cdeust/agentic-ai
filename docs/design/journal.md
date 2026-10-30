@@ -169,6 +169,7 @@ Position du propriétaire : voir l'en-tête du document. Base `0dd97c5`. Méthod
 | Retrait de la clé en réponse | Retiré, contournable (T-42h) | R-11 |
 | Profils srt multiples | Simplifié : un gabarit et une variable réseau | Moins de finesse par profil |
 | `repo-prepare`, `gate-tests` | Retirés | R-2, R-6 |
+| Hooks Claude Code `PreToolUse` (1a.0) | Ajoutés à la demande du propriétaire, couche de réduction, jeu minimal à confirmer | Bash obfusqué, code lancé par un script |
 | `calls_allowed` | Simplifié : liste à chaque appel, cycle refusé au chargement, sans `parent` | Profondeur non suivie, bornée par timeout |
 | Profils de task | Gardés, format Claude Code | |
 | Registre | Gardé, table append-only existante | |
@@ -205,6 +206,7 @@ Faites par un agent en parallèle, reçues du coordinateur, non rejouées ici.
 - **Builder.** `srt --settings builder.json claude` fonctionne sur macOS en `-p` avec le compte Claude, un appel réel minimal. Le profil demandé casse `git commit` et permet une évasion prouvée en réécrivant `.git/worktrees/<w>/commondir` ; profil retenu au §8 du document, sous réserve de décision du propriétaire. Le trousseau est lisible depuis la sandbox. TUI à valider au premier lancement.
 - **`zod` sous srt.** Non exploitable depuis la sandbox, seul `safeParse` observé, sur la configuration de démarrage ; un override ne corrige rien. Le vrai risque est dans notre code : `WorkerOutputSchema.evidence` sans borne (`tools.ts:82`) et stdout sans plafond (`docker-runner.ts:93-99`), 2 Mo donnant 545 Mo de tas. Inscrit en 1b.1 et 1b.5.
 - **Workflows.** Un externe ne lance pas Claude ; la revue n'a jamais produit de revue. Correction minimale inscrite en 1a.
+- **Hooks de protection, précision du propriétaire.** « Les hooks de protection sont là pour protéger aussi. » Lu, sans expérience : le profil retenu n'a dans `allowWrite` ni `~/.claude/settings.json`, ni `settings.local.json`, ni `plugins`, ni `hooks` de `~/.claude`. `DANGEROUS_DIRECTORIES` de srt (`sandbox-utils.js`) ne couvre que `.claude/commands` et `.claude/agents`, pas `.claude/settings.json`. Doc Claude Code : le projet a priorité sur l'utilisateur, les hooks se rechargent par surveillance des fichiers, `disableAllHooks` suit cette priorité. **Déduit, à prouver :** un `disableAllHooks: true` écrit dans le worktree couperait les hooks utilisateur ; d'où deux `denyWrite`. **Déduit, à prouver :** `shell-snapshots` et `session-env`, inscriptibles et partagés, pourraient faire exécuter du code par une session hôte hors sandbox.
 
 ## 9. Sources Anthropic lues
 
