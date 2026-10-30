@@ -87,6 +87,7 @@ describe('auth proxy (host side, fake upstream, fake credential)', () => {
     const record = JSON.parse(log.trim()) as Record<string, unknown>;
     expect(record).toMatchObject({
       status: 200,
+      route: '/v1/messages',
       model: 'claude-test',
       input_tokens: 12,
       cache_read_input_tokens: 3,
@@ -151,6 +152,9 @@ describe('usageOf', () => {
       input_tokens: 1,
     });
     expect(usageOf('application/json', 'not json')).toEqual({});
+    expect(
+      usageOf('application/json', '{"type":"error","error":{"type":"rate_limit_error","message":"m"}}'),
+    ).toEqual({ error_type: 'rate_limit_error' });
   });
 });
 

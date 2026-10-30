@@ -52,6 +52,10 @@ export interface AuthProxy {
 export interface UsageRecord {
   at: string;
   status: number;
+  /** Chemin de la route relayée, sans requête. */
+  route?: string;
+  /** `error.type` d'une réponse en erreur ; jamais le message. */
+  error_type?: string;
   model?: string;
   input_tokens?: number;
   output_tokens?: number;
@@ -130,8 +134,16 @@ export function usageOf(contentType: string, body: string): Omit<UsageRecord, 'a
       }
       return record;
     }
-    const json = JSON.parse(body) as { model?: string; usage?: Record<string, unknown> };
-    return { ...(json.model ? { model: json.model } : {}), ...pick(json.usage) };
+    const json = JSON.parse(body) as {
+      model?: string;
+      usage?: Record<string, unknown>;
+      error?: { type?: unknown };
+    };
+    return {
+      ...(json.model ? { model: json.model } : {}),
+      ...(typeof json.error?.type === 'string' ? { error_type: json.error.type } : {}),
+      ...pick(json.usage),
+    };
   } catch {
     return {};
   }
@@ -180,6 +192,7 @@ export async function startAuthProxy(options: AuthProxyOptions): Promise<AuthPro
           log({
             at: new Date().toISOString(),
             status: up.statusCode ?? 0,
+            route: path.split('?')[0] ?? path,
             ...usageOf(String(up.headers['content-type'] ?? ''), body),
           });
         });
