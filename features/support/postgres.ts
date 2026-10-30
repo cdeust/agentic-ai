@@ -20,6 +20,10 @@ interface Server {
 }
 
 let started: Promise<Server> | undefined;
+
+// macOS: without a locale, postmaster becomes multithreaded at startup and `pg_ctl start` fails ("set LC_ALL").
+// Every PostgreSQL binary runs with LC_ALL=C on top of the inherited environment.
+const PG_ENV: NodeJS.ProcessEnv = { ...process.env, LC_ALL: 'C' };
 let databases = 0;
 
 /** PG_BIN, else the directory of the pg_ctl found on PATH. Never skips: a missing server fails the scenario. */
@@ -46,17 +50,23 @@ async function startServer(): Promise<Server> {
   const user = userInfo().username;
   try {
     // Local connections only, trusted: no TCP socket is ever opened (listen_addresses='').
-    await run(bin('initdb'), ['-D', data, '-U', user, '--auth=trust', '-E', 'UTF8']);
-    await run(bin('pg_ctl'), [
-      '-D',
-      data,
-      '-w',
-      '-l',
-      join(dir, 'postgres.log'),
-      '-o',
-      `-c listen_addresses='' -c unix_socket_directories='${dir}' -c fsync=off`,
-      'start',
-    ]);
+    await run(bin('initdb'), ['-D', data, '-U', user, '--auth=trust', '-E', 'UTF8', '--no-locale'], {
+      env: PG_ENV,
+    });
+    await run(
+      bin('pg_ctl'),
+      [
+        '-D',
+        data,
+        '-w',
+        '-l',
+        join(dir, 'postgres.log'),
+        '-o',
+        `-c listen_addresses='' -c unix_socket_directories='${dir}' -c fsync=off`,
+        'start',
+      ],
+      { env: PG_ENV },
+    );
   } catch (error) {
     rmSync(dir, { recursive: true, force: true });
     throw error;
@@ -66,7 +76,9 @@ async function startServer(): Promise<Server> {
 
 function stopServerSync(server: Server): void {
   try {
-    execFileSync(server.bin('pg_ctl'), ['-D', join(server.dir, 'data'), '-m', 'immediate', '-w', 'stop']);
+    execFileSync(server.bin('pg_ctl'), ['-D', join(server.dir, 'data'), '-m', 'immediate', '-w', 'stop'], {
+      env: PG_ENV,
+    });
   } catch {
     // already stopped
   }
@@ -77,7 +89,7 @@ Before({ tags: '@postgres', timeout: 120_000 }, async function (this: ArchitectW
   started ??= startServer();
   const server = await started;
   const name = `scenario_${process.pid}_${++databases}`;
-  await run(server.bin('createdb'), ['-h', server.socketDir, '-U', server.user, name]);
+  await run(server.bin('createdb'), ['-h', server.socketDir, '-U', server.user, name], { env: PG_ENV });
   this.databaseUrl = `postgresql://${encodeURIComponent(server.user)}@/${name}?host=${encodeURIComponent(server.socketDir)}`;
 });
 

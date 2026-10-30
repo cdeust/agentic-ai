@@ -17,6 +17,9 @@
       "path": "services/memory"
     },
     {
+      "path": "tools/test-gate"
+    },
+    {
       "path": "test/integration"
     },
     {

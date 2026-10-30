@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "1.0",
+  "thresholds": {
+    "high": 80,
+    "low": 60,
+    "break": null
+  },
+  "files": {},
+  "testFiles": {
+    "specs/green.feature": {
+      "tests": [
+        {
+          "id": "0",
+          "name": "Feature: Green fixture -- Scenario: a plain scenario",
+          "location": {
+            "start": {
+              "column": 4,
+              "line": 4
+            }
+          }
+        },
+        {
+          "id": "1",
+          "name": "Feature: Green fixture -- Scenario Outline: an outline with <value> [Example L12]",
+          "location": {
+            "start": {
+              "column": 8,
+              "line": 12
+            }
+          }
+        },
+        {
+          "id": "2",
+          "name": "Feature: Green fixture -- Scenario Outline: an outline with <value> [Example L13]",
+          "location": {
+            "start": {
+              "column": 8,
+              "line": 13
+            }
+          }
+        },
+        {
+          "id": "3",
+          "name": "Feature: Green fixture -- Rule: a rule with a background -- Scenario: a scenario of the rule",
+          "location": {
+            "start": {
+              "column": 6,
+              "line": 20
+            }
+          }
+        }
+      ]
+    },
+    "specs/second.feature": {
+      "tests": [
+        {
+          "id": "4",
+          "name": "Feature: Second green fixture -- Scenario: another passing scenario",
+          "location": {
+            "start": {
+              "column": 4,
+              "line": 3
+            }
+          }
+        }
+      ]
+    }
+  },
+  "config": {
+    "mutate": []
+  }
+}

@@ -488,3 +488,21 @@ Montage des preuves : lanceur `tool-1a0`, worktree visé `<repo>/.claude/worktre
 - Gabarit : réseau limité au proxy, jeton littéral refusé, base URL vers un autre hôte refusée, fichiers hors `allowWrite` refusés.
 - `code.json` : amont non HTTPS et route non ancrée refusés.
 - Hooks : `onFailure: block` exigé par le schéma.
+
+## 16. Brique 1a construite dans l'outil, 30 octobre 2026
+
+Branche `feat/gate-1a`, créée depuis `origin/feat/marketplace-srt` (`e525b50`), worktree `<repo>/.claude/worktrees/gate-1a`. Méthode imposée par le propriétaire : le code de 1a s'écrit **dans l'outil de code isolé de 1a.0**, preuve d'usage. Chaque étape est un appel `-p` depuis le worktree : `npm --prefix <repo>/.claude/worktrees/marketplace-srt run code -- -p --output-format json --permission-mode bypassPermissions -- "<tâche>"` (lanceur hors du worktree visé). L'orchestrateur écrit le prompt, relit `git diff`, rejoue sur l'hôte ce que la sandbox interdit, et commite depuis l'hôte. Usage lu dans `~/.local/state/architect-os/usage.jsonl` (lignes ajoutées pendant l'appel) et coût dans le `total_cost_usd` du résultat JSON. Les prompts et sorties brutes restent hors dépôt (dossier de travail de l'orchestrateur).
+
+### Constats de départ
+
+- **Compte de base : 224, pas 119.** Le document (§8, E-09, T-17) dit 119 cas : c'est le compte d'avant 1a.0. `vitest run` à `e525b50` : 26 fichiers, 224 tests, 218 passés, 6 ignorés (`describe.skipIf(TEST_DATABASE_URL)`), plus `describe.runIf(darwin)` sur l'adaptateur srt réel. 1a.0 a ajouté 105 cas (`packages/sandbox` 54, `builder-guard` 51). Les 224 sont migrés ; le tableau par fichier est plus bas.
+- **Actions épinglées, SHA vérifiés par l'API GitHub** : `actions/checkout` `d23441a…` = `v6.1.0` ; `actions/setup-node` `949feb2…` = `v7.1.0` ; `anthropics/claude-code-action` `6d5ae52…` = `v1` (commit du 30 octobre 2026, « bump Claude Code to 2.1.314 ») ; `actions/upload-artifact` `ea165f8…` = `v4.6.2` (déjà au banc).
+- **Postgres de la suite** : Postgres 17.9 Homebrew, pgvector présent (`$(pg_config --sharedir)/extension/vector.control`).
+
+### Appels à l'outil
+
+| # | Étape | Prompt, résumé | Durée | Réponses | Tokens (entrée, sortie, cache lu, cache écrit) | Coût | Obstacle |
+|---|---|---|---|---|---|---|---|
+| 0 | essai | `node --version`, `git status` | 9 s | 2 × 200, sonnet-5-5 | 4 ; 121 ; 20 748 ; 20 845 | 0,087 USD | Premier essai perdu côté orchestrateur : chemin du prompt relatif après `cd` (échec de méthode, aucun appel parti) |
+| 1 | 1a.2 A | `cucumber.mjs`, World, hook `@postgres` (initdb, socket Unix, aucun TCP), migration de `packages/contracts` (7) et `data` (32) | 598 s | 36 × 200, sonnet-5-5, 45 tours | 72 ; 44 578 ; 2 355 475 ; 87 541 | 1,03 USD | Dans la sandbox : `listen` EPERM (T-39b, 3 scénarios HTTP), Postgres ne démarre pas (`shmget … Operation not permitted`, 6 lignes `@postgres`). Rejoués sur l'hôte. L'agent a fait `git rm` (index de l'hôte) malgré la consigne « ne pas toucher à .git » : consigne précisée ensuite |
+| 2 | 1a.3 | `tools/test-gate` : règles du §7 (identité de pickle, steps tous `PASSED`, une tentative, exécutés = statique, exécutés = base + ajoutés − supprimés avec repli écrit, mutation sur le périmètre du diff étendu par `coveredBy`), `gate.json` descriptif, fixtures réelles, `npm run gate`, `stryker.config.mjs` ; correctif de la locale du hook Postgres | 4 465 s | 150 × 200, **opus-5-5**, 10 tours | 308 ; 210 055 ; 32 434 543 ; 364 195 | 13,60 USD | Stryker ne démarre pas dans la sandbox : son serveur de journalisation fait `net.listen`, EPERM ; l'agent l'a fait tourner avec une cale locale non commitée pour mesurer `coveredBy` (rempli par le runner cucumber : identifiants remappés, `testFiles` par `.feature`). Deux runs Stryker sur `tools/test-gate/src` de 15 min et 13 min dans la sandbox |

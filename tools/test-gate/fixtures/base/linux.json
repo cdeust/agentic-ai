@@ -1,0 +1,12 @@
+{
+  "job": "linux",
+  "sha": "FIRST_PARENT",
+  "count": 5,
+  "pickles": [
+    "[\"specs/green.feature\",\"Green fixture\",\"a rule with a background\",\"a scenario of the rule\",null,null]",
+    "[\"specs/green.feature\",\"Green fixture\",null,\"a plain scenario\",null,null]",
+    "[\"specs/green.feature\",\"Green fixture\",null,\"an outline with <value>\",\"small values\",[\"1\"]]",
+    "[\"specs/green.feature\",\"Green fixture\",null,\"an outline with <value>\",\"small values\",[\"2\"]]",
+    "[\"specs/second.feature\",\"Second green fixture\",null,\"another passing scenario\",null,null]"
+  ]
+}

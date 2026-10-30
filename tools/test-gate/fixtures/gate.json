@@ -1,0 +1,21 @@
+{
+  "production": { "include": ["src/**/*.mjs", "mod/*/src/**/*.mjs"], "exclude": ["**/specs/**"] },
+  "features": {
+    "include": ["specs/**/*.feature", "mod/*/specs/**/*.feature"],
+    "exclude": ["**/node_modules/**"]
+  },
+  "stepDefinitions": ["specs/steps/**/*.mjs", "mod/*/specs/steps/**/*.mjs"],
+  "components": ["mod/*"],
+  "jobs": {
+    "linux": { "features": ["**/*.feature"], "mutation": true },
+    "macos": { "features": ["specs/sandbox/**/*.feature"], "mutation": false }
+  },
+  "reports": {
+    "cucumber": "reports/cucumber.ndjson",
+    "mutation": "reports/mutation/mutation.json",
+    "base": "reports/base/gate-base.json",
+    "plan": "reports/gate-plan.json",
+    "report": "reports/gate-report.md",
+    "baseOut": "reports/gate-base.json"
+  }
+}

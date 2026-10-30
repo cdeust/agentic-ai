@@ -1,0 +1,38 @@
+{
+  "production": {
+    "include": [
+      "packages/*/src/**/*.ts",
+      "data/src/**/*.ts",
+      "gateway/src/**/*.ts",
+      "services/*/src/**/*.ts",
+      "services/*/worker/**/*.ts",
+      "tools/*/src/**/*.ts"
+    ],
+    "exclude": ["**/features/**", "**/node_modules/**", "**/dist/**", "**/*.d.ts"]
+  },
+  "features": {
+    "include": ["features/**/*.feature", "*/features/**/*.feature", "*/*/features/**/*.feature"],
+    "exclude": ["**/node_modules/**"]
+  },
+  "stepDefinitions": [
+    "features/steps/**/*.ts",
+    "features/support/**/*.ts",
+    "*/features/steps/**/*.ts",
+    "*/features/support/**/*.ts",
+    "*/*/features/steps/**/*.ts",
+    "*/*/features/support/**/*.ts"
+  ],
+  "components": ["packages/*", "data", "gateway", "services/*", "tools/*"],
+  "jobs": {
+    "linux": { "features": ["**/*.feature"], "mutation": true },
+    "macos": { "features": ["features/sandbox/**/*.feature"], "mutation": false }
+  },
+  "reports": {
+    "cucumber": "reports/cucumber.ndjson",
+    "mutation": "reports/mutation/mutation.json",
+    "base": "reports/base/gate-base.json",
+    "plan": "reports/gate-plan.json",
+    "report": "reports/gate-report.md",
+    "baseOut": "reports/gate-base.json"
+  }
+}

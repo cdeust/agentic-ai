@@ -9,3 +9,4 @@ coverage/
 scripts/gate.sh
 .claude/worktrees/
 reports/
+.stryker-tmp/

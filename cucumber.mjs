@@ -9,7 +9,7 @@ register();
 
 const COMPONENTS = ['packages/*', 'data', 'gateway', 'services/*', 'tools/*'];
 
-export default {
+const config = {
   paths: ['features/**/*.feature', ...COMPONENTS.map((c) => `${c}/features/**/*.feature`)],
   import: [
     'features/support/**/*.ts',
@@ -20,3 +20,9 @@ export default {
   retry: 0,
   strict: true,
 };
+
+export default config;
+
+// The gate-macos job (docs/design/platform-v3-srt.md §7) runs features/sandbox only: `cucumber-js --profile macos`.
+// A scope by path, not a filter: tools/test-gate/gate.json scopes the static count of the job identically.
+export const macos = { ...config, paths: ['features/sandbox/**/*.feature'] };

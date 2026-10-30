@@ -1,8 +1,8 @@
 /**
  * Architecture guard (npm run arch). Rules mirror docs/architecture.md and CLAUDE.md.
- * Component = gateway | services/<name> | data. Layers live in <component>/src/{domain,application,infrastructure,presentation}.
+ * Component = gateway | services/<name> | data | tools/<name>. Layers live in <component>/src/{domain,application,infrastructure,presentation}.
  */
-const COMPONENT = '^(gateway|services/[^/]+|data)/';
+const COMPONENT = '^(gateway|services/[^/]+|data|tools/[^/]+)/';
 const CONTRACTS = '^packages/contracts/';
 const LOCAL_TYPES = ['local', 'aliased', 'aliased-tsconfig', 'aliased-subpath-import', 'aliased-workspace'];
 
@@ -101,11 +101,16 @@ module.exports = {
     {
       name: 'child-process-only-in-sandbox',
       comment:
-        'Process launching lives behind the SandboxRunner port (docs/design/platform-v3-srt.md, §6). Named exception: ' +
-        'services/memory/src/infrastructure/docker-runner.ts, which moves behind the port in brick 1b.1.',
+        'Process launching lives behind the SandboxRunner port (docs/design/platform-v3-srt.md, §6). Named exceptions: ' +
+        'services/memory/src/infrastructure/docker-runner.ts, which moves behind the port in brick 1b.1; ' +
+        'tools/test-gate/src/infrastructure/git.ts, the single file through which the CI gate runs git (§7).',
       severity: 'error',
       from: {
-        pathNot: ['^packages/sandbox/', '^services/memory/src/infrastructure/docker-runner\\.ts$'],
+        pathNot: [
+          '^packages/sandbox/',
+          '^services/memory/src/infrastructure/docker-runner\\.ts$',
+          '^tools/test-gate/src/infrastructure/git\\.ts$',
+        ],
       },
       to: { path: '^(node:)?child_process$', dependencyTypes: ['core'] },
     },
@@ -122,7 +127,7 @@ module.exports = {
     doNotFollow: { path: 'node_modules' },
     tsPreCompilationDeps: true,
     tsConfig: { fileName: 'tsconfig.base.json' },
-    exclude: { path: '^(packages/[^/]+|data|gateway|services/[^/]+)/dist/' },
+    exclude: { path: '^(packages/[^/]+|data|gateway|services/[^/]+|tools/[^/]+)/dist/' },
     enhancedResolveOptions: { exportsFields: ['exports'], conditionNames: ['import', 'node', 'default'] },
   },
 };

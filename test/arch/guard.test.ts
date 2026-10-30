@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const DEPCRUISE = join(ROOT, 'node_modules', 'dependency-cruiser', 'bin', 'dependency-cruiser.mjs');
-const TARGETS = ['packages', 'data', 'gateway', 'services'];
+const TARGETS = ['packages', 'data', 'gateway', 'services', 'tools'];
 
 interface Violation {
   rule: { name: string };
@@ -99,6 +99,16 @@ const FIXTURES: { file: string; code: string; rule: string }[] = [
     file: 'services/memory/src/infrastructure/zz-fixture-spawn.ts',
     code: "import 'child_process';",
     rule: 'child-process-only-in-sandbox',
+  },
+  {
+    file: 'tools/test-gate/src/infrastructure/zz-fixture-spawn.ts',
+    code: "import 'node:child_process';",
+    rule: 'child-process-only-in-sandbox',
+  },
+  {
+    file: 'tools/test-gate/src/domain/zz-fixture-domain.ts',
+    code: "import '../infrastructure/git.js';",
+    rule: 'domain-imports-only-domain-and-contracts',
   },
   {
     file: 'gateway/src/infrastructure/zz-fixture-srt.ts',

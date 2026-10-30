@@ -1,0 +1,13 @@
+{
+  "name": "@architect-os/test-gate",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "dependencies": {
+    "@cucumber/gherkin": "38.0.0",
+    "@cucumber/messages": "32.3.1",
+    "mutation-testing-report-schema": "3.8.4",
+    "zod": "4.6.7"
+  }
+}

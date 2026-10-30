@@ -13,7 +13,8 @@
     "packages/sandbox",
     "data",
     "gateway",
-    "services/memory"
+    "services/memory",
+    "tools/test-gate"
   ],
   "scripts": {
     "code": "node --import tsx packages/sandbox/src/code.ts",
@@ -22,9 +23,10 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:features": "cucumber-js",
-    "arch": "depcruise --config .dependency-cruiser.cjs packages data gateway services",
+    "arch": "depcruise --config .dependency-cruiser.cjs packages data gateway services tools",
     "lint": "npm run format:check --silent && npm run typecheck --silent",
-    "check": "npm run typecheck && npm run format:check && npm run test && npm run test:features && npm run arch"
+    "check": "npm run typecheck && npm run format:check && npm run test && npm run test:features && npm run arch",
+    "gate": "sh tools/test-gate/gate.sh"
   },
   "devDependencies": {
     "@cucumber/cucumber": "12.9.0",
