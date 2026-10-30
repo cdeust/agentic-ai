@@ -36,7 +36,7 @@
 <body>
 
 <h1>ai-architect.tools, architecture plateforme v3 sous srt</h1>
-<p class="lead">Diagrammes tirés de <code>docs/design/platform-v3-srt.md</code> (révision du 30 octobre 2026, base <code>1746cc8</code>, amendée depuis <code>584ac03</code>), qui amende la vision v3 du 29 octobre 2026. Aucune exécution hors du conteneur : un conteneur v3 = un processus srt, quatre exceptions prouvées. Plus de <code>platformd</code>, plus de protocole JSON lines : MCP stdio et Agent SDK officiels, broker seul détenteur de la clé Anthropic, profils au format Claude Code. Multi-utilisateur bloqué tant que la suite d’évasion ne passe pas sur Linux et macOS. <code>architect-os</code> est un nom provisoire. Les expériences T-xx et E-xx sont consignées au journal du document source ; le banc 1b.0 a tourné sur Linux et macOS (run 41038015293) : T-38, T-39 et T-41 prouvés, trois échecs Linux conservés (T-02e, T-02e2, T-07-fd0), le natif étranger joint le broker (BROKER-FOREIGN, P0 ouvert jusqu’à T-42) ; restent T-42, T-43 et T-45.</p>
+<p class="lead">Diagrammes tirés de <code>docs/design/platform-v3-srt.md</code> (révision du 30 octobre 2026, base <code>1746cc8</code>, amendée depuis <code>584ac03</code>, banc à <code>70a146f</code>, contre-expertise et décisions DC-1 à DC-11), qui amende la vision v3 du 29 octobre 2026. Aucune exécution hors du conteneur : un conteneur v3 = un processus srt, quatre exceptions prouvées. Plus de <code>platformd</code>, plus de protocole JSON lines : MCP stdio et Agent SDK officiels, broker seul détenteur de la clé Anthropic, profils au format Claude Code. Multi-utilisateur bloqué tant que la suite d’évasion ne passe pas sur Linux et macOS. <code>architect-os</code> est un nom provisoire. Les expériences T-xx et E-xx sont consignées au journal du document source ; le banc 1b.0 a tourné sur Linux et macOS (run 41044838678, 106 tests, en échec) : macOS 94 pass, 1 fail (E-03-huge, défaut du banc), 5 residual, 6 finding ; Linux 92 pass, 5 fail (T-02e, T-02e2, T-07-fd0, T-34h, T-34i), 3 residual, 6 finding. T-42 et T-43 passent sur les deux OS avec un faux amont ; T-45 passe sur l'ancien <code>settle</code>, dont un interblocage <code>40P01</code> a été reproduit hors banc : le <code>settle</code> amendé (verrou de <code>budgets</code> d'abord) reste à rejouer, avec T-45l. Décisions du 2026-10-30 : un port, deux adaptateurs (srt d'abord, OCI/Docker là où srt n'est pas supporté), copie du builder par clone <code>--no-hardlinks</code> et bundle, outil de code isolé = stage 0 simplifié (brique 1a.0).</p>
 
 <div class="toc">
 <ol>
@@ -44,7 +44,8 @@
 <li>Chemin d'un appel <code>execute</code> (figure 2)</li>
 <li>Porte de CI (figure 3)</li>
 <li>Processus, réseau, écritures et secrets</li>
-<li>Repli srt</li>
+<li>Un port, deux adaptateurs, repli</li>
+<li>Outil de code isolé, stage 0 simplifié (figure 4)</li>
 </ol>
 </div>
 
@@ -99,7 +100,7 @@
 <text x="1073" y="180" font-size="10" text-anchor="middle" font-weight="600">registre</text>
 <text x="1073" y="195" font-size="10" text-anchor="middle">verdict, tokens par couche</text>
 <rect x="32" y="212" width="560" height="62" rx="4" fill="none" stroke="#c15a2e" stroke-width="1.6"/>
-<text x="44" y="228" font-size="11" font-weight="600" fill="#c15a2e">SandboxRunner : seule autorité de lancement, adaptateur srt</text>
+<text x="44" y="228" font-size="11" font-weight="600" fill="#c15a2e">SandboxRunner : seule autorité de lancement, adaptateurs srt et OCI</text>
 <text x="44" y="244" font-size="10">start({ profile, task, lease }) : nom de profil figé, UUID, autorisation du broker</text>
 <text x="44" y="258" font-size="10">aucun script, prompt ni argument ; argv statique ; flux jamais lus par l'adaptateur</text>
 <rect x="604" y="212" width="564" height="62" rx="4" fill="none" stroke="currentColor" stroke-width="1"/>
@@ -112,7 +113,7 @@
 <text x="32" y="316" font-size="10">serveur : utilisateur architect-os-gateway</text>
 <rect x="20" y="336" width="380" height="126" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
 <text x="30" y="354" font-size="11" font-weight="600">[broker] natif (T-07, clé), D-10</text>
-<text x="30" y="370" font-size="10">un listener et une autorisation par task (T-42, T-43)</text>
+<text x="30" y="370" font-size="10">un listener et une autorisation par task (T-42, T-43 joués)</text>
 <text x="30" y="384" font-size="10">le port route, il n'identifie pas ; POST /v1/messages seul</text>
 <text x="30" y="398" font-size="10">réservation persistée avant envoi : reserved, observed,</text>
 <text x="30" y="412" font-size="10">unknown jamais libérée, settled, settled_admin</text>
@@ -154,7 +155,7 @@
 <rect x="32" y="700" width="560" height="72" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
 <text x="44" y="716" font-size="11" font-weight="600" fill="#c15a2e">worker agent entier : task builder</text>
 <text x="44" y="731" font-size="9.5" font-family="ui-monospace, Menlo, Consolas, monospace">srt --settings builder.srt.json -- … node worker.js</text>
-<text x="44" y="746" font-size="10">réseau : broker de la task</text>
+<text x="44" y="746" font-size="10">réseau : broker de la task ; clone --no-hardlinks, sortie par bundle (DC-2)</text>
 <text x="44" y="760" font-size="10">écriture : copie de travail jetable « . » ; srt hors de tout chemin inscriptible</text>
 <rect x="32" y="780" width="560" height="72" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
 <text x="44" y="796" font-size="11" font-weight="600" fill="#c15a2e">worker agent entier : task zetetic-reviewer</text>
@@ -183,17 +184,18 @@
 <text x="622" y="850" font-size="10">Multi-utilisateur BLOQUÉ tant que la suite d'évasion, secrets et intersessions</text>
 <text x="622" y="867" font-size="10">ne passe pas sur Linux ET macOS. Gateway compromise = compromission totale.</text>
 <text x="622" y="884" font-size="10">Résidus macOS : enfant setsid survivant (T-06b), pas de limite par sandbox (T-09).</text>
-<text x="622" y="901" font-size="10">Banc 1b.0 joué : T-38, T-39, T-41 ; reste T-42, T-43, T-45.</text>
+<text x="622" y="901" font-size="10">Banc 1b.0 joué : T-38, T-39, T-41, T-42, T-43, T-45 (run 41044838678).</text>
+<text x="622" y="918" font-size="10">Linux : 5 échecs conservés. settle amendé (DC-3) à rejouer, T-45l.</text>
 <rect x="32" y="944" width="1138" height="92" rx="4" fill="none" stroke="currentColor" stroke-width="1"/>
 <text x="44" y="962" font-size="11" font-weight="600">Chemin du modèle</text>
 <text x="44" y="980" font-size="10">claude sous srt, sentinelle → proxy srt (côté hôte) : pose l'autorisation de task → https://broker.localhost:&lt;port&gt; → le broker compare, pose la clé réelle → api.anthropic.com:443</text>
 <text x="44" y="996" font-size="10">Le masquage reste écarté pour la clé Anthropic (T-04) ; il ne porte qu'une autorisation de faible valeur. Une autorisation hors de x-api-key est refusée (LEASE_OUT_OF_PLACE).</text>
-<text x="44" y="1012" font-size="10">Un processus natif étranger qui connaît le port reçoit 401 (T-43). Socket Unix avec identifiants du pair : écarté, allowUnixSockets est ignoré sous Linux (§11.2).</text>
+<text x="44" y="1012" font-size="10">Un processus natif étranger qui connaît le port reçoit 401 (T-43, joué). Socket Unix avec identifiants du pair : écarté, allowUnixSockets est ignoré sous Linux (§11.2).</text>
 <rect x="32" y="1046" width="1138" height="54" rx="4" fill="none" stroke="currentColor" stroke-width="1"/>
-<text x="44" y="1064" font-size="11" font-weight="600">Repli srt (§4.11)</text>
-<text x="44" y="1082" font-size="10">Un seul port SandboxRunner, srt comme unique adaptateur ; aucun second adaptateur codé. Candidats évalués au déclenchement, sans décision.</text>
+<text x="44" y="1064" font-size="11" font-weight="600">Un port, deux adaptateurs (§4.11, DC-1)</text>
+<text x="44" y="1082" font-size="10">SandboxRunner : srt par défaut, OCI/Docker là où srt n'est pas supporté ; choix par configuration, canari fermé à l'échec (ISOLATION_UNAVAILABLE).</text>
 </svg>
-<figcaption>Figure 1. Un conteneur v3 = un processus srt (D-8). Quatre exceptions natives, prouvées : gateway, broker, data, Postgres. La gateway est le seul point de politique et le seul parent : <code>SandboxRunner</code> ne reçoit qu'un nom de profil, une task et une autorisation, jamais du contenu. <code>query()</code>, les handlers minces et le binaire Claude Code tournent ensemble sous srt ; cette réunion est prouvée au banc 1b.0 sur Linux et macOS, avec un faux amont et sans appel réel à Anthropic (T-41 ; T-04R reste à jouer en 1b). L’executor n’a aucun réseau. Web-scout et db-migrator sont des recommandations à confirmer par le propriétaire.</figcaption>
+<figcaption>Figure 1. Un conteneur v3 = un processus srt (D-8). Quatre exceptions natives, prouvées : gateway, broker, data, Postgres. La gateway est le seul point de politique et le seul parent : <code>SandboxRunner</code> ne reçoit qu'un nom de profil, une task et une autorisation, jamais du contenu. <code>query()</code>, les handlers minces et le binaire Claude Code tournent ensemble sous srt ; cette réunion est prouvée au banc 1b.0 sur Linux et macOS, avec un faux amont et sans appel réel à Anthropic (T-41 ; T-04R reste à jouer en 1b). L’executor n’a aucun réseau. Web-scout et db-migrator sont décidés (O-27, O-28). Sous l'adaptateur OCI, la gateway est équivalente à root par la socket Docker (STRIDE E), jamais montée dans un conteneur.</figcaption>
 </figure>
 
 <h2>2. Chemin d'un appel <code>execute</code></h2>
@@ -412,27 +414,94 @@
 <tr><td><strong>executor de session</strong></td><td>oui, executor.srt.json</td><td>AUCUN</td><td>« . » (session)</td><td>aucun</td></tr>
 <tr><td><strong>modules data / workflow, plugins compris</strong></td><td>oui, module-&lt;nom&gt;.srt.json (T-38)</td><td>gateway par le proxy srt, rien d'autre</td><td>« . »</td><td>jeton de l'appel en cours</td></tr>
 <tr><td><strong>worker scout : query(), handlers, binaire</strong></td><td>oui, scout.srt.json (T-41)</td><td>broker de la task seul</td><td>« . » sauf ./repo</td><td>sentinelle</td></tr>
-<tr><td><strong>worker builder</strong></td><td>oui, builder.srt.json (T-41)</td><td>broker de la task</td><td>copie jetable « . »</td><td>sentinelle</td></tr>
+<tr><td><strong>worker builder</strong></td><td>oui, builder.srt.json (T-41)</td><td>broker de la task</td><td>copie jetable « . » (clone --no-hardlinks, sortie par bundle, DC-2)</td><td>sentinelle</td></tr>
 <tr><td><strong>worker zetetic-reviewer</strong></td><td>oui, zetetic-reviewer.srt.json (T-41)</td><td>broker de la task</td><td>« . » sauf ./repo</td><td>sentinelle</td></tr>
 <tr><td><strong>agent-worker</strong></td><td>oui, agent-worker.srt.json (T-41)</td><td>broker de la task ; outils relayés à la gateway</td><td>« . »</td><td>sentinelle</td></tr>
 <tr><td><strong>repo-prepare</strong></td><td>oui, repo-prepare.srt.json</td><td>aucun</td><td>« . »</td><td>aucun</td></tr>
 <tr><td><strong>web-scout (O-27, décidée)</strong></td><td>oui, web-scout.srt.json</td><td>allowlist du manifeste ; plages privées refusées</td><td>« . » ; quarantaine par tool MCP</td><td>aucun</td></tr>
 <tr><td><strong>db-migrator (O-28, décidée)</strong></td><td>oui, db-migrator.srt.json (T-49)</td><td>aucun ; Postgres jetable dans la sandbox</td><td>« . »</td><td>aucun</td></tr>
 <tr><td><strong>gate-tests (CI)</strong></td><td>oui, gate-tests.srt.json (T-50)</td><td>aucun vers l'extérieur ; Postgres de test et Stryker dans la sandbox</td><td>merge, reports/</td><td>aucun</td></tr>
+<tr><td><strong>adaptateur OCI/Docker (DC-1, hôtes où srt n'est pas supporté)</strong></td><td>non : conteneur lancé par la gateway ; la socket Docker rend la gateway équivalente à root</td><td>--network none ; socket Unix par task vers le broker (T-43D à prouver)</td><td>volume d'écriture ; copie en lecture seule</td><td>aucun ; l'autorisation est un fichier socket, pas une variable</td></tr>
 </table>
 <p class="legend">Les limites mémoire et PID ne sont pas portées par srt : Linux, <code>systemd-run</code> autour de srt (à prouver, T-09L, brique 1b) ; macOS, aucune par sandbox, résidu assumé (T-09). Sur un poste, gateway, broker et data partagent un uid : les utilisateurs dédiés ne valent que sur serveur (T-24, T-26).</p>
 
-<h2>5. Repli srt</h2>
-<p>Un seul port <code>SandboxRunner</code>, srt comme unique adaptateur, aucun second adaptateur codé. Le repli s'ouvre si T-41 échoue pour une raison structurelle sur un OS ciblé (non déclenché : T-41 passe sur les deux OS), si un test d'évasion réussit sans correction possible dans srt, ou si une montée de version casse une propriété prouvée. Tout est à évaluer au déclenchement, sans décision, et le test de pérennité (mesure du 30 octobre 2026) est alors rejoué : détail au §4.11 du document source.</p>
+<h2>5. Un port, deux adaptateurs, repli</h2>
+<p>Un seul port <code>SandboxRunner</code>, deux adaptateurs derrière la même signature fermée et la même suite Gherkin : srt par défaut, OCI/Docker (lignée de <code>docker-runner.ts</code>, Podman ensuite par les mêmes flags) seulement là où srt n'est pas supporté. Le choix est une configuration explicite, jamais une bascule automatique ; un canari au démarrage, fermé à l'échec, refuse de démarrer (<code>ISOLATION_UNAVAILABLE</code>). Critère « srt non supporté » : système ou architecture hors du support (macOS avec <code>sandbox-exec</code>, Linux x64 ou arm64 avec <code>bwrap</code>, <code>socat</code>, <code>ripgrep</code> et espaces de noms utilisateur) ; <code>kernel.apparmor_restrict_unprivileged_userns = 1</code> sans profil AppArmor ; conteneur sans espaces de noms utilisateur ; appelant root sans <code>CAP_SETFCAP</code> ; échec d'un test obligatoire du banc à la montée de version. Paradoxe : là où srt échoue faute d'espaces de noms utilisateur, Docker exige un démon root ou du rootless (qui en exige aussi) ; la niche réelle est un hôte Linux avec démon Docker rootful et sysctl non modifiable (rootless sans sysctl : lu, non testé, O-31 en brique D). L'absence de Docker sur <code>macos-latest</code> est déduite, non vérifiée. Les autres candidats ci-dessous s'ouvrent si T-41 échoue pour une raison structurelle sur un OS ciblé (non déclenché : T-41 passe sur les deux OS), si un test d'évasion réussit sans correction possible dans srt, ou si une montée de version casse une propriété prouvée. Tout est à évaluer au déclenchement, sans décision, et le test de pérennité (mesure du 30 octobre 2026) est alors rejoué : détail au §4.11 du document source.</p>
 <table>
 <tr><th>Cas</th><th>Candidats à évaluer</th></tr>
-<tr><td>Échec propre à Linux</td><td>Podman rootless</td></tr>
+<tr><td>Linux où srt n'est pas supporté</td><td>Adaptateur OCI : Docker d'abord, Podman rootless ensuite</td></tr>
 <tr><td>Contenu hostile ou multi-utilisateur (O-22)</td><td>Kata Containers</td></tr>
 <tr><td>Échec sur macOS</td><td><code>podman machine</code></td></tr>
 <tr><td>srt abandonné ou divergent</td><td>Fork de srt (Apache-2.0), ou adaptateur fin écrit par nous sur Seatbelt, bubblewrap, Landlock, seccomp</td></tr>
 <tr><td>Le propriétaire ne veut plus gérer l'isolation</td><td>Sandbox hébergé par Anthropic : non open source, hors critères</td></tr>
 </table>
 <p class="legend">Écartés par le test de pérennité, un seul éditeur : gVisor, Firecracker, <code>apple/container</code>. Quel que soit le code, la suite d'évasion reste la preuve indispensable.</p>
+
+<h2>6. Outil de code isolé, stage 0 simplifié (brique 1a.0)</h2>
+<p>Ce système simplifié est le stage 0 : un port <code>SandboxRunner</code> avec l'adaptateur srt, le profil <code>builder</code> (copie par clone <code>--no-hardlinks</code>, <code>denyWrite</code>, descripteurs créés par l'adaptateur) et une seule commande qui lance la version précédente épinglée de Claude Code dedans. Le reste de 1a et 1b se construit à l'intérieur de l'outil. <strong>Le premier stage 0 est construit hors sandbox</strong>, dans le Claude Code non sandboxé du propriétaire.</p>
+<figure>
+<svg viewBox="0 0 1200 380" role="img" aria-label="Outil de code isolé : une commande unique de l'hôte lance la sandbox builder sous srt ; la sandbox ne parle qu'au broker, qui détient le jeton OAuth en mode Bearer et ne relaie que /v1/messages vers api.anthropic.com ; la sortie se fait par bundle, récupéré par l'hôte avec fsck sur décision du propriétaire." xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="11" fill="currentColor">
+<defs>
+  <marker id="arr4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
+</defs>
+<rect x="20" y="20" width="340" height="140" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="32" y="40" font-size="11" font-weight="600">commande unique (hôte, natif, un seul uid)</text>
+<text x="32" y="60" font-size="10">lance la version précédente épinglée de Claude Code</text>
+<text x="32" y="76" font-size="10">SandboxRunner : srt ; OCI là où srt n'est pas supporté</text>
+<text x="32" y="92" font-size="10">canari au démarrage, fermé à l'échec (ISOLATION_UNAVAILABLE)</text>
+<text x="32" y="108" font-size="10">adaptateur choisi par configuration, jamais par bascule</text>
+<text x="32" y="128" font-size="10" font-weight="600">premier stage 0 : construit hors sandbox</text>
+<line x1="360" y1="90" x2="420" y2="90" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr4)"/>
+<text x="390" y="82" font-size="10" text-anchor="middle">lance</text>
+<rect x="420" y="20" width="400" height="300" rx="4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="7 4"/>
+<text x="432" y="38" font-size="10.5" font-weight="600">frontière srt (profil builder)</text>
+<rect x="432" y="50" width="376" height="258" rx="4" fill="none" stroke="#c15a2e" stroke-width="2"/>
+<text x="444" y="70" font-size="11" font-weight="600" fill="#c15a2e">builder : Claude Code, version précédente</text>
+<text x="444" y="92" font-size="10">copie jetable : git clone --no-hardlinks, jamais un worktree</text>
+<text x="444" y="108" font-size="10">node_modules fourni en lecture seule par l'hôte</text>
+<text x="444" y="124" font-size="10">denyWrite nommés : défense en profondeur seulement</text>
+<text x="444" y="140" font-size="10">aucun identifiant, aucun jeton de push dans la sandbox</text>
+<text x="444" y="156" font-size="10">CLAUDE_CONFIG_DIR par task ; settingSources: []</text>
+<text x="444" y="172" font-size="10">réseau : le broker de la task, rien d'autre</text>
+<text x="444" y="188" font-size="10">descripteurs 0 à 2 créés par l'adaptateur</text>
+<text x="444" y="212" font-size="10" font-weight="600">sortie : git bundle produit ici</text>
+<text x="444" y="228" font-size="10">l'hôte n'ouvre la copie dans aucun outil</text>
+<text x="444" y="244" font-size="10">T-34h, T-34i restent fail sous Linux jusqu'à la preuve</text>
+<text x="444" y="260" font-size="10">du scénario de copie</text>
+<line x1="820" y1="90" x2="880" y2="90" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr4)"/>
+<text x="850" y="82" font-size="10" text-anchor="middle">Bearer</text>
+<rect x="880" y="20" width="300" height="140" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="892" y="40" font-size="11" font-weight="600">broker (natif)</text>
+<text x="892" y="60" font-size="10">détient le jeton OAuth et son rafraîchissement</text>
+<text x="892" y="76" font-size="10">Authorization: Bearer ; T-42 à rejouer en Bearer</text>
+<text x="892" y="92" font-size="10">POST /v1/messages seul</text>
+<text x="892" y="108" font-size="10" font-weight="600">jamais /v1/oauth/*</text>
+<text x="892" y="128" font-size="10">clé API obligatoire si la plateforme sert un tiers</text>
+<line x1="1030" y1="160" x2="1030" y2="210" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr4)"/>
+<rect x="880" y="210" width="300" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1"/>
+<text x="1030" y="235" font-size="11" text-anchor="middle">api.anthropic.com:443</text>
+<line x1="420" y1="290" x2="360" y2="290" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr4)"/>
+<text x="390" y="282" font-size="10" text-anchor="middle">bundle</text>
+<rect x="20" y="210" width="340" height="140" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+<text x="32" y="230" font-size="11" font-weight="600">sortie hors sandbox (hôte)</text>
+<text x="32" y="250" font-size="10">git fetch du bundle, fetch.fsckObjects=true</text>
+<text x="32" y="266" font-size="10">rien n'est lancé dans la copie ; npm ci --ignore-scripts</text>
+<text x="32" y="282" font-size="10">décidée uniquement par le propriétaire, journalisée</text>
+<text x="32" y="298" font-size="10">push par le propriétaire ou un agent hôte,</text>
+<text x="32" y="314" font-size="10">sur une branche de travail</text>
+</svg>
+<figcaption>Figure 4. Outil de code isolé, brique 1a.0. Le compte Claude du propriétaire n'entre jamais dans la sandbox : le broker le détient et le rafraîchit. L'allowlist réseau est documentée (Anthropic par le broker ; registre npm à arbitrer, O-32). Prérequis : décision sur le zod imbriqué de srt (O-33), lecture de <code>docs/security.md</code> de <code>claude-code-action</code>.</figcaption>
+</figure>
+<table>
+<tr><th>Étape</th><th>Contenu</th></tr>
+<tr><td>1a.0.1</td><td>Port <code>SandboxRunner</code> à signature fermée, adaptateur srt, profil validé par schéma strict, descripteurs créés par l'adaptateur, dossier temporaire par sandbox, arrêt du groupe, canari</td></tr>
+<tr><td>1a.0.2</td><td>Profil <code>builder</code> : copie DC-2, <code>denyWrite</code>, <code>node_modules</code> en lecture seule, réseau = broker seul</td></tr>
+<tr><td>1a.0.3</td><td>Broker minimal en mode Bearer, jamais <code>/v1/oauth/*</code>, T-42 rejoué en Bearer</td></tr>
+<tr><td>1a.0.4</td><td>Une commande qui lance la version précédente épinglée de Claude Code</td></tr>
+<tr><td>1a.0.5</td><td>Sortie par bundle, <code>git fetch</code> avec fsck, push par le propriétaire, journalisé</td></tr>
+<tr><td>1a.0.6</td><td>T-34h-variante (hooks non vide), scénario de copie hostile, T-43e, canari, descripteurs repris dans l'adaptateur</td></tr>
+<tr><td>1a.0.7</td><td>Journal : « premier stage 0 construit hors sandbox », puis une ligne « construite dans l'outil » par brique</td></tr>
+</table>
 
 </body>
 </html>
