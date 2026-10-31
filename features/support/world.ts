@@ -18,3 +18,5 @@ export class ArchitectWorld extends World {
 }
 
 setWorldConstructor(ArchitectWorld);
+
+// Sample 4: a comment only, to make the gate mutate the whole perimeter on Linux (never merged).
