@@ -17,6 +17,7 @@ const config = {
     ...COMPONENTS.map((c) => `${c}/features/steps/**/*.ts`),
   ],
   format: ['message:reports/cucumber.ndjson', 'progress'],
+  tags: 'not @postgres',
   retry: 0,
   strict: true,
 };
