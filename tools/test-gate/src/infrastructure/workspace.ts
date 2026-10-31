@@ -25,6 +25,10 @@ export class Workspace {
     return existsSync(file) ? readFileSync(file, 'utf8') : null;
   }
 
+  exists(path: string): boolean {
+    return existsSync(resolve(this.root, path));
+  }
+
   write(path: string, text: string): void {
     const file = resolve(this.root, path);
     mkdirSync(dirname(file), { recursive: true });

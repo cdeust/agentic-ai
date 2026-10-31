@@ -30,6 +30,9 @@ export const Then = CucumberThen<GateWorld>;
 
 export const FIXTURES = fileURLToPath(new URL('../../fixtures/', import.meta.url));
 
+/** The `debt` of fixtures/gate.json: the empty registry every disposable repository starts with. */
+export const DEBT_PATH = 'mutation-debt.json';
+
 /**
  * A disposable git repository laid out like tools/test-gate/fixtures/gate.json expects (specs/, src/, mod/<name>/).
  * Real git, never this repository: commits are made with a fixed identity, no hook, no signature.
@@ -43,6 +46,7 @@ export class GateRepository {
     git(this.dir, ['init', '-q']);
     this.write(CONFIG_PATH, readFileSync(join(FIXTURES, 'gate.json'), 'utf8'));
     this.write('.gitignore', 'reports/\n');
+    this.write(DEBT_PATH, '{"survivors": []}\n');
   }
 
   path(relative: string): string {

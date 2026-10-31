@@ -8,6 +8,7 @@ const RULES: readonly (readonly [RuleNumber, string])[] = [
   [3, 'Règle 3, exécutés = statique'],
   [4, 'Règle 4, exécutés = base + ajoutés − supprimés'],
   [5, 'Règle 5, mutation'],
+  [6, 'Règle 6, dette de mutation'],
 ];
 
 function list(items: readonly string[], none = '- aucun'): string[] {
@@ -29,7 +30,7 @@ function mutationLines(verdict: Verdict): string[] {
   for (const { mutant } of mutation.mutants)
     statuses.set(mutant.status, (statuses.get(mutant.status) ?? 0) + 1);
   return [
-    `- fichiers du périmètre : ${mutation.perimeter.files.length}`,
+    `- fichiers du périmètre : ${mutation.perimeter.judged.length}`,
     `- mutants du périmètre : ${mutation.mutants.length}`,
     ...[...statuses].sort().map(([status, n]) => `  - ${status} : ${n}`),
     ...(mutation.coverageFallback
@@ -37,6 +38,23 @@ function mutationLines(verdict: Verdict): string[] {
       : []),
     '- mutants invalides (signalés, pas rouges) :',
     ...list(mutation.invalid).map((line) => `  ${line}`),
+  ];
+}
+
+/** The mutation debt section, only for a job with mutation. */
+function debtLines(verdict: Verdict): string[] {
+  const debt = verdict.mutation?.debt;
+  if (debt === undefined || debt === null) return [];
+  return [
+    '## Dette de mutation',
+    '',
+    `- registre : ${debt.path}`,
+    `- survivants au registre : ${debt.survivors}`,
+    `- rencontrés dans le périmètre de ce run : ${debt.accepted}`,
+    `- entrées ajoutées par ce diff : ${debt.added}`,
+    `- entrées retirées par ce diff : ${debt.removed}`,
+    ...(debt.created ? ["- création du registre par ce diff (le premier parent n'en a pas)"] : []),
+    '',
   ];
 }
 
@@ -62,6 +80,7 @@ export function renderReport(verdict: Verdict): string {
     '',
     ...list(count.removed),
     '',
+    ...debtLines(verdict),
     '## Violations',
   ];
   for (const [rule, title] of RULES) {

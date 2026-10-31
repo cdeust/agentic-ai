@@ -38,6 +38,14 @@ Feature: Test gate, rule 2: one attempt, at least one step, every step PASSED
 
       - aucun
 
+      ## Dette de mutation
+
+      - registre : mutation-debt.json
+      - survivants au registre : 0
+      - rencontrés dans le périmètre de ce run : 0
+      - entrées ajoutées par ce diff : 0
+      - entrées retirées par ce diff : 0
+
       ## Violations
 
       ### Règle 1, identité des pickles
@@ -57,6 +65,10 @@ Feature: Test gate, rule 2: one attempt, at least one step, every step PASSED
       - aucune
 
       ### Règle 5, mutation
+
+      - aucune
+
+      ### Règle 6, dette de mutation
 
       - aucune
 

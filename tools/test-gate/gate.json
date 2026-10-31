@@ -27,6 +27,7 @@
     "linux": { "features": ["**/*.feature"], "mutation": true },
     "macos": { "features": ["features/sandbox/**/*.feature"], "mutation": false }
   },
+  "debt": "tools/test-gate/mutation-debt.json",
   "reports": {
     "cucumber": "reports/cucumber.ndjson",
     "mutation": "reports/mutation/mutation.json",

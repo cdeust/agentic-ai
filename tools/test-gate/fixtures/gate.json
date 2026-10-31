@@ -10,6 +10,7 @@
     "linux": { "features": ["**/*.feature"], "mutation": true },
     "macos": { "features": ["specs/sandbox/**/*.feature"], "mutation": false }
   },
+  "debt": "mutation-debt.json",
   "reports": {
     "cucumber": "reports/cucumber.ndjson",
     "mutation": "reports/mutation/mutation.json",

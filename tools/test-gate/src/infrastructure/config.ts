@@ -15,6 +15,8 @@ export const GateConfigSchema = z.strictObject({
   stepDefinitions: z.array(Glob).min(1),
   components: z.array(Glob),
   jobs: z.record(Glob, z.strictObject({ features: z.array(Glob).min(1), mutation: z.boolean() })),
+  /** The mutation debt registry (rule 6), relative to the repository root. */
+  debt: Path,
   reports: z.strictObject({
     cucumber: Path,
     mutation: Path,

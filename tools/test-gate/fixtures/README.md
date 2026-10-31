@@ -11,6 +11,18 @@ of the repository.
 | `mutation/` | Stryker JSON reports of `suite/src/math.mjs`, derived from a real Stryker 10.1.1 report.            |
 | `base/`     | `gate-base.json` files; `FIRST_PARENT` is replaced by the SHA of the temporary first parent.        |
 
+## Mutation debt registry
+
+`gate.json` carries `"debt": "mutation-debt.json"`, and every disposable repository starts with the empty registry
+`{"survivors": []}` at that path, so the scenarios that do not speak of the debt see no difference (their first
+parent holds the registry, or none: then the report says the diff creates it). Rule 6 (doc §7) reads that file,
+the one at the first parent, and the mutation report. An entry is `file`, `start` and `end` (`line` from 1, `column`
+from 1 as in the Stryker report, end exclusive), `mutator`, `original` (the source slice between start and end) and
+`replacement`; its identity is the text `file:l:c-l:c mutator "original" -> "replacement"`, never the mutant `id`.
+Creation is allowed when the first parent has no registry; afterwards it only shrinks. Known limit: a shift of
+lines in a file with debt makes its entry not found and the moved mutant unregistered, so the debt is paid or the
+entry removed in the same PR. `test-gate debt` writes the registry from the mutation report, once.
+
 ## Reports
 
 `cd tools/test-gate/fixtures/suite && npx cucumber-js --config generate.cucumber.mjs --profile <name>` writes

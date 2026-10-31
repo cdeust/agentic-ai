@@ -80,7 +80,7 @@ const change = (spec: string): ChangedFile => {
 When(
   'the gate computes the perimeter of the changes {string} over the production files {string}',
   function (changes: string, production: string) {
-    this.state['perimeter'] = perimeterOf(layout, list(changes).map(change), list(production));
+    this.state['perimeter'] = perimeterOf(layout, list(changes).map(change), list(production), []);
   },
 );
 
@@ -112,6 +112,7 @@ Given(
       changedLines,
       scopes: list(scopes),
       fallbackFiles: list(fallback),
+      judged: list(files),
       files: list(files),
     };
     this.state['perimeter'] = perimeter;
@@ -126,16 +127,20 @@ interface ReportFixture {
 
 When('the gate judges the mutation report:', function (text: string) {
   const fixture = JSON.parse(text) as ReportFixture;
-  this.state['judgement'] = judgeMutation(this.state['perimeter'] as Perimeter, {
-    mutate: fixture.mutate,
-    testFiles: new Map(Object.entries(fixture.testFiles)),
-    files: new Map(
-      Object.entries(fixture.files).map(([path, file]) => [
-        path,
-        { source: file.source.join('\n'), mutants: file.mutants },
-      ]),
-    ),
-  });
+  this.state['judgement'] = judgeMutation(
+    this.state['perimeter'] as Perimeter,
+    {
+      mutate: fixture.mutate,
+      testFiles: new Map(Object.entries(fixture.testFiles)),
+      files: new Map(
+        Object.entries(fixture.files).map(([path, file]) => [
+          path,
+          { source: file.source.join('\n'), mutants: file.mutants },
+        ]),
+      ),
+    },
+    null,
+  );
 });
 
 Then('the gate judged mutants are {string}', function (expected: string) {

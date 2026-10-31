@@ -1,4 +1,5 @@
 import { countRule, type BaseInput, type Count } from './count.js';
+import type { DebtInput } from './debt.js';
 import { judgeMutation, type MutationJudgement, type MutationReport, type Perimeter } from './mutation.js';
 import {
   duplicateIdentities,
@@ -18,7 +19,11 @@ export interface GateInputs {
   readonly run: CucumberRun | ReadFailure;
   readonly base: BaseInput;
   /** null when the job runs no mutation. */
-  readonly mutation: { readonly perimeter: Perimeter; readonly report: MutationReport | ReadFailure } | null;
+  readonly mutation: {
+    readonly perimeter: Perimeter;
+    readonly report: MutationReport | ReadFailure;
+    readonly debt: DebtInput;
+  } | null;
 }
 
 export interface Verdict {
@@ -50,7 +55,9 @@ export function evaluate(inputs: GateInputs): Verdict {
     base: inputs.base,
   });
   const mutation =
-    inputs.mutation === null ? null : judgeMutation(inputs.mutation.perimeter, inputs.mutation.report);
+    inputs.mutation === null
+      ? null
+      : judgeMutation(inputs.mutation.perimeter, inputs.mutation.report, inputs.mutation.debt);
   const violations = [
     ...duplicateIdentities(inputs.staticNow),
     ...readFailure,
