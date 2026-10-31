@@ -52,6 +52,7 @@ function debtLines(verdict: Verdict): string[] {
     `- registre : ${debt.path}`,
     `- survivants au registre : ${debt.survivors}`,
     `- rencontrés dans le périmètre de ce run : ${debt.accepted}`,
+    `- entrées dont le mutant n'a pas survécu à ce run : ${debt.notSurvived} (à retirer du registre quand la dette est payée)`,
     `- entrées ajoutées par ce diff : ${debt.added}`,
     `- entrées retirées par ce diff : ${debt.removed}`,
     ...(debt.created ? ["- création du registre par ce diff (le premier parent n'en a pas)"] : []),

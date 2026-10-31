@@ -19,9 +19,10 @@ parent holds the registry, or none: then the report says the diff creates it). R
 the one at the first parent, and the mutation report. An entry is `file`, `start` and `end` (`line` from 1, `column`
 from 1 as in the Stryker report, end exclusive), `mutator`, `original` (the source slice between start and end) and
 `replacement`; its identity is the text `file:l:c-l:c mutator "original" -> "replacement"`, never the mutant `id`.
-Creation is allowed when the first parent has no registry; afterwards it only shrinks. Known limit: a shift of
-lines in a file with debt makes its entry not found and the moved mutant unregistered, so the debt is paid or the
-entry removed in the same PR. `test-gate debt` writes the registry from the mutation report, once.
+Creation is allowed when the first parent has no registry; afterwards it only shrinks. An entry with no mutant of that identity in the report (any status) is red, "introuvable"; one whose mutant exists
+but did not survive this run (Killed, Timeout, RuntimeError, CompileError, Ignored) is green and counted in the
+report, since Stryker survivors vary from run to run. Known limit: a shift of lines in a file with debt makes its
+entry not found and the moved mutant unregistered, so the entry is removed in the same PR. `test-gate debt` writes the registry from the mutation report, once.
 
 ## Reports
 

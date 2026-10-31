@@ -28,6 +28,7 @@ Feature: Test gate, rule 6: the mutation debt registry only shrinks
       - registre : mutation-debt.json
       - survivants au registre : 1
       - rencontrés dans le périmètre de ce run : 1
+      - entrées dont le mutant n'a pas survécu à ce run : 0 (à retirer du registre quand la dette est payée)
       - entrées ajoutées par ce diff : 0
       - entrées retirées par ce diff : 0
       """
@@ -62,6 +63,7 @@ Feature: Test gate, rule 6: the mutation debt registry only shrinks
       - registre : mutation-debt.json
       - survivants au registre : 0
       - rencontrés dans le périmètre de ce run : 0
+      - entrées dont le mutant n'a pas survécu à ce run : 0 (à retirer du registre quand la dette est payée)
       - entrées ajoutées par ce diff : 0
       - entrées retirées par ce diff : 0
       """
@@ -85,7 +87,7 @@ Feature: Test gate, rule 6: the mutation debt registry only shrinks
     Examples:
       | status     | verdict | rule 5                                            | rule 6                                                                                                                                      |
       | NoCoverage | green   |                                                   |                                                                                                                                             |
-      | Pending    | red     | 5: src/math.mjs:7 EqualityOperator #5 : Pending   | 6: src/math.mjs:7:10-7:15 EqualityOperator "n > 0" -> "n >= 0" : introuvable (code supprimé, déplacé ou dette payée), à retirer dans la même PR |
+      | Pending    | red     | 5: src/math.mjs:7 EqualityOperator #5 : Pending   |                                                                                                                                             |
 
   Scenario Outline: an entry that differs from the surviving mutant by one field does not accept it: <field>
     Given the gate repository holds "src/math.mjs" of the mutation fixture "survivor" with line 7 changed
@@ -99,7 +101,7 @@ Feature: Test gate, rule 6: the mutation debt registry only shrinks
     And the gate violations are:
       """
       5: src/math.mjs:7 EqualityOperator #5 : Survived
-      6: <identity> : introuvable (code supprimé, déplacé ou dette payée), à retirer dans la même PR
+      6: <identity> : introuvable (code supprimé ou déplacé), à retirer dans la même PR
       """
 
     Examples:
@@ -130,6 +132,7 @@ Feature: Test gate, rule 6: the mutation debt registry only shrinks
       - registre : mutation-debt.json
       - survivants au registre : 1
       - rencontrés dans le périmètre de ce run : 1
+      - entrées dont le mutant n'a pas survécu à ce run : 0 (à retirer du registre quand la dette est payée)
       - entrées ajoutées par ce diff : 0
       - entrées retirées par ce diff : 0
       """
@@ -156,6 +159,7 @@ Feature: Test gate, rule 6: the mutation debt registry only shrinks
       - registre : mutation-debt.json
       - survivants au registre : 1
       - rencontrés dans le périmètre de ce run : 1
+      - entrées dont le mutant n'a pas survécu à ce run : 0 (à retirer du registre quand la dette est payée)
       - entrées ajoutées par ce diff : 0
       - entrées retirées par ce diff : 0
       """
@@ -177,6 +181,7 @@ Feature: Test gate, rule 6: the mutation debt registry only shrinks
       - registre : mutation-debt.json
       - survivants au registre : 1
       - rencontrés dans le périmètre de ce run : 1
+      - entrées dont le mutant n'a pas survécu à ce run : 0 (à retirer du registre quand la dette est payée)
       - entrées ajoutées par ce diff : 0
       - entrées retirées par ce diff : 0
       """
@@ -201,6 +206,7 @@ Feature: Test gate, rule 6: the mutation debt registry only shrinks
       - registre : mutation-debt.json
       - survivants au registre : 1
       - rencontrés dans le périmètre de ce run : 1
+      - entrées dont le mutant n'a pas survécu à ce run : 0 (à retirer du registre quand la dette est payée)
       - entrées ajoutées par ce diff : 1
       - entrées retirées par ce diff : 0
       """
@@ -223,6 +229,7 @@ Feature: Test gate, rule 6: the mutation debt registry only shrinks
       - registre : mutation-debt.json
       - survivants au registre : 1
       - rencontrés dans le périmètre de ce run : 1
+      - entrées dont le mutant n'a pas survécu à ce run : 0 (à retirer du registre quand la dette est payée)
       - entrées ajoutées par ce diff : 1
       - entrées retirées par ce diff : 0
       - création du registre par ce diff (le premier parent n'en a pas)
@@ -243,6 +250,7 @@ Feature: Test gate, rule 6: the mutation debt registry only shrinks
       - registre : mutation-debt.json
       - survivants au registre : 1
       - rencontrés dans le périmètre de ce run : 1
+      - entrées dont le mutant n'a pas survécu à ce run : 0 (à retirer du registre quand la dette est payée)
       - entrées ajoutées par ce diff : 1
       - entrées retirées par ce diff : 0
       - création du registre par ce diff (le premier parent n'en a pas)
@@ -351,6 +359,7 @@ Feature: Test gate, rule 6: the mutation debt registry only shrinks
       - registre : mutation-debt.json
       - survivants au registre : 0
       - rencontrés dans le périmètre de ce run : 0
+      - entrées dont le mutant n'a pas survécu à ce run : 0 (à retirer du registre quand la dette est payée)
       - entrées ajoutées par ce diff : 0
       - entrées retirées par ce diff : 1
       """
@@ -470,6 +479,7 @@ Feature: Test gate, rule 6: the mutation debt registry only shrinks
       - registre : mutation-debt.json
       - survivants au registre : 0
       - rencontrés dans le périmètre de ce run : 0
+      - entrées dont le mutant n'a pas survécu à ce run : 0 (à retirer du registre quand la dette est payée)
       - entrées ajoutées par ce diff : 0
       - entrées retirées par ce diff : 1
       """
@@ -499,10 +509,10 @@ Feature: Test gate, rule 6: the mutation debt registry only shrinks
     Then the gate verdict is red
     And the gate violations are:
       """
-      6: src/math.mjs:7:10-7:15 EqualityOperator "n > 0" -> "n >= 0" : introuvable (code supprimé, déplacé ou dette payée), à retirer dans la même PR
+      6: src/math.mjs:7:10-7:15 EqualityOperator "n > 0" -> "n >= 0" : introuvable (code supprimé ou déplacé), à retirer dans la même PR
       """
 
-  Scenario: an entry whose mutant is now killed is not found: the debt is paid but the entry stays
+  Scenario: an entry whose mutant is now killed is green and counted: survivors vary from one run to the next
     Given the gate repository holds "src/math.mjs" of the mutation fixture "survivor"
     And the gate debt registry is the fixture "survivor"
     And the gate first parent is committed
@@ -510,11 +520,77 @@ Feature: Test gate, rule 6: the mutation debt registry only shrinks
     And the gate mutation report is the fixture "survivor"
     And mutant "5" of the gate mutation report has the status "Killed"
     When the gate checks the "linux" job
-    Then the gate verdict is red
-    And the gate violations are:
+    Then the gate verdict is green
+    And the gate reports no violation
+    And the gate debt section reads:
       """
-      6: src/math.mjs:7:10-7:15 EqualityOperator "n > 0" -> "n >= 0" : introuvable (code supprimé, déplacé ou dette payée), à retirer dans la même PR
+      ## Dette de mutation
+
+      - registre : mutation-debt.json
+      - survivants au registre : 1
+      - rencontrés dans le périmètre de ce run : 0
+      - entrées dont le mutant n'a pas survécu à ce run : 1 (à retirer du registre quand la dette est payée)
+      - entrées ajoutées par ce diff : 0
+      - entrées retirées par ce diff : 0
       """
+
+  Scenario Outline: an entry whose mutant did not survive this run is green and counted: <status>
+    Given the gate repository holds "src/math.mjs" of the mutation fixture "survivor"
+    And the gate debt registry is the fixture "survivor"
+    And the gate first parent is committed
+    And the gate head is committed
+    And the gate mutation report is the fixture "survivor"
+    And mutant "5" of the gate mutation report has the status "<status>"
+    When the gate checks the "linux" job
+    Then the gate verdict is green
+    And the gate reports no violation
+    And the gate debt section reads:
+      """
+      ## Dette de mutation
+
+      - registre : mutation-debt.json
+      - survivants au registre : 1
+      - rencontrés dans le périmètre de ce run : 0
+      - entrées dont le mutant n'a pas survécu à ce run : 1 (à retirer du registre quand la dette est payée)
+      - entrées ajoutées par ce diff : 0
+      - entrées retirées par ce diff : 0
+      """
+
+    Examples:
+      | status       |
+      | Killed       |
+      | Timeout      |
+      | RuntimeError |
+      | CompileError |
+      | Ignored      |
+
+  Scenario Outline: an entry whose mutant is still Survived, NoCoverage or Pending is found and not counted: <status>
+    Given the gate repository holds "src/math.mjs" of the mutation fixture "survivor"
+    And the gate debt registry is the fixture "survivor"
+    And the gate first parent is committed
+    And the gate head is committed
+    And the gate mutation report is the fixture "survivor"
+    And mutant "5" of the gate mutation report has the status "<status>"
+    When the gate checks the "linux" job
+    Then the gate verdict is green
+    And the gate reports no violation
+    And the gate debt section reads:
+      """
+      ## Dette de mutation
+
+      - registre : mutation-debt.json
+      - survivants au registre : 1
+      - rencontrés dans le périmètre de ce run : 0
+      - entrées dont le mutant n'a pas survécu à ce run : 0 (à retirer du registre quand la dette est payée)
+      - entrées ajoutées par ce diff : 0
+      - entrées retirées par ce diff : 0
+      """
+
+    Examples:
+      | status       |
+      | Survived     |
+      | NoCoverage   |
+      | Pending      |
 
   Scenario: an entry whose file is not in the mutation report is not judged
     Given the gate repository holds "mod/a/src/a.mjs" of the mutation fixture "covered-by-feature"
@@ -532,6 +608,7 @@ Feature: Test gate, rule 6: the mutation debt registry only shrinks
       - registre : mutation-debt.json
       - survivants au registre : 1
       - rencontrés dans le périmètre de ce run : 0
+      - entrées dont le mutant n'a pas survécu à ce run : 0 (à retirer du registre quand la dette est payée)
       - entrées ajoutées par ce diff : 0
       - entrées retirées par ce diff : 0
       """
@@ -546,7 +623,7 @@ Feature: Test gate, rule 6: the mutation debt registry only shrinks
     Then the gate verdict is red
     And the gate violations are:
       """
-      6: src/math.mjs:7:10-7:15 EqualityOperator "n > 0" -> "n >= 0" : introuvable (code supprimé, déplacé ou dette payée), à retirer dans la même PR
+      6: src/math.mjs:7:10-7:15 EqualityOperator "n > 0" -> "n >= 0" : introuvable (code supprimé ou déplacé), à retirer dans la même PR
       """
 
   Scenario: two entries with the same identity are red
@@ -569,6 +646,7 @@ Feature: Test gate, rule 6: the mutation debt registry only shrinks
       - registre : mutation-debt.json
       - survivants au registre : 2
       - rencontrés dans le périmètre de ce run : 1
+      - entrées dont le mutant n'a pas survécu à ce run : 0 (à retirer du registre quand la dette est payée)
       - entrées ajoutées par ce diff : 0
       - entrées retirées par ce diff : 0
       """
@@ -761,6 +839,7 @@ Feature: Test gate, rule 6: the mutation debt registry only shrinks
       - registre : mutation-debt.json
       - survivants au registre : 7
       - rencontrés dans le périmètre de ce run : 7
+      - entrées dont le mutant n'a pas survécu à ce run : 0 (à retirer du registre quand la dette est payée)
       - entrées ajoutées par ce diff : 7
       - entrées retirées par ce diff : 0
       - création du registre par ce diff (le premier parent n'en a pas)

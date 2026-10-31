@@ -43,6 +43,7 @@ Feature: Test gate, rule 2: one attempt, at least one step, every step PASSED
       - registre : mutation-debt.json
       - survivants au registre : 0
       - rencontrés dans le périmètre de ce run : 0
+      - entrées dont le mutant n'a pas survécu à ce run : 0 (à retirer du registre quand la dette est payée)
       - entrées ajoutées par ce diff : 0
       - entrées retirées par ce diff : 0
 

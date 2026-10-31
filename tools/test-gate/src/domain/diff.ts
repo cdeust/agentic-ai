@@ -6,9 +6,6 @@ export interface ChangedFile {
   readonly lines: readonly number[];
 }
 
-const HEADER = /^diff --git a\/(.+) b\/\1$/;
-const HUNK = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/;
-
 /** A file the first parent does not have (untracked, or every file of a root commit): all its lines are changed. */
 export function wholeFile(path: string, text: string): ChangedFile {
   return { path, deleted: false, lines: text.split('\n').map((_, index) => index + 1) };
@@ -19,6 +16,9 @@ export function wholeFile(path: string, text: string): ChangedFile {
  * with ' ', '+', '-' or '\', so a header or a hunk line can only be what it looks like.
  */
 export function parseUnifiedDiff(text: string): ChangedFile[] {
+  // Built here, not at module level: a module-level regex is a static mutant; built per call, its mutants are covered by test.
+  const HEADER = /^diff --git a\/(.+) b\/\1$/;
+  const HUNK = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/;
   const files: { path: string; deleted: boolean; lines: number[] }[] = [];
   // Stryker disable next-line StringLiteral,BooleanLiteral: équivalent: cet objet de départ n'entre jamais dans `files` (seul un en-tête en pousse un) : ni son path ni son deleted ne sont lus.
   let current = { path: '', deleted: false, lines: [] as number[] };

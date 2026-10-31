@@ -58,6 +58,8 @@ export interface DebtSummary {
   readonly survivors: number;
   /** Mutants of the rule 5 perimeter accepted because they are in the registry. */
   readonly accepted: number;
+  /** Entries whose mutant is in the report of this run but did not survive it (Killed, Timeout, ...). */
+  readonly notSurvived: number;
   /** Entries the current registry holds and the first parent's does not (all of them for a creation). */
   readonly added: number;
   readonly removed: number;
@@ -198,13 +200,13 @@ export function judgeDebt(
   const readable = 'failure' in report ? null : report;
   // A file the report speaks of: it has mutants, or it was mutated (config.mutate) and had none.
   const covered = (found: DebtReport, file: string) => found.files.has(file) || found.mutate.includes(file);
-  // The identities of the mutants of one file of the report with one of the statuses.
-  const identitiesOf = (found: DebtReport, file: string, statuses: ReadonlySet<string>): Set<string> => {
+  // The identities of the mutants of one file of the report whose status passes `keep`.
+  const identitiesOf = (found: DebtReport, file: string, keep: (status: string) => boolean): Set<string> => {
     const result = found.files.get(file);
     if (result === undefined) return new Set();
     return new Set(
       result.mutants
-        .filter((mutant) => statuses.has(mutant.status))
+        .filter((mutant) => keep(mutant.status))
         .map((mutant) => debtIdentity(entryOf(file, mutant, result.source))),
     );
   };
@@ -213,25 +215,27 @@ export function judgeDebt(
     const id = debtIdentity(entry);
     if (!covered(readable, entry.file))
       add(`${id} : retrait non prouvé, le fichier n'est pas dans le rapport de mutation`);
-    else if (identitiesOf(readable, entry.file, NOT_KILLED).has(id)) {
+    else if (identitiesOf(readable, entry.file, (status) => NOT_KILLED.has(status)).has(id)) {
       add(`${id} : retrait refusé, le survivant existe toujours`);
     }
   }
+  let notSurvived = 0;
   for (const entry of entries) {
     const id = debtIdentity(entry);
     if (!present.has(entry.file)) add(`${id} : fichier absent, entrée à retirer dans la même PR`);
-    else if (
-      readable !== null &&
-      covered(readable, entry.file) &&
-      !identitiesOf(readable, entry.file, DEBT_STATUSES).has(id)
-    ) {
-      add(`${id} : introuvable (code supprimé, déplacé ou dette payée), à retirer dans la même PR`);
+    else if (readable !== null && covered(readable, entry.file)) {
+      if (!identitiesOf(readable, entry.file, () => true).has(id)) {
+        add(`${id} : introuvable (code supprimé ou déplacé), à retirer dans la même PR`);
+      } else if (!identitiesOf(readable, entry.file, (status) => NOT_KILLED.has(status)).has(id)) {
+        notSurvived++;
+      }
     }
   }
   const summary: DebtSummary = {
     path: input.path,
     survivors: entries.length,
     accepted,
+    notSurvived,
     added: parent === null ? ids.size : added.length,
     removed: removed.length,
     created: parent === null,
