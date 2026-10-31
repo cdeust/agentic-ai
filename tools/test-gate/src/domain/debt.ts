@@ -80,9 +80,10 @@ export function debtIdentity(entry: DebtEntry): string {
   return `${where} ${entry.mutator} ${JSON.stringify(entry.original)} -> ${JSON.stringify(entry.replacement)}`;
 }
 
+// Every position is inside `source`: parseMutationReport refuses a report whose mutant reaches past the last line.
 function sliceOf(source: string, start: Position, end: Position): string {
   const lines = source.split('\n');
-  const line = (position: Position) => lines[position.line - 1] ?? '';
+  const line = (position: Position) => lines[position.line - 1] as string;
   if (start.line === end.line) return line(start).slice(start.column - 1, end.column - 1);
   return [
     line(start).slice(start.column - 1),
@@ -127,22 +128,29 @@ export function debtEntries(report: DebtReport): DebtEntry[] {
     );
 }
 
-/** What `test-gate debt` prints: entries by first directory of their file, sorted, then the total. */
+/**
+ * What `test-gate debt` prints: entries by first directory of their file, then the total. `entries` come sorted by
+ * file (debtEntries), so the Map, which keeps insertion order, meets the directories in that order: sorting them
+ * again would change nothing.
+ */
 export function renderGenerated(path: string, entries: readonly DebtEntry[]): string {
   const counts = new Map<string, number>();
   for (const entry of entries) {
     const directory = entry.file.split('/')[0] as string;
     counts.set(directory, (counts.get(directory) ?? 0) + 1);
   }
-  const lines = [...counts]
-    .sort(([a], [b]) => earlier(a, b))
-    .map(([directory, n]) => `- ${directory} : ${n}`);
+  const lines = [...counts].map(([directory, n]) => `- ${directory} : ${n}`);
   return [`registre de dette écrit : ${path}`, ...lines, `- total : ${entries.length}`, ''].join('\n');
+}
+
+/** The entries of a registry; none when it is unreadable. */
+function entriesOf(registry: DebtRegistry | ReadFailure): readonly DebtEntry[] {
+  return 'failure' in registry ? [] : registry.survivors;
 }
 
 /** The identities of the current registry, for rule 5; empty when it is unreadable. */
 export function acceptedIdentities(input: DebtInput): ReadonlySet<string> {
-  return new Set('failure' in input.current ? [] : input.current.survivors.map(debtIdentity));
+  return new Set(entriesOf(input.current).map(debtIdentity));
 }
 
 /** Entries of the first parent's registry that the current one no longer holds; none when either is unreadable. */
@@ -175,7 +183,7 @@ export function judgeDebt(
   if (parent !== null && 'failure' in parent) {
     add(`registre de dette illisible au premier parent : ${parent.failure}`);
   }
-  const entries = 'failure' in current ? [] : current.survivors;
+  const entries = entriesOf(current);
   const ids = new Set<string>();
   for (const entry of entries) {
     const id = debtIdentity(entry);
@@ -186,9 +194,13 @@ export function judgeDebt(
   const added = before === null ? [] : [...ids].filter((id) => !before.has(id));
   for (const id of added) add(`${id} : entrée ajoutée au registre, le registre ne peut que rétrécir`);
   const removed = removedEntries(input);
+  // The report as the checks below read it; none when it is unreadable (rule 5 says so, nothing is judged on it).
+  const readable = 'failure' in report ? null : report;
+  // A file the report speaks of: it has mutants, or it was mutated (config.mutate) and had none.
+  const covered = (found: DebtReport, file: string) => found.files.has(file) || found.mutate.includes(file);
   // The identities of the mutants of one file of the report with one of the statuses.
-  const identitiesOf = (file: string, statuses: ReadonlySet<string>): Set<string> => {
-    const result = 'failure' in report ? undefined : report.files.get(file);
+  const identitiesOf = (found: DebtReport, file: string, statuses: ReadonlySet<string>): Set<string> => {
+    const result = found.files.get(file);
     if (result === undefined) return new Set();
     return new Set(
       result.mutants
@@ -196,22 +208,23 @@ export function judgeDebt(
         .map((mutant) => debtIdentity(entryOf(file, mutant, result.source))),
     );
   };
-  // A file the report speaks of: it has mutants, or it was mutated (config.mutate) and had none.
-  const covered = (file: string) =>
-    !('failure' in report) && (report.files.has(file) || report.mutate.includes(file));
   for (const entry of removed) {
-    if (!present.has(entry.file) || 'failure' in report) continue;
+    if (!present.has(entry.file) || readable === null) continue;
     const id = debtIdentity(entry);
-    if (!covered(entry.file))
+    if (!covered(readable, entry.file))
       add(`${id} : retrait non prouvé, le fichier n'est pas dans le rapport de mutation`);
-    else if (identitiesOf(entry.file, NOT_KILLED).has(id)) {
+    else if (identitiesOf(readable, entry.file, NOT_KILLED).has(id)) {
       add(`${id} : retrait refusé, le survivant existe toujours`);
     }
   }
   for (const entry of entries) {
     const id = debtIdentity(entry);
     if (!present.has(entry.file)) add(`${id} : fichier absent, entrée à retirer dans la même PR`);
-    else if (covered(entry.file) && !identitiesOf(entry.file, DEBT_STATUSES).has(id)) {
+    else if (
+      readable !== null &&
+      covered(readable, entry.file) &&
+      !identitiesOf(readable, entry.file, DEBT_STATUSES).has(id)
+    ) {
       add(`${id} : introuvable (code supprimé, déplacé ou dette payée), à retirer dans la même PR`);
     }
   }

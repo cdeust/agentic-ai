@@ -110,7 +110,10 @@ Then('the gate debt section reads:', function (text: string) {
 });
 
 Then('the gate report has no debt section', function () {
-  assert.equal(repository(this).read(REPORT).includes('## Dette de mutation'), false);
+  const report = repository(this).read(REPORT);
+  assert.equal(report.includes('## Dette de mutation'), false);
+  // Nothing else sits between the removed pickles and the violations.
+  assert.match(report, /\n\n## Violations\n/);
 });
 
 Then('the gate violations of rule {int} start with {string}', function (rule: number, prefix: string) {

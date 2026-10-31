@@ -80,7 +80,7 @@ export interface MutantRecord {
   readonly endLine: number;
   /** Column of the end, from one, exclusive. */
   readonly endColumn: number;
-  /** The code of the mutant; empty when the report carries none. */
+  /** The code of the mutant. */
   readonly replacement: string;
   /** Test ids; null when the report measured no per-test coverage for this mutant. */
   readonly coveredBy: readonly string[] | null;
@@ -106,8 +106,8 @@ export interface MutationJudgement {
   readonly invalid: readonly string[];
   /** True when (b) had to use every mutant of the touched components: the report carried no coveredBy. */
   readonly coverageFallback: boolean;
-  /** Rule 6 on the mutation debt registry; null when none was given. */
-  readonly debt: DebtSummary | null;
+  /** Rule 6 on the mutation debt registry. */
+  readonly debt: DebtSummary;
   readonly violations: readonly Violation[];
 }
 
@@ -138,12 +138,12 @@ function label(file: string, mutant: MutantRecord): string {
 
 /**
  * Rule 5 on one report: statuses in the perimeter, form of every Stryker directive in its files. A Survived or
- * NoCoverage mutant of the mutation debt registry is accepted. Then rule 6 on that registry (null: no registry).
+ * NoCoverage mutant of the mutation debt registry is accepted. Then rule 6 on that registry.
  */
 export function judgeMutation(
   perimeter: Perimeter,
   report: MutationReport | ReadFailure,
-  debt: DebtInput | null,
+  debt: DebtInput,
 ): MutationJudgement {
   const violations: Violation[] = [];
   const add = (text: string) => violations.push({ rule: 5, text });
@@ -152,18 +152,11 @@ export function judgeMutation(
   if ('failure' in report) {
     // `files`, not `judged`: a removal from the debt registry is proved by the report alone.
     if (perimeter.files.length > 0) add(`rapport de mutation illisible : ${report.failure}`);
-    const unread = debt === null ? null : judgeDebt(debt, report, 0);
-    violations.push(...(unread?.violations ?? []));
-    return {
-      perimeter,
-      mutants,
-      invalid,
-      coverageFallback: false,
-      debt: unread?.summary ?? null,
-      violations,
-    };
+    const unread = judgeDebt(debt, report, 0);
+    violations.push(...unread.violations);
+    return { perimeter, mutants, invalid, coverageFallback: false, debt: unread.summary, violations };
   }
-  const known = debt === null ? new Set<string>() : acceptedIdentities(debt);
+  const known = acceptedIdentities(debt);
   let accepted = 0;
   const all = [...report.files.values()].flatMap((file) => file.mutants);
   const coverageFallback = perimeter.scopes.length > 0 && all.every((mutant) => mutant.coveredBy === null);
@@ -203,7 +196,7 @@ export function judgeMutation(
       }
     }
   }
-  const judgedDebt = debt === null ? null : judgeDebt(debt, report, accepted);
-  violations.push(...(judgedDebt?.violations ?? []));
-  return { perimeter, mutants, invalid, coverageFallback, debt: judgedDebt?.summary ?? null, violations };
+  const judgedDebt = judgeDebt(debt, report, accepted);
+  violations.push(...judgedDebt.violations);
+  return { perimeter, mutants, invalid, coverageFallback, debt: judgedDebt.summary, violations };
 }

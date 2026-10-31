@@ -1,0 +1,32 @@
+{
+  "survivors": [
+    {
+      "file": "mod/a/src/a.mjs",
+      "start": {
+        "line": 1,
+        "column": 28
+      },
+      "end": {
+        "line": 1,
+        "column": 33
+      },
+      "mutator": "ArithmeticOperator",
+      "original": "n + 1",
+      "replacement": "n - 1"
+    },
+    {
+      "file": "src/math.mjs",
+      "start": {
+        "line": 7,
+        "column": 10
+      },
+      "end": {
+        "line": 7,
+        "column": 15
+      },
+      "mutator": "EqualityOperator",
+      "original": "n > 0",
+      "replacement": "n >= 0"
+    }
+  ]
+}

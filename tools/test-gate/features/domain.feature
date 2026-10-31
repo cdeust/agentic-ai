@@ -63,6 +63,7 @@ Feature: Test gate domain functions, observed directly
     Then the gate perimeter changed files are "src/z.mjs"
     And the gate perimeter test scopes are "specs/x.feature"
     And the gate perimeter fallback files are "src/a.mjs, src/z.mjs"
+    And the gate perimeter judged files are "src/a.mjs, src/z.mjs"
     And the gate perimeter files are "src/a.mjs, src/z.mjs"
 
   Scenario: without a touched test the coverage fallback is not used, even when no mutant has per-test coverage

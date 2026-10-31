@@ -3,6 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { countRule, type Count } from '../../src/domain/count.js';
+import type { DebtInput } from '../../src/domain/debt.js';
 import { parseUnifiedDiff, type ChangedFile } from '../../src/domain/diff.js';
 import { componentOf, type Layout } from '../../src/domain/layout.js';
 import {
@@ -21,6 +22,14 @@ import { FIXTURES, Given, Then, When } from './repository.js';
 const layout = JSON.parse(readFileSync(join(FIXTURES, 'gate.json'), 'utf8')) as Layout;
 
 const list = (text: string): string[] => (text === '' ? [] : text.split(', '));
+
+// The registry of a gate that creates it empty: rule 6 has nothing to say.
+const EMPTY_DEBT: DebtInput = {
+  path: 'mutation-debt.json',
+  current: { survivors: [] },
+  parent: null,
+  present: new Set(),
+};
 
 When(
   'the gate counts the static pickles {string} against those {string} of the first parent {string}',
@@ -96,6 +105,10 @@ Then('the gate perimeter fallback files are {string}', function (expected: strin
   assert.deepEqual((this.state['perimeter'] as Perimeter).fallbackFiles, list(expected));
 });
 
+Then('the gate perimeter judged files are {string}', function (expected: string) {
+  assert.deepEqual((this.state['perimeter'] as Perimeter).judged, list(expected));
+});
+
 Then('the gate perimeter files are {string}', function (expected: string) {
   assert.deepEqual((this.state['perimeter'] as Perimeter).files, list(expected));
 });
@@ -139,7 +152,7 @@ When('the gate judges the mutation report:', function (text: string) {
         ]),
       ),
     },
-    null,
+    EMPTY_DEBT,
   );
 });
 

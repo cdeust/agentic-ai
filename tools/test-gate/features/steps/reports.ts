@@ -9,7 +9,13 @@ const BASE = 'reports/base/gate-base.json';
 const REPORT = 'reports/gate-report.md';
 
 interface MutationFixture {
-  files: Record<string, { source: string; mutants: { id: string; status: string }[] }>;
+  files: Record<
+    string,
+    {
+      source: string;
+      mutants: { id: string; status: string; location: Record<'start' | 'end', { line: number }> }[];
+    }
+  >;
 }
 
 function mutationReport(repo: GateRepository): MutationFixture {
@@ -86,6 +92,21 @@ Given(
       .find((candidate) => candidate.id === id);
     assert.ok(mutant !== undefined, `no mutant ${id}`);
     mutant.status = status;
+    repo.write(MUTATION, JSON.stringify(report));
+  },
+);
+
+Given(
+  'the {word} line of mutant {string} of the gate mutation report is {int}',
+  function (edge: string, id: string, line: number) {
+    const repo = repository(this);
+    const report = mutationReport(repo);
+    const mutant = Object.values(report.files)
+      .flatMap((file) => file.mutants)
+      .find((candidate) => candidate.id === id);
+    assert.ok(mutant !== undefined, `no mutant ${id}`);
+    assert.ok(edge === 'start' || edge === 'end', `${edge} is neither start nor end`);
+    mutant.location[edge].line = line;
     repo.write(MUTATION, JSON.stringify(report));
   },
 );

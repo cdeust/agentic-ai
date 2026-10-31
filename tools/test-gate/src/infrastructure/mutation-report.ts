@@ -22,20 +22,29 @@ const Position = z.object({ line: z.number().int().positive(), column: z.number(
 const ReportSchema = z.object({
   files: z.record(
     z.string(),
-    z.object({
-      source: z.string(),
-      mutants: z.array(
-        z.object({
-          id: z.string(),
-          mutatorName: z.string(),
-          status: z.enum(STATUSES),
-          replacement: z.string().optional(),
-          location: z.object({ start: Position, end: Position }),
-          coveredBy: z.array(z.string()).optional(),
-          static: z.boolean().optional(),
-        }),
+    z
+      .object({
+        source: z.string(),
+        mutants: z.array(
+          z.object({
+            id: z.string(),
+            mutatorName: z.string(),
+            status: z.enum(STATUSES),
+            replacement: z.string(),
+            location: z.object({ start: Position, end: Position }),
+            coveredBy: z.array(z.string()).optional(),
+            static: z.boolean().optional(),
+          }),
+        ),
+      })
+      // The debt reads the text between start and end: both lines are in the source.
+      .refine(
+        ({ source, mutants }) => {
+          const last = source.split('\n').length;
+          return mutants.every(({ location }) => location.start.line <= last && location.end.line <= last);
+        },
+        { error: 'un mutant sort du texte de son fichier' },
       ),
-    }),
   ),
   testFiles: z.record(z.string(), z.object({ tests: z.array(z.object({ id: z.string() })) })),
   config: z.object({ mutate: z.array(z.string()) }),
@@ -60,7 +69,7 @@ export function parseMutationReport(text: string): MutationReport | ReadFailure 
             startColumn: mutant.location.start.column,
             endLine: mutant.location.end.line,
             endColumn: mutant.location.end.column,
-            replacement: mutant.replacement ?? '',
+            replacement: mutant.replacement,
             coveredBy: mutant.coveredBy ?? null,
             static: mutant.static ?? false,
           })),

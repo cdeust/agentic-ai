@@ -43,8 +43,9 @@ function mutationLines(verdict: Verdict): string[] {
 
 /** The mutation debt section, only for a job with mutation. */
 function debtLines(verdict: Verdict): string[] {
-  const debt = verdict.mutation?.debt;
-  if (debt === undefined || debt === null) return [];
+  const { mutation } = verdict;
+  if (mutation === null) return [];
+  const { debt } = mutation;
   return [
     '## Dette de mutation',
     '',

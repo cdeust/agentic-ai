@@ -190,7 +190,7 @@ Feature: Test gate, rule 5: no surviving mutant in the perimeter
     And the gate head is committed
     And the gate mutation report reads:
       """
-      {"files":{"src/first.mjs":{"language":"javascript","source":"export const twice = (n) => n + n;","mutants":[{"id":"0","mutatorName":"ArithmeticOperator","status":"Ignored","location":{"start":{"line":1,"column":29},"end":{"line":1,"column":34}}}]}},"testFiles":{},"config":{"mutate":["src/first.mjs"]}}
+      {"files":{"src/first.mjs":{"language":"javascript","source":"export const twice = (n) => n + n;","mutants":[{"id":"0","mutatorName":"ArithmeticOperator","replacement":"x","status":"Ignored","location":{"start":{"line":1,"column":29},"end":{"line":1,"column":34}}}]}},"testFiles":{},"config":{"mutate":["src/first.mjs"]}}
       """
     And the gate repository file "src/first.mjs" reads:
       """
@@ -208,7 +208,7 @@ Feature: Test gate, rule 5: no surviving mutant in the perimeter
     And the gate head is committed
     And the gate mutation report reads:
       """
-      {"files":{"src/first.mjs":{"language":"javascript","source":"export const twice = (n) => n + n;","mutants":[{"id":"0","mutatorName":"ArithmeticOperator","status":"Survived","coveredBy":[],"location":{"start":{"line":1,"column":29},"end":{"line":1,"column":34}}}]}},"testFiles":{},"config":{"mutate":["src/first.mjs"]}}
+      {"files":{"src/first.mjs":{"language":"javascript","source":"export const twice = (n) => n + n;","mutants":[{"id":"0","mutatorName":"ArithmeticOperator","replacement":"x","status":"Survived","coveredBy":[],"location":{"start":{"line":1,"column":29},"end":{"line":1,"column":34}}}]}},"testFiles":{},"config":{"mutate":["src/first.mjs"]}}
       """
     And the gate repository file "src/first.mjs" reads:
       """
@@ -262,7 +262,7 @@ Feature: Test gate, rule 5: no surviving mutant in the perimeter
     And the gate head is committed
     And the gate mutation report reads:
       """
-      {"files":{"src/math.mjs":{"source":"","mutants":[{"id":"0","mutatorName":"X","status":"Lost","location":{"start":{"line":1,"column":1},"end":{"line":1,"column":2}}}]}},"testFiles":{},"config":{"mutate":[]}}
+      {"files":{"src/math.mjs":{"source":"","mutants":[{"id":"0","mutatorName":"X","replacement":"x","status":"Lost","location":{"start":{"line":1,"column":1},"end":{"line":1,"column":2}}}]}},"testFiles":{},"config":{"mutate":[]}}
       """
     When the gate checks the "linux" job
     Then the gate verdict is red
@@ -270,6 +270,43 @@ Feature: Test gate, rule 5: no surviving mutant in the perimeter
       """
       5: rapport de mutation illisible : hors schéma : ✖ Invalid option: expected one of "Killed"|"Survived"|"NoCoverage"|"CompileError"|"RuntimeError"|"Timeout"|"Ignored"|"Pending"   → at files["src/math.mjs"].mutants[0].status
       """
+
+  Scenario: a mutant without replacement makes the mutation report unreadable
+    Given the gate repository holds "src/math.mjs" of the mutation fixture "survivor" with line 7 changed
+    And the gate first parent is committed
+    And the gate repository holds "src/math.mjs" of the mutation fixture "survivor"
+    And the gate head is committed
+    And the gate mutation report reads:
+      """
+      {"files":{"src/math.mjs":{"source":"","mutants":[{"id":"0","mutatorName":"X","status":"Killed","location":{"start":{"line":1,"column":1},"end":{"line":1,"column":2}}}]}},"testFiles":{},"config":{"mutate":[]}}
+      """
+    When the gate checks the "linux" job
+    Then the gate verdict is red
+    And the gate violations are:
+      """
+      5: rapport de mutation illisible : hors schéma : ✖ Invalid input: expected string, received undefined   → at files["src/math.mjs"].mutants[0].replacement
+      """
+
+  Scenario Outline: a mutant whose position leaves the text of its file makes the mutation report unreadable: the <edge> line is <line>
+    Given the gate repository holds "src/math.mjs" of the mutation fixture "survivor" with line 7 changed
+    And the gate first parent is committed
+    And the gate repository holds "src/math.mjs" of the mutation fixture "survivor"
+    And the gate head is committed
+    And the gate mutation report is the fixture "survivor"
+    And the <edge> line of mutant "5" of the gate mutation report is <line>
+    When the gate checks the "linux" job
+    Then the gate verdict is "<verdict>"
+    And the gate violations are:
+      """
+      <violation>
+      """
+
+    Examples:
+      | edge  | line | verdict | violation                                                                                                      |
+      | end   | 9    | red     | 5: src/math.mjs:7 EqualityOperator #5 : Survived                                                                |
+      | end   | 10   | red     | 5: rapport de mutation illisible : hors schéma : ✖ un mutant sort du texte de son fichier   → at files["src/math.mjs"] |
+      | start | 9    | green   |                                                                                                                  |
+      | start | 10   | red     | 5: rapport de mutation illisible : hors schéma : ✖ un mutant sort du texte de son fichier   → at files["src/math.mjs"] |
 
   Scenario: nothing changed in production nor in tests: an empty perimeter needs no mutation report
     Given the gate repository holds "src/math.mjs" of the mutation fixture "survivor"

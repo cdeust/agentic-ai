@@ -50,6 +50,7 @@ indexes and `testFiles` maps them to their `.feature`. The committed reports kee
 | `covered-by-feature.json`  | #0 without `coveredBy`, #1 covered by `green.feature` (no `static` field), #3 by both features, #4 static; `mod/a/src/a.mjs`. |
 | `no-coverage-data.json`    | `covered-by-feature` without any `coveredBy` (a run without perTest coverage).                                                |
 | `unsorted.json`            | For `debt`, see below.                                                                                                        |
+| `partial-line.json`        | From `survivor`: #9 added (synthetic, no real Stryker report holds it), `BlockStatement` Survived, 2:27 to 3:11.              |
 
 ## Mutation debt fixtures
 
@@ -62,6 +63,8 @@ Stryker locations of the report named below, `original` being the source text be
 | `debt/survivor.json`        | `survivor.json` #5 (also `nocoverage.json` #5): `src/math.mjs:7:10-7:15 EqualityOperator "n > 0" -> "n >= 0"`.        |
 | `debt/block-0.json`         | `survivor.json` #0 `BlockStatement`, lines 2 to 4: `original` spans three lines (`{`, `  return a + b;`, `}`).        |
 | `debt/block-2.json`         | `survivor.json` #2 `BlockStatement`, lines 6 to 8: three lines too, another start column (31) and end column (2).     |
+| `debt/partial-line.json`    | `partial-line.json` #9: `original` is `{` then `  return a`, the end being before the end of line 3.                  |
+| `debt/a-and-survivor.json`  | `debt/a-survivor.json` then `debt/survivor.json`: two files, for the plan that holds only the removed entry file.     |
 | `debt/a-survivor.json`      | `covered-by-feature.json` #7: `mod/a/src/a.mjs:1:28-1:33 ArithmeticOperator "n + 1" -> "n - 1"` (a mutant on line 1). |
 | `debt/duplicate.json`       | `debt/survivor.json` twice.                                                                                           |
 | `debt/unknown-key.json`     | `{"survivors": [], "extra": 1}`: rejected by the strict schema.                                                       |

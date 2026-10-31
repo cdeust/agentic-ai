@@ -139,6 +139,27 @@ Feature: Test gate, rule 6: the mutation debt registry only shrinks
       | 0      | 3    | block-0  |
       | 2      | 6    | block-2  |
 
+  Scenario: a multi-line mutant that ends before the end of its last line has only the text up to its end as original
+    Given the gate repository holds "src/math.mjs" of the mutation fixture "partial-line" with line 3 changed
+    And the gate debt registry is the fixture "partial-line"
+    And the gate first parent is committed
+    And the gate repository holds "src/math.mjs" of the mutation fixture "partial-line"
+    And the gate head is committed
+    And the gate mutation report is the fixture "partial-line"
+    When the gate checks the "linux" job
+    Then the gate verdict is green
+    And the gate reports no violation
+    And the gate debt section reads:
+      """
+      ## Dette de mutation
+
+      - registre : mutation-debt.json
+      - survivants au registre : 1
+      - rencontrés dans le périmètre de ce run : 1
+      - entrées ajoutées par ce diff : 0
+      - entrées retirées par ce diff : 0
+      """
+
   Scenario: a single-line mutant on the first line of its file is identified from the first line of the source
     Given the gate repository holds "mod/a/src/a.mjs" of the mutation fixture "covered-by-feature" with line 1 changed
     And the gate debt registry is the fixture "a-survivor"
@@ -340,6 +361,19 @@ Feature: Test gate, rule 6: the mutation debt registry only shrinks
     And the gate debt registry is the fixture "survivor"
     And the gate first parent is committed
     And the gate debt registry is the fixture "empty"
+    And the gate head is committed
+    When the gate plans the "linux" job
+    Then the gate plan is:
+      """
+      { "job": "linux", "head": "<head>", "firstParent": "<parent>", "mutate": ["src/math.mjs"] }
+      """
+
+  Scenario: the plan holds the file of the removed entry only, not the other file that the registry still holds
+    Given the gate repository holds "src/math.mjs" of the mutation fixture "survivor"
+    And the gate repository holds "mod/a/src/a.mjs" of the mutation fixture "covered-by-feature"
+    And the gate debt registry is the fixture "a-and-survivor"
+    And the gate first parent is committed
+    And the gate debt registry is the fixture "a-survivor"
     And the gate head is committed
     When the gate plans the "linux" job
     Then the gate plan is:
@@ -558,6 +592,19 @@ Feature: Test gate, rule 6: the mutation debt registry only shrinks
     And the gate debt registry is the fixture "survivor"
     And the gate first parent is committed
     And the gate debt registry is the fixture "empty"
+    And the gate head is committed
+    When the gate checks the "linux" job
+    Then the gate verdict is red
+    And the gate violations are:
+      """
+      5: rapport de mutation illisible : reports/mutation/mutation.json absent
+      """
+
+  Scenario: an unreadable mutation report judges no entry of the registry: the report is the only violation
+    Given the gate repository holds "src/math.mjs" of the mutation fixture "survivor" with line 7 changed
+    And the gate debt registry is the fixture "survivor"
+    And the gate first parent is committed
+    And the gate repository holds "src/math.mjs" of the mutation fixture "survivor"
     And the gate head is committed
     When the gate checks the "linux" job
     Then the gate verdict is red
