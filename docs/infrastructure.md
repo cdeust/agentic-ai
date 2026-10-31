@@ -60,4 +60,4 @@ Rule: no secret ever enters a worker container. The worker is given `ANTHROPIC_B
 
 ## CI
 
-`.github/workflows/ci.yml`: `npm ci` then `npm run check` on pull requests and pushes to `main`, with `contents: read`. `claude.yml` and `claude-code-review.yml` are copied from `anthropics/claude-code-action` examples (provenance in the PR that added them); the Claude review reads `CLAUDE.md` and does not run the tests, which is why `ci.yml` exists next to it.
+`.github/workflows/gate.yml`: the CI gate (`npm run gate`, docs/design/platform-v3-srt.md §7) on pull requests and pushes to `main`, in two jobs required by the ruleset on `main`: `gate-linux` (the whole suite, with Postgres) and `gate-macos` (`features/sandbox/` only), with `contents: read` and `actions: read`. Typecheck, format and the architecture guard are scenarios of the suite. `claude.yml` and `claude-code-review.yml` are copied from `anthropics/claude-code-action` examples (provenance in the PR that added them); the Claude review reads `CLAUDE.md` and does not run the tests, which is why the gate runs next to it.

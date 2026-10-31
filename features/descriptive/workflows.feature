@@ -12,7 +12,6 @@ Feature: GitHub workflows
     Examples:
       | file                   |
       | bench-sandbox.yml      |
-      | ci.yml                 |
       | claude-code-review.yml |
       | claude.yml             |
       | gate.yml               |

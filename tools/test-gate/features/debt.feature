@@ -613,6 +613,21 @@ Feature: Test gate, rule 6: the mutation debt registry only shrinks
       5: rapport de mutation illisible : reports/mutation/mutation.json absent
       """
 
+  Scenario: an unreadable mutation report and an unreadable registry are both reported, rule 5 first
+    Given the gate repository holds "src/math.mjs" of the mutation fixture "survivor" with line 7 changed
+    And the gate debt registry is the fixture "survivor"
+    And the gate first parent is committed
+    And the gate repository holds "src/math.mjs" of the mutation fixture "survivor"
+    And the gate debt registry is absent
+    And the gate head is committed
+    When the gate checks the "linux" job
+    Then the gate verdict is red
+    And the gate violations are:
+      """
+      5: rapport de mutation illisible : reports/mutation/mutation.json absent
+      6: registre de dette illisible : mutation-debt.json absent
+      """
+
   Scenario: the macos job does not read the registry
     Given the gate repository holds the fixture specs "green.feature, second.feature"
     And the gate head is committed
