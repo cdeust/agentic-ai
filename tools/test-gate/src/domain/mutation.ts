@@ -150,7 +150,8 @@ export function judgeMutation(
   const mutants: JudgedMutant[] = [];
   const invalid: string[] = [];
   if ('failure' in report) {
-    if (perimeter.judged.length > 0) add(`rapport de mutation illisible : ${report.failure}`);
+    // `files`, not `judged`: a removal from the debt registry is proved by the report alone.
+    if (perimeter.files.length > 0) add(`rapport de mutation illisible : ${report.failure}`);
     const unread = debt === null ? null : judgeDebt(debt, report, 0);
     violations.push(...(unread?.violations ?? []));
     return {

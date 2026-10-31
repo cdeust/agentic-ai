@@ -1,0 +1,18 @@
+{
+  "survivors": [
+    {
+      "file": "src/math.mjs",
+      "start": {
+        "line": 7,
+        "column": -1
+      },
+      "end": {
+        "line": 7,
+        "column": 15
+      },
+      "mutator": "EqualityOperator",
+      "original": "n > 0",
+      "replacement": "n >= 0"
+    }
+  ]
+}

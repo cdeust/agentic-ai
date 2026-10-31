@@ -1,0 +1,18 @@
+{
+  "survivors": [
+    {
+      "file": "src/math.mjs",
+      "start": {
+        "line": 2,
+        "column": 27
+      },
+      "end": {
+        "line": 4,
+        "column": 2
+      },
+      "mutator": "BlockStatement",
+      "original": "{\n  return a + b;\n}",
+      "replacement": "{}"
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "survivors": [
+    {
+      "file": "mod/a/src/a.mjs",
+      "start": {
+        "line": 3,
+        "column": 28
+      },
+      "end": {
+        "line": 3,
+        "column": 33
+      },
+      "mutator": "ArithmeticOperator",
+      "original": "n + 1",
+      "replacement": "n - 1"
+    },
+    {
+      "file": "src/math.mjs",
+      "start": {
+        "line": 2,
+        "column": 27
+      },
+      "end": {
+        "line": 4,
+        "column": 2
+      },
+      "mutator": "BlockStatement",
+      "original": "{\n  return a + b;\n}",
+      "replacement": "{}"
+    },
+    {
+      "file": "src/math.mjs",
+      "start": {
+        "line": 3,
+        "column": 3
+      },
+      "end": {
+        "line": 3,
+        "column": 15
+      },
+      "mutator": "StringLiteral",
+      "original": "return a + b",
+      "replacement": "\"\""
+    },
+    {
+      "file": "src/math.mjs",
+      "start": {
+        "line": 3,
+        "column": 10
+      },
+      "end": {
+        "line": 3,
+        "column": 15
+      },
+      "mutator": "ArithmeticOperator",
+      "original": "a + b",
+      "replacement": "a - b"
+    },
+    {
+      "file": "src/math.mjs",
+      "start": {
+        "line": 7,
+        "column": 10
+      },
+      "end": {
+        "line": 7,
+        "column": 15
+      },
+      "mutator": "ConditionalExpression",
+      "original": "n > 0",
+      "replacement": "false"
+    },
+    {
+      "file": "src/math.mjs",
+      "start": {
+        "line": 7,
+        "column": 10
+      },
+      "end": {
+        "line": 7,
+        "column": 15
+      },
+      "mutator": "ConditionalExpression",
+      "original": "n > 0",
+      "replacement": "true"
+    },
+    {
+      "file": "src/math.mjs",
+      "start": {
+        "line": 7,
+        "column": 10
+      },
+      "end": {
+        "line": 7,
+        "column": 15
+      },
+      "mutator": "EqualityOperator",
+      "original": "n > 0",
+      "replacement": "n >= 0"
+    }
+  ]
+}

@@ -49,3 +49,33 @@ indexes and `testFiles` maps them to their `.feature`. The committed reports kee
 | `no-mutant.json`           | No file, `src/math.mjs` in `config.mutate`.                                                                                   |
 | `covered-by-feature.json`  | #0 without `coveredBy`, #1 covered by `green.feature` (no `static` field), #3 by both features, #4 static; `mod/a/src/a.mjs`. |
 | `no-coverage-data.json`    | `covered-by-feature` without any `coveredBy` (a run without perTest coverage).                                                |
+| `unsorted.json`            | For `debt`, see below.                                                                                                        |
+
+## Mutation debt fixtures
+
+`debt/` holds registries (`features/debt.feature`, steps in `features/steps/debt.ts`). Each entry is written from the
+Stryker locations of the report named below, `original` being the source text between start and end.
+
+| File                        | What                                                                                                                  |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `debt/empty.json`           | No entry.                                                                                                             |
+| `debt/survivor.json`        | `survivor.json` #5 (also `nocoverage.json` #5): `src/math.mjs:7:10-7:15 EqualityOperator "n > 0" -> "n >= 0"`.        |
+| `debt/block-0.json`         | `survivor.json` #0 `BlockStatement`, lines 2 to 4: `original` spans three lines (`{`, `  return a + b;`, `}`).        |
+| `debt/block-2.json`         | `survivor.json` #2 `BlockStatement`, lines 6 to 8: three lines too, another start column (31) and end column (2).     |
+| `debt/a-survivor.json`      | `covered-by-feature.json` #7: `mod/a/src/a.mjs:1:28-1:33 ArithmeticOperator "n + 1" -> "n - 1"` (a mutant on line 1). |
+| `debt/duplicate.json`       | `debt/survivor.json` twice.                                                                                           |
+| `debt/unknown-key.json`     | `{"survivors": [], "extra": 1}`: rejected by the strict schema.                                                       |
+| `debt/negative-column.json` | `debt/survivor.json` with `start.column` -1: rejected by the schema.                                                  |
+| `debt/unsorted.json`        | The registry `test-gate debt` must write from `mutation/unsorted.json`, byte for byte.                                |
+
+`mutation/unsorted.json` derives from `covered-by-feature.json` (`src/math.mjs` first, then `mod/a/src/a.mjs`):
+
+- `src/math.mjs` mutants in the order #6, #3, #5, #4, #8, #1, #2, #0, so the report order is not the sorted order;
+  statuses #0 Survived, #1 Survived, #3 Survived, #4 Survived, #5 NoCoverage (`coveredBy: []`), #2 Timeout, #6 Killed:
+  only Survived and NoCoverage enter the registry.
+- #8 is added (synthetic, no real Stryker report holds it): `StringLiteral` `""` on line 3, columns 3 to 15
+  (`return a + b`), Survived. It shares a line with #1 (columns 10 to 15) and sorts after it by mutator, before it by
+  column: the column decides.
+- #3 `true` and #4 `false` (same position and mutator) sort by replacement; #5 `EqualityOperator` after them by mutator.
+- The source of `mod/a/src/a.mjs` gets two comment lines first, so its mutant #7 is on line 3 (column 28 to 33): by line
+  alone it would sort among the `src/math.mjs` entries, by file it comes first.

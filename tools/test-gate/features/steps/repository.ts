@@ -104,6 +104,7 @@ export class GateRepository {
 
   /** `<head>` and `<parent>` in an expected text stand for the SHAs of this repository. */
   tokens(text: string): string {
+    if (!text.includes('<head>') && !text.includes('<parent>')) return text;
     const parent =
       git(this.dir, ['rev-list', '--parents', '-n', '1', 'HEAD']).trim().split(' ')[1] ?? 'NO-PARENT';
     return text.replaceAll('<head>', this.rev('HEAD')).replaceAll('<parent>', parent);
